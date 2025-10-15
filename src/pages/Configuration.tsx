@@ -54,6 +54,16 @@ const Configuration = () => {
       return;
     }
 
+    // Save search configuration to localStorage
+    const searchConfig = {
+      category,
+      products,
+      selectedCustomers,
+      location,
+      companySize,
+    };
+    localStorage.setItem('leadSearchConfig', JSON.stringify(searchConfig));
+
     toast({
       title: "Busca configurada!",
       description: "Procurando leads compatíveis...",

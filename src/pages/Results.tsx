@@ -1,81 +1,102 @@
 import { Building2, TrendingUp, Users, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import LeadCard from "@/components/LeadCard";
 import StatsCard from "@/components/StatsCard";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+interface Lead {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  instagram?: string;
+  responsible: string;
+  matchScore: number;
+  category: string;
+  revenue: string;
+  openedDate: string;
+  reasons: string[];
+}
 
 const Results = () => {
-  const mockLeads = [
-    {
-      id: "1",
-      name: "Pizzaria Napoli",
-      address: "Rua das Flores, 123 - Centro",
-      phone: "(47) 99998-8888",
-      instagram: "@pizzarianapoli",
-      responsible: "João Silva",
-      matchScore: 92,
-      category: "Restaurante",
-      revenue: "R$ 30-50 mil/mês",
-      openedDate: "Há 3 meses",
-      reasons: [
-        "Abriu há 3 meses (cliente novo no mercado)",
-        "Faturamento estimado compatível com seu produto",
-        "Ainda não tem fornecedor estabelecido",
-        "Alto movimento nas redes sociais",
-      ],
-    },
-    {
-      id: "2",
-      name: "Padaria Pão Quente",
-      address: "Av. Principal, 456 - Bairro Novo",
-      phone: "(47) 99997-7777",
-      instagram: "@padariapqquente",
-      responsible: "Maria Santos",
-      matchScore: 85,
-      category: "Padaria",
-      revenue: "R$ 50-80 mil/mês",
-      openedDate: "Há 2 anos",
-      reasons: [
-        "Está expandindo o cardápio recentemente",
-        "Localização privilegiada com alto fluxo",
-        "Cliente tradicional na região",
-        "Busca novos fornecedores para crescimento",
-      ],
-    },
-    {
-      id: "3",
-      name: "Bar do Zé",
-      address: "Rua do Comércio, 789 - Vila Nova",
-      phone: "(47) 99996-6666",
-      responsible: "José Oliveira",
-      matchScore: 78,
-      category: "Bar",
-      revenue: "R$ 20-35 mil/mês",
-      openedDate: "Há 5 anos",
-      reasons: [
-        "Estabelecimento consolidado na região",
-        "Público fiel e constante",
-        "Procura melhorar mix de produtos",
-      ],
-    },
-    {
-      id: "4",
-      name: "Lanchonete Sabor Rápido",
-      address: "Av. Central, 321 - Centro",
-      phone: "(47) 99995-5555",
-      instagram: "@saborrapido",
-      responsible: "Ana Paula",
-      matchScore: 88,
-      category: "Lanchonete",
-      revenue: "R$ 25-40 mil/mês",
-      openedDate: "Há 6 meses",
-      reasons: [
-        "Crescimento rápido nos últimos meses",
-        "Ótima avaliação nas redes sociais",
-        "Planeja abrir segunda unidade",
-        "Busca fornecedores confiáveis",
-      ],
-    },
-  ];
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchLeads = async () => {
+      try {
+        // Get search configuration from localStorage
+        const searchConfigStr = localStorage.getItem('leadSearchConfig');
+        if (!searchConfigStr) {
+          toast({
+            title: "Erro",
+            description: "Configure sua busca primeiro",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const searchConfig = JSON.parse(searchConfigStr);
+        
+        // Call the edge function
+        const { data, error } = await supabase.functions.invoke('search-leads', {
+          body: {
+            segment: searchConfig.selectedCustomers.join(', '),
+            products: searchConfig.products,
+            location: searchConfig.location,
+            filters: {
+              category: searchConfig.category,
+              companySize: searchConfig.companySize,
+            }
+          }
+        });
+
+        if (error) {
+          console.error('Error calling search-leads:', error);
+          toast({
+            title: "Erro ao buscar leads",
+            description: "Tente novamente mais tarde",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (data?.leads) {
+          setLeads(data.leads);
+        }
+      } catch (error) {
+        console.error('Error fetching leads:', error);
+        toast({
+          title: "Erro ao buscar leads",
+          description: "Tente novamente mais tarde",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLeads();
+  }, [toast]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Buscando leads...</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -85,7 +106,7 @@ const Results = () => {
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">Leads Encontrados</h1>
           <p className="text-muted-foreground text-lg">
-            Encontramos {mockLeads.length} leads compatíveis com seu perfil
+            Encontramos {leads.length} leads compatíveis com seu perfil
           </p>
         </div>
 
@@ -93,36 +114,42 @@ const Results = () => {
         <div className="grid gap-6 md:grid-cols-4 mb-8">
           <StatsCard
             title="Total de Leads"
-            value={mockLeads.length}
+            value={leads.length}
             icon={Building2}
             trend="+12% esta semana"
             trendUp={true}
           />
           <StatsCard
             title="Alta Prioridade"
-            value={mockLeads.filter(l => l.matchScore >= 85).length}
+            value={leads.filter(l => l.matchScore >= 85).length}
             icon={Zap}
             trend="23% do total"
             trendUp={true}
           />
           <StatsCard
             title="Match Médio"
-            value="86%"
+            value={leads.length > 0 ? `${Math.round(leads.reduce((acc, l) => acc + l.matchScore, 0) / leads.length)}%` : "0%"}
             icon={TrendingUp}
           />
           <StatsCard
             title="Novos Clientes"
-            value={mockLeads.filter(l => l.openedDate?.includes("meses")).length}
+            value={leads.filter(l => l.openedDate?.includes("meses") || l.openedDate?.includes("mês")).length}
             icon={Users}
           />
         </div>
 
         {/* Lead Cards */}
-        <div className="grid gap-6 md:grid-cols-2">
-          {mockLeads.map((lead) => (
-            <LeadCard key={lead.id} {...lead} />
-          ))}
-        </div>
+        {leads.length > 0 ? (
+          <div className="grid gap-6 md:grid-cols-2">
+            {leads.map((lead) => (
+              <LeadCard key={lead.id} {...lead} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground text-lg">Nenhum lead encontrado. Configure uma nova busca.</p>
+          </div>
+        )}
       </main>
     </div>
   );
