@@ -31,9 +31,9 @@ Retorne dados reais e precisos sobre estabelecimentos que realmente existem, inc
 
 IMPORTANTE: Busque apenas estabelecimentos que realmente existem. Não invente nomes genéricos.`;
 
-    const userPrompt = `Encontre 4 estabelecimentos reais do tipo "${segment}" na região de ${location} que seriam bons leads para um representante que vende ${products}.
+    const userPrompt = `Encontre 12 estabelecimentos reais do tipo "${segment}" na região de ${location} que seriam bons leads para um representante que vende ${products}.
 
-Retorne um JSON array com exatamente 4 estabelecimentos no seguinte formato:
+Retorne um JSON array com pelo menos 12 estabelecimentos no seguinte formato:
 [
   {
     "name": "Nome Real do Estabelecimento",
