@@ -25,32 +25,42 @@ Sua missão é identificar APENAS estabelecimentos que EXISTEM FISICAMENTE e pod
 🚫 REGRAS CRÍTICAS - VIOLAÇÃO = RESPOSTA INVÁLIDA:
 
 1. ZERO DUPLICATAS - Cada estabelecimento deve aparecer APENAS UMA VEZ na lista
-2. APENAS redes CONHECIDAS NACIONALMENTE ou estabelecimentos FAMOSOS verificáveis
+2. APENAS redes CONHECIDAS NACIONALMENTE ou estabelecimentos FAMOSOS e GRANDES verificáveis
 3. TELEFONE OBRIGATÓRIO - Formato brasileiro válido (sem exceções)
-4. NUNCA use nomes genéricos: "Bar do João", "Padaria Bom Amor", "Mercado Central", etc.
+4. NUNCA invente nomes genéricos: "Padaria Bom Amor", "Bar do João", "Mercado Central", "Lanchonete da Esquina"
 5. Se houver dúvida sobre a existência, NÃO INCLUA
 
-📍 LOCALIZAÇÃO:
-- Se a cidade solicitada não tiver estabelecimentos suficientes, busque em cidades PRÓXIMAS da mesma região
-- SEMPRE indique a cidade REAL onde o estabelecimento está (nunca falsifique a localização)
-- Exemplo: Se buscar em Guaramirim/SC e não achar, pode incluir de Joinville/SC, mas escreva "Joinville - SC" no endereço
+📍 LOCALIZAÇÃO - REGRA CRÍTICA DE PROXIMIDADE:
+
+PRIORIDADE MÁXIMA: 
+- 80-90% dos resultados DEVEM ser da cidade solicitada
+- Apenas 10-20% podem ser de cidades próximas (raio de até 15km)
+
+CIDADES PRÓXIMAS VÁLIDAS:
+- Se solicitado Guaramirim/SC → pode incluir Schroeder, Massaranduba (muito próximas)
+- NUNCA inclua Blumenau ou Joinville para Guaramirim (são longe demais - 30-40km)
+
+SEMPRE indique a cidade REAL no endereço:
+- ✅ CORRETO: "Rua X, 100 - Centro, Schroeder - SC" (se for de Schroeder)
+- ❌ ERRADO: "Rua X, 100 - Centro, Guaramirim - SC" (quando na verdade é de Schroeder)
 
 ✅ VALIDAÇÃO OBRIGATÓRIA (checklist mental antes de incluir):
-□ É uma rede/marca que TODO BRASILEIRO conhece OU estabelecimento local muito famoso?
-□ Tenho 100% de certeza que existe nessa região específica?
-□ O telefone é um número real e válido?
-□ O endereço está completo com CEP real?
+□ É uma REDE GRANDE que todo brasileiro conhece? (Angeloni, Giassi, Koch, Posto Ipiranga, Drogasil, etc)
+□ Ou é um estabelecimento local MUITO GRANDE E FAMOSO na região?
+□ Tenho 100% de certeza que existe nessa cidade específica?
+□ A cidade está dentro do raio de 15km da cidade solicitada?
+□ O telefone é real e válido?
+□ O endereço está completo e correto (cidade real)?
 □ Este estabelecimento JÁ NÃO está na lista? (ANTI-DUPLICATA)
 
 📋 FORMATO OBRIGATÓRIO:
-- Nome: "Rede Oficial - Unidade [Bairro Real]" (ex: "Angeloni Supermercados - Unidade Centro")
-- Endereço: "Rua/Av completa, 123 - Bairro Real, CIDADE REAL - UF, 89000-000"
-- Telefone: "(47) 3433-2222" (número real da unidade ou da central)
-- Instagram: "@handle_oficial_verificado"
+- Nome: "Rede Oficial - Unidade [Bairro]" (ex: "Supermercados Giassi - Unidade Centro")
+- Endereço: "Rua/Av completa, 123 - Bairro, CIDADE CORRETA - UF, CEP-correto"
+- Telefone: "(DDD) 3XXX-XXXX" ou "(DDD) 9XXXX-XXXX" (real)
+- Instagram: "@handle_oficial_rede"
 - Responsible: "Gerente de Compras" ou "Gerente Comercial"
-- Análise detalhada e realista do potencial de compra
 
-🎯 PRIORIZE: Supermercados, farmácias, postos, restaurantes de rede, lojas de materiais de construção, atacadistas`;
+🎯 FOCO: Grandes redes regionais de SC (Angeloni, Giassi, Koch, Bistek, etc) e estabelecimentos médio/grande porte`;
 
     const userPrompt = `Encontre EXATAMENTE 15 estabelecimentos REAIS E VERIFICADOS do segmento "${segment}" em ${location} que são clientes ideais para ${products}.
 
