@@ -19,41 +19,49 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `Você é um especialista em prospecção de leads para representantes comerciais no Brasil. 
-Sua tarefa é buscar estabelecimentos reais que existem na região especificada.
-Retorne dados reais e precisos sobre estabelecimentos que realmente existem, incluindo:
-- Nome do estabelecimento (deve ser um nome real, não genérico)
-- Endereço completo e preciso
-- Telefone (formato brasileiro)
-- Instagram (se disponível)
-- Nome do responsável (quando disponível publicamente)
-- Informações relevantes sobre o negócio
+    const systemPrompt = `Você é um especialista em prospecção B2B no Brasil com acesso a dados de mercado.
+Sua missão é identificar estabelecimentos REAIS que existem fisicamente na região especificada.
 
-IMPORTANTE: Busque apenas estabelecimentos que realmente existem. Não invente nomes genéricos.`;
+REGRAS CRÍTICAS:
+1. APENAS estabelecimentos que você TEM CERTEZA que existem
+2. Se não tiver certeza sobre um estabelecimento, NÃO inclua na lista
+3. NUNCA invente nomes genéricos como "Bar do João", "Mercado Central", "Farmácia Popular"
+4. Use APENAS nomes de redes conhecidas ou estabelecimentos famosos que você conhece
+5. Todos os dados devem ser o mais precisos possível baseado no seu conhecimento
 
-    const userPrompt = `Encontre 12 estabelecimentos reais do tipo "${segment}" na região de ${location} que seriam bons leads para um representante que vende ${products}.
+INFORMAÇÕES OBRIGATÓRIAS para cada estabelecimento:
+- Nome oficial completo (ex: "Drogaria São Paulo - Unidade Centro")
+- Endereço completo com CEP
+- Telefone no formato (XX) XXXXX-XXXX ou (XX) XXXX-XXXX
+- Instagram (pesquise o handle oficial da rede/loja)
+- Informações detalhadas sobre o perfil do cliente
+- Score de match baseado em análise real do perfil`;
 
-Retorne um JSON array com pelo menos 12 estabelecimentos no seguinte formato:
+    const userPrompt = `Encontre EXATAMENTE 12 estabelecimentos REAIS do segmento "${segment}" em ${location} que seriam ótimos clientes para vender ${products}.
+
+IMPORTANTE: Foque em redes conhecidas e estabelecimentos de médio/grande porte que você TEM CERTEZA que existem nessa região.
+
+Retorne um JSON array com EXATAMENTE 12 estabelecimentos neste formato:
 [
   {
-    "name": "Nome Real do Estabelecimento",
-    "address": "Endereço completo",
+    "name": "Nome Real Completo do Estabelecimento",
+    "address": "Rua/Av completa, número - Bairro, Cidade - UF, CEP",
     "phone": "(XX) XXXXX-XXXX",
-    "instagram": "@usuario",
-    "responsible": "Nome do Responsável",
+    "instagram": "@handle_oficial",
+    "responsible": "Cargo do responsável (ex: Gerente Comercial) - Nome se disponível publicamente",
     "category": "${segment}",
-    "revenue": "Estimativa de faturamento",
-    "openedDate": "Tempo no mercado",
-    "matchScore": número entre 70-95,
+    "revenue": "Estimativa realista baseada no porte: R$ XXX.XXX - R$ X.XXX.XXX/mês",
+    "openedDate": "Tempo aproximado no mercado (ex: Mais de 5 anos, Rede estabelecida há 20 anos)",
+    "matchScore": número entre 75-95 (seja criterioso),
     "reasons": [
-      "Motivo 1",
-      "Motivo 2",
-      "Motivo 3"
+      "Razão específica e detalhada relacionada ao produto ${products}",
+      "Segunda razão baseada no perfil do estabelecimento",
+      "Terceira razão focada em potencial de volume/parceria"
     ]
   }
 ]
 
-CRÍTICO: Use apenas nomes reais de estabelecimentos que você conhece que existem. Não invente nomes genéricos como "Bar do Zé" ou "Pizzaria do João".`;
+VALIDAÇÃO FINAL: Antes de retornar, verifique se TODOS os 12 estabelecimentos são lugares reais que você conhece. Se tiver dúvida sobre algum, substitua por outro que você tenha certeza.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
