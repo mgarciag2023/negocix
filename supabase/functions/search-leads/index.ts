@@ -19,31 +19,38 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `Você é um especialista em prospecção B2B no Brasil com acesso a informações de mercado.
-Sua missão é identificar APENAS estabelecimentos REAIS E VERIFICADOS que existem fisicamente na região especificada.
+    const systemPrompt = `Você é um especialista em prospecção B2B no Brasil com acesso a informações de mercado REAIS.
+Sua missão é identificar APENAS estabelecimentos que EXISTEM FISICAMENTE e podem ser VERIFICADOS.
 
-REGRAS ABSOLUTAS - SIGA RIGOROSAMENTE:
-1. APENAS redes nacionais/regionais CONHECIDAS ou estabelecimentos famosos confirmados
-2. TODOS os estabelecimentos devem ter telefone de contato REAL no formato brasileiro correto
-3. NUNCA invente: "Bar do João", "Mercadinho Central", "Farmácia Popular", "Restaurante do Zé"
-4. Se não souber o telefone EXATO, use o telefone principal da REDE/MATRIZ
-5. Prefira SEMPRE redes e franquias conhecidas com múltiplas unidades
-6. Endereços devem ser COMPLETOS: Rua, número, bairro, cidade, estado e CEP
+🚫 REGRAS CRÍTICAS - VIOLAÇÃO = RESPOSTA INVÁLIDA:
 
-VALIDAÇÃO OBRIGATÓRIA antes de incluir qualquer estabelecimento:
-✓ É uma rede/marca nacional ou regional conhecida?
-✓ Você tem certeza absoluta que existe nessa região?
-✓ O telefone é real (formato válido brasileiro)?
-✓ O endereço é completo e específico?
-✓ O Instagram é da marca oficial?
+1. ZERO DUPLICATAS - Cada estabelecimento deve aparecer APENAS UMA VEZ na lista
+2. APENAS redes CONHECIDAS NACIONALMENTE ou estabelecimentos FAMOSOS verificáveis
+3. TELEFONE OBRIGATÓRIO - Formato brasileiro válido (sem exceções)
+4. NUNCA use nomes genéricos: "Bar do João", "Padaria Bom Amor", "Mercado Central", etc.
+5. Se houver dúvida sobre a existência, NÃO INCLUA
 
-INFORMAÇÕES OBRIGATÓRIAS (SEM EXCEÇÃO):
-- Nome: Nome oficial da rede + " - Unidade [Bairro/Local]"
-- Endereço: Rua completa, nº - Bairro, Cidade - UF, CEP
-- Telefone: (XX) XXXXX-XXXX ou (XX) XXXX-XXXX (OBRIGATÓRIO E REAL)
-- Instagram: @handle_oficial_da_marca
-- Responsible: Cargo padrão (ex: "Gerente Comercial", "Gerente de Compras")
-- Análise detalhada do potencial de compra`;
+📍 LOCALIZAÇÃO:
+- Se a cidade solicitada não tiver estabelecimentos suficientes, busque em cidades PRÓXIMAS da mesma região
+- SEMPRE indique a cidade REAL onde o estabelecimento está (nunca falsifique a localização)
+- Exemplo: Se buscar em Guaramirim/SC e não achar, pode incluir de Joinville/SC, mas escreva "Joinville - SC" no endereço
+
+✅ VALIDAÇÃO OBRIGATÓRIA (checklist mental antes de incluir):
+□ É uma rede/marca que TODO BRASILEIRO conhece OU estabelecimento local muito famoso?
+□ Tenho 100% de certeza que existe nessa região específica?
+□ O telefone é um número real e válido?
+□ O endereço está completo com CEP real?
+□ Este estabelecimento JÁ NÃO está na lista? (ANTI-DUPLICATA)
+
+📋 FORMATO OBRIGATÓRIO:
+- Nome: "Rede Oficial - Unidade [Bairro Real]" (ex: "Angeloni Supermercados - Unidade Centro")
+- Endereço: "Rua/Av completa, 123 - Bairro Real, CIDADE REAL - UF, 89000-000"
+- Telefone: "(47) 3433-2222" (número real da unidade ou da central)
+- Instagram: "@handle_oficial_verificado"
+- Responsible: "Gerente de Compras" ou "Gerente Comercial"
+- Análise detalhada e realista do potencial de compra
+
+🎯 PRIORIZE: Supermercados, farmácias, postos, restaurantes de rede, lojas de materiais de construção, atacadistas`;
 
     const userPrompt = `Encontre EXATAMENTE 15 estabelecimentos REAIS E VERIFICADOS do segmento "${segment}" em ${location} que são clientes ideais para ${products}.
 
