@@ -19,49 +19,67 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `Você é um especialista em prospecção B2B no Brasil com acesso a dados de mercado.
-Sua missão é identificar estabelecimentos REAIS que existem fisicamente na região especificada.
+    const systemPrompt = `Você é um especialista em prospecção B2B no Brasil com acesso a informações de mercado.
+Sua missão é identificar APENAS estabelecimentos REAIS E VERIFICADOS que existem fisicamente na região especificada.
 
-REGRAS CRÍTICAS:
-1. APENAS estabelecimentos que você TEM CERTEZA que existem
-2. Se não tiver certeza sobre um estabelecimento, NÃO inclua na lista
-3. NUNCA invente nomes genéricos como "Bar do João", "Mercado Central", "Farmácia Popular"
-4. Use APENAS nomes de redes conhecidas ou estabelecimentos famosos que você conhece
-5. Todos os dados devem ser o mais precisos possível baseado no seu conhecimento
+REGRAS ABSOLUTAS - SIGA RIGOROSAMENTE:
+1. APENAS redes nacionais/regionais CONHECIDAS ou estabelecimentos famosos confirmados
+2. TODOS os estabelecimentos devem ter telefone de contato REAL no formato brasileiro correto
+3. NUNCA invente: "Bar do João", "Mercadinho Central", "Farmácia Popular", "Restaurante do Zé"
+4. Se não souber o telefone EXATO, use o telefone principal da REDE/MATRIZ
+5. Prefira SEMPRE redes e franquias conhecidas com múltiplas unidades
+6. Endereços devem ser COMPLETOS: Rua, número, bairro, cidade, estado e CEP
 
-INFORMAÇÕES OBRIGATÓRIAS para cada estabelecimento:
-- Nome oficial completo (ex: "Drogaria São Paulo - Unidade Centro")
-- Endereço completo com CEP
-- Telefone no formato (XX) XXXXX-XXXX ou (XX) XXXX-XXXX
-- Instagram (pesquise o handle oficial da rede/loja)
-- Informações detalhadas sobre o perfil do cliente
-- Score de match baseado em análise real do perfil`;
+VALIDAÇÃO OBRIGATÓRIA antes de incluir qualquer estabelecimento:
+✓ É uma rede/marca nacional ou regional conhecida?
+✓ Você tem certeza absoluta que existe nessa região?
+✓ O telefone é real (formato válido brasileiro)?
+✓ O endereço é completo e específico?
+✓ O Instagram é da marca oficial?
 
-    const userPrompt = `Encontre EXATAMENTE 12 estabelecimentos REAIS do segmento "${segment}" em ${location} que seriam ótimos clientes para vender ${products}.
+INFORMAÇÕES OBRIGATÓRIAS (SEM EXCEÇÃO):
+- Nome: Nome oficial da rede + " - Unidade [Bairro/Local]"
+- Endereço: Rua completa, nº - Bairro, Cidade - UF, CEP
+- Telefone: (XX) XXXXX-XXXX ou (XX) XXXX-XXXX (OBRIGATÓRIO E REAL)
+- Instagram: @handle_oficial_da_marca
+- Responsible: Cargo padrão (ex: "Gerente Comercial", "Gerente de Compras")
+- Análise detalhada do potencial de compra`;
 
-IMPORTANTE: Foque em redes conhecidas e estabelecimentos de médio/grande porte que você TEM CERTEZA que existem nessa região.
+    const userPrompt = `Encontre EXATAMENTE 15 estabelecimentos REAIS E VERIFICADOS do segmento "${segment}" em ${location} que são clientes ideais para ${products}.
 
-Retorne um JSON array com EXATAMENTE 12 estabelecimentos neste formato:
+FOCO ABSOLUTO: REDES CONHECIDAS que você TEM 100% DE CERTEZA que:
+- Existem na região (ex: Carrefour, Extra, Pão de Açúcar, Drogasil, Raia, Panvel)
+- Possuem telefone de contato real e válido
+- São estabelecimentos de médio/grande porte
+
+FORMATO JSON (retorne EXATAMENTE 15 estabelecimentos):
 [
   {
-    "name": "Nome Real Completo do Estabelecimento",
-    "address": "Rua/Av completa, número - Bairro, Cidade - UF, CEP",
-    "phone": "(XX) XXXXX-XXXX",
-    "instagram": "@handle_oficial",
-    "responsible": "Cargo do responsável (ex: Gerente Comercial) - Nome se disponível publicamente",
+    "name": "Nome da Rede - Unidade Bairro Específico",
+    "address": "Rua/Avenida Completa, 1234 - Bairro, Cidade - UF, 12345-678",
+    "phone": "(47) 3222-3333",
+    "instagram": "@instagram_oficial_da_rede",
+    "responsible": "Gerente Comercial",
     "category": "${segment}",
-    "revenue": "Estimativa realista baseada no porte: R$ XXX.XXX - R$ X.XXX.XXX/mês",
-    "openedDate": "Tempo aproximado no mercado (ex: Mais de 5 anos, Rede estabelecida há 20 anos)",
-    "matchScore": número entre 75-95 (seja criterioso),
+    "revenue": "Estimativa realista: R$ 500.000 - R$ 2.000.000/mês",
+    "openedDate": "Tempo no mercado (ex: Rede com 15 anos, Unidade há 3 anos)",
+    "matchScore": número entre 80-95,
     "reasons": [
-      "Razão específica e detalhada relacionada ao produto ${products}",
-      "Segunda razão baseada no perfil do estabelecimento",
-      "Terceira razão focada em potencial de volume/parceria"
+      "Alto volume de vendas no segmento ${products} - potencial para pedidos recorrentes grandes",
+      "Rede estabelecida com processos de compra estruturados e pagamento confiável",
+      "Localização estratégica com grande fluxo de clientes-alvo para ${products}"
     ]
   }
 ]
 
-VALIDAÇÃO FINAL: Antes de retornar, verifique se TODOS os 12 estabelecimentos são lugares reais que você conhece. Se tiver dúvida sobre algum, substitua por outro que você tenha certeza.`;
+CHECKLIST FINAL (verifique cada item):
+□ Todos os 15 são redes/marcas REAIS que existem em ${location}
+□ TODOS têm telefone no formato brasileiro correto
+□ TODOS os endereços são completos (rua, número, bairro, cidade, UF, CEP)
+□ TODOS os Instagrams são de marcas/redes oficiais reais
+□ NENHUM nome genérico foi usado (sem "Bar do João", "Mercado Central", etc)
+
+Se algum estabelecimento não passar neste checklist, SUBSTITUA por outro verificado.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

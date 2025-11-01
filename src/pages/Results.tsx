@@ -1,10 +1,12 @@
-import { Building2, TrendingUp, Users, Zap } from "lucide-react";
+import { Building2, TrendingUp, Users, Zap, Download } from "lucide-react";
 import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import LeadCard from "@/components/LeadCard";
 import StatsCard from "@/components/StatsCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import * as XLSX from 'xlsx';
 
 interface Lead {
   id: string;
@@ -24,6 +26,64 @@ const Results = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  const exportToExcel = () => {
+    if (leads.length === 0) {
+      toast({
+        title: "Nenhum dado para exportar",
+        description: "Faça uma busca primeiro para gerar leads",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Preparar dados para o Excel
+    const excelData = leads.map((lead) => ({
+      'Nome': lead.name,
+      'Endereço': lead.address,
+      'Telefone': lead.phone,
+      'Instagram': lead.instagram || 'N/A',
+      'Responsável': lead.responsible,
+      'Categoria': lead.category,
+      'Faturamento Estimado': lead.revenue,
+      'Tempo no Mercado': lead.openedDate,
+      'Score de Match (%)': lead.matchScore,
+      'Motivo 1': lead.reasons[0] || '',
+      'Motivo 2': lead.reasons[1] || '',
+      'Motivo 3': lead.reasons[2] || '',
+    }));
+
+    // Criar workbook e worksheet
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Leads');
+
+    // Ajustar largura das colunas
+    const columnWidths = [
+      { wch: 30 }, // Nome
+      { wch: 40 }, // Endereço
+      { wch: 15 }, // Telefone
+      { wch: 20 }, // Instagram
+      { wch: 25 }, // Responsável
+      { wch: 15 }, // Categoria
+      { wch: 25 }, // Faturamento
+      { wch: 20 }, // Tempo no Mercado
+      { wch: 12 }, // Score
+      { wch: 50 }, // Motivo 1
+      { wch: 50 }, // Motivo 2
+      { wch: 50 }, // Motivo 3
+    ];
+    worksheet['!cols'] = columnWidths;
+
+    // Gerar arquivo e fazer download
+    const timestamp = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(workbook, `leads-negocix-${timestamp}.xlsx`);
+
+    toast({
+      title: "Exportação concluída",
+      description: `${leads.length} leads exportados com sucesso`,
+    });
+  };
 
   useEffect(() => {
     const fetchLeads = async () => {
@@ -103,11 +163,21 @@ const Results = () => {
       <Navbar />
       
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">Leads Encontrados</h1>
-          <p className="text-muted-foreground text-lg">
-            Encontramos {leads.length} leads compatíveis com seu perfil
-          </p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-foreground mb-2">Leads Encontrados</h1>
+            <p className="text-muted-foreground text-lg">
+              Encontramos {leads.length} leads compatíveis com seu perfil
+            </p>
+          </div>
+          <Button 
+            onClick={exportToExcel}
+            className="gap-2"
+            size="lg"
+          >
+            <Download className="h-5 w-5" />
+            Exportar para Excel
+          </Button>
         </div>
 
         {/* Stats */}
