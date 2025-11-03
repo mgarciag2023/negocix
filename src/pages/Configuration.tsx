@@ -78,18 +78,18 @@ const Configuration = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-6 md:py-8">
         <div className="mx-auto max-w-4xl">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-foreground mb-2">Configure Sua Busca</h1>
-            <p className="text-muted-foreground text-lg">
+          <div className="mb-6 md:mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Configure Sua Busca</h1>
+            <p className="text-muted-foreground text-base md:text-lg">
               Preencha os dados abaixo para encontrar os leads perfeitos para seu negócio
             </p>
           </div>
 
           <form onSubmit={handleSubmit}>
-            <Card className="p-8 shadow-card">
-              <div className="space-y-8">
+            <Card className="p-4 md:p-8 shadow-card">
+              <div className="space-y-6 md:space-y-8">
                 {/* Category */}
                 <div>
                   <Label htmlFor="category" className="text-base font-semibold">
@@ -131,7 +131,7 @@ const Configuration = () => {
                   <Label className="text-base font-semibold mb-4 block">
                     Clientes que quero encontrar: *
                   </Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
                     {customerTypes.map((customer) => (
                       <div key={customer} className="flex items-center space-x-2">
                         <Checkbox
@@ -198,8 +198,8 @@ const Configuration = () => {
                 </div>
               </div>
 
-              <div className="mt-8 flex justify-end">
-                <Button type="submit" size="lg" className="bg-success hover:bg-success-hover shadow-success">
+              <div className="mt-6 md:mt-8 flex justify-end">
+                <Button type="submit" size="lg" className="bg-success hover:bg-success-hover shadow-success w-full sm:w-auto">
                   <Search className="mr-2 h-5 w-5" />
                   Buscar Leads
                 </Button>

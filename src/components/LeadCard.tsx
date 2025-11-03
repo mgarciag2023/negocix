@@ -41,85 +41,85 @@ const LeadCard = ({
   };
   
   return (
-    <Card className="p-6 hover:shadow-card-hover transition-all duration-300 relative">
+    <Card className="p-4 md:p-6 hover:shadow-card-hover transition-all duration-300 relative">
       <Button
         variant="ghost"
         size="icon"
-        className="absolute top-4 right-4"
+        className="absolute top-2 right-2 md:top-4 md:right-4 h-8 w-8 md:h-10 md:w-10"
         onClick={() => setIsFavorite(!isFavorite)}
       >
-        <Heart className={`h-5 w-5 ${isFavorite ? "fill-destructive text-destructive" : ""}`} />
+        <Heart className={`h-4 w-4 md:h-5 md:w-5 ${isFavorite ? "fill-destructive text-destructive" : ""}`} />
       </Button>
       
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <h3 className="text-xl font-bold text-foreground mb-1">{name}</h3>
-          <Badge variant="secondary" className="mb-2">{category}</Badge>
-          <div className="flex items-center text-muted-foreground text-sm">
-            <MapPin className="h-4 w-4 mr-1" />
-            {address}
+      <div className="flex items-start justify-between mb-4 gap-2">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-lg md:text-xl font-bold text-foreground mb-1 truncate">{name}</h3>
+          <Badge variant="secondary" className="mb-2 text-xs">{category}</Badge>
+          <div className="flex items-start text-muted-foreground text-xs md:text-sm">
+            <MapPin className="h-3 w-3 md:h-4 md:w-4 mr-1 mt-0.5 flex-shrink-0" />
+            <span className="line-clamp-2">{address}</span>
           </div>
         </div>
         
-        <div className={`flex h-16 w-16 items-center justify-center rounded-full ${getScoreColor(matchScore)}`}>
+        <div className={`flex h-14 w-14 md:h-16 md:w-16 items-center justify-center rounded-full flex-shrink-0 ${getScoreColor(matchScore)}`}>
           <div className="text-center">
-            <div className="text-2xl font-bold">{matchScore}</div>
-            <div className="text-xs">match</div>
+            <div className="text-xl md:text-2xl font-bold">{matchScore}</div>
+            <div className="text-[10px] md:text-xs">match</div>
           </div>
         </div>
       </div>
       
-      <div className="bg-success-light border-l-4 border-success rounded-md p-4 mb-4">
-        <h4 className="font-semibold text-foreground mb-2">Por que é um bom lead:</h4>
+      <div className="bg-success-light border-l-4 border-success rounded-md p-3 md:p-4 mb-4">
+        <h4 className="font-semibold text-foreground mb-2 text-sm md:text-base">Por que é um bom lead:</h4>
         <ul className="space-y-1">
           {reasons.map((reason, index) => (
-            <li key={index} className="text-sm text-foreground flex items-start">
-              <span className="text-success mr-2">✓</span>
-              {reason}
+            <li key={index} className="text-xs md:text-sm text-foreground flex items-start">
+              <span className="text-success mr-2 flex-shrink-0">✓</span>
+              <span>{reason}</span>
             </li>
           ))}
         </ul>
       </div>
       
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mb-4">
         {revenue && (
-          <div className="flex items-center gap-2 text-sm">
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <div className="flex items-center gap-2 text-xs md:text-sm">
+            <TrendingUp className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
             <span className="text-muted-foreground">Faturamento: <span className="text-foreground font-medium">{revenue}</span></span>
           </div>
         )}
         {openedDate && (
-          <div className="flex items-center gap-2 text-sm">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+          <div className="flex items-center gap-2 text-xs md:text-sm">
+            <Calendar className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
             <span className="text-muted-foreground">Abriu: <span className="text-foreground font-medium">{openedDate}</span></span>
           </div>
         )}
       </div>
       
       <div className="space-y-2 mb-4">
-        <div className="flex items-center gap-2 text-sm">
-          <Phone className="h-4 w-4 text-muted-foreground" />
-          <a href={`tel:${phone}`} className="text-primary hover:underline">{phone}</a>
+        <div className="flex items-center gap-2 text-xs md:text-sm">
+          <Phone className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+          <a href={`tel:${phone}`} className="text-primary hover:underline truncate">{phone}</a>
         </div>
         {instagram && (
-          <div className="flex items-center gap-2 text-sm">
-            <Instagram className="h-4 w-4 text-muted-foreground" />
-            <a href={`https://instagram.com/${instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{instagram}</a>
+          <div className="flex items-center gap-2 text-xs md:text-sm">
+            <Instagram className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+            <a href={`https://instagram.com/${instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate">{instagram}</a>
           </div>
         )}
         {responsible && (
-          <div className="flex items-center gap-2 text-sm">
-            <User className="h-4 w-4 text-muted-foreground" />
-            <span className="text-foreground">{responsible}</span>
+          <div className="flex items-center gap-2 text-xs md:text-sm">
+            <User className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+            <span className="text-foreground truncate">{responsible}</span>
           </div>
         )}
       </div>
       
-      <div className="flex gap-2">
-        <Button asChild className="flex-1">
+      <div className="flex flex-col sm:flex-row gap-2">
+        <Button asChild className="flex-1 text-sm md:text-base h-9 md:h-10">
           <Link to={`/lead/${id}`}>Ver Detalhes</Link>
         </Button>
-        <Button variant="outline" asChild className="flex-1">
+        <Button variant="outline" asChild className="flex-1 text-sm md:text-base h-9 md:h-10">
           <a href={`https://wa.me/${phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
             Contatar
           </a>

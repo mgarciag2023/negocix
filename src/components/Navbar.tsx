@@ -10,45 +10,48 @@ const Navbar = () => {
   return (
     <nav className="border-b bg-card shadow-sm sticky top-0 z-50">
       <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-14 md:h-16 items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-primary">
-              <Building2 className="h-6 w-6 text-white" />
+            <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-lg bg-gradient-primary">
+              <Building2 className="h-5 w-5 md:h-6 md:w-6 text-white" />
             </div>
-            <span className="text-xl font-bold text-primary">Negocix</span>
+            <span className="text-lg md:text-xl font-bold text-primary">Negocix</span>
           </Link>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 md:gap-2">
             <Button
               variant={isActive("/configuracao") ? "default" : "ghost"}
               size="sm"
+              className="h-8 md:h-9 text-xs md:text-sm px-2 md:px-3"
               asChild
             >
               <Link to="/configuracao">
-                <Settings className="mr-2 h-4 w-4" />
-                Configurar Busca
+                <Settings className="h-3 w-3 md:h-4 md:w-4 md:mr-2" />
+                <span className="hidden sm:inline">Configurar</span>
               </Link>
             </Button>
             
             <Button
               variant={isActive("/resultados") ? "default" : "ghost"}
               size="sm"
+              className="h-8 md:h-9 text-xs md:text-sm px-2 md:px-3"
               asChild
             >
               <Link to="/resultados">
-                <FileText className="mr-2 h-4 w-4" />
-                Resultados
+                <FileText className="h-3 w-3 md:h-4 md:w-4 md:mr-2" />
+                <span className="hidden sm:inline">Resultados</span>
               </Link>
             </Button>
             
             <Button
               variant={isActive("/favoritos") ? "default" : "ghost"}
               size="sm"
+              className="h-8 md:h-9 text-xs md:text-sm px-2 md:px-3"
               asChild
             >
               <Link to="/favoritos">
-                <Heart className="mr-2 h-4 w-4" />
-                Favoritos
+                <Heart className="h-3 w-3 md:h-4 md:w-4 md:mr-2" />
+                <span className="hidden sm:inline">Favoritos</span>
               </Link>
             </Button>
           </div>

@@ -162,26 +162,27 @@ const Results = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8 flex items-center justify-between">
+      <main className="container mx-auto px-4 py-6 md:py-8">
+        <div className="mb-6 md:mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">Leads Encontrados</h1>
-            <p className="text-muted-foreground text-lg">
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Leads Encontrados</h1>
+            <p className="text-muted-foreground text-base md:text-lg">
               Encontramos {leads.length} leads compatíveis com seu perfil
             </p>
           </div>
           <Button 
             onClick={exportToExcel}
-            className="gap-2"
+            className="gap-2 w-full sm:w-auto"
             size="lg"
           >
             <Download className="h-5 w-5" />
-            Exportar para Excel
+            <span className="hidden sm:inline">Exportar para Excel</span>
+            <span className="sm:hidden">Exportar</span>
           </Button>
         </div>
 
         {/* Stats */}
-        <div className="grid gap-6 md:grid-cols-4 mb-8">
+        <div className="grid gap-4 md:gap-6 grid-cols-2 md:grid-cols-4 mb-6 md:mb-8">
           <StatsCard
             title="Total de Leads"
             value={leads.length}
@@ -210,7 +211,7 @@ const Results = () => {
 
         {/* Lead Cards */}
         {leads.length > 0 ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {leads.map((lead) => (
               <LeadCard key={lead.id} {...lead} />
             ))}
