@@ -32,6 +32,12 @@ const Configuration = () => {
     "Lojas de Roupas",
     "Salões de Beleza",
     "Escritórios",
+    "Materiais de Construção",
+    "Lojas de Materiais Elétricos",
+    "Agropecuária",
+    "E-commerce",
+    "Lojas de Ferramentas",
+    "Chaveiros",
   ];
 
   const handleCustomerToggle = (customer: string) => {

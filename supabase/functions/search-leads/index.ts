@@ -19,42 +19,67 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `Você é um especialista em prospecção B2B no Brasil.
-Identifique estabelecimentos REAIS que existem na região solicitada.
+    const systemPrompt = `Você é um especialista em prospecção B2B no Brasil com vasto conhecimento do mercado local.
+Identifique estabelecimentos REAIS E VERIFICÁVEIS que existem na região solicitada.
 
-🎯 REGRAS:
+🎯 REGRAS CRÍTICAS:
 1. ZERO DUPLICATAS - Cada estabelecimento aparece apenas UMA VEZ
-2. Priorize redes regionais conhecidas (Angeloni, Giassi, Koch, Bistek) e estabelecimentos locais de médio/grande porte
-3. TELEFONE OBRIGATÓRIO - Formato brasileiro válido
-4. Use nomes REAIS de estabelecimentos - NUNCA invente nomes genéricos
-5. Prefira 80% da cidade solicitada, até 20% de cidades vizinhas próximas (máx 15km)
+2. ESTABELECIMENTOS REAIS APENAS:
+   - Priorize redes regionais conhecidas (Angeloni, Giassi, Koch, Bistek, etc.)
+   - Inclua estabelecimentos locais de médio/grande porte CONFIRMADOS
+   - Se não tiver certeza absoluta do estabelecimento, NÃO INCLUA
+3. TELEFONE OBRIGATÓRIO - Formato brasileiro válido (XX) XXXX-XXXX ou (XX) 9XXXX-XXXX
+4. NOMES REAIS - NUNCA invente nomes genéricos como "Mercado Central" ou "Restaurante da Praça"
+5. LOCALIZAÇÃO PRECISA:
+   - 80% OBRIGATÓRIO da cidade solicitada
+   - Máximo 20% de cidades vizinhas PRÓXIMAS (máx 15km)
+   - SEMPRE especifique a cidade real no endereço
+
+📋 QUALIDADE DO LEAD:
+- Verifique se o estabelecimento FAZ SENTIDO para os produtos oferecidos
+- Match Score baseado em: volume potencial, necessidade do produto, acessibilidade
+- Priorize estabelecimentos com maior potencial de compra
+- Evite estabelecimentos muito pequenos ou informais a menos que sejam específicos
 
 📋 FORMATO DE CADA LEAD:
-- Nome: Nome real do estabelecimento
-- Endereço: Completo com cidade CORRETA
+- Nome: Nome real e completo do estabelecimento
+- Endereço: Rua completa, número, bairro, CIDADE - UF
 - Telefone: Formato (XX) XXXX-XXXX ou (XX) 9XXXX-XXXX
-- Instagram: Handle real (ou "@estabelecimento_nome" se desconhecido)
-- Responsible: "Gerente de Compras" ou "Proprietário"
-- Faturamento estimado realista
-- Score de match entre 75-95`;
+- Instagram: Handle real verificável (ou "@nome_do_estabelecimento" se desconhecido)
+- Responsible: "Gerente de Compras", "Proprietário" ou cargo específico
+- Faturamento: Estimativa realista baseada no porte (ex: "R$ 200-500 mil/mês")
+- Score de match: 75-95 (baseado no potencial real de compra)`;
 
-    const userPrompt = `Encontre entre 8-15 estabelecimentos REAIS do segmento "${segment}" em ${location} que possam comprar ${products}.
+    const userPrompt = `Encontre entre 8-15 estabelecimentos REAIS E VERIFICÁVEIS do segmento "${segment}" em ${location} que possam comprar ${products}.
 
-ACEITO: Redes regionais de SC (Angeloni, Giassi, Koch), estabelecimentos locais conhecidos de médio/grande porte.
+✅ CRITÉRIOS DE ACEITAÇÃO:
+- Redes regionais conhecidas (Angeloni, Giassi, Koch, Condor, etc.)
+- Estabelecimentos locais de médio/grande porte com presença estabelecida
+- Estabelecimentos que REALMENTE existem e podem ser verificados
+- Estabelecimentos que FAZEM SENTIDO para comprar ${products}
 
-Para cada lead forneça:
-- name: Nome do estabelecimento
-- address: Endereço completo com cidade real
-- phone: Telefone válido
-- instagram: Instagram (use @ + nome se não souber o oficial)
-- responsible: "Gerente de Compras" ou "Proprietário"  
+❌ NÃO ACEITAR:
+- Nomes genéricos ou inventados
+- Estabelecimentos sem telefone válido
+- Locais que não fazem sentido para o produto
+- Estabelecimentos de cidades muito distantes (>15km)
+
+📋 DADOS OBRIGATÓRIOS para cada lead:
+- name: Nome REAL e completo do estabelecimento
+- address: Endereço COMPLETO com rua, número, bairro, CIDADE - UF
+- phone: Telefone brasileiro válido (XX) XXXX-XXXX ou (XX) 9XXXX-XXXX
+- instagram: Handle real do Instagram (ou "@nome_estabelecimento" se desconhecido)
+- responsible: Cargo do responsável por compras ("Gerente de Compras", "Proprietário", etc.)
 - category: "${segment}"
-- revenue: Faturamento mensal estimado (ex: "R$ 200-500 mil/mês")
-- openedDate: Tempo no mercado (ex: "15 anos" ou "Inaugurou há 2 meses")
-- matchScore: Número 75-95
-- reasons: Array com 3 motivos de por que é bom lead para ${products}
+- revenue: Faturamento mensal estimado REALISTA (ex: "R$ 150-400 mil/mês")
+- openedDate: Tempo de mercado (ex: "10 anos", "Inaugurou há 6 meses")
+- matchScore: 75-95 (baseado no potencial REAL de compra e necessidade do produto)
+- reasons: Array com 3 motivos ESPECÍFICOS e CONVINCENTES de por que esse estabelecimento é um bom lead para ${products}
 
-IMPORTANTE: Se não encontrar 15 estabelecimentos verificados, retorne quantos conseguir com certeza (mínimo 8).`;
+🎯 IMPORTANTE: 
+- Qualidade > Quantidade: Se não encontrar 15 estabelecimentos VERIFICÁVEIS, retorne quantos conseguir com CERTEZA (mínimo 8)
+- Priorize estabelecimentos com maior potencial de compra e necessidade real do produto
+- Seja ESPECÍFICO nos motivos - evite frases genéricos como "estabelecimento grande"`;
 
     // Use tool calling to force structured JSON output
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
