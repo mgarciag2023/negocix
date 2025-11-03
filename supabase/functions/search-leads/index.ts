@@ -19,85 +19,44 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `Você é um especialista em prospecção B2B no Brasil com acesso a informações de mercado REAIS.
-Sua missão é identificar APENAS estabelecimentos que EXISTEM FISICAMENTE e podem ser VERIFICADOS.
+    const systemPrompt = `Você é um especialista em prospecção B2B no Brasil.
+Identifique estabelecimentos REAIS que existem na região solicitada.
 
-🚫 REGRAS CRÍTICAS - VIOLAÇÃO = RESPOSTA INVÁLIDA:
+🎯 REGRAS:
+1. ZERO DUPLICATAS - Cada estabelecimento aparece apenas UMA VEZ
+2. Priorize redes regionais conhecidas (Angeloni, Giassi, Koch, Bistek) e estabelecimentos locais de médio/grande porte
+3. TELEFONE OBRIGATÓRIO - Formato brasileiro válido
+4. Use nomes REAIS de estabelecimentos - NUNCA invente nomes genéricos
+5. Prefira 80% da cidade solicitada, até 20% de cidades vizinhas próximas (máx 15km)
 
-1. ZERO DUPLICATAS - Cada estabelecimento deve aparecer APENAS UMA VEZ na lista
-2. APENAS redes CONHECIDAS NACIONALMENTE ou estabelecimentos FAMOSOS e GRANDES verificáveis
-3. TELEFONE OBRIGATÓRIO - Formato brasileiro válido (sem exceções)
-4. NUNCA invente nomes genéricos: "Padaria Bom Amor", "Bar do João", "Mercado Central", "Lanchonete da Esquina"
-5. Se houver dúvida sobre a existência, NÃO INCLUA
+📋 FORMATO DE CADA LEAD:
+- Nome: Nome real do estabelecimento
+- Endereço: Completo com cidade CORRETA
+- Telefone: Formato (XX) XXXX-XXXX ou (XX) 9XXXX-XXXX
+- Instagram: Handle real (ou "@estabelecimento_nome" se desconhecido)
+- Responsible: "Gerente de Compras" ou "Proprietário"
+- Faturamento estimado realista
+- Score de match entre 75-95`;
 
-📍 LOCALIZAÇÃO - REGRA CRÍTICA DE PROXIMIDADE:
+    const userPrompt = `Encontre entre 8-15 estabelecimentos REAIS do segmento "${segment}" em ${location} que possam comprar ${products}.
 
-PRIORIDADE MÁXIMA: 
-- 80-90% dos resultados DEVEM ser da cidade solicitada
-- Apenas 10-20% podem ser de cidades próximas (raio de até 15km)
+ACEITO: Redes regionais de SC (Angeloni, Giassi, Koch), estabelecimentos locais conhecidos de médio/grande porte.
 
-CIDADES PRÓXIMAS VÁLIDAS:
-- Se solicitado Guaramirim/SC → pode incluir Schroeder, Massaranduba (muito próximas)
-- NUNCA inclua Blumenau ou Joinville para Guaramirim (são longe demais - 30-40km)
+Para cada lead forneça:
+- name: Nome do estabelecimento
+- address: Endereço completo com cidade real
+- phone: Telefone válido
+- instagram: Instagram (use @ + nome se não souber o oficial)
+- responsible: "Gerente de Compras" ou "Proprietário"  
+- category: "${segment}"
+- revenue: Faturamento mensal estimado (ex: "R$ 200-500 mil/mês")
+- openedDate: Tempo no mercado (ex: "15 anos" ou "Inaugurou há 2 meses")
+- matchScore: Número 75-95
+- reasons: Array com 3 motivos de por que é bom lead para ${products}
 
-SEMPRE indique a cidade REAL no endereço:
-- ✅ CORRETO: "Rua X, 100 - Centro, Schroeder - SC" (se for de Schroeder)
-- ❌ ERRADO: "Rua X, 100 - Centro, Guaramirim - SC" (quando na verdade é de Schroeder)
+IMPORTANTE: Se não encontrar 15 estabelecimentos verificados, retorne quantos conseguir com certeza (mínimo 8).`;
 
-✅ VALIDAÇÃO OBRIGATÓRIA (checklist mental antes de incluir):
-□ É uma REDE GRANDE que todo brasileiro conhece? (Angeloni, Giassi, Koch, Posto Ipiranga, Drogasil, etc)
-□ Ou é um estabelecimento local MUITO GRANDE E FAMOSO na região?
-□ Tenho 100% de certeza que existe nessa cidade específica?
-□ A cidade está dentro do raio de 15km da cidade solicitada?
-□ O telefone é real e válido?
-□ O endereço está completo e correto (cidade real)?
-□ Este estabelecimento JÁ NÃO está na lista? (ANTI-DUPLICATA)
-
-📋 FORMATO OBRIGATÓRIO:
-- Nome: "Rede Oficial - Unidade [Bairro]" (ex: "Supermercados Giassi - Unidade Centro")
-- Endereço: "Rua/Av completa, 123 - Bairro, CIDADE CORRETA - UF, CEP-correto"
-- Telefone: "(DDD) 3XXX-XXXX" ou "(DDD) 9XXXX-XXXX" (real)
-- Instagram: "@handle_oficial_rede"
-- Responsible: "Gerente de Compras" ou "Gerente Comercial"
-
-🎯 FOCO: Grandes redes regionais de SC (Angeloni, Giassi, Koch, Bistek, etc) e estabelecimentos médio/grande porte`;
-
-    const userPrompt = `Encontre EXATAMENTE 15 estabelecimentos REAIS E VERIFICADOS do segmento "${segment}" em ${location} que são clientes ideais para ${products}.
-
-FOCO ABSOLUTO: REDES CONHECIDAS que você TEM 100% DE CERTEZA que:
-- Existem na região (ex: Carrefour, Extra, Pão de Açúcar, Drogasil, Raia, Panvel)
-- Possuem telefone de contato real e válido
-- São estabelecimentos de médio/grande porte
-
-FORMATO JSON (retorne EXATAMENTE 15 estabelecimentos):
-[
-  {
-    "name": "Nome da Rede - Unidade Bairro Específico",
-    "address": "Rua/Avenida Completa, 1234 - Bairro, Cidade - UF, 12345-678",
-    "phone": "(47) 3222-3333",
-    "instagram": "@instagram_oficial_da_rede",
-    "responsible": "Gerente Comercial",
-    "category": "${segment}",
-    "revenue": "Estimativa realista: R$ 500.000 - R$ 2.000.000/mês",
-    "openedDate": "Tempo no mercado (ex: Rede com 15 anos, Unidade há 3 anos)",
-    "matchScore": número entre 80-95,
-    "reasons": [
-      "Alto volume de vendas no segmento ${products} - potencial para pedidos recorrentes grandes",
-      "Rede estabelecida com processos de compra estruturados e pagamento confiável",
-      "Localização estratégica com grande fluxo de clientes-alvo para ${products}"
-    ]
-  }
-]
-
-CHECKLIST FINAL (verifique cada item):
-□ Todos os 15 são redes/marcas REAIS que existem em ${location}
-□ TODOS têm telefone no formato brasileiro correto
-□ TODOS os endereços são completos (rua, número, bairro, cidade, UF, CEP)
-□ TODOS os Instagrams são de marcas/redes oficiais reais
-□ NENHUM nome genérico foi usado (sem "Bar do João", "Mercado Central", etc)
-
-Se algum estabelecimento não passar neste checklist, SUBSTITUA por outro verificado.`;
-
+    // Use tool calling to force structured JSON output
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -110,7 +69,44 @@ Se algum estabelecimento não passar neste checklist, SUBSTITUA por outro verifi
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        temperature: 0.7,
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "return_leads",
+              description: "Retorna lista de leads encontrados",
+              parameters: {
+                type: "object",
+                properties: {
+                  leads: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        name: { type: "string" },
+                        address: { type: "string" },
+                        phone: { type: "string" },
+                        instagram: { type: "string" },
+                        responsible: { type: "string" },
+                        category: { type: "string" },
+                        revenue: { type: "string" },
+                        openedDate: { type: "string" },
+                        matchScore: { type: "number" },
+                        reasons: {
+                          type: "array",
+                          items: { type: "string" }
+                        }
+                      },
+                      required: ["name", "address", "phone", "category", "matchScore", "reasons"]
+                    }
+                  }
+                },
+                required: ["leads"]
+              }
+            }
+          }
+        ],
+        tool_choice: { type: "function", function: { name: "return_leads" } }
       }),
     });
 
@@ -136,25 +132,29 @@ Se algum estabelecimento não passar neste checklist, SUBSTITUA por outro verifi
     }
 
     const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
     
-    if (!content) {
-      throw new Error("No content in AI response");
+    // Extract leads from tool call response
+    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+    
+    if (!toolCall || toolCall.function?.name !== "return_leads") {
+      console.error("No tool call in response:", JSON.stringify(data));
+      throw new Error("IA não retornou leads no formato esperado");
     }
 
-    console.log("AI Response:", content);
-
-    // Parse the JSON from the response
     let leads;
     try {
-      // Try to extract JSON from markdown code blocks if present
-      const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/```\s*([\s\S]*?)\s*```/);
-      const jsonStr = jsonMatch ? jsonMatch[1] : content;
-      leads = JSON.parse(jsonStr);
+      const functionArgs = JSON.parse(toolCall.function.arguments);
+      leads = functionArgs.leads;
+      
+      if (!Array.isArray(leads) || leads.length === 0) {
+        throw new Error("Nenhum lead encontrado para os critérios especificados");
+      }
+      
+      console.log(`Successfully parsed ${leads.length} leads`);
     } catch (parseError) {
-      console.error("Error parsing AI response:", parseError);
-      console.error("Raw content:", content);
-      throw new Error("Failed to parse AI response as JSON");
+      console.error("Error parsing tool call arguments:", parseError);
+      console.error("Tool call data:", toolCall);
+      throw new Error("Erro ao processar resposta da IA");
     }
 
     // Add unique IDs to leads
