@@ -1,41 +1,42 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   MapPin, Phone, Instagram, User, TrendingUp, Calendar, 
-  ArrowLeft, Heart, MessageCircle, Mail, ExternalLink 
+  ArrowLeft, Heart, MessageCircle 
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import { useEffect } from "react";
 
 const LeadDetail = () => {
   const { id } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Get lead data from navigation state
+  const leadData = location.state?.lead;
+  
+  // Redirect back if no lead data
+  useEffect(() => {
+    if (!leadData) {
+      navigate('/resultados');
+    }
+  }, [leadData, navigate]);
+  
+  if (!leadData) {
+    return null;
+  }
 
-  // Mock data - in real app, fetch by id
   const lead = {
-    id: "1",
-    name: "Pizzaria Napoli",
-    address: "Rua das Flores, 123 - Centro",
-    phone: "(47) 99998-8888",
-    instagram: "@pizzarianapoli",
-    responsible: "João Silva",
-    matchScore: 92,
-    category: "Restaurante",
-    revenue: "R$ 30-50 mil/mês",
-    openedDate: "Há 3 meses",
-    reasons: [
-      "Abriu há 3 meses (cliente novo no mercado)",
-      "Faturamento estimado compatível com seu produto",
-      "Ainda não tem fornecedor estabelecido",
-      "Alto movimento nas redes sociais",
-    ],
-    description: "Pizzaria moderna com foco em pizzas artesanais e ingredientes premium. Atende principalmente o público jovem da região central.",
-    hours: "Seg-Dom: 18h - 23h",
-    employees: "8-12 funcionários",
+    ...leadData,
+    description: `${leadData.category} localizado em ${leadData.address.split('-')[1] || 'região central'}. Estabelecimento com potencial para parceria comercial.`,
+    hours: "Horário comercial",
+    employees: "Equipe comercial",
     socialMedia: {
-      followers: "2.3k",
-      engagement: "Alto",
-      lastPost: "Há 2 dias",
+      followers: leadData.instagram ? "Presença ativa" : "N/A",
+      engagement: "Verificar redes",
+      lastPost: "Recente",
     },
   };
 

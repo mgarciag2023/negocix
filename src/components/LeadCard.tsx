@@ -117,7 +117,17 @@ const LeadCard = ({
       
       <div className="flex flex-col sm:flex-row gap-2">
         <Button asChild className="flex-1 text-sm md:text-base h-9 md:h-10">
-          <Link to={`/lead/${id}`}>Ver Detalhes</Link>
+          <Link 
+            to={`/lead/${id}`}
+            state={{ 
+              lead: { 
+                id, name, address, phone, instagram, responsible, 
+                matchScore, reasons, revenue, openedDate, category 
+              } 
+            }}
+          >
+            Ver Detalhes
+          </Link>
         </Button>
         <Button variant="outline" asChild className="flex-1 text-sm md:text-base h-9 md:h-10">
           <a href={`https://wa.me/${phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
