@@ -19,30 +19,38 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `Você é um especialista ULTRA-RIGOROSO em prospecção B2B no Brasil com ZERO TOLERÂNCIA para erros de localização.
+    const systemPrompt = `Você é um especialista ULTRA-RIGOROSO em prospecção B2B no Brasil.
 
-🚨 REGRA #1 - LOCALIZAÇÃO (INVIOLÁVEL):
-═══════════════════════════════════════════════════════════
-TODOS os estabelecimentos DEVEM estar em: "${location}"
-- O endereço DEVE dizer: "[rua], [número] - [bairro], ${location} - [UF]"
-- A palavra "${location}" PRECISA aparecer no endereço
-- Exemplos de ERRO (se buscar Blumenau):
-  ❌ "BR-470, Km 56 - Rio do Sul, Gaspar - SC" (Gaspar ≠ Blumenau)
-  ❌ "Rua Principal, 100 - Centro, Indaial - SC" (Indaial ≠ Blumenau)
-  ❌ "Av. Beira Rio - Pomerode - SC" (Pomerode ≠ Blumenau)
-- Exemplo CORRETO (se buscar Blumenau):
-  ✅ "Rua XV de Novembro, 841 - Centro, Blumenau - SC"
-- Cidades vizinhas, região metropolitana = REJEIÇÃO AUTOMÁTICA
-- Se encontrar apenas 3 verificáveis em "${location}", retorne 3
+🎯 MISSÃO CRÍTICA: Retornar APENAS estabelecimentos que você PODE VERIFICAR que existem em ${location}
 
-🔍 PROCESSO DE VERIFICAÇÃO OBRIGATÓRIO:
+🚨 REGRA #1 - APENAS ESTABELECIMENTOS VERIFICÁVEIS:
 ═══════════════════════════════════════════════════════════
-Antes de incluir qualquer lead, você DEVE:
-1. Confirmar que é um estabelecimento REAL (pesquise mentalmente/online)
-2. Verificar que o endereço contém "${location}" como cidade
-3. Validar que o telefone tem DDD coerente com a região
-4. Confirmar que o tipo de negócio combina com "${segment}"
-5. Garantir que faz sentido comprar "${products}" nesse estabelecimento
+VOCÊ DEVE ser capaz de CONFIRMAR que o estabelecimento existe em ${location}:
+- Redes/franquias nacionais que você SABE que têm unidade em ${location}
+- Estabelecimentos famosos/conhecidos de ${location} que você tem confiança que existem
+- Lojas de rua principais ou centros comerciais conhecidos de ${location}
+- SE você não tem CERTEZA ABSOLUTA que existe em ${location}, NÃO INCLUA
+
+🚨 REGRA #2 - ENDEREÇOS REALISTAS:
+═══════════════════════════════════════════════════════════
+- Use ruas PRINCIPAIS e CONHECIDAS de ${location}
+- Formato OBRIGATÓRIO: "[Rua/Av nome], [número] - [bairro], ${location} - [UF]"
+- O bairro DEVE ser real e conhecido de ${location}
+- NUNCA invente endereços genéricos como "Rua Principal, 100"
+- Exemplos de endereços RUINS para Blumenau:
+  ❌ "Rua Principal, 100 - Centro, Blumenau - SC" (muito genérico)
+  ❌ "Av. do Comércio, 500 - Centro, Blumenau - SC" (inventado)
+- Exemplos de endereços BONS para Blumenau:
+  ✅ "Rua XV de Novembro, 1500 - Centro, Blumenau - SC" (rua real e famosa)
+  ✅ "Rua 7 de Setembro, 2000 - Centro, Blumenau - SC" (rua real)
+
+🔍 ESTRATÉGIA DE VERIFICAÇÃO:
+═══════════════════════════════════════════════════════════
+1. PRIORIZE redes conhecidas (ex: se buscar materiais de construção, pense em Telhanorte, Leroy Merlin, etc que podem ter em ${location})
+2. PRIORIZE estabelecimentos de médio/grande porte que são mais prováveis de você conhecer
+3. Use seu conhecimento sobre bairros e ruas REAIS de ${location}
+4. Valide DDD do telefone (deve ser coerente com ${location})
+5. Se não conseguir 10 verificáveis, retorne MENOS (ex: 5-7 de alta qualidade)
 
 📊 PADRÕES DE QUALIDADE DOS DADOS:
 ═══════════════════════════════════════════════════════════
@@ -73,63 +81,65 @@ Cada motivo deve explicar POR QUE esse estabelecimento específico compraria "${
 Um único estabelecimento de cidade errada = FALHA COMPLETA.`;
 
 
-    const userPrompt = `🎯 MISSÃO: Encontre estabelecimentos VERIFICÁVEIS que existem COMPROVADAMENTE em ${location}.
+    const userPrompt = `🎯 TAREFA: Encontre 5-12 estabelecimentos VERIFICÁVEIS em ${location}
 
-📍 LOCALIZAÇÃO CRÍTICA - LEIA ISSO 3 VEZES:
+🚨 ATENÇÃO MÁXIMA - LEIA 3 VEZES:
 ═══════════════════════════════════════════════════════════
-- CIDADE OBRIGATÓRIA: ${location}
-- TODOS os estabelecimentos devem estar em ${location}
-- O endereço DEVE incluir "${location}" como cidade
-- Se você não tem 100% de certeza que existe em ${location}, NÃO INCLUA
-- Cidades vizinhas = REJEITAR
-- "Região de ${location}" = REJEITAR
-- "Próximo a ${location}" = REJEITAR
+LOCALIZAÇÃO: ${location} - APENAS ${location}
+- Todos devem estar FISICAMENTE em ${location}
+- Endereço OBRIGATÓRIO: "[Rua/Av], [nº] - [bairro], ${location} - [UF]"
+- Use APENAS ruas e bairros REAIS de ${location}
+- NUNCA: cidades vizinhas, região, próximo a ${location}
 
-✅ O QUE VOCÊ DEVE PROCURAR:
+✅ CRITÉRIOS DE SELEÇÃO:
 ═══════════════════════════════════════════════════════════
-Segmento alvo: ${segment}
-Produtos a serem vendidos: ${products}
-${filters.category !== 'all' ? `Categoria específica: ${filters.category}` : ''}
-${filters.companySize !== 'all' ? `Porte da empresa: ${filters.companySize}` : ''}
+Segmento: ${segment}
+Produtos: ${products}
+${filters.category !== 'all' ? `Categoria: ${filters.category}` : ''}
+${filters.companySize !== 'all' ? `Porte: ${filters.companySize}` : ''}
 
-Priorize:
-1. Redes conhecidas que TÊM unidade em ${location}
-2. Estabelecimentos locais de médio/grande porte em ${location}
-3. Negócios com endereços REAIS verificáveis em ${location}
-4. Empresas que FAZEM SENTIDO comprar ${products}
+PRIORIZE (nesta ordem):
+1. 🏢 Redes/franquias conhecidas COM unidade em ${location}
+2. 🏪 Estabelecimentos famosos locais de ${location}
+3. 🏬 Lojas em ruas/centros comerciais principais de ${location}
+4. ⭐ Negócios de médio/grande porte que você pode VERIFICAR
 
 ❌ REJEITE IMEDIATAMENTE:
 ═══════════════════════════════════════════════════════════
-- Estabelecimentos fora de ${location}
-- Nomes genéricos ou inventados
-- Endereços que você não consegue verificar
-- Telefones inválidos
-- Negócios que não precisam de ${products}
+- ❌ Estabelecimentos fora de ${location}
+- ❌ Endereços genéricos/inventados ("Rua Principal", "Av. Central")
+- ❌ Nomes muito vagos ("Loja do João", "Comércio X")
+- ❌ Qualquer dúvida sobre existência real em ${location}
 
-📋 DADOS OBRIGATÓRIOS (cada lead):
+📋 FORMATO DE RESPOSTA (cada lead):
 ═══════════════════════════════════════════════════════════
-- name: Nome REAL do estabelecimento em ${location}
-- address: "Rua/Av [nome], [nº], [bairro], ${location} - [UF]"
-- phone: "(XX) XXXX-XXXX" ou "(XX) 9XXXX-XXXX" (DDD correto)
-- instagram: "@nome_real" (verificável)
-- responsible: "Gerente de Compras", "Proprietário", etc.
+- name: Nome VERIFICÁVEL do estabelecimento
+- address: "[Rua REAL], [nº] - [Bairro REAL], ${location} - [UF]"
+- phone: "(XX) XXXX-XXXX" (DDD correto da região)
+- instagram: @nome_verificavel
+- responsible: Cargo realista (Gerente, Proprietário, etc)
 - category: "${segment}"
-- revenue: Faturamento mensal realista (R$ 50k-5M/mês)
-- openedDate: Tempo de existência (ex: "5 anos", "novo")
-- matchScore: 70-95 (potencial REAL)
-- reasons: [3 motivos ESPECÍFICOS e CONVINCENTES]
+- revenue: R$ 50k-5M/mês (realista para Brasil)
+- openedDate: Tempo realista (ex: "3 anos", "inaugurado há 6 meses")
+- matchScore: 70-95 (potencial REAL de comprar ${products})
+- reasons: [3 motivos ESPECÍFICOS por que compraria ${products}]
 
-⚠️ INSTRUÇÕES FINAIS:
+⚠️ QUALIDADE > QUANTIDADE:
 ═══════════════════════════════════════════════════════════
 - Retorne 5-12 leads VERIFICÁVEIS
-- Qualidade > Quantidade
-- Se só encontrar 4 leads CERTOS em ${location}, retorne 4
-- NUNCA invente estabelecimentos para completar o número
-- Um endereço errado invalida TODO o resultado
+- Se só encontrar 6 com CERTEZA em ${location}, retorne 6
+- NUNCA invente para completar número
+- Um endereço errado = FALHA TOTAL
 
-🎯 CONFIRME MENTALMENTE antes de retornar:
-"Todos esses estabelecimentos existem em ${location}?" 
-Se a resposta não for "SIM com 100% de certeza", revise sua lista.`;
+🔍 CHECKLIST FINAL (antes de retornar):
+═══════════════════════════════════════════════════════════
+□ Todos os endereços têm "${location}" como cidade?
+□ Todas as ruas/bairros são REAIS de ${location}?
+□ Você pode CONFIRMAR que esses estabelecimentos existem?
+□ Os DDDs dos telefones são corretos para a região?
+□ Os motivos são ESPECÍFICOS (não genéricos)?
+
+Se qualquer resposta for "não", REVISE sua lista antes de enviar.`;
 
     // Use tool calling to force structured JSON output
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -232,16 +242,49 @@ Se a resposta não for "SIM com 100% de certeza", revise sua lista.`;
       throw new Error("Erro ao processar resposta da IA");
     }
 
-    // CRITICAL: Filter out leads with wrong city
+    // CRITICAL: Ultra-strict validation of leads
     const validLeads = leads.filter((lead: any) => {
       const address = lead.address || '';
-      const cityMatch = address.toLowerCase().includes(location.toLowerCase());
+      const name = lead.name || '';
+      const addressLower = address.toLowerCase();
+      const locationLower = location.toLowerCase();
       
-      if (!cityMatch) {
-        console.warn(`🚨 REJECTED LEAD - Wrong city:`, lead.name, address);
+      // 1. Must contain exact city name
+      if (!addressLower.includes(locationLower)) {
+        console.warn(`🚨 REJECTED - City not in address:`, name, address);
+        return false;
       }
       
-      return cityMatch;
+      // 2. Reject generic addresses
+      const genericTerms = ['principal', 'central', 'comercial', 'do comércio', 'main'];
+      const hasGeneric = genericTerms.some(term => addressLower.includes(term));
+      if (hasGeneric) {
+        console.warn(`🚨 REJECTED - Generic address:`, name, address);
+        return false;
+      }
+      
+      // 3. Address must have minimum components (street, number, neighborhood, city, state)
+      const parts = address.split(',');
+      if (parts.length < 2) {
+        console.warn(`🚨 REJECTED - Invalid address format:`, name, address);
+        return false;
+      }
+      
+      // 4. Must have a hyphen separating neighborhood from city
+      if (!address.includes('-')) {
+        console.warn(`🚨 REJECTED - Missing neighborhood separator:`, name, address);
+        return false;
+      }
+      
+      // 5. Reject very vague names
+      const vagueNames = ['loja', 'comércio', 'estabelecimento'];
+      const nameWords = name.toLowerCase().split(' ');
+      if (nameWords.length === 2 && vagueNames.includes(nameWords[0])) {
+        console.warn(`🚨 REJECTED - Vague name:`, name);
+        return false;
+      }
+      
+      return true;
     });
 
     if (validLeads.length === 0) {
