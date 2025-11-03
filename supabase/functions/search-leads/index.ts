@@ -23,12 +23,17 @@ serve(async (req) => {
 
 🚨 REGRA #1 - LOCALIZAÇÃO (INVIOLÁVEL):
 ═══════════════════════════════════════════════════════════
-TODOS os estabelecimentos DEVEM estar fisicamente localizados em: "${location}"
-- O endereço DEVE conter "${location}" como nome da CIDADE
-- Se você não pode VERIFICAR com 100% de certeza que o estabelecimento existe em "${location}", NÃO INCLUA
-- Cidades vizinhas, região metropolitana, "perto de ${location}" = REJEIÇÃO AUTOMÁTICA
-- Se encontrar apenas 3 estabelecimentos verificáveis em "${location}", retorne apenas 3
-- NUNCA inclua estabelecimentos de outras cidades para "completar o número"
+TODOS os estabelecimentos DEVEM estar em: "${location}"
+- O endereço DEVE dizer: "[rua], [número] - [bairro], ${location} - [UF]"
+- A palavra "${location}" PRECISA aparecer no endereço
+- Exemplos de ERRO (se buscar Blumenau):
+  ❌ "BR-470, Km 56 - Rio do Sul, Gaspar - SC" (Gaspar ≠ Blumenau)
+  ❌ "Rua Principal, 100 - Centro, Indaial - SC" (Indaial ≠ Blumenau)
+  ❌ "Av. Beira Rio - Pomerode - SC" (Pomerode ≠ Blumenau)
+- Exemplo CORRETO (se buscar Blumenau):
+  ✅ "Rua XV de Novembro, 841 - Centro, Blumenau - SC"
+- Cidades vizinhas, região metropolitana = REJEIÇÃO AUTOMÁTICA
+- Se encontrar apenas 3 verificáveis em "${location}", retorne 3
 
 🔍 PROCESSO DE VERIFICAÇÃO OBRIGATÓRIO:
 ═══════════════════════════════════════════════════════════
@@ -227,13 +232,32 @@ Se a resposta não for "SIM com 100% de certeza", revise sua lista.`;
       throw new Error("Erro ao processar resposta da IA");
     }
 
-    // Add unique IDs to leads
-    const leadsWithIds = leads.map((lead: any, index: number) => ({
+    // CRITICAL: Filter out leads with wrong city
+    const validLeads = leads.filter((lead: any) => {
+      const address = lead.address || '';
+      const cityMatch = address.toLowerCase().includes(location.toLowerCase());
+      
+      if (!cityMatch) {
+        console.warn(`🚨 REJECTED LEAD - Wrong city:`, lead.name, address);
+      }
+      
+      return cityMatch;
+    });
+
+    if (validLeads.length === 0) {
+      console.error("❌ ALL LEADS REJECTED - None matched the city:", location);
+      throw new Error(`Nenhum estabelecimento válido encontrado em ${location}`);
+    }
+
+    console.log(`✅ Validated: ${validLeads.length}/${leads.length} leads in ${location}`);
+
+    // Add unique IDs to valid leads
+    const leadsWithIds = validLeads.map((lead: any, index: number) => ({
       ...lead,
       id: `${Date.now()}-${index}`,
     }));
 
-    console.log("Processed leads:", leadsWithIds);
+    console.log("Final processed leads:", leadsWithIds);
 
     return new Response(JSON.stringify({ leads: leadsWithIds }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
