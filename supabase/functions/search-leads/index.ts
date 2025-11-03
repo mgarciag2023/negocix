@@ -19,86 +19,112 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `Você é um especialista em prospecção B2B no Brasil com conhecimento VERIFICÁVEL do mercado local.
-Sua missão é identificar SOMENTE estabelecimentos que COMPROVADAMENTE existem na localização exata solicitada.
+    const systemPrompt = `Você é um especialista ULTRA-RIGOROSO em prospecção B2B no Brasil com ZERO TOLERÂNCIA para erros de localização.
 
-🎯 REGRAS ABSOLUTAS - QUALQUER VIOLAÇÃO INVALIDA O RESULTADO:
+🚨 REGRA #1 - LOCALIZAÇÃO (INVIOLÁVEL):
+═══════════════════════════════════════════════════════════
+TODOS os estabelecimentos DEVEM estar fisicamente localizados em: "${location}"
+- O endereço DEVE conter "${location}" como nome da CIDADE
+- Se você não pode VERIFICAR com 100% de certeza que o estabelecimento existe em "${location}", NÃO INCLUA
+- Cidades vizinhas, região metropolitana, "perto de ${location}" = REJEIÇÃO AUTOMÁTICA
+- Se encontrar apenas 3 estabelecimentos verificáveis em "${location}", retorne apenas 3
+- NUNCA inclua estabelecimentos de outras cidades para "completar o número"
 
-1. LOCALIZAÇÃO OBRIGATÓRIA E VERIFICÁVEL:
-   - 100% dos estabelecimentos DEVEM estar na cidade solicitada
-   - NUNCA inclua estabelecimentos de outras cidades, mesmo que próximas
-   - VERIFIQUE mentalmente se você REALMENTE conhece esse estabelecimento nessa cidade específica
-   - Se tiver QUALQUER dúvida sobre a localização, NÃO INCLUA
-   - O endereço deve ser REAL e específico (rua, número, bairro verificáveis)
+🔍 PROCESSO DE VERIFICAÇÃO OBRIGATÓRIO:
+═══════════════════════════════════════════════════════════
+Antes de incluir qualquer lead, você DEVE:
+1. Confirmar que é um estabelecimento REAL (pesquise mentalmente/online)
+2. Verificar que o endereço contém "${location}" como cidade
+3. Validar que o telefone tem DDD coerente com a região
+4. Confirmar que o tipo de negócio combina com "${segment}"
+5. Garantir que faz sentido comprar "${products}" nesse estabelecimento
 
-2. ESTABELECIMENTOS REAIS E VERIFICÁVEIS:
-   - Priorize redes regionais/nacionais CONHECIDAS (ex: Angeloni, Giassi, Koch, Condor, etc.)
-   - Inclua APENAS estabelecimentos locais que você TEM CERTEZA que existem
-   - Se não conseguir verificar mentalmente a existência, NÃO INCLUA
-   - NUNCA invente nomes genéricos ("Mercado Central", "Loja da Praça", etc.)
+📊 PADRÕES DE QUALIDADE DOS DADOS:
+═══════════════════════════════════════════════════════════
+- Endereço: "Rua/Avenida [nome], [número], [bairro], ${location} - [UF]"
+- Telefone: (XX) XXXX-XXXX ou (XX) 9XXXX-XXXX (DDD correto)
+- Instagram: @nomedoestabelecimento (realista e verificável)
+- Faturamento: Valores mensais realistas para Brasil (R$ 50 mil - 5 milhões/mês)
+- Tempo: Anos/meses realistas (ex: "3 anos", "15 anos", "inaugurado recentemente")
+- Match Score: 70-95 (baseado no potencial REAL de comprar "${products}")
 
-3. ZERO DUPLICATAS - Cada estabelecimento aparece apenas UMA VEZ
+💡 MOTIVOS DEVEM SER ESPECÍFICOS E CONVINCENTES:
+═══════════════════════════════════════════════════════════
+Cada motivo deve explicar POR QUE esse estabelecimento específico compraria "${products}":
+✓ Modelo de negócio atual NECESSITA desses produtos
+✓ Base de clientes DEMANDA essas soluções
+✓ Oportunidades de crescimento COM esses produtos
+✓ Vantagens competitivas AO USAR esses produtos
 
-4. TELEFONE OBRIGATÓRIO - Formato brasileiro válido (XX) XXXX-XXXX ou (XX) 9XXXX-XXXX
+❌ GATILHOS DE REJEIÇÃO AUTOMÁTICA:
+═══════════════════════════════════════════════════════════
+- Cidade no endereço ≠ "${location}"
+- Tipo de negócio não combina com o segmento
+- Dados suspeitos ou não-verificáveis
+- Motivos genéricos que servem para qualquer negócio
+- Estabelecimentos duplicados ou muito similares
 
-5. RELEVÂNCIA DO SEGMENTO:
-   - O estabelecimento DEVE fazer sentido para os produtos oferecidos
-   - Avalie o potencial real de compra e necessidade
-   - Match Score realista baseado em volume potencial e adequação
+🎯 SUA MÉTRICA DE SUCESSO: 100% de precisão na localização.
+Um único estabelecimento de cidade errada = FALHA COMPLETA.`;
 
-📋 FORMATO DE CADA LEAD:
-- Nome: Nome real e completo (VERIFICÁVEL)
-- Endereço: Rua, número, bairro, CIDADE EXATA - UF (deve ser a cidade solicitada)
-- Telefone: Formato (XX) XXXX-XXXX ou (XX) 9XXXX-XXXX
-- Instagram: Handle real (ou "@nome_estabelecimento" se desconhecido)
-- Responsible: Cargo realista ("Gerente de Compras", "Proprietário", etc.)
-- Faturamento: Estimativa baseada no porte (ex: "R$ 200-500 mil/mês")
-- Score de match: 75-95 (baseado no potencial REAL)
 
-⚠️ QUALIDADE > QUANTIDADE:
-Se não conseguir encontrar estabelecimentos VERIFICÁVEIS na cidade solicitada, retorne menos leads.
-É melhor retornar 5 leads CERTOS do que 15 leads duvidosos.`;
+    const userPrompt = `🎯 MISSÃO: Encontre estabelecimentos VERIFICÁVEIS que existem COMPROVADAMENTE em ${location}.
 
-    const userPrompt = `ATENÇÃO: Encontre SOMENTE estabelecimentos que EXISTEM COMPROVADAMENTE na cidade de ${location}.
-
-🎯 LOCALIZAÇÃO CRÍTICA:
-- TODOS os estabelecimentos DEVEM estar em ${location}
-- NUNCA inclua estabelecimentos de outras cidades
-- O endereço DEVE ser verificável e real em ${location}
-- Se não tiver CERTEZA ABSOLUTA que o estabelecimento existe em ${location}, NÃO INCLUA
-
-✅ CRITÉRIOS DE ACEITAÇÃO (segmento "${segment}" para ${products}):
-- Redes regionais/nacionais CONHECIDAS que TÊM unidades em ${location}
-- Estabelecimentos locais de médio/grande porte que você CONHECE em ${location}
-- Estabelecimentos com endereços REAIS e VERIFICÁVEIS em ${location}
-- Estabelecimentos que FAZEM SENTIDO para comprar ${products}
-
-❌ REJEITAR IMEDIATAMENTE:
-- Estabelecimentos de OUTRAS cidades (mesmo próximas)
-- Nomes genéricos ou inventados
-- Endereços que você não tem certeza que existem
-- Estabelecimentos sem telefone válido
-- Locais que não fazem sentido para o produto
-
-⚠️ IMPORTANTE: Retorne entre 5-12 estabelecimentos VERIFICÁVEIS.
-Se não conseguir encontrar estabelecimentos CERTOS em ${location}, retorne MENOS leads ao invés de inventar.
-
-📋 DADOS OBRIGATÓRIOS para cada lead:
-- name: Nome REAL e completo do estabelecimento que EXISTE em ${location}
-- address: Endereço COMPLETO e REAL: Rua, número, bairro, ${location} - UF
-- phone: Telefone brasileiro válido (XX) XXXX-XXXX ou (XX) 9XXXX-XXXX
-- instagram: Handle real do Instagram (ou "@nome_estabelecimento" se desconhecido)
-- responsible: Cargo do responsável por compras ("Gerente de Compras", "Proprietário", etc.)
-- category: "${segment}"
-- revenue: Faturamento mensal estimado REALISTA (ex: "R$ 150-400 mil/mês")
-- openedDate: Tempo de mercado (ex: "10 anos", "Inaugurou há 6 meses")
-- matchScore: 75-95 (baseado no potencial REAL de compra e adequação ao produto)
-- reasons: Array com 3 motivos ESPECÍFICOS, CONVINCENTES e CONCRETOS de por que esse estabelecimento em ${location} é um excelente lead para ${products}
-
-🎯 LEMBRE-SE: 
+📍 LOCALIZAÇÃO CRÍTICA - LEIA ISSO 3 VEZES:
+═══════════════════════════════════════════════════════════
+- CIDADE OBRIGATÓRIA: ${location}
 - TODOS os estabelecimentos devem estar em ${location}
-- Qualidade > Quantidade: prefira MENOS leads VERIFICÁVEIS do que MAIS leads duvidosos
-- Seja ESPECÍFICO nos motivos - evite frases genéricas`;
+- O endereço DEVE incluir "${location}" como cidade
+- Se você não tem 100% de certeza que existe em ${location}, NÃO INCLUA
+- Cidades vizinhas = REJEITAR
+- "Região de ${location}" = REJEITAR
+- "Próximo a ${location}" = REJEITAR
+
+✅ O QUE VOCÊ DEVE PROCURAR:
+═══════════════════════════════════════════════════════════
+Segmento alvo: ${segment}
+Produtos a serem vendidos: ${products}
+${filters.category !== 'all' ? `Categoria específica: ${filters.category}` : ''}
+${filters.companySize !== 'all' ? `Porte da empresa: ${filters.companySize}` : ''}
+
+Priorize:
+1. Redes conhecidas que TÊM unidade em ${location}
+2. Estabelecimentos locais de médio/grande porte em ${location}
+3. Negócios com endereços REAIS verificáveis em ${location}
+4. Empresas que FAZEM SENTIDO comprar ${products}
+
+❌ REJEITE IMEDIATAMENTE:
+═══════════════════════════════════════════════════════════
+- Estabelecimentos fora de ${location}
+- Nomes genéricos ou inventados
+- Endereços que você não consegue verificar
+- Telefones inválidos
+- Negócios que não precisam de ${products}
+
+📋 DADOS OBRIGATÓRIOS (cada lead):
+═══════════════════════════════════════════════════════════
+- name: Nome REAL do estabelecimento em ${location}
+- address: "Rua/Av [nome], [nº], [bairro], ${location} - [UF]"
+- phone: "(XX) XXXX-XXXX" ou "(XX) 9XXXX-XXXX" (DDD correto)
+- instagram: "@nome_real" (verificável)
+- responsible: "Gerente de Compras", "Proprietário", etc.
+- category: "${segment}"
+- revenue: Faturamento mensal realista (R$ 50k-5M/mês)
+- openedDate: Tempo de existência (ex: "5 anos", "novo")
+- matchScore: 70-95 (potencial REAL)
+- reasons: [3 motivos ESPECÍFICOS e CONVINCENTES]
+
+⚠️ INSTRUÇÕES FINAIS:
+═══════════════════════════════════════════════════════════
+- Retorne 5-12 leads VERIFICÁVEIS
+- Qualidade > Quantidade
+- Se só encontrar 4 leads CERTOS em ${location}, retorne 4
+- NUNCA invente estabelecimentos para completar o número
+- Um endereço errado invalida TODO o resultado
+
+🎯 CONFIRME MENTALMENTE antes de retornar:
+"Todos esses estabelecimentos existem em ${location}?" 
+Se a resposta não for "SIM com 100% de certeza", revise sua lista.`;
 
     // Use tool calling to force structured JSON output
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
