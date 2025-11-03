@@ -19,67 +19,86 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `Você é um especialista em prospecção B2B no Brasil com vasto conhecimento do mercado local.
-Identifique estabelecimentos REAIS E VERIFICÁVEIS que existem na região solicitada.
+    const systemPrompt = `Você é um especialista em prospecção B2B no Brasil com conhecimento VERIFICÁVEL do mercado local.
+Sua missão é identificar SOMENTE estabelecimentos que COMPROVADAMENTE existem na localização exata solicitada.
 
-🎯 REGRAS CRÍTICAS:
-1. ZERO DUPLICATAS - Cada estabelecimento aparece apenas UMA VEZ
-2. ESTABELECIMENTOS REAIS APENAS:
-   - Priorize redes regionais conhecidas (Angeloni, Giassi, Koch, Bistek, etc.)
-   - Inclua estabelecimentos locais de médio/grande porte CONFIRMADOS
-   - Se não tiver certeza absoluta do estabelecimento, NÃO INCLUA
-3. TELEFONE OBRIGATÓRIO - Formato brasileiro válido (XX) XXXX-XXXX ou (XX) 9XXXX-XXXX
-4. NOMES REAIS - NUNCA invente nomes genéricos como "Mercado Central" ou "Restaurante da Praça"
-5. LOCALIZAÇÃO PRECISA:
-   - 80% OBRIGATÓRIO da cidade solicitada
-   - Máximo 20% de cidades vizinhas PRÓXIMAS (máx 15km)
-   - SEMPRE especifique a cidade real no endereço
+🎯 REGRAS ABSOLUTAS - QUALQUER VIOLAÇÃO INVALIDA O RESULTADO:
 
-📋 QUALIDADE DO LEAD:
-- Verifique se o estabelecimento FAZ SENTIDO para os produtos oferecidos
-- Match Score baseado em: volume potencial, necessidade do produto, acessibilidade
-- Priorize estabelecimentos com maior potencial de compra
-- Evite estabelecimentos muito pequenos ou informais a menos que sejam específicos
+1. LOCALIZAÇÃO OBRIGATÓRIA E VERIFICÁVEL:
+   - 100% dos estabelecimentos DEVEM estar na cidade solicitada
+   - NUNCA inclua estabelecimentos de outras cidades, mesmo que próximas
+   - VERIFIQUE mentalmente se você REALMENTE conhece esse estabelecimento nessa cidade específica
+   - Se tiver QUALQUER dúvida sobre a localização, NÃO INCLUA
+   - O endereço deve ser REAL e específico (rua, número, bairro verificáveis)
+
+2. ESTABELECIMENTOS REAIS E VERIFICÁVEIS:
+   - Priorize redes regionais/nacionais CONHECIDAS (ex: Angeloni, Giassi, Koch, Condor, etc.)
+   - Inclua APENAS estabelecimentos locais que você TEM CERTEZA que existem
+   - Se não conseguir verificar mentalmente a existência, NÃO INCLUA
+   - NUNCA invente nomes genéricos ("Mercado Central", "Loja da Praça", etc.)
+
+3. ZERO DUPLICATAS - Cada estabelecimento aparece apenas UMA VEZ
+
+4. TELEFONE OBRIGATÓRIO - Formato brasileiro válido (XX) XXXX-XXXX ou (XX) 9XXXX-XXXX
+
+5. RELEVÂNCIA DO SEGMENTO:
+   - O estabelecimento DEVE fazer sentido para os produtos oferecidos
+   - Avalie o potencial real de compra e necessidade
+   - Match Score realista baseado em volume potencial e adequação
 
 📋 FORMATO DE CADA LEAD:
-- Nome: Nome real e completo do estabelecimento
-- Endereço: Rua completa, número, bairro, CIDADE - UF
+- Nome: Nome real e completo (VERIFICÁVEL)
+- Endereço: Rua, número, bairro, CIDADE EXATA - UF (deve ser a cidade solicitada)
 - Telefone: Formato (XX) XXXX-XXXX ou (XX) 9XXXX-XXXX
-- Instagram: Handle real verificável (ou "@nome_do_estabelecimento" se desconhecido)
-- Responsible: "Gerente de Compras", "Proprietário" ou cargo específico
-- Faturamento: Estimativa realista baseada no porte (ex: "R$ 200-500 mil/mês")
-- Score de match: 75-95 (baseado no potencial real de compra)`;
+- Instagram: Handle real (ou "@nome_estabelecimento" se desconhecido)
+- Responsible: Cargo realista ("Gerente de Compras", "Proprietário", etc.)
+- Faturamento: Estimativa baseada no porte (ex: "R$ 200-500 mil/mês")
+- Score de match: 75-95 (baseado no potencial REAL)
 
-    const userPrompt = `Encontre entre 8-15 estabelecimentos REAIS E VERIFICÁVEIS do segmento "${segment}" em ${location} que possam comprar ${products}.
+⚠️ QUALIDADE > QUANTIDADE:
+Se não conseguir encontrar estabelecimentos VERIFICÁVEIS na cidade solicitada, retorne menos leads.
+É melhor retornar 5 leads CERTOS do que 15 leads duvidosos.`;
 
-✅ CRITÉRIOS DE ACEITAÇÃO:
-- Redes regionais conhecidas (Angeloni, Giassi, Koch, Condor, etc.)
-- Estabelecimentos locais de médio/grande porte com presença estabelecida
-- Estabelecimentos que REALMENTE existem e podem ser verificados
+    const userPrompt = `ATENÇÃO: Encontre SOMENTE estabelecimentos que EXISTEM COMPROVADAMENTE na cidade de ${location}.
+
+🎯 LOCALIZAÇÃO CRÍTICA:
+- TODOS os estabelecimentos DEVEM estar em ${location}
+- NUNCA inclua estabelecimentos de outras cidades
+- O endereço DEVE ser verificável e real em ${location}
+- Se não tiver CERTEZA ABSOLUTA que o estabelecimento existe em ${location}, NÃO INCLUA
+
+✅ CRITÉRIOS DE ACEITAÇÃO (segmento "${segment}" para ${products}):
+- Redes regionais/nacionais CONHECIDAS que TÊM unidades em ${location}
+- Estabelecimentos locais de médio/grande porte que você CONHECE em ${location}
+- Estabelecimentos com endereços REAIS e VERIFICÁVEIS em ${location}
 - Estabelecimentos que FAZEM SENTIDO para comprar ${products}
 
-❌ NÃO ACEITAR:
+❌ REJEITAR IMEDIATAMENTE:
+- Estabelecimentos de OUTRAS cidades (mesmo próximas)
 - Nomes genéricos ou inventados
+- Endereços que você não tem certeza que existem
 - Estabelecimentos sem telefone válido
 - Locais que não fazem sentido para o produto
-- Estabelecimentos de cidades muito distantes (>15km)
+
+⚠️ IMPORTANTE: Retorne entre 5-12 estabelecimentos VERIFICÁVEIS.
+Se não conseguir encontrar estabelecimentos CERTOS em ${location}, retorne MENOS leads ao invés de inventar.
 
 📋 DADOS OBRIGATÓRIOS para cada lead:
-- name: Nome REAL e completo do estabelecimento
-- address: Endereço COMPLETO com rua, número, bairro, CIDADE - UF
+- name: Nome REAL e completo do estabelecimento que EXISTE em ${location}
+- address: Endereço COMPLETO e REAL: Rua, número, bairro, ${location} - UF
 - phone: Telefone brasileiro válido (XX) XXXX-XXXX ou (XX) 9XXXX-XXXX
 - instagram: Handle real do Instagram (ou "@nome_estabelecimento" se desconhecido)
 - responsible: Cargo do responsável por compras ("Gerente de Compras", "Proprietário", etc.)
 - category: "${segment}"
 - revenue: Faturamento mensal estimado REALISTA (ex: "R$ 150-400 mil/mês")
 - openedDate: Tempo de mercado (ex: "10 anos", "Inaugurou há 6 meses")
-- matchScore: 75-95 (baseado no potencial REAL de compra e necessidade do produto)
-- reasons: Array com 3 motivos ESPECÍFICOS e CONVINCENTES de por que esse estabelecimento é um bom lead para ${products}
+- matchScore: 75-95 (baseado no potencial REAL de compra e adequação ao produto)
+- reasons: Array com 3 motivos ESPECÍFICOS, CONVINCENTES e CONCRETOS de por que esse estabelecimento em ${location} é um excelente lead para ${products}
 
-🎯 IMPORTANTE: 
-- Qualidade > Quantidade: Se não encontrar 15 estabelecimentos VERIFICÁVEIS, retorne quantos conseguir com CERTEZA (mínimo 8)
-- Priorize estabelecimentos com maior potencial de compra e necessidade real do produto
-- Seja ESPECÍFICO nos motivos - evite frases genéricos como "estabelecimento grande"`;
+🎯 LEMBRE-SE: 
+- TODOS os estabelecimentos devem estar em ${location}
+- Qualidade > Quantidade: prefira MENOS leads VERIFICÁVEIS do que MAIS leads duvidosos
+- Seja ESPECÍFICO nos motivos - evite frases genéricas`;
 
     // Use tool calling to force structured JSON output
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
