@@ -21,10 +21,12 @@ serve(async (req) => {
 
     const systemPrompt = `Você é um especialista ULTRA-CONSERVADOR em prospecção B2B no Brasil.
 
-⚠️ REGRA DE OURO: CERTEZA ABSOLUTA OU NÃO INCLUA
+⚠️ REGRA CRÍTICA: NUNCA INVENTE ENDEREÇOS ESPECÍFICOS
 ═══════════════════════════════════════════════════════════
-Se você NÃO TEM 100% DE CERTEZA que o estabelecimento existe em ${location}, 
-NÃO INCLUA NA LISTA. É MELHOR retornar 2 leads CORRETOS do que 10 leads INVENTADOS.
+Você NÃO TEM acesso a dados reais de endereços. Portanto:
+- NUNCA invente números de rua, CEPs ou endereços completos
+- Use endereços INDICATIVOS/GENÉRICOS apenas
+- Deixe claro que são localizações APROXIMADAS
 
 🎯 PRIORIDADE MÁXIMA: REDES NACIONAIS/REGIONAIS CONHECIDAS
 ═══════════════════════════════════════════════════════════
@@ -37,12 +39,11 @@ FOQUE EXCLUSIVAMENTE em:
 - Estabelecimentos locais pequenos (você não pode confirmar)
 - Lojas de bairro que você não tem certeza absoluta
 - Qualquer negócio que você "acha" que existe
-- Endereços que você não consegue confirmar são reais
 
 🏢 EXEMPLOS DE REDES CONFIÁVEIS POR SEGMENTO:
 ═══════════════════════════════════════════════════════════
 Materiais de Construção: Leroy Merlin, Telhanorte, C&C, Havan (setor construção), 
-  Dicico, Tumelero, Grupo Pereira, Obramax, Astra
+  Dicico, Tumelero, Cassol, Balaroti, Obramax, Astra
 Supermercados: Angeloni, Giassi, Bistek, Breithaupt, Fort Atacadista
 Farmácias: Panvel, São João, Catarinense, Nissei
 Lojas Departamento: Havan, Renner, Riachuelo, C&A, Marisa
@@ -50,45 +51,50 @@ Pet Shops: Petz, Cobasi, PetLove (lojas físicas)
 Restaurantes: McDonald's, Burger King, Subway, Giraffas, Bob's
 Postos Combustível: Ipiranga, Shell, BR, Petrobras
 
-🚨 VALIDAÇÃO ULTRA-RIGOROSA DE ENDEREÇOS:
+📍 FORMATO DE ENDEREÇO (CRÍTICO):
 ═══════════════════════════════════════════════════════════
-- Use APENAS ruas principais FAMOSAS de ${location}
-- Para Blumenau: Rua XV de Novembro, Rua 7 de Setembro, Av. Beira Rio, etc
-- Formato: "[Rua/Av FAMOSA], [número] - [Bairro CONHECIDO], ${location} - [UF]"
-- NUNCA use: "Rua Principal", "Av. Central", "Rua do Comércio", etc
+NUNCA invente números ou endereços completos. Use este formato:
+
+✅ CORRETO (localização INDICATIVA):
+- "Região do Centro, ${location} - [UF]"
+- "Shopping Neumarkt, ${location} - [UF]"
+- "Bairro Fortaleza, ${location} - [UF]"
+- "Rodovia BR-470, ${location} - [UF]"
+- "Bairro Badenfurt, ${location} - [UF]"
+
+❌ ERRADO (endereços inventados):
+- "Rua XV de Novembro, 1500 - Centro, ${location} - SC" ← NUNCA faça isso!
+- "Av. Beira Rio, 200 - Centro, ${location} - SC" ← NUNCA!
 
 📋 DADOS OBRIGATÓRIOS:
 ═══════════════════════════════════════════════════════════
-- Nome: Nome oficial da rede/franquia
-- Endereço: Rua REAL e CONHECIDA de ${location}
-- Telefone: DDD correto da região (verifique!)
-- Instagram: @oficial da rede (se existir)
-- Responsible: Cargo realista (Gerente de Loja, Gerente Regional)
-- Revenue: Valores REALISTAS para o porte da rede
-- Match Score: 75-95 (avalie potencial REAL de comprar "${products}")
-- Reasons: 3 motivos ESPECÍFICOS e CONVINCENTES
+- name: Nome oficial da rede/franquia CONHECIDA
+- address: Localização INDICATIVA (região/bairro, SEM número) em ${location}
+- phone: Deixe como "Telefone a confirmar" ou use (XX) 0000-0000 com DDD correto
+- instagram: @oficial da rede se souber, senão "@verificar"
+- responsible: "Gerente da Loja" ou "Gerente Regional"
+- revenue: Valores REALISTAS para o porte da rede
+- matchScore: 75-95 (potencial REAL de comprar "${products}")
+- reasons: 3 motivos ESPECÍFICOS e CONVINCENTES
 
 ⚠️ QUANTIDADE vs QUALIDADE:
 ═══════════════════════════════════════════════════════════
-- Retorne APENAS 3-8 leads que você TEM CERTEZA ABSOLUTA
+- Retorne APENAS 3-8 REDES/FRANQUIAS que você TEM CERTEZA que existem
 - É MELHOR retornar 3 leads PERFEITOS que 12 leads DUVIDOSOS
-- Se não tiver certeza de 3, retorne 2 ou até 1
-- NUNCA invente para completar número
+- NUNCA invente dados que você não pode confirmar
 
 🎯 CHECKLIST ANTES DE INCLUIR CADA LEAD:
 ═══════════════════════════════════════════════════════════
 □ É uma rede/franquia CONHECIDA nacionalmente ou regionalmente?
 □ Você TEM CERTEZA que existe unidade em ${location}?
-□ A rua/bairro são REAIS e CONHECIDOS de ${location}?
-□ O DDD do telefone está correto para ${location}?
+□ O endereço é INDICATIVO (região/bairro) sem números inventados?
+□ Os dados que você NÃO sabe estão marcados para confirmar?
 □ Os motivos são ESPECÍFICOS para este tipo de negócio?
 
-Se QUALQUER resposta for "não" ou "talvez", NÃO INCLUA o lead.
-
-🎯 SUA MISSÃO: Retornar poucos leads, mas TODOS 100% CORRETOS e VERIFICÁVEIS.`;
+🎯 SUA MISSÃO: Retornar REDES CONHECIDAS com dados HONESTOS - não invente o que você não sabe.`;
 
 
-    const userPrompt = `⚠️ ATENÇÃO: APENAS INCLUA O QUE VOCÊ TEM CERTEZA ABSOLUTA!
+    const userPrompt = `⚠️ ATENÇÃO: NÃO INVENTE ENDEREÇOS ESPECÍFICOS!
 ═══════════════════════════════════════════════════════════
 
 🎯 TAREFA: Encontre 3-8 REDES/FRANQUIAS CONHECIDAS em ${location}
@@ -113,21 +119,28 @@ ${filters.companySize !== 'all' ? `Porte: ${filters.companySize}` : ''}
 - Estabelecimentos que você "acha" que existem
 - Qualquer negócio que você tem DÚVIDA
 
-🗺️ ENDEREÇOS - ULTRA RIGOROSO:
+📍 ENDEREÇOS - FORMATO INDICATIVO (CRÍTICO):
 ═══════════════════════════════════════════════════════════
-- Use APENAS ruas PRINCIPAIS e FAMOSAS de ${location}
-- Formato: "[Rua/Av CONHECIDA], [nº] - [Bairro FAMOSO], ${location} - [UF]"
-- Exemplo BOM: "Rua XV de Novembro, 1500 - Centro, ${location} - SC"
-- Exemplo RUIM: "Rua Principal, 100 - Centro, ${location} - SC"
+⚠️ VOCÊ NÃO TEM dados reais de endereços. NUNCA invente números específicos!
 
-📋 DADOS OBRIGATÓRIOS PARA CADA LEAD:
+✅ Use localizações INDICATIVAS:
+- "Região do Centro, ${location} - [UF]"
+- "Shopping Neumarkt, ${location} - [UF]"
+- "Bairro Itoupava Central, ${location} - [UF]"
+- "Rodovia BR-470, ${location} - [UF]"
+
+❌ NUNCA faça isto:
+- "Rua XV de Novembro, 1500 - Centro, ${location} - SC" ← ERRADO!
+- Qualquer endereço com número de rua inventado
+
+📋 DADOS PARA CADA LEAD:
 ═══════════════════════════════════════════════════════════
 {
-  "name": "Nome oficial da rede (ex: Havan, Leroy Merlin)",
-  "address": "[Rua FAMOSA], [nº] - [Bairro REAL], ${location} - [UF]",
-  "phone": "(XX) XXXX-XXXX" [DDD CORRETO],
-  "instagram": "@oficial_da_rede",
-  "responsible": "Gerente de Loja / Gerente Regional",
+  "name": "Nome oficial da rede (ex: Havan, Telhanorte)",
+  "address": "[Região/Bairro INDICATIVO], ${location} - [UF]",
+  "phone": "Telefone a confirmar" OU "(XX) 0000-0000",
+  "instagram": "@oficial_da_rede" OU "@verificar",
+  "responsible": "Gerente de Loja",
   "category": "${segment}",
   "revenue": "R$ [valor realista]/mês",
   "openedDate": "[tempo realista]",
@@ -141,23 +154,21 @@ ${filters.companySize !== 'all' ? `Porte: ${filters.companySize}` : ''}
 
 ⚠️ REGRAS CRÍTICAS:
 ═══════════════════════════════════════════════════════════
-1. Retorne APENAS 3-8 leads (não mais!)
-2. Cada lead deve ser uma REDE/FRANQUIA que você TEM CERTEZA
-3. Se não tiver certeza de 3, retorne MENOS (1-2)
-4. QUALIDADE é INFINITAMENTE mais importante que QUANTIDADE
-5. Um único lead errado = FALHA TOTAL
+1. Retorne APENAS 3-8 REDES/FRANQUIAS conhecidas
+2. Use endereços INDICATIVOS - sem números inventados
+3. Marque como "a confirmar" os dados que você NÃO sabe
+4. QUALIDADE > QUANTIDADE
+5. Seja HONESTO sobre o que você não pode confirmar
 
-🎯 ANTES DE ENVIAR, PERGUNTE-SE:
+🎯 ANTES DE ENVIAR:
 ═══════════════════════════════════════════════════════════
-Para CADA lead:
-- "Eu REALMENTE sei que essa rede existe em ${location}?" 
-  → Se não tiver 100% certeza: REMOVA
-- "Essa rua é REALMENTE famosa/principal de ${location}?"
-  → Se tiver qualquer dúvida: REMOVA
-- "Os motivos são ESPECÍFICOS para este tipo de negócio?"
-  → Se forem genéricos: REESCREVA
+Para CADA lead, pergunte-se:
+- "Eu sei que essa REDE existe em ${location}?" → Se não: REMOVA
+- "Usei endereço INDICATIVO sem números inventados?" → Se não: CORRIJA
+- "Os dados que não sei estão marcados para confirmar?" → Se não: CORRIJA
+- "Os motivos são ESPECÍFICOS?" → Se não: REESCREVA
 
-Lembre-se: 2 leads PERFEITOS > 10 leads DUVIDOSOS`;
+Lembre-se: Dados HONESTOS > Dados INVENTADOS`;
 
     // Use tool calling to force structured JSON output
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -273,28 +284,14 @@ Lembre-se: 2 leads PERFEITOS > 10 leads DUVIDOSOS`;
         return false;
       }
       
-      // 2. Reject generic addresses
-      const genericTerms = ['principal', 'central', 'comercial', 'do comércio', 'main'];
-      const hasGeneric = genericTerms.some(term => addressLower.includes(term));
-      if (hasGeneric) {
-        console.warn(`🚨 REJECTED - Generic address:`, name, address);
-        return false;
-      }
-      
-      // 3. Address must have minimum components (street, number, neighborhood, city, state)
+      // 2. Address must have minimum components (neighborhood/region and city)
       const parts = address.split(',');
       if (parts.length < 2) {
         console.warn(`🚨 REJECTED - Invalid address format:`, name, address);
         return false;
       }
       
-      // 4. Must have a hyphen separating neighborhood from city
-      if (!address.includes('-')) {
-        console.warn(`🚨 REJECTED - Missing neighborhood separator:`, name, address);
-        return false;
-      }
-      
-      // 5. Reject very vague names
+      // 3. Reject very vague names
       const vagueNames = ['loja', 'comércio', 'estabelecimento'];
       const nameWords = name.toLowerCase().split(' ');
       if (nameWords.length === 2 && vagueNames.includes(nameWords[0])) {
