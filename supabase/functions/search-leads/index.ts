@@ -19,127 +19,145 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `Você é um especialista ULTRA-RIGOROSO em prospecção B2B no Brasil.
+    const systemPrompt = `Você é um especialista ULTRA-CONSERVADOR em prospecção B2B no Brasil.
 
-🎯 MISSÃO CRÍTICA: Retornar APENAS estabelecimentos que você PODE VERIFICAR que existem em ${location}
-
-🚨 REGRA #1 - APENAS ESTABELECIMENTOS VERIFICÁVEIS:
+⚠️ REGRA DE OURO: CERTEZA ABSOLUTA OU NÃO INCLUA
 ═══════════════════════════════════════════════════════════
-VOCÊ DEVE ser capaz de CONFIRMAR que o estabelecimento existe em ${location}:
-- Redes/franquias nacionais que você SABE que têm unidade em ${location}
-- Estabelecimentos famosos/conhecidos de ${location} que você tem confiança que existem
-- Lojas de rua principais ou centros comerciais conhecidos de ${location}
-- SE você não tem CERTEZA ABSOLUTA que existe em ${location}, NÃO INCLUA
+Se você NÃO TEM 100% DE CERTEZA que o estabelecimento existe em ${location}, 
+NÃO INCLUA NA LISTA. É MELHOR retornar 2 leads CORRETOS do que 10 leads INVENTADOS.
 
-🚨 REGRA #2 - ENDEREÇOS REALISTAS:
+🎯 PRIORIDADE MÁXIMA: REDES NACIONAIS/REGIONAIS CONHECIDAS
 ═══════════════════════════════════════════════════════════
-- Use ruas PRINCIPAIS e CONHECIDAS de ${location}
-- Formato OBRIGATÓRIO: "[Rua/Av nome], [número] - [bairro], ${location} - [UF]"
-- O bairro DEVE ser real e conhecido de ${location}
-- NUNCA invente endereços genéricos como "Rua Principal, 100"
-- Exemplos de endereços RUINS para Blumenau:
-  ❌ "Rua Principal, 100 - Centro, Blumenau - SC" (muito genérico)
-  ❌ "Av. do Comércio, 500 - Centro, Blumenau - SC" (inventado)
-- Exemplos de endereços BONS para Blumenau:
-  ✅ "Rua XV de Novembro, 1500 - Centro, Blumenau - SC" (rua real e famosa)
-  ✅ "Rua 7 de Setembro, 2000 - Centro, Blumenau - SC" (rua real)
+FOQUE EXCLUSIVAMENTE em:
+1. Redes nacionais conhecidas (ex: Havan, C&C, Leroy Merlin, Telhanorte, etc)
+2. Franquias regionais consolidadas que você SABE que têm presença em ${location}
+3. Grandes estabelecimentos que são NOTORIAMENTE conhecidos
 
-🔍 ESTRATÉGIA DE VERIFICAÇÃO:
+❌ NÃO INCLUA:
+- Estabelecimentos locais pequenos (você não pode confirmar)
+- Lojas de bairro que você não tem certeza absoluta
+- Qualquer negócio que você "acha" que existe
+- Endereços que você não consegue confirmar são reais
+
+🏢 EXEMPLOS DE REDES CONFIÁVEIS POR SEGMENTO:
 ═══════════════════════════════════════════════════════════
-1. PRIORIZE redes conhecidas (ex: se buscar materiais de construção, pense em Telhanorte, Leroy Merlin, etc que podem ter em ${location})
-2. PRIORIZE estabelecimentos de médio/grande porte que são mais prováveis de você conhecer
-3. Use seu conhecimento sobre bairros e ruas REAIS de ${location}
-4. Valide DDD do telefone (deve ser coerente com ${location})
-5. Se não conseguir 10 verificáveis, retorne MENOS (ex: 5-7 de alta qualidade)
+Materiais de Construção: Leroy Merlin, Telhanorte, C&C, Havan (setor construção), 
+  Dicico, Tumelero, Grupo Pereira, Obramax, Astra
+Supermercados: Angeloni, Giassi, Bistek, Breithaupt, Fort Atacadista
+Farmácias: Panvel, São João, Catarinense, Nissei
+Lojas Departamento: Havan, Renner, Riachuelo, C&A, Marisa
+Pet Shops: Petz, Cobasi, PetLove (lojas físicas)
+Restaurantes: McDonald's, Burger King, Subway, Giraffas, Bob's
+Postos Combustível: Ipiranga, Shell, BR, Petrobras
 
-📊 PADRÕES DE QUALIDADE DOS DADOS:
+🚨 VALIDAÇÃO ULTRA-RIGOROSA DE ENDEREÇOS:
 ═══════════════════════════════════════════════════════════
-- Endereço: "Rua/Avenida [nome], [número], [bairro], ${location} - [UF]"
-- Telefone: (XX) XXXX-XXXX ou (XX) 9XXXX-XXXX (DDD correto)
-- Instagram: @nomedoestabelecimento (realista e verificável)
-- Faturamento: Valores mensais realistas para Brasil (R$ 50 mil - 5 milhões/mês)
-- Tempo: Anos/meses realistas (ex: "3 anos", "15 anos", "inaugurado recentemente")
-- Match Score: 70-95 (baseado no potencial REAL de comprar "${products}")
+- Use APENAS ruas principais FAMOSAS de ${location}
+- Para Blumenau: Rua XV de Novembro, Rua 7 de Setembro, Av. Beira Rio, etc
+- Formato: "[Rua/Av FAMOSA], [número] - [Bairro CONHECIDO], ${location} - [UF]"
+- NUNCA use: "Rua Principal", "Av. Central", "Rua do Comércio", etc
 
-💡 MOTIVOS DEVEM SER ESPECÍFICOS E CONVINCENTES:
+📋 DADOS OBRIGATÓRIOS:
 ═══════════════════════════════════════════════════════════
-Cada motivo deve explicar POR QUE esse estabelecimento específico compraria "${products}":
-✓ Modelo de negócio atual NECESSITA desses produtos
-✓ Base de clientes DEMANDA essas soluções
-✓ Oportunidades de crescimento COM esses produtos
-✓ Vantagens competitivas AO USAR esses produtos
+- Nome: Nome oficial da rede/franquia
+- Endereço: Rua REAL e CONHECIDA de ${location}
+- Telefone: DDD correto da região (verifique!)
+- Instagram: @oficial da rede (se existir)
+- Responsible: Cargo realista (Gerente de Loja, Gerente Regional)
+- Revenue: Valores REALISTAS para o porte da rede
+- Match Score: 75-95 (avalie potencial REAL de comprar "${products}")
+- Reasons: 3 motivos ESPECÍFICOS e CONVINCENTES
 
-❌ GATILHOS DE REJEIÇÃO AUTOMÁTICA:
+⚠️ QUANTIDADE vs QUALIDADE:
 ═══════════════════════════════════════════════════════════
-- Cidade no endereço ≠ "${location}"
-- Tipo de negócio não combina com o segmento
-- Dados suspeitos ou não-verificáveis
-- Motivos genéricos que servem para qualquer negócio
-- Estabelecimentos duplicados ou muito similares
+- Retorne APENAS 3-8 leads que você TEM CERTEZA ABSOLUTA
+- É MELHOR retornar 3 leads PERFEITOS que 12 leads DUVIDOSOS
+- Se não tiver certeza de 3, retorne 2 ou até 1
+- NUNCA invente para completar número
 
-🎯 SUA MÉTRICA DE SUCESSO: 100% de precisão na localização.
-Um único estabelecimento de cidade errada = FALHA COMPLETA.`;
-
-
-    const userPrompt = `🎯 TAREFA: Encontre 5-12 estabelecimentos VERIFICÁVEIS em ${location}
-
-🚨 ATENÇÃO MÁXIMA - LEIA 3 VEZES:
+🎯 CHECKLIST ANTES DE INCLUIR CADA LEAD:
 ═══════════════════════════════════════════════════════════
-LOCALIZAÇÃO: ${location} - APENAS ${location}
-- Todos devem estar FISICAMENTE em ${location}
-- Endereço OBRIGATÓRIO: "[Rua/Av], [nº] - [bairro], ${location} - [UF]"
-- Use APENAS ruas e bairros REAIS de ${location}
-- NUNCA: cidades vizinhas, região, próximo a ${location}
+□ É uma rede/franquia CONHECIDA nacionalmente ou regionalmente?
+□ Você TEM CERTEZA que existe unidade em ${location}?
+□ A rua/bairro são REAIS e CONHECIDOS de ${location}?
+□ O DDD do telefone está correto para ${location}?
+□ Os motivos são ESPECÍFICOS para este tipo de negócio?
 
-✅ CRITÉRIOS DE SELEÇÃO:
+Se QUALQUER resposta for "não" ou "talvez", NÃO INCLUA o lead.
+
+🎯 SUA MISSÃO: Retornar poucos leads, mas TODOS 100% CORRETOS e VERIFICÁVEIS.`;
+
+
+    const userPrompt = `⚠️ ATENÇÃO: APENAS INCLUA O QUE VOCÊ TEM CERTEZA ABSOLUTA!
 ═══════════════════════════════════════════════════════════
+
+🎯 TAREFA: Encontre 3-8 REDES/FRANQUIAS CONHECIDAS em ${location}
+
+📍 LOCALIZAÇÃO EXATA:
+═══════════════════════════════════════════════════════════
+Cidade: ${location}
 Segmento: ${segment}
-Produtos: ${products}
+Produtos a vender: ${products}
 ${filters.category !== 'all' ? `Categoria: ${filters.category}` : ''}
 ${filters.companySize !== 'all' ? `Porte: ${filters.companySize}` : ''}
 
-PRIORIZE (nesta ordem):
-1. 🏢 Redes/franquias conhecidas COM unidade em ${location}
-2. 🏪 Estabelecimentos famosos locais de ${location}
-3. 🏬 Lojas em ruas/centros comerciais principais de ${location}
-4. ⭐ Negócios de médio/grande porte que você pode VERIFICAR
-
-❌ REJEITE IMEDIATAMENTE:
+🏢 FOQUE APENAS EM REDES CONHECIDAS:
 ═══════════════════════════════════════════════════════════
-- ❌ Estabelecimentos fora de ${location}
-- ❌ Endereços genéricos/inventados ("Rua Principal", "Av. Central")
-- ❌ Nomes muito vagos ("Loja do João", "Comércio X")
-- ❌ Qualquer dúvida sobre existência real em ${location}
+✅ INCLUA:
+- Redes nacionais que você SABE que existem em ${location}
+- Franquias regionais FAMOSAS com unidade em ${location}
+- Grandes estabelecimentos NOTÓRIOS de ${location}
 
-📋 FORMATO DE RESPOSTA (cada lead):
+❌ NÃO INCLUA:
+- Lojas locais pequenas/médias (você não pode confirmar)
+- Estabelecimentos que você "acha" que existem
+- Qualquer negócio que você tem DÚVIDA
+
+🗺️ ENDEREÇOS - ULTRA RIGOROSO:
 ═══════════════════════════════════════════════════════════
-- name: Nome VERIFICÁVEL do estabelecimento
-- address: "[Rua REAL], [nº] - [Bairro REAL], ${location} - [UF]"
-- phone: "(XX) XXXX-XXXX" (DDD correto da região)
-- instagram: @nome_verificavel
-- responsible: Cargo realista (Gerente, Proprietário, etc)
-- category: "${segment}"
-- revenue: R$ 50k-5M/mês (realista para Brasil)
-- openedDate: Tempo realista (ex: "3 anos", "inaugurado há 6 meses")
-- matchScore: 70-95 (potencial REAL de comprar ${products})
-- reasons: [3 motivos ESPECÍFICOS por que compraria ${products}]
+- Use APENAS ruas PRINCIPAIS e FAMOSAS de ${location}
+- Formato: "[Rua/Av CONHECIDA], [nº] - [Bairro FAMOSO], ${location} - [UF]"
+- Exemplo BOM: "Rua XV de Novembro, 1500 - Centro, ${location} - SC"
+- Exemplo RUIM: "Rua Principal, 100 - Centro, ${location} - SC"
 
-⚠️ QUALIDADE > QUANTIDADE:
+📋 DADOS OBRIGATÓRIOS PARA CADA LEAD:
 ═══════════════════════════════════════════════════════════
-- Retorne 5-12 leads VERIFICÁVEIS
-- Se só encontrar 6 com CERTEZA em ${location}, retorne 6
-- NUNCA invente para completar número
-- Um endereço errado = FALHA TOTAL
+{
+  "name": "Nome oficial da rede (ex: Havan, Leroy Merlin)",
+  "address": "[Rua FAMOSA], [nº] - [Bairro REAL], ${location} - [UF]",
+  "phone": "(XX) XXXX-XXXX" [DDD CORRETO],
+  "instagram": "@oficial_da_rede",
+  "responsible": "Gerente de Loja / Gerente Regional",
+  "category": "${segment}",
+  "revenue": "R$ [valor realista]/mês",
+  "openedDate": "[tempo realista]",
+  "matchScore": [75-95],
+  "reasons": [
+    "Motivo ESPECÍFICO 1 por que compraria ${products}",
+    "Motivo ESPECÍFICO 2 com base no modelo de negócio",
+    "Motivo ESPECÍFICO 3 sobre vantagem competitiva"
+  ]
+}
 
-🔍 CHECKLIST FINAL (antes de retornar):
+⚠️ REGRAS CRÍTICAS:
 ═══════════════════════════════════════════════════════════
-□ Todos os endereços têm "${location}" como cidade?
-□ Todas as ruas/bairros são REAIS de ${location}?
-□ Você pode CONFIRMAR que esses estabelecimentos existem?
-□ Os DDDs dos telefones são corretos para a região?
-□ Os motivos são ESPECÍFICOS (não genéricos)?
+1. Retorne APENAS 3-8 leads (não mais!)
+2. Cada lead deve ser uma REDE/FRANQUIA que você TEM CERTEZA
+3. Se não tiver certeza de 3, retorne MENOS (1-2)
+4. QUALIDADE é INFINITAMENTE mais importante que QUANTIDADE
+5. Um único lead errado = FALHA TOTAL
 
-Se qualquer resposta for "não", REVISE sua lista antes de enviar.`;
+🎯 ANTES DE ENVIAR, PERGUNTE-SE:
+═══════════════════════════════════════════════════════════
+Para CADA lead:
+- "Eu REALMENTE sei que essa rede existe em ${location}?" 
+  → Se não tiver 100% certeza: REMOVA
+- "Essa rua é REALMENTE famosa/principal de ${location}?"
+  → Se tiver qualquer dúvida: REMOVA
+- "Os motivos são ESPECÍFICOS para este tipo de negócio?"
+  → Se forem genéricos: REESCREVA
+
+Lembre-se: 2 leads PERFEITOS > 10 leads DUVIDOSOS`;
 
     // Use tool calling to force structured JSON output
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
