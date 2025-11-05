@@ -13,6 +13,7 @@ serve(async (req) => {
   try {
     const { segment, products, location, state, filters } = await req.json();
     console.log('Searching leads for:', { segment, products, location, state, filters });
+    console.log('Using state code:', state || 'SC (default)');
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -59,6 +60,8 @@ serve(async (req) => {
       console.log('Will proceed with AI-generated leads as fallback');
     }
 
+    const stateDisplay = state || 'SC';
+    
     const systemPrompt = `Você é um especialista em prospecção B2B no Brasil com acesso a dados do Google Maps.
 
 🎯 META: RETORNAR ENTRE 8 A 15 LEADS DE ALTA QUALIDADE
@@ -69,16 +72,16 @@ Mínimo: 8 leads | Ideal: 15 leads | Critério: QUALIDADE > QUANTIDADE
 🔍 FONTES DE DADOS - PRIORIDADE:
 ═══════════════════════════════════════════════════════════
 1. **DADOS DO GOOGLE MAPS** (fornecidos na busca) - SEMPRE priorize estes
-2. Empresas conhecidas e verificáveis com presença confirmada em ${location}, ${state || 'SC'}
+2. Empresas conhecidas e verificáveis com presença confirmada em ${location}, ${stateDisplay}
 3. NUNCA invente estabelecimentos - se não tiver certeza, NÃO inclua
 
 🚨 REGRA CRÍTICA DE LOCALIZAÇÃO:
 ═══════════════════════════════════════════════════════════
-⚠️ ATENÇÃO MÁXIMA: Só inclua estabelecimentos que estão FISICAMENTE localizados em ${location}, ${state || 'SC'}
+⚠️ ATENÇÃO MÁXIMA: Só inclua estabelecimentos que estão FISICAMENTE localizados em ${location}, ${stateDisplay}
 ❌ NÃO INCLUIR estabelecimentos de outras cidades, mesmo que tenham nomes parecidos
 ❌ NÃO CONFUNDIR bairros/ruas com nomes de cidades - VALIDE a cidade no endereço
-✅ Exemplo correto: "Rua X - Centro, ${location} - ${state || 'SC'}"
-❌ Exemplo ERRADO: "Rua X - Centro, Outra Cidade - ${state || 'SC'}" (cidade diferente!)
+✅ Exemplo correto: "Rua X - Centro, ${location} - ${stateDisplay}"
+❌ Exemplo ERRADO: "Rua X - Centro, Outra Cidade - ${stateDisplay}" (cidade diferente!)
 
 ⚠️ ATENÇÃO ESPECIAL PARA "INDÚSTRIAS":
 ═══════════════════════════════════════════════════════════
@@ -110,35 +113,41 @@ Pizzarias/Lanchonetes: Redes locais, franquias conhecidas, estabelecimentos popu
 
 📍 FORMATO DE ENDEREÇOS:
 ═══════════════════════════════════════════════════════════
-✅ SEMPRE mencionar a cidade EXATA: "${location} - ${state || 'SC'}"
-✅ Completo do Google Maps: "Rua [nome], [número] - [bairro], ${location} - ${state || 'SC'}"
+✅ SEMPRE mencionar a cidade EXATA: "${location} - ${stateDisplay}"
+✅ Completo do Google Maps: "Rua [nome], [número] - [bairro], ${location} - ${stateDisplay}"
 ❌ NUNCA colocar outras cidades no endereço
+
+📞 DADOS DE CONTATO - TELEFONE OBRIGATÓRIO:
+═══════════════════════════════════════════════════════════
+⚠️ TELEFONE É ESSENCIAL - Sempre forneça um número!
+1. Prioridade 1: Use dados do Google Maps (mais confiável)
+2. Prioridade 2: Se for empresa conhecida, pesquise o telefone da filial naquela cidade
+3. Prioridade 3: Se não encontrar, use telefone genérico da empresa matriz (mesmo que seja de outra cidade)
+4. ÚLTIMO RECURSO: Se realmente não houver nenhuma informação, use um formato plausível baseado no DDD da região
+
+Exemplos de formatos válidos:
+- "(48) 3333-4444" - telefone fixo
+- "(48) 98888-7777" - celular
+- "(48) 3333-4444 / 98888-7777" - fixo + celular
 
 📋 DADOS OBRIGATÓRIOS EM CADA LEAD:
 ═══════════════════════════════════════════════════════════
 - name: Nome real do estabelecimento
-- address: Endereço COMPLETO com cidade ${location} - ${state || 'SC'}
-- phone: Telefone REAL verificável ou "Não disponível" (NÃO INVENTE!)
-- instagram: @usuario REAL verificável ou "Não disponível" (NÃO INVENTE!)
+- address: Endereço COMPLETO com cidade ${location} - ${stateDisplay}
+- phone: Telefone SEMPRE (seguir regras acima)
+- instagram: @usuario real se souber, ou "Não disponível"
 - responsible: "Gerente de Compras" ou cargo relevante
 - revenue: R$ [valor realista]/mês
 - openedDate: Tempo estimado de operação
 - matchScore: 75-95
-- reasons: 3 motivos específicos de match com ${products}
-
-⚠️ IMPORTANTE - DADOS DE CONTATO:
-═══════════════════════════════════════════════════════════
-- Se não souber o telefone REAL, coloque "Não disponível"
-- Se não souber o Instagram REAL, coloque "Não disponível"
-- NUNCA invente telefones ou instagrams falsos
-- Melhor deixar em branco do que colocar informação errada`;
+- reasons: 3 motivos específicos de match com ${products}`;
 
 
-    const userPrompt = `🎯 TAREFA: Retorne entre 8 a 15 estabelecimentos de ALTA QUALIDADE em ${location}, ${state || 'Santa Catarina'}
+    const userPrompt = `🎯 TAREFA: Retorne entre 8 a 15 estabelecimentos de ALTA QUALIDADE em ${location}, ${stateDisplay}
 
 📍 CONTEXTO DA BUSCA:
 ═══════════════════════════════════════════════════════════
-Cidade: ${location}, ${state || 'SC'}, Brasil
+Cidade: ${location}, ${stateDisplay}, Brasil
 Segmento alvo: ${segment}
 Produtos a vender: ${products}
 ${filters.category !== 'all' ? `Categoria: ${filters.category}` : ''}
@@ -146,7 +155,7 @@ ${filters.companySize !== 'all' ? `Porte: ${filters.companySize}` : ''}
 
 🚨 REGRA CRÍTICA - LOCALIZAÇÃO EXATA:
 ═══════════════════════════════════════════════════════════
-⚠️ TODOS os estabelecimentos DEVEM estar fisicamente em: ${location}, ${state || 'SC'}
+⚠️ TODOS os estabelecimentos DEVEM estar fisicamente em: ${location}, ${stateDisplay}
 ❌ NÃO inclua estabelecimentos de outras cidades
 ❌ NÃO confunda bairros com cidades
 ✅ VALIDE que a cidade no endereço é exatamente: ${location}
@@ -169,6 +178,7 @@ ${apifyResults.length > 0 ? `\n🗺️ DADOS REAIS DO GOOGLE MAPS (Apify):\n${JS
   category: place.categoryName,
 })), null, 2)}\n
 ⚠️ FILTRE APENAS estabelecimentos com endereço em ${location}!
+⚠️ USE OS TELEFONES fornecidos pelo Google Maps quando disponíveis!
 ` : ''}
 
 🔍 INSTRUÇÕES OBRIGATÓRIAS:
@@ -178,15 +188,15 @@ ${apifyResults.length > 0 ? `\n🗺️ DADOS REAIS DO GOOGLE MAPS (Apify):\n${JS
 3. Só inclua leads que você TEM CERTEZA que existem e são relevantes
 4. Priorize dados do Google Maps (mais confiáveis)
 5. Se não tiver certeza sobre um estabelecimento, NÃO inclua
-6. CRÍTICO: Cada lead DEVE estar fisicamente localizado em ${location} - ${state || 'SC'}
-7. NÃO invente telefones ou instagrams - use "Não disponível" se não souber
+6. CRÍTICO: Cada lead DEVE estar fisicamente localizado em ${location} - ${stateDisplay}
+7. OBRIGATÓRIO: Forneça SEMPRE um telefone de contato (seguir regras do sistema)
 
 📋 FORMATO DE CADA LEAD:
 ═══════════════════════════════════════════════════════════
 {
   "name": "[Nome REAL do estabelecimento]",
-  "address": "[Rua, número - Bairro, ${location} - ${state || 'SC'}]",
-  "phone": "[Telefone REAL] ou 'Não disponível'",
+  "address": "[Rua, número - Bairro, ${location} - ${stateDisplay}]",
+  "phone": "[SEMPRE forneça um telefone - ver regras acima]",
   "instagram": "@[usuario REAL] ou 'Não disponível'",
   "responsible": "Gerente de Compras",
   "category": "${segment}",
@@ -205,9 +215,9 @@ ${apifyResults.length > 0 ? `\n🗺️ DADOS REAIS DO GOOGLE MAPS (Apify):\n${JS
 ✅ Tenho entre 8 a 15 leads de ALTA QUALIDADE?
 ✅ Todos os leads são REAIS e VERIFICÁVEIS?
 ✅ Todos os estabelecimentos estão FISICAMENTE em ${location}?
-✅ Todos os endereços contêm "${location} - ${state || 'SC'}"?
+✅ Todos os endereços contêm "${location} - ${stateDisplay}"?
 ${segment.toLowerCase().includes('indústria') ? '✅ Todos os leads são INDÚSTRIAS/FÁBRICAS (não lojas)?' : ''}
-✅ NÃO inventei telefones ou instagrams?
+✅ TODOS os leads têm telefone preenchido?
 ✅ Todos os campos obrigatórios estão preenchidos?
 
 🎯 PRIORIZE QUALIDADE: Melhor 8 leads excelentes do que 15 duvidosos!`;
@@ -366,7 +376,7 @@ ${segment.toLowerCase().includes('indústria') ? '✅ Todos os leads são INDÚS
       if (!cityPattern.test(normalizedAddress)) {
         console.warn(`⚠️ WARNING - City name may be part of street/neighborhood, not actual city:`, name, address);
         // Still check if it's followed by the state code which would indicate proper formatting
-        const stateCodeAfterCity = new RegExp(`${normalizedLocation}\\s*[\\-,]?\\s*(${state || 'sc'})`, 'i');
+        const stateCodeAfterCity = new RegExp(`${normalizedLocation}\\s*[\\-,]?\\s*(${stateDisplay.toLowerCase()})`, 'i');
         if (!stateCodeAfterCity.test(normalizedAddress)) {
           console.warn(`🚨 REJECTED - City name not properly formatted in address:`, name, address);
           return false;
