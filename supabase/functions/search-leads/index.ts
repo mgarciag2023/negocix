@@ -11,8 +11,8 @@ serve(async (req) => {
   }
 
   try {
-    const { segment, products, location, filters } = await req.json();
-    console.log('Searching leads for:', { segment, products, location, filters });
+    const { segment, products, location, state, filters } = await req.json();
+    console.log('Searching leads for:', { segment, products, location, state, filters });
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -21,7 +21,8 @@ serve(async (req) => {
 
     // Use Apify Google Maps Scraper for real data
     console.log('Searching Google Maps via Apify API...');
-    const searchQuery = `${segment} ${location} SC Brasil`;
+    const stateCode = state || 'SC'; // Default to SC if not provided
+    const searchQuery = `${segment} ${location} ${stateCode} Brasil`;
     
     let apifyResults: any[] = [];
     try {
@@ -68,7 +69,7 @@ Mínimo: 8 leads | Ideal: 15 leads | Critério: QUALIDADE > QUANTIDADE
 🔍 FONTES DE DADOS - PRIORIDADE:
 ═══════════════════════════════════════════════════════════
 1. **DADOS DO GOOGLE MAPS** (fornecidos na busca) - SEMPRE priorize estes
-2. Empresas conhecidas e verificáveis com presença confirmada em ${location}
+2. Empresas conhecidas e verificáveis com presença confirmada em ${location}, ${state || 'SC'}
 3. NUNCA invente estabelecimentos - se não tiver certeza, NÃO inclua
 
 ⚠️ ATENÇÃO ESPECIAL PARA "INDÚSTRIAS":
@@ -91,23 +92,23 @@ Exemplos ERRADOS para "Indústrias de Pão de Queijo":
 - Cafeterias
 - Supermercados
 
-🏢 EXEMPLOS DE EMPRESAS POR SEGMENTO:
+🏢 EXEMPLOS DE EMPRESAS POR SEGMENTO (TODO O BRASIL):
 ═══════════════════════════════════════════════════════════
 Materiais de Construção: Leroy Merlin, Telhanorte, C&C, Havan, Dicico, Tumelero
-Supermercados: Angeloni, Giassi, Bistek, Fort Atacadista, Walmart, Carrefour
-Farmácias: Panvel, São João, Catarinense, Nissei, Drogasil, Drogaria São Paulo
+Supermercados: Pão de Açúcar, Carrefour, Extra, Angeloni, Giassi, Fort Atacadista
+Farmácias: Drogasil, Raia, Pacheco, Panvel, São João, DPSP
 Restaurantes: McDonald's, Burger King, Subway, Giraffas, Bob's, Habib's
 Pizzarias/Lanchonetes: Redes locais, franquias conhecidas, estabelecimentos populares
 
 📍 FORMATO DE ENDEREÇOS:
 ═══════════════════════════════════════════════════════════
-✅ Completo do Google Maps: "Rua [nome], [número] - [bairro], ${location} - SC"
-✅ Empresas conhecidas: use endereço real se souber, ou "Endereço a confirmar, ${location} - SC"
+✅ Completo do Google Maps: "Rua [nome], [número] - [bairro], ${location} - ${state || 'SC'}"
+✅ Empresas conhecidas: use endereço real se souber, ou "Endereço a confirmar, ${location} - ${state || 'SC'}"
 
 📋 DADOS OBRIGATÓRIOS EM CADA LEAD:
 ═══════════════════════════════════════════════════════════
 - name: Nome real do estabelecimento
-- address: Endereço com cidade ${location} - SC
+- address: Endereço completo com ${location} - ${state || 'SC'}
 - phone: Telefone real ou "Telefone a confirmar"
 - instagram: @usuario real ou "@verificar"
 - responsible: "Gerente de Compras" ou cargo relevante
@@ -117,11 +118,11 @@ Pizzarias/Lanchonetes: Redes locais, franquias conhecidas, estabelecimentos popu
 - reasons: 3 motivos específicos de match com ${products}`;
 
 
-    const userPrompt = `🎯 TAREFA: Retorne entre 8 a 15 estabelecimentos de ALTA QUALIDADE em ${location}, Santa Catarina
+    const userPrompt = `🎯 TAREFA: Retorne entre 8 a 15 estabelecimentos de ALTA QUALIDADE em ${location}, ${state || 'Santa Catarina'}
 
 📍 CONTEXTO DA BUSCA:
 ═══════════════════════════════════════════════════════════
-Cidade: ${location}, SC, Brasil
+Cidade: ${location}, ${state || 'SC'}, Brasil
 Segmento alvo: ${segment}
 Produtos a vender: ${products}
 ${filters.category !== 'all' ? `Categoria: ${filters.category}` : ''}
@@ -152,13 +153,13 @@ ${apifyResults.length > 0 ? `\n🗺️ DADOS REAIS DO GOOGLE MAPS (Apify):\n${JS
 3. Só inclua leads que você TEM CERTEZA que existem e são relevantes
 4. Priorize dados do Google Maps (mais confiáveis)
 5. Se não tiver certeza sobre um estabelecimento, NÃO inclua
-6. Cada lead DEVE ter endereço contendo "${location} - SC"
+6. Cada lead DEVE ter endereço contendo "${location} - ${state || 'SC'}"
 
 📋 FORMATO DE CADA LEAD:
 ═══════════════════════════════════════════════════════════
 {
   "name": "[Nome REAL do estabelecimento]",
-  "address": "[Endereço real ou 'Endereço a confirmar, ${location} - SC']",
+  "address": "[Endereço real ou 'Endereço a confirmar, ${location} - ${state || 'SC'}']",
   "phone": "[Telefone real] ou 'Telefone a confirmar'",
   "instagram": "@[usuario real] ou '@verificar'",
   "responsible": "Gerente de Compras",
@@ -177,7 +178,7 @@ ${apifyResults.length > 0 ? `\n🗺️ DADOS REAIS DO GOOGLE MAPS (Apify):\n${JS
 ═══════════════════════════════════════════════════════════
 ✅ Tenho entre 8 a 15 leads de ALTA QUALIDADE?
 ✅ Todos os leads são REAIS e VERIFICÁVEIS?
-✅ Todos os endereços contêm "${location} - SC"?
+✅ Todos os endereços contêm "${location} - ${state || 'SC'}"?
 ${segment.toLowerCase().includes('indústria') ? '✅ Todos os leads são INDÚSTRIAS/FÁBRICAS (não lojas)?' : ''}
 ✅ Todos os campos obrigatórios estão preenchidos?
 
@@ -305,9 +306,15 @@ ${segment.toLowerCase().includes('indústria') ? '✅ Todos os leads são INDÚS
         return false;
       }
       
-      // 2. Must have an address with "SC" (Santa Catarina)
-      if (!address.includes('SC') && !address.includes('sc')) {
-        console.warn(`🚨 REJECTED - No SC in address:`, name, address);
+      // 2. Must have an address with a state code (2 letters)
+      // Check for common Brazilian state codes
+      const brazilianStates = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
+      const hasStateCode = brazilianStates.some(stateCode => 
+        address.includes(` ${stateCode}`) || address.includes(`-${stateCode}`) || address.includes(` ${stateCode.toLowerCase()}`) || address.includes(`-${stateCode.toLowerCase()}`)
+      );
+      
+      if (!hasStateCode) {
+        console.warn(`🚨 REJECTED - No valid state code in address:`, name, address);
         return false;
       }
       

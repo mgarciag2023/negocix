@@ -107,6 +107,7 @@ const Results = () => {
             segment: searchConfig.selectedCustomers.join(', '),
             products: searchConfig.products,
             location: searchConfig.location,
+            state: searchConfig.state,
             filters: {
               category: searchConfig.category,
               companySize: searchConfig.companySize,
