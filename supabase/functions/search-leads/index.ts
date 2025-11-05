@@ -19,79 +19,83 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    // First, search the web for real establishments
+    console.log('Searching web for real establishments...');
+    const webSearchQuery = `${segment} em ${location} Brasil endereço telefone`;
+    
+    let webResults = '';
+    try {
+      const searchResponse = await fetch(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(webSearchQuery)}`);
+      if (searchResponse.ok) {
+        webResults = await searchResponse.text();
+        console.log('Web search successful, found real establishments');
+      }
+    } catch (error) {
+      console.warn('Web search failed, will rely on AI knowledge:', error);
+    }
+
     const systemPrompt = `Você é um especialista ULTRA-RIGOROSO em prospecção B2B no Brasil.
 
-🎯 PRIORIDADE MÁXIMA: REDES NACIONAIS/REGIONAIS CONHECIDAS
+🔍 FONTES DE DADOS OBRIGATÓRIAS:
 ═══════════════════════════════════════════════════════════
-FOQUE EXCLUSIVAMENTE em:
-1. Redes nacionais conhecidas (ex: Havan, C&C, Leroy Merlin, Telhanorte, etc)
-2. Franquias regionais consolidadas que você SABE que têm presença em ${location}
-3. Grandes estabelecimentos NOTORIAMENTE conhecidos
+Você DEVE basear suas respostas em:
+1. Informações reais de buscas no Google/Google Maps
+2. Dados verificáveis de redes sociais (Instagram, Facebook)
+3. Seu conhecimento sobre redes nacionais/regionais CONFIRMADAS
+4. Diretórios comerciais e sites oficiais
 
-❌ NÃO INCLUA:
-- Estabelecimentos locais pequenos (você não pode confirmar)
-- Lojas de bairro que você não tem certeza absoluta
-- Qualquer negócio que você "acha" que existe
+❌ NUNCA invente ou "adivinhe" informações
+✅ Se não tiver certeza de um dado, marque como "a confirmar"
+
+🎯 QUANTIDADE EXIGIDA: 12-20 LEADS
+═══════════════════════════════════════════════════════════
+IMPORTANTE: Você DEVE retornar entre 12 e 20 leads por busca.
+Combine diferentes tipos de estabelecimentos:
+- Redes nacionais conhecidas (McDonald's, Subway, etc)
+- Franquias regionais consolidadas
+- Estabelecimentos locais GRANDES e conhecidos
+- Shoppings e centros comerciais relevantes
 
 🏢 EXEMPLOS DE REDES CONFIÁVEIS POR SEGMENTO:
 ═══════════════════════════════════════════════════════════
 Materiais de Construção: Leroy Merlin, Telhanorte, C&C, Havan (setor construção), 
   Dicico, Tumelero, Cassol, Balaroti, Obramax, Astra
-Supermercados: Angeloni, Giassi, Bistek, Breithaupt, Fort Atacadista
-Farmácias: Panvel, São João, Catarinense, Nissei
-Lojas Departamento: Havan, Renner, Riachuelo, C&A, Marisa
+Supermercados: Angeloni, Giassi, Bistek, Breithaupt, Fort Atacadista, Walmart, Carrefour
+Farmácias: Panvel, São João, Catarinense, Nissei, Drogasil, São Paulo
+Lojas Departamento: Havan, Renner, Riachuelo, C&A, Marisa, Lojas Americanas
 Pet Shops: Petz, Cobasi, PetLove (lojas físicas)
-Restaurantes: McDonald's, Burger King, Subway, Giraffas, Bob's
+Restaurantes: McDonald's, Burger King, Subway, Giraffas, Bob's, Pizza Hut, Domino's
 Postos Combustível: Ipiranga, Shell, BR, Petrobras
+Indústrias de Pão de Queijo: Forno de Minas, Casa do Pão de Queijo, Pão de Queijo Haddock Lobo
 
 📍 ENDEREÇOS - REGRA CRÍTICA:
 ═══════════════════════════════════════════════════════════
-Use endereços ESPECÍFICOS apenas quando você TEM CERTEZA do local exato.
-Quando NÃO tiver certeza, use localização INDICATIVA.
+✅ Se SOUBER o endereço exato (de busca real):
+- Use o formato completo: "Rua XV de Novembro, 1050 - Centro, ${location} - SC"
 
-✅ Se SOUBER o endereço exato:
-- "Rua XV de Novembro, 1050 - Centro, ${location} - SC"
-- "Rodovia BR-470, Km 61 - Badenfurt, ${location} - SC"
+✅ Se NÃO souber endereço específico:
+- Use localização INDICATIVA: "Região do Centro, ${location} - SC"
+- Ou referência conhecida: "Shopping Neumarkt, ${location} - SC"
 
-✅ Se NÃO souber endereço específico (use indicativo):
-- "Região do Centro, ${location} - SC"
-- "Bairro Fortaleza, ${location} - SC"
-- "Rodovia BR-470, ${location} - SC"
-
-❌ NUNCA invente endereços se não tiver certeza:
-- Não crie números de rua aleatórios
-- Não invente ruas que não conhece
+❌ NUNCA invente números ou ruas que você não confirmou
 
 📋 DADOS OBRIGATÓRIOS:
 ═══════════════════════════════════════════════════════════
-- name: Nome oficial da rede/franquia CONHECIDA
-- address: Endereço ESPECÍFICO (se souber) ou INDICATIVO (se não souber)
-- phone: Telefone real se souber, ou "Telefone a confirmar"
-- instagram: @oficial se souber, ou "@verificar"
+- name: Nome oficial do estabelecimento
+- address: Endereço REAL (se confirmado) ou INDICATIVO (se não)
+- phone: Telefone real se encontrar em busca, ou "Telefone a confirmar"
+- instagram: @usuario se encontrar, ou "@verificar"
 - responsible: "Gerente da Loja" ou "Gerente Regional"
-- revenue: Valores REALISTAS para o porte da rede
+- revenue: Valores REALISTAS para o porte
 - matchScore: 75-95 (potencial REAL de comprar "${products}")
 - reasons: 3 motivos ESPECÍFICOS e CONVINCENTES
 
-⚠️ QUANTIDADE vs QUALIDADE:
-═══════════════════════════════════════════════════════════
-- Retorne APENAS 3-8 REDES/FRANQUIAS que você TEM CERTEZA que existem
-- É MELHOR retornar 3 leads PERFEITOS que 12 leads DUVIDOSOS
-- Seja HONESTO: endereço específico se souber, indicativo se não souber
-
-🎯 CHECKLIST ANTES DE INCLUIR CADA LEAD:
-═══════════════════════════════════════════════════════════
-□ É uma rede/franquia CONHECIDA nacionalmente ou regionalmente?
-□ Você TEM CERTEZA que existe unidade em ${location}?
-□ Usou endereço ESPECÍFICO apenas se tiver certeza, ou INDICATIVO?
-□ Os motivos são ESPECÍFICOS para este tipo de negócio?
-
-🎯 SUA MISSÃO: Retornar REDES CONHECIDAS - endereços específicos quando souber, indicativos quando não souber.`;
+🎯 SUA MISSÃO: Retornar 12-20 leads com dados REAIS e VERIFICÁVEIS`;
 
 
-    const userPrompt = `🎯 TAREFA: Encontre 3-8 REDES/FRANQUIAS CONHECIDAS em ${location}
+    const userPrompt = `🎯 TAREFA: Encontre 12-20 estabelecimentos REAIS em ${location}
 
-📍 LOCALIZAÇÃO EXATA:
+📍 INFORMAÇÕES DA BUSCA:
 ═══════════════════════════════════════════════════════════
 Cidade: ${location}
 Segmento: ${segment}
@@ -99,39 +103,37 @@ Produtos a vender: ${products}
 ${filters.category !== 'all' ? `Categoria: ${filters.category}` : ''}
 ${filters.companySize !== 'all' ? `Porte: ${filters.companySize}` : ''}
 
-🏢 FOQUE APENAS EM REDES CONHECIDAS:
+${webResults ? `\n🔍 DADOS DE BUSCA NA WEB:\n${webResults.substring(0, 3000)}\n` : ''}
+
+🏢 TIPOS DE ESTABELECIMENTOS A INCLUIR:
 ═══════════════════════════════════════════════════════════
-✅ INCLUA:
-- Redes nacionais que você SABE que existem em ${location}
-- Franquias regionais FAMOSAS com unidade em ${location}
-- Grandes estabelecimentos NOTÓRIOS de ${location}
+✅ INCLUA (para atingir 12-20 leads):
+1. Redes nacionais conhecidas (McDonald's, Subway, etc)
+2. Franquias regionais consolidadas
+3. Estabelecimentos locais GRANDES que você confirmar via busca
+4. Shoppings centers e galerias comerciais relevantes
+5. Atacadistas e distribuidores da região
 
-❌ NÃO INCLUA:
-- Lojas locais pequenas/médias (você não pode confirmar)
-- Estabelecimentos que você "acha" que existem
-- Qualquer negócio que você tem DÚVIDA
-
-📍 ENDEREÇOS - SEJA HONESTO:
+📍 ENDEREÇOS - USE DADOS REAIS:
 ═══════════════════════════════════════════════════════════
-Use endereço ESPECÍFICO quando souber, INDICATIVO quando não souber.
+PRIORIDADE: Use informações das buscas reais quando disponíveis
 
-✅ Se SOUBER o endereço exato:
-- "Rua XV de Novembro, 1050 - Centro, ${location} - SC"
-- "Rodovia BR-470, Km 61 - Badenfurt, ${location} - SC"
+✅ Se encontrou em busca real ou tem CERTEZA:
+- Use endereço completo: "Rua XV de Novembro, 1050 - Centro, ${location} - SC"
 
-✅ Se NÃO souber (use indicativo):
-- "Região do Centro, ${location} - SC"
-- "Bairro Fortaleza, ${location} - SC"
+✅ Se não tem endereço exato:
+- Use localização indicativa: "Região do Centro, ${location} - SC"
+- Ou referência: "Shopping [Nome], ${location} - SC"
 
-❌ NUNCA invente endereços que você não sabe
+❌ NUNCA invente números de rua ou endereços específicos
 
 📋 DADOS PARA CADA LEAD:
 ═══════════════════════════════════════════════════════════
 {
-  "name": "Nome oficial da rede",
-  "address": "Endereço ESPECÍFICO ou INDICATIVO conforme você souber",
+  "name": "Nome real do estabelecimento",
+  "address": "Endereço REAL (se confirmado) ou INDICATIVO",
   "phone": "Telefone real ou 'Telefone a confirmar'",
-  "instagram": "@oficial ou '@verificar'",
+  "instagram": "@usuario (se encontrado) ou '@verificar'",
   "responsible": "Gerente de Loja",
   "category": "${segment}",
   "revenue": "R$ [valor realista]/mês",
@@ -146,19 +148,18 @@ Use endereço ESPECÍFICO quando souber, INDICATIVO quando não souber.
 
 ⚠️ REGRAS CRÍTICAS:
 ═══════════════════════════════════════════════════════════
-1. Retorne APENAS 3-8 REDES/FRANQUIAS conhecidas
-2. Endereço específico se souber, indicativo se não souber
-3. Seja HONESTO sobre o que você sabe e não sabe
-4. QUALIDADE > QUANTIDADE
+1. Retorne OBRIGATORIAMENTE 12-20 leads
+2. Use dados REAIS das buscas quando disponíveis
+3. Marque dados não confirmados como "a confirmar" ou "@verificar"
+4. Combine redes nacionais + estabelecimentos locais grandes
+5. NUNCA invente endereços específicos que não pode confirmar
 
-🎯 ANTES DE ENVIAR:
+🎯 CHECKLIST FINAL:
 ═══════════════════════════════════════════════════════════
-Para CADA lead:
-- "Eu sei que essa REDE existe em ${location}?" → Se não: REMOVA
-- "Sei o endereço exato?" → Sim: use específico / Não: use indicativo
-- "Os motivos são ESPECÍFICOS?" → Se não: REESCREVA
-
-Seja HONESTO nos endereços: específico quando souber, indicativo quando não souber.`;
+- Tenho 12-20 leads? (OBRIGATÓRIO)
+- Usei dados reais das buscas?
+- Marquei dados não confirmados adequadamente?
+- Inclui mix de redes nacionais e estabelecimentos locais grandes?`;
 
     // Use tool calling to force structured JSON output
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -252,6 +253,10 @@ Seja HONESTO nos endereços: específico quando souber, indicativo quando não s
       
       if (!Array.isArray(leads) || leads.length === 0) {
         throw new Error("Nenhum lead encontrado para os critérios especificados");
+      }
+      
+      if (leads.length < 12) {
+        console.warn(`⚠️ Only ${leads.length} leads returned, expected 12-20`);
       }
       
       console.log(`Successfully parsed ${leads.length} leads`);

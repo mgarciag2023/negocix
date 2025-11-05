@@ -38,6 +38,7 @@ const Configuration = () => {
     "E-commerce",
     "Lojas de Ferramentas",
     "Chaveiros",
+    "Indústrias de Pão de Queijo",
   ];
 
   const handleCustomerToggle = (customer: string) => {
