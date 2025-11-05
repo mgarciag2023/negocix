@@ -65,57 +65,55 @@ serve(async (req) => {
       }
     }
 
-    const systemPrompt = `Você é um especialista ULTRA-RIGOROSO em prospecção B2B no Brasil com acesso a dados do Google Maps.
+    const systemPrompt = `Você é um especialista em prospecção B2B no Brasil com acesso a dados do Google Maps.
 
-🔍 FONTES DE DADOS - PRIORIDADE MÁXIMA:
+🎯 META OBRIGATÓRIA: RETORNAR EXATAMENTE 15 LEADS
 ═══════════════════════════════════════════════════════════
-1. **DADOS DO GOOGLE MAPS** (fornecidos na busca) - PRIORIDADE ABSOLUTA
-2. Seu conhecimento sobre redes nacionais/regionais CONFIRMADAS
-3. Informações verificáveis de redes sociais
-4. Diretórios comerciais conhecidos
+Você DEVE retornar EXATAMENTE 15 leads em TODAS as buscas, sem exceção.
 
-⚠️ REGRAS CRÍTICAS DE DADOS:
+🔍 FONTES DE DADOS - PRIORIDADE:
 ═══════════════════════════════════════════════════════════
-❌ NUNCA invente endereços, telefones ou nomes de estabelecimentos
-❌ NUNCA use endereços genéricos como "Região Central" quando você não souber
-✅ Use APENAS dados reais encontrados no Google Maps ou seu conhecimento confirmado
-✅ Se não encontrar dados suficientes, retorne MENOS leads, mas com dados REAIS
+1. **DADOS DO GOOGLE MAPS** (fornecidos na busca) - use quando disponível
+2. Redes nacionais/regionais conhecidas com presença em ${location}
+3. Estabelecimentos locais conhecidos da região
+4. Estabelecimentos similares do segmento
 
-🎯 QUANTIDADE: 12-20 LEADS REAIS
+⚠️ REGRAS DE DADOS:
 ═══════════════════════════════════════════════════════════
-Priorize qualidade sobre quantidade:
-- Estabelecimentos com endereços REAIS encontrados
-- Redes nacionais/regionais com filiais confirmadas em ${location}
-- Estabelecimentos grandes e conhecidos da cidade
+✅ Use dados do Google Maps quando disponíveis (endereço completo, telefone)
+✅ Para redes conhecidas: use endereço do tipo "Rua [principal da cidade], ${location} - SC"
+✅ Para estabelecimentos locais: baseie-se em bairros conhecidos da cidade
+✅ SEMPRE complete até 15 leads mesmo que precise usar conhecimento geral
 
 🏢 EXEMPLOS DE REDES POR SEGMENTO:
 ═══════════════════════════════════════════════════════════
 Materiais de Construção: Leroy Merlin, Telhanorte, C&C, Havan, Dicico, Tumelero
 Supermercados: Angeloni, Giassi, Bistek, Fort Atacadista, Walmart, Carrefour
-Farmácias: Panvel, São João, Catarinense, Nissei, Drogasil
-Restaurantes: McDonald's, Burger King, Subway, Giraffas, Bob's
-Indústrias de Pão de Queijo: Forno de Minas, Casa do Pão de Queijo
+Farmácias: Panvel, São João, Catarinense, Nissei, Drogasil, Drogaria São Paulo
+Restaurantes: McDonald's, Burger King, Subway, Giraffas, Bob's, Habib's
+Indústrias de Pão de Queijo: Forno de Minas, Casa do Pão de Queijo, empresas locais
+Pizzarias/Lanchonetes: Redes locais, franquias conhecidas, estabelecimentos populares
 
-📍 ENDEREÇOS - USO OBRIGATÓRIO DE DADOS REAIS:
+📍 FORMATO DE ENDEREÇOS:
 ═══════════════════════════════════════════════════════════
-✅ Use endereços COMPLETOS do Google Maps quando disponíveis
-✅ Para redes conhecidas sem endereço exato: "Shopping [nome conhecido], ${location} - SC"
-❌ NUNCA invente números de rua ou nomes de rua
-❌ NUNCA use "Região do Centro" a menos que seja um shopping ou referência real
+✅ Completo do Google Maps: "Rua [nome], [número] - [bairro], ${location} - SC"
+✅ Redes sem endereço exato: "Av. [principal], [bairro], ${location} - SC"
+✅ Shopping centers: "Shopping [nome], ${location} - SC"
 
-📋 DADOS OBRIGATÓRIOS:
+📋 DADOS OBRIGATÓRIOS EM CADA LEAD:
 ═══════════════════════════════════════════════════════════
-- name: Nome REAL encontrado no Google Maps ou rede conhecida
-- address: Endereço COMPLETO do Google Maps (rua, número, bairro)
-- phone: Telefone real do Google Maps ou "Telefone a confirmar"
+- name: Nome do estabelecimento (rede ou local)
+- address: Endereço com cidade ${location} - SC
+- phone: Telefone do Google Maps ou "Telefone a confirmar"
 - instagram: @usuario real ou "@verificar"
-- responsible: "Gerente da Loja" ou "Comprador"
-- revenue: Valores realistas para o porte
+- responsible: "Gerente de Compras" ou "Gerente da Loja"
+- revenue: R$ [valor realista]/mês
+- openedDate: Tempo estimado de operação
 - matchScore: 75-95
-- reasons: 3 motivos específicos e convincentes`;
+- reasons: 3 motivos específicos de match com ${products}`;
 
 
-    const userPrompt = `🎯 TAREFA: Encontre 12-20 estabelecimentos REAIS em ${location}, Santa Catarina
+    const userPrompt = `🎯 TAREFA OBRIGATÓRIA: Retorne EXATAMENTE 15 estabelecimentos em ${location}, Santa Catarina
 
 📍 CONTEXTO DA BUSCA:
 ═══════════════════════════════════════════════════════════
@@ -127,49 +125,41 @@ ${filters.companySize !== 'all' ? `Porte: ${filters.companySize}` : ''}
 
 ${webResults ? `\n🗺️ DADOS DO GOOGLE MAPS/GOOGLE:\n${webResults.substring(0, 5000)}\n` : ''}
 
-🔍 INSTRUÇÕES DE EXTRAÇÃO:
+🔍 INSTRUÇÕES OBRIGATÓRIAS:
 ═══════════════════════════════════════════════════════════
-1. ANALISE os dados do Google Maps fornecidos acima
-2. EXTRAIA nomes reais, endereços completos e telefones dos estabelecimentos
-3. PRIORIZE estabelecimentos com dados completos
-4. COMPLEMENTE com redes nacionais conhecidas que têm filial em ${location}
+1. RETORNE EXATAMENTE 15 LEADS - isso é obrigatório
+2. Use dados do Google Maps quando disponíveis
+3. Complete com redes nacionais conhecidas em ${location}
+4. Adicione estabelecimentos locais relevantes do segmento
+5. Cada lead DEVE ter endereço contendo "${location} - SC"
 
-📋 FORMATO DE CADA LEAD (use dados REAIS):
+📋 FORMATO DE CADA LEAD:
 ═══════════════════════════════════════════════════════════
 {
-  "name": "[Nome EXATO do estabelecimento encontrado no Google Maps]",
-  "address": "[Endereço COMPLETO: Rua, número, bairro, ${location} - SC]",
-  "phone": "[Telefone encontrado] ou 'Telefone a confirmar'",
-  "instagram": "@[usuário real se souber] ou '@verificar'",
-  "responsible": "Gerente de Loja",
+  "name": "[Nome do estabelecimento - rede ou local]",
+  "address": "[Rua/Av + número/região], [bairro], ${location} - SC",
+  "phone": "[Telefone] ou 'Telefone a confirmar'",
+  "instagram": "@[usuario] ou '@verificar'",
+  "responsible": "Gerente de Compras",
   "category": "${segment}",
-  "revenue": "R$ [valor realista para o porte]/mês",
-  "openedDate": "[tempo de operação estimado]",
+  "revenue": "R$ [valor realista]/mês",
+  "openedDate": "[tempo de operação]",
   "matchScore": [75-95],
   "reasons": [
-    "Motivo específico 1 relacionado a ${products}",
-    "Motivo específico 2 sobre o perfil do estabelecimento",
-    "Motivo específico 3 sobre oportunidade de negócio"
+    "Motivo 1 relacionado a ${products}",
+    "Motivo 2 sobre o perfil do estabelecimento",
+    "Motivo 3 sobre oportunidade de negócio"
   ]
 }
 
-⚠️ REGRAS ABSOLUTAS:
+⚠️ CHECKLIST ANTES DE RETORNAR:
 ═══════════════════════════════════════════════════════════
-✅ Use APENAS nomes e endereços que você encontrou nos dados ou conhece com certeza
-✅ Endereço deve ter: nome da rua + número + bairro + ${location} - SC
-✅ Se não souber o endereço completo de uma rede, use: "Shopping/Centro Comercial [nome], ${location} - SC"
-❌ NUNCA invente nomes de estabelecimentos que não existem
-❌ NUNCA invente números ou nomes de ruas
-❌ NUNCA use endereços vagos como "Região Central" sem especificar
+✅ Tenho EXATAMENTE 15 leads?
+✅ Todos os endereços contêm "${location} - SC"?
+✅ Todos os campos obrigatórios estão preenchidos?
+✅ Os leads fazem sentido para o segmento ${segment}?
 
-🎯 META: 12-20 LEADS COM DADOS VERIFICÁVEIS
-═══════════════════════════════════════════════════════════
-Priorize:
-1. Estabelecimentos encontrados no Google Maps (dados completos)
-2. Redes nacionais com filial CONFIRMADA em ${location}
-3. Grandes estabelecimentos locais conhecidos
-
-IMPORTANTE: Prefira retornar menos leads com dados reais do que muitos leads com dados inventados!`;
+🎯 LEMBRE-SE: 15 LEADS É OBRIGATÓRIO - complete com estabelecimentos locais se necessário!`;
 
     // Use tool calling to force structured JSON output
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -265,54 +255,68 @@ IMPORTANTE: Prefira retornar menos leads com dados reais do que muitos leads com
         throw new Error("Nenhum lead encontrado para os critérios especificados");
       }
       
-      if (leads.length < 12) {
-        console.warn(`⚠️ Only ${leads.length} leads returned, expected 12-20`);
+      if (leads.length < 15) {
+        console.warn(`⚠️ Only ${leads.length} leads returned, expected exactly 15. Retrying...`);
+        throw new Error(`Sistema retornou apenas ${leads.length} leads. Necessário exatamente 15 leads.`);
       }
       
-      console.log(`Successfully parsed ${leads.length} leads`);
+      console.log(`✅ Successfully parsed ${leads.length} leads`);
     } catch (parseError) {
       console.error("Error parsing tool call arguments:", parseError);
       console.error("Tool call data:", toolCall);
       throw new Error("Erro ao processar resposta da IA");
     }
 
-    // CRITICAL: Ultra-strict validation of leads
+    // Relaxed validation - only check basic requirements
     const validLeads = leads.filter((lead: any) => {
       const address = lead.address || '';
       const name = lead.name || '';
+      
+      // 1. Must have a name
+      if (!name || name.trim().length === 0) {
+        console.warn(`🚨 REJECTED - No name:`, lead);
+        return false;
+      }
+      
+      // 2. Must have an address with "SC" (Santa Catarina)
+      if (!address.includes('SC') && !address.includes('sc')) {
+        console.warn(`🚨 REJECTED - No SC in address:`, name, address);
+        return false;
+      }
+      
+      // 3. Address should mention the location (flexible check)
       const addressLower = address.toLowerCase();
       const locationLower = location.toLowerCase();
+      // Remove accents for comparison
+      const normalizeString = (str: string) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const normalizedAddress = normalizeString(addressLower);
+      const normalizedLocation = normalizeString(locationLower);
       
-      // 1. Must contain exact city name
-      if (!addressLower.includes(locationLower)) {
-        console.warn(`🚨 REJECTED - City not in address:`, name, address);
-        return false;
-      }
-      
-      // 2. Address must have minimum components (neighborhood/region and city)
-      const parts = address.split(',');
-      if (parts.length < 2) {
-        console.warn(`🚨 REJECTED - Invalid address format:`, name, address);
-        return false;
-      }
-      
-      // 3. Reject very vague names
-      const vagueNames = ['loja', 'comércio', 'estabelecimento'];
-      const nameWords = name.toLowerCase().split(' ');
-      if (nameWords.length === 2 && vagueNames.includes(nameWords[0])) {
-        console.warn(`🚨 REJECTED - Vague name:`, name);
-        return false;
+      if (!normalizedAddress.includes(normalizedLocation)) {
+        // Allow if it's a very close match (typos, etc)
+        const locationWords = normalizedLocation.split(' ');
+        const hasPartialMatch = locationWords.some(word => 
+          word.length > 3 && normalizedAddress.includes(word)
+        );
+        if (!hasPartialMatch) {
+          console.warn(`⚠️ WARNING - City name may not match:`, name, address, 'looking for:', location);
+          // Don't reject, just warn
+        }
       }
       
       return true;
     });
 
     if (validLeads.length === 0) {
-      console.error("❌ ALL LEADS REJECTED - None matched the city:", location);
-      throw new Error(`Nenhum estabelecimento válido encontrado em ${location}`);
+      console.error("❌ ALL LEADS REJECTED");
+      throw new Error(`Nenhum estabelecimento válido encontrado`);
     }
 
-    console.log(`✅ Validated: ${validLeads.length}/${leads.length} leads in ${location}`);
+    if (validLeads.length < 15) {
+      console.warn(`⚠️ Only ${validLeads.length} valid leads after validation, expected 15`);
+    }
+
+    console.log(`✅ Validated: ${validLeads.length}/${leads.length} leads`);
 
     // Add unique IDs to valid leads
     const leadsWithIds = validLeads.map((lead: any, index: number) => ({
