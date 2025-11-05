@@ -19,147 +19,157 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // First, search the web for real establishments
-    console.log('Searching web for real establishments...');
-    const webSearchQuery = `${segment} em ${location} Brasil endereço telefone`;
+    // Search Google Maps for real establishments
+    console.log('Searching Google Maps for real establishments...');
+    const mapsSearchQuery = `${segment} ${location} SC Brasil`;
     
     let webResults = '';
     try {
-      const searchResponse = await fetch(`https://html.duckduckgo.com/html/?q=${encodeURIComponent(webSearchQuery)}`);
+      // Try to get Google Maps data
+      const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(mapsSearchQuery)}`;
+      console.log('Fetching from Google Maps:', mapsUrl);
+      
+      const searchResponse = await fetch(mapsUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+      });
+      
       if (searchResponse.ok) {
         webResults = await searchResponse.text();
-        console.log('Web search successful, found real establishments');
+        console.log('Google Maps search successful, extracting data...');
+        
+        // Extract more context from the HTML
+        const relevantData = webResults.substring(0, 5000); // Get more data for better context
+        webResults = relevantData;
       }
     } catch (error) {
-      console.warn('Web search failed, will rely on AI knowledge:', error);
+      console.warn('Google Maps search failed, trying alternative search:', error);
+      
+      // Fallback to Google search
+      try {
+        const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(mapsSearchQuery + ' endereço telefone instagram')}`;
+        const fallbackResponse = await fetch(googleSearchUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+          }
+        });
+        
+        if (fallbackResponse.ok) {
+          webResults = await fallbackResponse.text();
+          webResults = webResults.substring(0, 5000);
+          console.log('Google search successful');
+        }
+      } catch (fallbackError) {
+        console.warn('All web searches failed, will rely on AI knowledge:', fallbackError);
+      }
     }
 
-    const systemPrompt = `Você é um especialista ULTRA-RIGOROSO em prospecção B2B no Brasil.
+    const systemPrompt = `Você é um especialista ULTRA-RIGOROSO em prospecção B2B no Brasil com acesso a dados do Google Maps.
 
-🔍 FONTES DE DADOS OBRIGATÓRIAS:
+🔍 FONTES DE DADOS - PRIORIDADE MÁXIMA:
 ═══════════════════════════════════════════════════════════
-Você DEVE basear suas respostas em:
-1. Informações reais de buscas no Google/Google Maps
-2. Dados verificáveis de redes sociais (Instagram, Facebook)
-3. Seu conhecimento sobre redes nacionais/regionais CONFIRMADAS
-4. Diretórios comerciais e sites oficiais
+1. **DADOS DO GOOGLE MAPS** (fornecidos na busca) - PRIORIDADE ABSOLUTA
+2. Seu conhecimento sobre redes nacionais/regionais CONFIRMADAS
+3. Informações verificáveis de redes sociais
+4. Diretórios comerciais conhecidos
 
-❌ NUNCA invente ou "adivinhe" informações
-✅ Se não tiver certeza de um dado, marque como "a confirmar"
-
-🎯 QUANTIDADE EXIGIDA: 12-20 LEADS
+⚠️ REGRAS CRÍTICAS DE DADOS:
 ═══════════════════════════════════════════════════════════
-IMPORTANTE: Você DEVE retornar entre 12 e 20 leads por busca.
-Combine diferentes tipos de estabelecimentos:
-- Redes nacionais conhecidas (McDonald's, Subway, etc)
-- Franquias regionais consolidadas
-- Estabelecimentos locais GRANDES e conhecidos
-- Shoppings e centros comerciais relevantes
+❌ NUNCA invente endereços, telefones ou nomes de estabelecimentos
+❌ NUNCA use endereços genéricos como "Região Central" quando você não souber
+✅ Use APENAS dados reais encontrados no Google Maps ou seu conhecimento confirmado
+✅ Se não encontrar dados suficientes, retorne MENOS leads, mas com dados REAIS
 
-🏢 EXEMPLOS DE REDES CONFIÁVEIS POR SEGMENTO:
+🎯 QUANTIDADE: 12-20 LEADS REAIS
 ═══════════════════════════════════════════════════════════
-Materiais de Construção: Leroy Merlin, Telhanorte, C&C, Havan (setor construção), 
-  Dicico, Tumelero, Cassol, Balaroti, Obramax, Astra
-Supermercados: Angeloni, Giassi, Bistek, Breithaupt, Fort Atacadista, Walmart, Carrefour
-Farmácias: Panvel, São João, Catarinense, Nissei, Drogasil, São Paulo
-Lojas Departamento: Havan, Renner, Riachuelo, C&A, Marisa, Lojas Americanas
-Pet Shops: Petz, Cobasi, PetLove (lojas físicas)
-Restaurantes: McDonald's, Burger King, Subway, Giraffas, Bob's, Pizza Hut, Domino's
-Postos Combustível: Ipiranga, Shell, BR, Petrobras
-Indústrias de Pão de Queijo: Forno de Minas, Casa do Pão de Queijo, Pão de Queijo Haddock Lobo
+Priorize qualidade sobre quantidade:
+- Estabelecimentos com endereços REAIS encontrados
+- Redes nacionais/regionais com filiais confirmadas em ${location}
+- Estabelecimentos grandes e conhecidos da cidade
 
-📍 ENDEREÇOS - REGRA CRÍTICA:
+🏢 EXEMPLOS DE REDES POR SEGMENTO:
 ═══════════════════════════════════════════════════════════
-✅ Se SOUBER o endereço exato (de busca real):
-- Use o formato completo: "Rua XV de Novembro, 1050 - Centro, ${location} - SC"
+Materiais de Construção: Leroy Merlin, Telhanorte, C&C, Havan, Dicico, Tumelero
+Supermercados: Angeloni, Giassi, Bistek, Fort Atacadista, Walmart, Carrefour
+Farmácias: Panvel, São João, Catarinense, Nissei, Drogasil
+Restaurantes: McDonald's, Burger King, Subway, Giraffas, Bob's
+Indústrias de Pão de Queijo: Forno de Minas, Casa do Pão de Queijo
 
-✅ Se NÃO souber endereço específico:
-- Use localização INDICATIVA: "Região do Centro, ${location} - SC"
-- Ou referência conhecida: "Shopping Neumarkt, ${location} - SC"
-
-❌ NUNCA invente números ou ruas que você não confirmou
+📍 ENDEREÇOS - USO OBRIGATÓRIO DE DADOS REAIS:
+═══════════════════════════════════════════════════════════
+✅ Use endereços COMPLETOS do Google Maps quando disponíveis
+✅ Para redes conhecidas sem endereço exato: "Shopping [nome conhecido], ${location} - SC"
+❌ NUNCA invente números de rua ou nomes de rua
+❌ NUNCA use "Região do Centro" a menos que seja um shopping ou referência real
 
 📋 DADOS OBRIGATÓRIOS:
 ═══════════════════════════════════════════════════════════
-- name: Nome oficial do estabelecimento
-- address: Endereço REAL (se confirmado) ou INDICATIVO (se não)
-- phone: Telefone real se encontrar em busca, ou "Telefone a confirmar"
-- instagram: @usuario se encontrar, ou "@verificar"
-- responsible: "Gerente da Loja" ou "Gerente Regional"
-- revenue: Valores REALISTAS para o porte
-- matchScore: 75-95 (potencial REAL de comprar "${products}")
-- reasons: 3 motivos ESPECÍFICOS e CONVINCENTES
-
-🎯 SUA MISSÃO: Retornar 12-20 leads com dados REAIS e VERIFICÁVEIS`;
+- name: Nome REAL encontrado no Google Maps ou rede conhecida
+- address: Endereço COMPLETO do Google Maps (rua, número, bairro)
+- phone: Telefone real do Google Maps ou "Telefone a confirmar"
+- instagram: @usuario real ou "@verificar"
+- responsible: "Gerente da Loja" ou "Comprador"
+- revenue: Valores realistas para o porte
+- matchScore: 75-95
+- reasons: 3 motivos específicos e convincentes`;
 
 
-    const userPrompt = `🎯 TAREFA: Encontre 12-20 estabelecimentos REAIS em ${location}
+    const userPrompt = `🎯 TAREFA: Encontre 12-20 estabelecimentos REAIS em ${location}, Santa Catarina
 
-📍 INFORMAÇÕES DA BUSCA:
+📍 CONTEXTO DA BUSCA:
 ═══════════════════════════════════════════════════════════
-Cidade: ${location}
-Segmento: ${segment}
+Cidade: ${location}, SC, Brasil
+Segmento alvo: ${segment}
 Produtos a vender: ${products}
 ${filters.category !== 'all' ? `Categoria: ${filters.category}` : ''}
 ${filters.companySize !== 'all' ? `Porte: ${filters.companySize}` : ''}
 
-${webResults ? `\n🔍 DADOS DE BUSCA NA WEB:\n${webResults.substring(0, 3000)}\n` : ''}
+${webResults ? `\n🗺️ DADOS DO GOOGLE MAPS/GOOGLE:\n${webResults.substring(0, 5000)}\n` : ''}
 
-🏢 TIPOS DE ESTABELECIMENTOS A INCLUIR:
+🔍 INSTRUÇÕES DE EXTRAÇÃO:
 ═══════════════════════════════════════════════════════════
-✅ INCLUA (para atingir 12-20 leads):
-1. Redes nacionais conhecidas (McDonald's, Subway, etc)
-2. Franquias regionais consolidadas
-3. Estabelecimentos locais GRANDES que você confirmar via busca
-4. Shoppings centers e galerias comerciais relevantes
-5. Atacadistas e distribuidores da região
+1. ANALISE os dados do Google Maps fornecidos acima
+2. EXTRAIA nomes reais, endereços completos e telefones dos estabelecimentos
+3. PRIORIZE estabelecimentos com dados completos
+4. COMPLEMENTE com redes nacionais conhecidas que têm filial em ${location}
 
-📍 ENDEREÇOS - USE DADOS REAIS:
-═══════════════════════════════════════════════════════════
-PRIORIDADE: Use informações das buscas reais quando disponíveis
-
-✅ Se encontrou em busca real ou tem CERTEZA:
-- Use endereço completo: "Rua XV de Novembro, 1050 - Centro, ${location} - SC"
-
-✅ Se não tem endereço exato:
-- Use localização indicativa: "Região do Centro, ${location} - SC"
-- Ou referência: "Shopping [Nome], ${location} - SC"
-
-❌ NUNCA invente números de rua ou endereços específicos
-
-📋 DADOS PARA CADA LEAD:
+📋 FORMATO DE CADA LEAD (use dados REAIS):
 ═══════════════════════════════════════════════════════════
 {
-  "name": "Nome real do estabelecimento",
-  "address": "Endereço REAL (se confirmado) ou INDICATIVO",
-  "phone": "Telefone real ou 'Telefone a confirmar'",
-  "instagram": "@usuario (se encontrado) ou '@verificar'",
+  "name": "[Nome EXATO do estabelecimento encontrado no Google Maps]",
+  "address": "[Endereço COMPLETO: Rua, número, bairro, ${location} - SC]",
+  "phone": "[Telefone encontrado] ou 'Telefone a confirmar'",
+  "instagram": "@[usuário real se souber] ou '@verificar'",
   "responsible": "Gerente de Loja",
   "category": "${segment}",
-  "revenue": "R$ [valor realista]/mês",
-  "openedDate": "[tempo realista]",
+  "revenue": "R$ [valor realista para o porte]/mês",
+  "openedDate": "[tempo de operação estimado]",
   "matchScore": [75-95],
   "reasons": [
-    "Motivo ESPECÍFICO 1 por que compraria ${products}",
-    "Motivo ESPECÍFICO 2 com base no modelo de negócio",
-    "Motivo ESPECÍFICO 3 sobre vantagem competitiva"
+    "Motivo específico 1 relacionado a ${products}",
+    "Motivo específico 2 sobre o perfil do estabelecimento",
+    "Motivo específico 3 sobre oportunidade de negócio"
   ]
 }
 
-⚠️ REGRAS CRÍTICAS:
+⚠️ REGRAS ABSOLUTAS:
 ═══════════════════════════════════════════════════════════
-1. Retorne OBRIGATORIAMENTE 12-20 leads
-2. Use dados REAIS das buscas quando disponíveis
-3. Marque dados não confirmados como "a confirmar" ou "@verificar"
-4. Combine redes nacionais + estabelecimentos locais grandes
-5. NUNCA invente endereços específicos que não pode confirmar
+✅ Use APENAS nomes e endereços que você encontrou nos dados ou conhece com certeza
+✅ Endereço deve ter: nome da rua + número + bairro + ${location} - SC
+✅ Se não souber o endereço completo de uma rede, use: "Shopping/Centro Comercial [nome], ${location} - SC"
+❌ NUNCA invente nomes de estabelecimentos que não existem
+❌ NUNCA invente números ou nomes de ruas
+❌ NUNCA use endereços vagos como "Região Central" sem especificar
 
-🎯 CHECKLIST FINAL:
+🎯 META: 12-20 LEADS COM DADOS VERIFICÁVEIS
 ═══════════════════════════════════════════════════════════
-- Tenho 12-20 leads? (OBRIGATÓRIO)
-- Usei dados reais das buscas?
-- Marquei dados não confirmados adequadamente?
-- Inclui mix de redes nacionais e estabelecimentos locais grandes?`;
+Priorize:
+1. Estabelecimentos encontrados no Google Maps (dados completos)
+2. Redes nacionais com filial CONFIRMADA em ${location}
+3. Grandes estabelecimentos locais conhecidos
+
+IMPORTANTE: Prefira retornar menos leads com dados reais do que muitos leads com dados inventados!`;
 
     // Use tool calling to force structured JSON output
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
