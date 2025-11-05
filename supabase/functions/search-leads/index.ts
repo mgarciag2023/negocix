@@ -25,11 +25,11 @@ serve(async (req) => {
     
     let apifyResults: any[] = [];
     try {
-      // Start Apify scraper task
-      console.log('Starting Apify scraper for query:', searchQuery);
+      // Use run-sync-get-dataset-items endpoint for efficient single-call execution
+      console.log('Starting Apify scraper (sync) for query:', searchQuery);
       
-      const apifyRunResponse = await fetch(
-        'https://api.apify.com/v2/actor-tasks/exclusive_ravel~google-maps-scraper-task/runs?token=apify_api_4VVzISqyOszKRn62CZERtBuigK5eKa0SbQjA',
+      const apifyResponse = await fetch(
+        'https://api.apify.com/v2/actor-tasks/exclusive_ravel~google-maps-scraper-task/run-sync-get-dataset-items?token=apify_api_4VVzISqyOszKRn62CZERtBuigK5eKa0SbQjA',
         {
           method: 'POST',
           headers: {
@@ -44,51 +44,15 @@ serve(async (req) => {
         }
       );
 
-      if (!apifyRunResponse.ok) {
-        throw new Error(`Apify API error: ${apifyRunResponse.status}`);
+      if (!apifyResponse.ok) {
+        const errorText = await apifyResponse.text();
+        console.error(`Apify API error: ${apifyResponse.status}`, errorText);
+        throw new Error(`Apify API error: ${apifyResponse.status}`);
       }
 
-      const runData = await apifyRunResponse.json();
-      const runId = runData.data.id;
-      console.log('Apify run started:', runId);
-
-      // Wait for the run to complete (poll with timeout)
-      let completed = false;
-      let attempts = 0;
-      const maxAttempts = 30; // 30 seconds max wait
+      apifyResults = await apifyResponse.json();
+      console.log(`Apify returned ${apifyResults.length} places from Google Maps`);
       
-      while (!completed && attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
-        
-        const statusResponse = await fetch(
-          `https://api.apify.com/v2/actor-runs/${runId}?token=apify_api_4VVzISqyOszKRn62CZERtBuigK5eKa0SbQjA`
-        );
-        
-        const statusData = await statusResponse.json();
-        const status = statusData.data.status;
-        
-        console.log(`Apify run status (attempt ${attempts + 1}):`, status);
-        
-        if (status === 'SUCCEEDED') {
-          completed = true;
-          
-          // Get the results
-          const resultsResponse = await fetch(
-            `https://api.apify.com/v2/actor-runs/${runId}/dataset/items?token=apify_api_4VVzISqyOszKRn62CZERtBuigK5eKa0SbQjA`
-          );
-          
-          apifyResults = await resultsResponse.json();
-          console.log(`Apify returned ${apifyResults.length} places`);
-        } else if (status === 'FAILED' || status === 'ABORTED' || status === 'TIMED-OUT') {
-          throw new Error(`Apify run ${status.toLowerCase()}`);
-        }
-        
-        attempts++;
-      }
-
-      if (!completed) {
-        console.warn('Apify scraper timeout, using partial results if available');
-      }
     } catch (error) {
       console.error('Apify scraper error:', error);
       console.log('Will proceed with AI-generated leads as fallback');
