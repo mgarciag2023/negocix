@@ -72,6 +72,14 @@ Mínimo: 8 leads | Ideal: 15 leads | Critério: QUALIDADE > QUANTIDADE
 2. Empresas conhecidas e verificáveis com presença confirmada em ${location}, ${state || 'SC'}
 3. NUNCA invente estabelecimentos - se não tiver certeza, NÃO inclua
 
+🚨 REGRA CRÍTICA DE LOCALIZAÇÃO:
+═══════════════════════════════════════════════════════════
+⚠️ ATENÇÃO MÁXIMA: Só inclua estabelecimentos que estão FISICAMENTE localizados em ${location}, ${state || 'SC'}
+❌ NÃO INCLUIR estabelecimentos de outras cidades, mesmo que tenham nomes parecidos
+❌ NÃO CONFUNDIR bairros/ruas com nomes de cidades - VALIDE a cidade no endereço
+✅ Exemplo correto: "Rua X - Centro, ${location} - ${state || 'SC'}"
+❌ Exemplo ERRADO: "Rua X - Centro, Outra Cidade - ${state || 'SC'}" (cidade diferente!)
+
 ⚠️ ATENÇÃO ESPECIAL PARA "INDÚSTRIAS":
 ═══════════════════════════════════════════════════════════
 Quando o segmento for "Indústrias de [produto]":
@@ -102,20 +110,28 @@ Pizzarias/Lanchonetes: Redes locais, franquias conhecidas, estabelecimentos popu
 
 📍 FORMATO DE ENDEREÇOS:
 ═══════════════════════════════════════════════════════════
+✅ SEMPRE mencionar a cidade EXATA: "${location} - ${state || 'SC'}"
 ✅ Completo do Google Maps: "Rua [nome], [número] - [bairro], ${location} - ${state || 'SC'}"
-✅ Empresas conhecidas: use endereço real se souber, ou "Endereço a confirmar, ${location} - ${state || 'SC'}"
+❌ NUNCA colocar outras cidades no endereço
 
 📋 DADOS OBRIGATÓRIOS EM CADA LEAD:
 ═══════════════════════════════════════════════════════════
 - name: Nome real do estabelecimento
-- address: Endereço completo com ${location} - ${state || 'SC'}
-- phone: Telefone real ou "Telefone a confirmar"
-- instagram: @usuario real ou "@verificar"
+- address: Endereço COMPLETO com cidade ${location} - ${state || 'SC'}
+- phone: Telefone REAL verificável ou "Não disponível" (NÃO INVENTE!)
+- instagram: @usuario REAL verificável ou "Não disponível" (NÃO INVENTE!)
 - responsible: "Gerente de Compras" ou cargo relevante
 - revenue: R$ [valor realista]/mês
 - openedDate: Tempo estimado de operação
 - matchScore: 75-95
-- reasons: 3 motivos específicos de match com ${products}`;
+- reasons: 3 motivos específicos de match com ${products}
+
+⚠️ IMPORTANTE - DADOS DE CONTATO:
+═══════════════════════════════════════════════════════════
+- Se não souber o telefone REAL, coloque "Não disponível"
+- Se não souber o Instagram REAL, coloque "Não disponível"
+- NUNCA invente telefones ou instagrams falsos
+- Melhor deixar em branco do que colocar informação errada`;
 
 
     const userPrompt = `🎯 TAREFA: Retorne entre 8 a 15 estabelecimentos de ALTA QUALIDADE em ${location}, ${state || 'Santa Catarina'}
@@ -127,6 +143,13 @@ Segmento alvo: ${segment}
 Produtos a vender: ${products}
 ${filters.category !== 'all' ? `Categoria: ${filters.category}` : ''}
 ${filters.companySize !== 'all' ? `Porte: ${filters.companySize}` : ''}
+
+🚨 REGRA CRÍTICA - LOCALIZAÇÃO EXATA:
+═══════════════════════════════════════════════════════════
+⚠️ TODOS os estabelecimentos DEVEM estar fisicamente em: ${location}, ${state || 'SC'}
+❌ NÃO inclua estabelecimentos de outras cidades
+❌ NÃO confunda bairros com cidades
+✅ VALIDE que a cidade no endereço é exatamente: ${location}
 
 ${segment.toLowerCase().includes('indústria') ? `
 ⚠️ ATENÇÃO: Este é um segmento de INDÚSTRIAS/FÁBRICAS
@@ -144,7 +167,9 @@ ${apifyResults.length > 0 ? `\n🗺️ DADOS REAIS DO GOOGLE MAPS (Apify):\n${JS
   rating: place.totalScore,
   reviews: place.reviewsCount,
   category: place.categoryName,
-})), null, 2)}\n` : ''}
+})), null, 2)}\n
+⚠️ FILTRE APENAS estabelecimentos com endereço em ${location}!
+` : ''}
 
 🔍 INSTRUÇÕES OBRIGATÓRIAS:
 ═══════════════════════════════════════════════════════════
@@ -153,15 +178,16 @@ ${apifyResults.length > 0 ? `\n🗺️ DADOS REAIS DO GOOGLE MAPS (Apify):\n${JS
 3. Só inclua leads que você TEM CERTEZA que existem e são relevantes
 4. Priorize dados do Google Maps (mais confiáveis)
 5. Se não tiver certeza sobre um estabelecimento, NÃO inclua
-6. Cada lead DEVE ter endereço contendo "${location} - ${state || 'SC'}"
+6. CRÍTICO: Cada lead DEVE estar fisicamente localizado em ${location} - ${state || 'SC'}
+7. NÃO invente telefones ou instagrams - use "Não disponível" se não souber
 
 📋 FORMATO DE CADA LEAD:
 ═══════════════════════════════════════════════════════════
 {
   "name": "[Nome REAL do estabelecimento]",
-  "address": "[Endereço real ou 'Endereço a confirmar, ${location} - ${state || 'SC'}']",
-  "phone": "[Telefone real] ou 'Telefone a confirmar'",
-  "instagram": "@[usuario real] ou '@verificar'",
+  "address": "[Rua, número - Bairro, ${location} - ${state || 'SC'}]",
+  "phone": "[Telefone REAL] ou 'Não disponível'",
+  "instagram": "@[usuario REAL] ou 'Não disponível'",
   "responsible": "Gerente de Compras",
   "category": "${segment}",
   "revenue": "R$ [valor realista]/mês",
@@ -178,8 +204,10 @@ ${apifyResults.length > 0 ? `\n🗺️ DADOS REAIS DO GOOGLE MAPS (Apify):\n${JS
 ═══════════════════════════════════════════════════════════
 ✅ Tenho entre 8 a 15 leads de ALTA QUALIDADE?
 ✅ Todos os leads são REAIS e VERIFICÁVEIS?
+✅ Todos os estabelecimentos estão FISICAMENTE em ${location}?
 ✅ Todos os endereços contêm "${location} - ${state || 'SC'}"?
 ${segment.toLowerCase().includes('indústria') ? '✅ Todos os leads são INDÚSTRIAS/FÁBRICAS (não lojas)?' : ''}
+✅ NÃO inventei telefones ou instagrams?
 ✅ Todos os campos obrigatórios estão preenchidos?
 
 🎯 PRIORIZE QUALIDADE: Melhor 8 leads excelentes do que 15 duvidosos!`;
@@ -318,7 +346,7 @@ ${segment.toLowerCase().includes('indústria') ? '✅ Todos os leads são INDÚS
         return false;
       }
       
-      // 3. Address should mention the location (flexible check)
+      // 3. CRITICAL: Address MUST mention the exact location (city)
       const addressLower = address.toLowerCase();
       const locationLower = location.toLowerCase();
       // Remove accents for comparison
@@ -326,15 +354,22 @@ ${segment.toLowerCase().includes('indústria') ? '✅ Todos os leads são INDÚS
       const normalizedAddress = normalizeString(addressLower);
       const normalizedLocation = normalizeString(locationLower);
       
+      // Check if the city name appears in the address
       if (!normalizedAddress.includes(normalizedLocation)) {
-        // Allow if it's a very close match (typos, etc)
-        const locationWords = normalizedLocation.split(' ');
-        const hasPartialMatch = locationWords.some(word => 
-          word.length > 3 && normalizedAddress.includes(word)
-        );
-        if (!hasPartialMatch) {
-          console.warn(`⚠️ WARNING - City name may not match:`, name, address, 'looking for:', location);
-          // Don't reject, just warn
+        console.warn(`🚨 REJECTED - City name not found in address:`, name, address, 'expected city:', location);
+        return false;
+      }
+      
+      // Additional check: make sure it's not just a street/neighborhood name
+      // The city should appear after a comma or dash (typical address format)
+      const cityPattern = new RegExp(`[,\\-]\\s*${normalizedLocation}\\s*[\\-,]`, 'i');
+      if (!cityPattern.test(normalizedAddress)) {
+        console.warn(`⚠️ WARNING - City name may be part of street/neighborhood, not actual city:`, name, address);
+        // Still check if it's followed by the state code which would indicate proper formatting
+        const stateCodeAfterCity = new RegExp(`${normalizedLocation}\\s*[\\-,]?\\s*(${state || 'sc'})`, 'i');
+        if (!stateCodeAfterCity.test(normalizedAddress)) {
+          console.warn(`🚨 REJECTED - City name not properly formatted in address:`, name, address);
+          return false;
         }
       }
       
