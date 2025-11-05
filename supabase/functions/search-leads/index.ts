@@ -60,53 +60,64 @@ serve(async (req) => {
 
     const systemPrompt = `Você é um especialista em prospecção B2B no Brasil com acesso a dados do Google Maps.
 
-🎯 META OBRIGATÓRIA: RETORNAR EXATAMENTE 15 LEADS
+🎯 META: RETORNAR ENTRE 8 A 15 LEADS DE ALTA QUALIDADE
 ═══════════════════════════════════════════════════════════
-Você DEVE retornar EXATAMENTE 15 leads em TODAS as buscas, sem exceção.
+Retorne APENAS leads que você TEM CERTEZA que existem e são relevantes.
+Mínimo: 8 leads | Ideal: 15 leads | Critério: QUALIDADE > QUANTIDADE
 
 🔍 FONTES DE DADOS - PRIORIDADE:
 ═══════════════════════════════════════════════════════════
-1. **DADOS DO GOOGLE MAPS** (fornecidos na busca) - use quando disponível
-2. Redes nacionais/regionais conhecidas com presença em ${location}
-3. Estabelecimentos locais conhecidos da região
-4. Estabelecimentos similares do segmento
+1. **DADOS DO GOOGLE MAPS** (fornecidos na busca) - SEMPRE priorize estes
+2. Empresas conhecidas e verificáveis com presença confirmada em ${location}
+3. NUNCA invente estabelecimentos - se não tiver certeza, NÃO inclua
 
-⚠️ REGRAS DE DADOS:
+⚠️ ATENÇÃO ESPECIAL PARA "INDÚSTRIAS":
 ═══════════════════════════════════════════════════════════
-✅ Use dados do Google Maps quando disponíveis (endereço completo, telefone)
-✅ Para redes conhecidas: use endereço do tipo "Rua [principal da cidade], ${location} - SC"
-✅ Para estabelecimentos locais: baseie-se em bairros conhecidos da cidade
-✅ SEMPRE complete até 15 leads mesmo que precise usar conhecimento geral
+Quando o segmento for "Indústrias de [produto]":
+✅ INCLUIR: Fábricas, produtores, fabricantes, indústrias que PRODUZEM o produto
+✅ INCLUIR: Empresas com CNPJ industrial que fabricam em larga escala
+❌ NÃO INCLUIR: Lojas, cafeterias, padarias, restaurantes que apenas VENDEM
+❌ NÃO INCLUIR: Pontos de venda, franquias, estabelecimentos comerciais
 
-🏢 EXEMPLOS DE REDES POR SEGMENTO:
+Exemplos corretos para "Indústrias de Pão de Queijo":
+- Catarininho Alimentos (produz linha de temperos e recheios)
+- Schultz Massas Especiais (fabrica produtos congelados)
+- Colonial da Serra (indústria de alimentos)
+- Forno de Minas (fábrica/indústria)
+
+Exemplos ERRADOS para "Indústrias de Pão de Queijo":
+- Casa do Pão de Queijo (rede de lojas)
+- Padarias locais
+- Cafeterias
+- Supermercados
+
+🏢 EXEMPLOS DE EMPRESAS POR SEGMENTO:
 ═══════════════════════════════════════════════════════════
 Materiais de Construção: Leroy Merlin, Telhanorte, C&C, Havan, Dicico, Tumelero
 Supermercados: Angeloni, Giassi, Bistek, Fort Atacadista, Walmart, Carrefour
 Farmácias: Panvel, São João, Catarinense, Nissei, Drogasil, Drogaria São Paulo
 Restaurantes: McDonald's, Burger King, Subway, Giraffas, Bob's, Habib's
-Indústrias de Pão de Queijo: Forno de Minas, Casa do Pão de Queijo, empresas locais
 Pizzarias/Lanchonetes: Redes locais, franquias conhecidas, estabelecimentos populares
 
 📍 FORMATO DE ENDEREÇOS:
 ═══════════════════════════════════════════════════════════
 ✅ Completo do Google Maps: "Rua [nome], [número] - [bairro], ${location} - SC"
-✅ Redes sem endereço exato: "Av. [principal], [bairro], ${location} - SC"
-✅ Shopping centers: "Shopping [nome], ${location} - SC"
+✅ Empresas conhecidas: use endereço real se souber, ou "Endereço a confirmar, ${location} - SC"
 
 📋 DADOS OBRIGATÓRIOS EM CADA LEAD:
 ═══════════════════════════════════════════════════════════
-- name: Nome do estabelecimento (rede ou local)
+- name: Nome real do estabelecimento
 - address: Endereço com cidade ${location} - SC
-- phone: Telefone do Google Maps ou "Telefone a confirmar"
+- phone: Telefone real ou "Telefone a confirmar"
 - instagram: @usuario real ou "@verificar"
-- responsible: "Gerente de Compras" ou "Gerente da Loja"
+- responsible: "Gerente de Compras" ou cargo relevante
 - revenue: R$ [valor realista]/mês
 - openedDate: Tempo estimado de operação
 - matchScore: 75-95
 - reasons: 3 motivos específicos de match com ${products}`;
 
 
-    const userPrompt = `🎯 TAREFA OBRIGATÓRIA: Retorne EXATAMENTE 15 estabelecimentos em ${location}, Santa Catarina
+    const userPrompt = `🎯 TAREFA: Retorne entre 8 a 15 estabelecimentos de ALTA QUALIDADE em ${location}, Santa Catarina
 
 📍 CONTEXTO DA BUSCA:
 ═══════════════════════════════════════════════════════════
@@ -115,6 +126,14 @@ Segmento alvo: ${segment}
 Produtos a vender: ${products}
 ${filters.category !== 'all' ? `Categoria: ${filters.category}` : ''}
 ${filters.companySize !== 'all' ? `Porte: ${filters.companySize}` : ''}
+
+${segment.toLowerCase().includes('indústria') ? `
+⚠️ ATENÇÃO: Este é um segmento de INDÚSTRIAS/FÁBRICAS
+═══════════════════════════════════════════════════════════
+Você DEVE buscar apenas INDÚSTRIAS que FABRICAM/PRODUZEM o produto.
+NÃO inclua lojas, cafeterias, padarias ou estabelecimentos que apenas VENDEM.
+Procure por: fábricas, indústrias alimentícias, produtores em larga escala.
+` : ''}
 
 ${apifyResults.length > 0 ? `\n🗺️ DADOS REAIS DO GOOGLE MAPS (Apify):\n${JSON.stringify(apifyResults.slice(0, 20).map(place => ({
   name: place.title,
@@ -128,19 +147,20 @@ ${apifyResults.length > 0 ? `\n🗺️ DADOS REAIS DO GOOGLE MAPS (Apify):\n${JS
 
 🔍 INSTRUÇÕES OBRIGATÓRIAS:
 ═══════════════════════════════════════════════════════════
-1. RETORNE EXATAMENTE 15 LEADS - isso é obrigatório
-2. Use dados do Google Maps quando disponíveis
-3. Complete com redes nacionais conhecidas em ${location}
-4. Adicione estabelecimentos locais relevantes do segmento
-5. Cada lead DEVE ter endereço contendo "${location} - SC"
+1. Mínimo de 8 leads, máximo de 15 leads
+2. QUALIDADE é mais importante que QUANTIDADE
+3. Só inclua leads que você TEM CERTEZA que existem e são relevantes
+4. Priorize dados do Google Maps (mais confiáveis)
+5. Se não tiver certeza sobre um estabelecimento, NÃO inclua
+6. Cada lead DEVE ter endereço contendo "${location} - SC"
 
 📋 FORMATO DE CADA LEAD:
 ═══════════════════════════════════════════════════════════
 {
-  "name": "[Nome do estabelecimento - rede ou local]",
-  "address": "[Rua/Av + número/região], [bairro], ${location} - SC",
-  "phone": "[Telefone] ou 'Telefone a confirmar'",
-  "instagram": "@[usuario] ou '@verificar'",
+  "name": "[Nome REAL do estabelecimento]",
+  "address": "[Endereço real ou 'Endereço a confirmar, ${location} - SC']",
+  "phone": "[Telefone real] ou 'Telefone a confirmar'",
+  "instagram": "@[usuario real] ou '@verificar'",
   "responsible": "Gerente de Compras",
   "category": "${segment}",
   "revenue": "R$ [valor realista]/mês",
@@ -155,12 +175,13 @@ ${apifyResults.length > 0 ? `\n🗺️ DADOS REAIS DO GOOGLE MAPS (Apify):\n${JS
 
 ⚠️ CHECKLIST ANTES DE RETORNAR:
 ═══════════════════════════════════════════════════════════
-✅ Tenho EXATAMENTE 15 leads?
+✅ Tenho entre 8 a 15 leads de ALTA QUALIDADE?
+✅ Todos os leads são REAIS e VERIFICÁVEIS?
 ✅ Todos os endereços contêm "${location} - SC"?
+${segment.toLowerCase().includes('indústria') ? '✅ Todos os leads são INDÚSTRIAS/FÁBRICAS (não lojas)?' : ''}
 ✅ Todos os campos obrigatórios estão preenchidos?
-✅ Os leads fazem sentido para o segmento ${segment}?
 
-🎯 LEMBRE-SE: 15 LEADS É OBRIGATÓRIO - complete com estabelecimentos locais se necessário!`;
+🎯 PRIORIZE QUALIDADE: Melhor 8 leads excelentes do que 15 duvidosos!`;
 
     // Use tool calling to force structured JSON output
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -256,9 +277,14 @@ ${apifyResults.length > 0 ? `\n🗺️ DADOS REAIS DO GOOGLE MAPS (Apify):\n${JS
         throw new Error("Nenhum lead encontrado para os critérios especificados");
       }
       
-      if (leads.length < 15) {
-        console.warn(`⚠️ Only ${leads.length} leads returned, expected exactly 15. Retrying...`);
-        throw new Error(`Sistema retornou apenas ${leads.length} leads. Necessário exatamente 15 leads.`);
+      if (leads.length < 8) {
+        console.warn(`⚠️ Only ${leads.length} leads returned, minimum is 8`);
+        throw new Error(`Sistema retornou apenas ${leads.length} leads. Mínimo necessário: 8 leads.`);
+      }
+      
+      if (leads.length > 15) {
+        console.warn(`⚠️ ${leads.length} leads returned, trimming to 15`);
+        leads = leads.slice(0, 15);
       }
       
       console.log(`✅ Successfully parsed ${leads.length} leads`);
@@ -269,7 +295,7 @@ ${apifyResults.length > 0 ? `\n🗺️ DADOS REAIS DO GOOGLE MAPS (Apify):\n${JS
     }
 
     // Relaxed validation - only check basic requirements
-    const validLeads = leads.filter((lead: any) => {
+    let validLeads = leads.filter((lead: any) => {
       const address = lead.address || '';
       const name = lead.name || '';
       
@@ -313,8 +339,14 @@ ${apifyResults.length > 0 ? `\n🗺️ DADOS REAIS DO GOOGLE MAPS (Apify):\n${JS
       throw new Error(`Nenhum estabelecimento válido encontrado`);
     }
 
-    if (validLeads.length < 15) {
-      console.warn(`⚠️ Only ${validLeads.length} valid leads after validation, expected 15`);
+    if (validLeads.length < 8) {
+      console.error(`❌ Only ${validLeads.length} valid leads after validation, minimum is 8`);
+      throw new Error(`Apenas ${validLeads.length} estabelecimentos válidos encontrados. Mínimo necessário: 8.`);
+    }
+    
+    if (validLeads.length > 15) {
+      console.warn(`⚠️ ${validLeads.length} valid leads, trimming to 15`);
+      validLeads = validLeads.slice(0, 15);
     }
 
     console.log(`✅ Validated: ${validLeads.length}/${leads.length} leads`);
