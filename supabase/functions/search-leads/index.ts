@@ -19,50 +19,79 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Search Google Maps for real establishments
-    console.log('Searching Google Maps for real establishments...');
-    const mapsSearchQuery = `${segment} ${location} SC Brasil`;
+    // Use Apify Google Maps Scraper for real data
+    console.log('Searching Google Maps via Apify API...');
+    const searchQuery = `${segment} ${location} SC Brasil`;
     
-    let webResults = '';
+    let apifyResults: any[] = [];
     try {
-      // Try to get Google Maps data
-      const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(mapsSearchQuery)}`;
-      console.log('Fetching from Google Maps:', mapsUrl);
+      // Start Apify scraper task
+      console.log('Starting Apify scraper for query:', searchQuery);
       
-      const searchResponse = await fetch(mapsUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      const apifyRunResponse = await fetch(
+        'https://api.apify.com/v2/actor-tasks/exclusive_ravel~google-maps-scraper-task/runs?token=apify_api_4VVzISqyOszKRn62CZERtBuigK5eKa0SbQjA',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            searchStringsArray: [searchQuery],
+            maxCrawledPlacesPerSearch: 20,
+            language: 'pt',
+            deeperCityScrape: true,
+          }),
         }
-      });
+      );
+
+      if (!apifyRunResponse.ok) {
+        throw new Error(`Apify API error: ${apifyRunResponse.status}`);
+      }
+
+      const runData = await apifyRunResponse.json();
+      const runId = runData.data.id;
+      console.log('Apify run started:', runId);
+
+      // Wait for the run to complete (poll with timeout)
+      let completed = false;
+      let attempts = 0;
+      const maxAttempts = 30; // 30 seconds max wait
       
-      if (searchResponse.ok) {
-        webResults = await searchResponse.text();
-        console.log('Google Maps search successful, extracting data...');
+      while (!completed && attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
         
-        // Extract more context from the HTML
-        const relevantData = webResults.substring(0, 5000); // Get more data for better context
-        webResults = relevantData;
+        const statusResponse = await fetch(
+          `https://api.apify.com/v2/actor-runs/${runId}?token=apify_api_4VVzISqyOszKRn62CZERtBuigK5eKa0SbQjA`
+        );
+        
+        const statusData = await statusResponse.json();
+        const status = statusData.data.status;
+        
+        console.log(`Apify run status (attempt ${attempts + 1}):`, status);
+        
+        if (status === 'SUCCEEDED') {
+          completed = true;
+          
+          // Get the results
+          const resultsResponse = await fetch(
+            `https://api.apify.com/v2/actor-runs/${runId}/dataset/items?token=apify_api_4VVzISqyOszKRn62CZERtBuigK5eKa0SbQjA`
+          );
+          
+          apifyResults = await resultsResponse.json();
+          console.log(`Apify returned ${apifyResults.length} places`);
+        } else if (status === 'FAILED' || status === 'ABORTED' || status === 'TIMED-OUT') {
+          throw new Error(`Apify run ${status.toLowerCase()}`);
+        }
+        
+        attempts++;
+      }
+
+      if (!completed) {
+        console.warn('Apify scraper timeout, using partial results if available');
       }
     } catch (error) {
-      console.warn('Google Maps search failed, trying alternative search:', error);
-      
-      // Fallback to Google search
-      try {
-        const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(mapsSearchQuery + ' endereço telefone instagram')}`;
-        const fallbackResponse = await fetch(googleSearchUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-          }
-        });
-        
-        if (fallbackResponse.ok) {
-          webResults = await fallbackResponse.text();
-          webResults = webResults.substring(0, 5000);
-          console.log('Google search successful');
-        }
-      } catch (fallbackError) {
-        console.warn('All web searches failed, will rely on AI knowledge:', fallbackError);
-      }
+      console.error('Apify scraper error:', error);
+      console.log('Will proceed with AI-generated leads as fallback');
     }
 
     const systemPrompt = `Você é um especialista em prospecção B2B no Brasil com acesso a dados do Google Maps.
@@ -123,7 +152,15 @@ Produtos a vender: ${products}
 ${filters.category !== 'all' ? `Categoria: ${filters.category}` : ''}
 ${filters.companySize !== 'all' ? `Porte: ${filters.companySize}` : ''}
 
-${webResults ? `\n🗺️ DADOS DO GOOGLE MAPS/GOOGLE:\n${webResults.substring(0, 5000)}\n` : ''}
+${apifyResults.length > 0 ? `\n🗺️ DADOS REAIS DO GOOGLE MAPS (Apify):\n${JSON.stringify(apifyResults.slice(0, 20).map(place => ({
+  name: place.title,
+  address: place.address,
+  phone: place.phone,
+  website: place.website,
+  rating: place.totalScore,
+  reviews: place.reviewsCount,
+  category: place.categoryName,
+})), null, 2)}\n` : ''}
 
 🔍 INSTRUÇÕES OBRIGATÓRIAS:
 ═══════════════════════════════════════════════════════════
