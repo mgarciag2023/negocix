@@ -40,7 +40,7 @@ serve(async (req) => {
           body: JSON.stringify({
             searchStringsArray: [searchQuery],
             maxCrawledPlacesPerSearch: 20,
-            language: 'pt',
+            language: 'pt-BR',
             deeperCityScrape: true,
           }),
         }
@@ -350,7 +350,26 @@ ${segment.toLowerCase().includes('indústria') ? '✅ Todos os leads são INDÚS
       throw new Error("Erro ao processar resposta da IA");
     }
 
-    // STRICT validation - ensure leads are in the EXACT city
+    // Helper function to normalize and capitalize city names properly
+    const capitalizeCity = (cityName: string): string => {
+      return cityName
+        .toLowerCase()
+        .split(' ')
+        .map(word => {
+          // Don't capitalize prepositions and articles
+          if (['de', 'da', 'do', 'das', 'dos', 'e'].includes(word)) {
+            return word;
+          }
+          return word.charAt(0).toUpperCase() + word.slice(1);
+        })
+        .join(' ');
+    };
+
+    // Normalize the location input
+    const normalizedLocation = capitalizeCity(location.trim());
+    console.log(`📍 Normalized location: "${location}" → "${normalizedLocation}"`);
+
+    // ULTRA-STRICT validation - ensure leads are in the EXACT city
     let validLeads = leads.filter((lead: any) => {
       const address = lead.address || '';
       const name = lead.name || '';
@@ -361,51 +380,71 @@ ${segment.toLowerCase().includes('indústria') ? '✅ Todos os leads são INDÚS
         return false;
       }
       
-      // 2. Must have an address with the CORRECT state code
+      // 2. Normalize strings for comparison (remove accents)
       const normalizeString = (str: string) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       const addressLower = normalizeString(address.toLowerCase());
       const stateDisplayLower = normalizeString(stateDisplay.toLowerCase());
+      const locationLower = normalizeString(normalizedLocation.toLowerCase());
       
-      // Check if state code appears in address
+      // 3. Must have an address with the CORRECT state code
       const hasCorrectState = addressLower.includes(` ${stateDisplayLower}`) || 
                              addressLower.includes(`-${stateDisplayLower}`) ||
-                             addressLower.includes(`/${stateDisplayLower}`);
+                             addressLower.includes(`/${stateDisplayLower}`) ||
+                             addressLower.includes(`, ${stateDisplayLower}`);
       
       if (!hasCorrectState) {
-        console.warn(`🚨 REJECTED - State code "${stateDisplay}" not found in address:`, name, address);
+        console.warn(`🚨 REJECTED - State "${stateDisplay}" not in address:`, name, address);
         return false;
       }
       
-      // 3. CRITICAL: Address MUST mention the EXACT city with proper formatting
-      const locationLower = normalizeString(location.toLowerCase());
-      
-      // The city name must appear in the address
+      // 4. CRITICAL: City name MUST appear in address
       if (!addressLower.includes(locationLower)) {
-        console.warn(`🚨 REJECTED - City "${location}" not found in address:`, name, address);
+        console.warn(`🚨 REJECTED - City "${normalizedLocation}" not in address:`, name, address);
         return false;
       }
       
-      // 4. EXTRA STRICT: City must be followed by state code (proper address format)
-      // Pattern: "CityName - State" or "CityName/State" or "CityName, State"
-      const cityStatePattern = new RegExp(
-        `${locationLower}\\s*[\\-,/]\\s*${stateDisplayLower}`,
+      // 5. ULTRA-STRICT: City MUST be directly followed by state (proper city-state format)
+      // Matches: "City - State", "City/State", "City, State", or "City - State" variations
+      const strictCityStatePattern = new RegExp(
+        `\\b${locationLower}\\s*[\\-,/]\\s*${stateDisplayLower}\\b`,
         'i'
       );
       
-      if (!cityStatePattern.test(addressLower)) {
-        console.warn(`🚨 REJECTED - City-State pattern not found. Expected "${location} - ${stateDisplay}":`, name, address);
+      if (!strictCityStatePattern.test(addressLower)) {
+        console.warn(`🚨 REJECTED - No valid "City-State" format found (expected "${normalizedLocation} - ${stateDisplay}"):`, name, address);
         return false;
       }
       
-      // 5. EXTRA VALIDATION: Reject if another city name appears AFTER the target city
-      // This catches cases like "Santa Maria" appearing but address is actually in another city
-      const cityStateIndex = addressLower.indexOf(`${locationLower} - ${stateDisplayLower}`);
-      if (cityStateIndex === -1) {
-        const altIndex = addressLower.indexOf(`${locationLower}/${stateDisplayLower}`);
-        if (altIndex === -1) {
-          console.warn(`🚨 REJECTED - City-State combination not properly formatted:`, name, address);
-          return false;
+      // 6. REJECT if city name appears as part of another word (e.g., street name)
+      // City must have word boundaries around it
+      const cityWithBoundaries = new RegExp(`\\b${locationLower}\\b`, 'i');
+      if (!cityWithBoundaries.test(addressLower)) {
+        console.warn(`🚨 REJECTED - City "${normalizedLocation}" appears as part of another word:`, name, address);
+        return false;
+      }
+      
+      // 7. FINAL CHECK: Ensure there's no OTHER city name after the target city in the address
+      // Split by common separators and check if city appears in the last significant part
+      const addressParts = address.split(/[-,]/);
+      let foundCityInCorrectPosition = false;
+      
+      for (let i = addressParts.length - 1; i >= 0; i--) {
+        const part = normalizeString(addressParts[i].toLowerCase().trim());
+        if (part.includes(stateDisplayLower)) {
+          // Found the state part, check if the previous part has our city
+          if (i > 0) {
+            const previousPart = normalizeString(addressParts[i - 1].toLowerCase().trim());
+            if (previousPart.includes(locationLower) || part.includes(locationLower)) {
+              foundCityInCorrectPosition = true;
+              break;
+            }
+          }
         }
+      }
+      
+      if (!foundCityInCorrectPosition) {
+        console.warn(`🚨 REJECTED - City not in correct position relative to state:`, name, address);
+        return false;
       }
       
       console.log(`✅ ACCEPTED - Valid location:`, name, address);
@@ -429,11 +468,26 @@ ${segment.toLowerCase().includes('indústria') ? '✅ Todos os leads são INDÚS
 
     console.log(`✅ Validated: ${validLeads.length}/${leads.length} leads`);
 
-    // Add unique IDs to valid leads
-    const leadsWithIds = validLeads.map((lead: any, index: number) => ({
-      ...lead,
-      id: `${Date.now()}-${index}`,
-    }));
+    // Normalize city names in addresses and add unique IDs
+    const leadsWithIds = validLeads.map((lead: any, index: number) => {
+      // Normalize the city name in the address
+      let normalizedAddress = lead.address;
+      
+      // Replace any occurrence of the city name with the properly capitalized version
+      const normalizeString = (str: string) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const locationPattern = new RegExp(
+        normalizeString(location.toLowerCase()).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+        'gi'
+      );
+      
+      normalizedAddress = normalizedAddress.replace(locationPattern, normalizedLocation);
+      
+      return {
+        ...lead,
+        address: normalizedAddress,
+        id: `${Date.now()}-${index}`,
+      };
+    });
 
     console.log("Final processed leads:", leadsWithIds);
 
