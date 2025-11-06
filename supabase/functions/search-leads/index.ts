@@ -39,6 +39,15 @@ serve(async (req) => {
       // Use run-sync-get-dataset-items endpoint for efficient single-call execution
       console.log('Starting Apify scraper (sync) for query:', searchQuery);
       
+      // Define coordinates for the location
+      const coordinates: { [key: string]: { lat: number; lng: number } } = {
+        'Santa Maria': { lat: -29.6868, lng: -53.8149 },
+        'Blumenau': { lat: -26.9194, lng: -49.0661 },
+        // Add more cities as needed
+      };
+      
+      const cityCoords = coordinates[location] || { lat: -29.6868, lng: -53.8149 };
+      
       const apifyResponse = await fetch(
         'https://api.apify.com/v2/actor-tasks/exclusive_ravel~google-maps-scraper-task/run-sync-get-dataset-items?token=apify_api_4VVzISqyOszKRn62CZERtBuigK5eKa0SbQjA',
         {
@@ -48,6 +57,10 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             searchStringsArray: [searchQuery],
+            lat: cityCoords.lat,
+            lng: cityCoords.lng,
+            radius: 20000, // 20 km radius
+            exactMatch: true,
             maxCrawledPlacesPerSearch: 25,
             language: 'pt-BR',
             deeperCityScrape: true,
