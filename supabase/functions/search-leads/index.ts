@@ -75,13 +75,27 @@ Mínimo: 8 leads | Ideal: 15 leads | Critério: QUALIDADE > QUANTIDADE
 2. Empresas conhecidas e verificáveis com presença confirmada em ${location}, ${stateDisplay}
 3. NUNCA invente estabelecimentos - se não tiver certeza, NÃO inclua
 
-🚨 REGRA CRÍTICA DE LOCALIZAÇÃO:
+🚨🚨🚨 REGRA CRÍTICA DE LOCALIZAÇÃO - LEIA COM ATENÇÃO MÁXIMA 🚨🚨🚨
 ═══════════════════════════════════════════════════════════
-⚠️ ATENÇÃO MÁXIMA: Só inclua estabelecimentos que estão FISICAMENTE localizados em ${location}, ${stateDisplay}
-❌ NÃO INCLUIR estabelecimentos de outras cidades, mesmo que tenham nomes parecidos
-❌ NÃO CONFUNDIR bairros/ruas com nomes de cidades - VALIDE a cidade no endereço
-✅ Exemplo correto: "Rua X - Centro, ${location} - ${stateDisplay}"
-❌ Exemplo ERRADO: "Rua X - Centro, Outra Cidade - ${stateDisplay}" (cidade diferente!)
+⚠️ ATENÇÃO ABSOLUTA: TODOS os estabelecimentos DEVEM estar FISICAMENTE em ${location}, ${stateDisplay}
+
+❌ EXEMPLOS DO QUE **NÃO FAZER**:
+- Se pesquisar "Santa Maria - RS", NÃO incluir estabelecimentos de "Santa Maria da Vitória - BA"
+- Se pesquisar "Santa Maria - RS", NÃO incluir estabelecimentos de "Santa Maria - DF"
+- Se pesquisar qualquer cidade, NÃO incluir estabelecimentos de OUTRAS cidades
+- NÃO confundir "Rua Santa Maria" com a cidade "Santa Maria"
+- NÃO incluir se o endereço diz "outra cidade" mesmo que tenha filial em ${location}
+
+✅ EXEMPLOS DO QUE **FAZER**:
+- Endereço: "Av. Rio Branco, 123 - Centro, ${location} - ${stateDisplay}" ✓ CORRETO
+- Endereço: "Rua das Flores, 456 - ${location} - ${stateDisplay}" ✓ CORRETO
+
+🔍 COMO VALIDAR ANTES DE INCLUIR UM LEAD:
+═══════════════════════════════════════════════════════════
+1. Olhe o endereço do Google Maps
+2. Pergunte: "A CIDADE no endereço é EXATAMENTE ${location}?"
+3. Se a resposta for NÃO → REJEITE o estabelecimento
+4. Se a resposta for SIM → Pode incluir
 
 ⚠️ ATENÇÃO ESPECIAL PARA "INDÚSTRIAS":
 ═══════════════════════════════════════════════════════════
@@ -147,18 +161,21 @@ Exemplos de formatos válidos:
 
 📍 CONTEXTO DA BUSCA:
 ═══════════════════════════════════════════════════════════
-Cidade: ${location}, ${stateDisplay}, Brasil
+Cidade EXATA: ${location}
+Estado: ${stateDisplay}
+País: Brasil
 Segmento alvo: ${segment}
 Produtos a vender: ${products}
 ${filters.category !== 'all' ? `Categoria: ${filters.category}` : ''}
 ${filters.companySize !== 'all' ? `Porte: ${filters.companySize}` : ''}
 
-🚨 REGRA CRÍTICA - LOCALIZAÇÃO EXATA:
+🚨🚨🚨 REGRA CRÍTICA - LOCALIZAÇÃO EXATA 🚨🚨🚨
 ═══════════════════════════════════════════════════════════
-⚠️ TODOS os estabelecimentos DEVEM estar fisicamente em: ${location}, ${stateDisplay}
-❌ NÃO inclua estabelecimentos de outras cidades
-❌ NÃO confunda bairros com cidades
-✅ VALIDE que a cidade no endereço é exatamente: ${location}
+⚠️ ATENÇÃO MÁXIMA: TODOS os estabelecimentos DEVEM estar em: ${location}, ${stateDisplay}
+⚠️ SE O ENDEREÇO NÃO MENCIONAR "${location}" COMO CIDADE → REJEITE
+❌ NÃO inclua estabelecimentos de outras cidades (mesmo com nomes parecidos)
+❌ NÃO confunda "Rua ${location}" com a cidade "${location}"
+✅ O endereço DEVE conter: "${location} - ${stateDisplay}" ou "${location}/${stateDisplay}"
 
 ${segment.toLowerCase().includes('indústria') ? `
 ⚠️ ATENÇÃO: Este é um segmento de INDÚSTRIAS/FÁBRICAS
@@ -333,7 +350,7 @@ ${segment.toLowerCase().includes('indústria') ? '✅ Todos os leads são INDÚS
       throw new Error("Erro ao processar resposta da IA");
     }
 
-    // Relaxed validation - only check basic requirements
+    // STRICT validation - ensure leads are in the EXACT city
     let validLeads = leads.filter((lead: any) => {
       const address = lead.address || '';
       const name = lead.name || '';
@@ -344,45 +361,54 @@ ${segment.toLowerCase().includes('indústria') ? '✅ Todos os leads são INDÚS
         return false;
       }
       
-      // 2. Must have an address with a state code (2 letters)
-      // Check for common Brazilian state codes
-      const brazilianStates = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
-      const hasStateCode = brazilianStates.some(stateCode => 
-        address.includes(` ${stateCode}`) || address.includes(`-${stateCode}`) || address.includes(` ${stateCode.toLowerCase()}`) || address.includes(`-${stateCode.toLowerCase()}`)
+      // 2. Must have an address with the CORRECT state code
+      const normalizeString = (str: string) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const addressLower = normalizeString(address.toLowerCase());
+      const stateDisplayLower = normalizeString(stateDisplay.toLowerCase());
+      
+      // Check if state code appears in address
+      const hasCorrectState = addressLower.includes(` ${stateDisplayLower}`) || 
+                             addressLower.includes(`-${stateDisplayLower}`) ||
+                             addressLower.includes(`/${stateDisplayLower}`);
+      
+      if (!hasCorrectState) {
+        console.warn(`🚨 REJECTED - State code "${stateDisplay}" not found in address:`, name, address);
+        return false;
+      }
+      
+      // 3. CRITICAL: Address MUST mention the EXACT city with proper formatting
+      const locationLower = normalizeString(location.toLowerCase());
+      
+      // The city name must appear in the address
+      if (!addressLower.includes(locationLower)) {
+        console.warn(`🚨 REJECTED - City "${location}" not found in address:`, name, address);
+        return false;
+      }
+      
+      // 4. EXTRA STRICT: City must be followed by state code (proper address format)
+      // Pattern: "CityName - State" or "CityName/State" or "CityName, State"
+      const cityStatePattern = new RegExp(
+        `${locationLower}\\s*[\\-,/]\\s*${stateDisplayLower}`,
+        'i'
       );
       
-      if (!hasStateCode) {
-        console.warn(`🚨 REJECTED - No valid state code in address:`, name, address);
+      if (!cityStatePattern.test(addressLower)) {
+        console.warn(`🚨 REJECTED - City-State pattern not found. Expected "${location} - ${stateDisplay}":`, name, address);
         return false;
       }
       
-      // 3. CRITICAL: Address MUST mention the exact location (city)
-      const addressLower = address.toLowerCase();
-      const locationLower = location.toLowerCase();
-      // Remove accents for comparison
-      const normalizeString = (str: string) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      const normalizedAddress = normalizeString(addressLower);
-      const normalizedLocation = normalizeString(locationLower);
-      
-      // Check if the city name appears in the address
-      if (!normalizedAddress.includes(normalizedLocation)) {
-        console.warn(`🚨 REJECTED - City name not found in address:`, name, address, 'expected city:', location);
-        return false;
-      }
-      
-      // Additional check: make sure it's not just a street/neighborhood name
-      // The city should appear after a comma or dash (typical address format)
-      const cityPattern = new RegExp(`[,\\-]\\s*${normalizedLocation}\\s*[\\-,]`, 'i');
-      if (!cityPattern.test(normalizedAddress)) {
-        console.warn(`⚠️ WARNING - City name may be part of street/neighborhood, not actual city:`, name, address);
-        // Still check if it's followed by the state code which would indicate proper formatting
-        const stateCodeAfterCity = new RegExp(`${normalizedLocation}\\s*[\\-,]?\\s*(${stateDisplay.toLowerCase()})`, 'i');
-        if (!stateCodeAfterCity.test(normalizedAddress)) {
-          console.warn(`🚨 REJECTED - City name not properly formatted in address:`, name, address);
+      // 5. EXTRA VALIDATION: Reject if another city name appears AFTER the target city
+      // This catches cases like "Santa Maria" appearing but address is actually in another city
+      const cityStateIndex = addressLower.indexOf(`${locationLower} - ${stateDisplayLower}`);
+      if (cityStateIndex === -1) {
+        const altIndex = addressLower.indexOf(`${locationLower}/${stateDisplayLower}`);
+        if (altIndex === -1) {
+          console.warn(`🚨 REJECTED - City-State combination not properly formatted:`, name, address);
           return false;
         }
       }
       
+      console.log(`✅ ACCEPTED - Valid location:`, name, address);
       return true;
     });
 
