@@ -20,10 +20,19 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Use Apify Google Maps Scraper for real data
+    // Use Apify Google Maps Scraper for real data - CRITICAL for accuracy
     console.log('Searching Google Maps via Apify API...');
     const stateCode = state || 'SC'; // Default to SC if not provided
-    const searchQuery = `${segment} ${location} ${stateCode} Brasil`;
+    
+    // Make the search query broader to get more real results
+    // Extract key terms from segment (e.g., "Indústrias de Pão de Queijo" -> "Pão de Queijo")
+    let searchTerm = segment;
+    if (segment.toLowerCase().includes('indústria')) {
+      // Remove "indústrias de" or "indústria de" to broaden search
+      searchTerm = segment.replace(/indústrias?\s+de\s+/gi, '').trim();
+    }
+    
+    const searchQuery = `${searchTerm} ${location} ${stateCode}`;
     
     let apifyResults: any[] = [];
     try {
@@ -39,7 +48,7 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             searchStringsArray: [searchQuery],
-            maxCrawledPlacesPerSearch: 20,
+            maxCrawledPlacesPerSearch: 25,
             language: 'pt-BR',
             deeperCityScrape: true,
           }),
@@ -55,6 +64,29 @@ serve(async (req) => {
       apifyResults = await apifyResponse.json();
       console.log(`Apify returned ${apifyResults.length} places from Google Maps`);
       
+      // CRITICAL: If we got real data, filter it to only include the exact city
+      if (apifyResults.length > 0) {
+        const normalizeString = (str: string) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const locationLower = normalizeString(location.toLowerCase());
+        const stateDisplayLower = normalizeString(stateCode.toLowerCase());
+        
+        apifyResults = apifyResults.filter((place: any) => {
+          const address = normalizeString((place.address || '').toLowerCase());
+          // Strict validation: address must contain both city and state in proper format
+          const hasCity = address.includes(locationLower);
+          const hasState = address.includes(stateDisplayLower);
+          const hasCityStateFormat = new RegExp(`\\b${locationLower}\\s*[\\-,/]\\s*${stateDisplayLower}\\b`).test(address);
+          
+          const isValid = hasCity && hasState && hasCityStateFormat;
+          if (!isValid) {
+            console.log(`🚫 Filtered out Apify result - wrong location: ${place.title} at ${place.address}`);
+          }
+          return isValid;
+        });
+        
+        console.log(`✅ After location filtering: ${apifyResults.length} valid places from Google Maps`);
+      }
+      
     } catch (error) {
       console.error('Apify scraper error:', error);
       console.log('Will proceed with AI-generated leads as fallback');
@@ -62,18 +94,19 @@ serve(async (req) => {
 
     const stateDisplay = state || 'SC';
     
-    const systemPrompt = `Você é um especialista em prospecção B2B no Brasil com acesso a dados do Google Maps.
+    const systemPrompt = `Você é um especialista em prospecção B2B no Brasil com acesso a dados REAIS do Google Maps.
 
 🎯 META: RETORNAR ENTRE 8 A 15 LEADS DE ALTA QUALIDADE
 ═══════════════════════════════════════════════════════════
-Retorne APENAS leads que você TEM CERTEZA que existem e são relevantes.
+⚠️ ATENÇÃO CRÍTICA: Use APENAS dados VERIFICADOS do Google Maps!
 Mínimo: 8 leads | Ideal: 15 leads | Critério: QUALIDADE > QUANTIDADE
 
-🔍 FONTES DE DADOS - PRIORIDADE:
+🔍 FONTES DE DADOS - PRIORIDADE ABSOLUTA:
 ═══════════════════════════════════════════════════════════
-1. **DADOS DO GOOGLE MAPS** (fornecidos na busca) - SEMPRE priorize estes
-2. Empresas conhecidas e verificáveis com presença confirmada em ${location}, ${stateDisplay}
-3. NUNCA invente estabelecimentos - se não tiver certeza, NÃO inclua
+1. **DADOS DO GOOGLE MAPS** (fornecidos na busca) - ⚠️ USE APENAS ESTES ⚠️
+2. **SE DADOS DO GOOGLE MAPS < 8**: Só então adicione empresas REAIS que você TEM CERTEZA ABSOLUTA que existem
+3. ❌ NUNCA NUNCA NUNCA invente estabelecimentos ou endereços
+4. ❌ SE TIVER DÚVIDA SE O ESTABELECIMENTO EXISTE NAQUELA CIDADE → NÃO INCLUA
 
 🚨🚨🚨 REGRA CRÍTICA DE LOCALIZAÇÃO - LEIA COM ATENÇÃO MÁXIMA 🚨🚨🚨
 ═══════════════════════════════════════════════════════════
@@ -185,7 +218,10 @@ NÃO inclua lojas, cafeterias, padarias ou estabelecimentos que apenas VENDEM.
 Procure por: fábricas, indústrias alimentícias, produtores em larga escala.
 ` : ''}
 
-${apifyResults.length > 0 ? `\n🗺️ DADOS REAIS DO GOOGLE MAPS (Apify):\n${JSON.stringify(apifyResults.slice(0, 20).map(place => ({
+${apifyResults.length > 0 ? `
+🗺️ DADOS REAIS DO GOOGLE MAPS - USE APENAS ESTES DADOS:
+═══════════════════════════════════════════════════════════
+${JSON.stringify(apifyResults.slice(0, 25).map(place => ({
   name: place.title,
   address: place.address,
   phone: place.phone,
@@ -193,10 +229,21 @@ ${apifyResults.length > 0 ? `\n🗺️ DADOS REAIS DO GOOGLE MAPS (Apify):\n${JS
   rating: place.totalScore,
   reviews: place.reviewsCount,
   category: place.categoryName,
-})), null, 2)}\n
-⚠️ FILTRE APENAS estabelecimentos com endereço em ${location}!
-⚠️ USE OS TELEFONES fornecidos pelo Google Maps quando disponíveis!
-` : ''}
+})), null, 2)}
+
+⚠️⚠️⚠️ INSTRUÇÃO CRÍTICA ⚠️⚠️⚠️
+1. USE APENAS OS DADOS ACIMA do Google Maps
+2. NÃO invente ou adicione estabelecimentos que não estão listados acima
+3. USE os endereços e telefones EXATOS fornecidos pelo Google Maps
+4. TODOS os estabelecimentos acima JÁ foram validados e estão em ${location}, ${stateDisplay}
+5. Se tiver menos de 8 resultados válidos acima, APENAS então adicione empresas que você TEM CERTEZA ABSOLUTA que existem
+` : `
+⚠️⚠️⚠️ NENHUM DADO DO GOOGLE MAPS DISPONÍVEL ⚠️⚠️⚠️
+1. Use APENAS empresas REAIS que você TEM CERTEZA ABSOLUTA que existem em ${location}, ${stateDisplay}
+2. NUNCA invente nomes ou endereços
+3. Se não tiver certeza → NÃO INCLUA
+4. Prefira retornar menos leads (mas reais) do que inventar leads
+`}
 
 🔍 INSTRUÇÕES OBRIGATÓRIAS:
 ═══════════════════════════════════════════════════════════
