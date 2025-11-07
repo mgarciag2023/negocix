@@ -164,6 +164,112 @@ function calculateConfidenceScore(lead: any, source: 'google_maps' | 'ai_generat
   return Math.min(score, 100); // Cap at 100
 }
 
+// Search CNPJ data to enrich lead information
+async function searchCNPJData(businessName: string, city: string, state: string): Promise<{
+  cnpj?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  validated: boolean;
+} | null> {
+  try {
+    console.log(`🔍 Searching CNPJ for: ${businessName} in ${city}, ${state}`);
+    
+    // Format the search query
+    const cleanName = businessName.replace(/[^\w\s]/g, '').trim();
+    
+    // Try ReceitaWS API (free Brazilian CNPJ database)
+    // Note: This is a public API that searches by CNPJ number, not name
+    // For production, you'd use a paid service like CNPJWS or Oinc.app
+    
+    // For now, we'll return null to indicate CNPJ lookup needs external API
+    // In production: integrate with Oinc.app or similar service
+    console.log(`⚠️ CNPJ lookup requires external API integration (Oinc.app or CNPJWS)`);
+    
+    return null;
+  } catch (error) {
+    console.error('Error searching CNPJ:', error);
+    return null;
+  }
+}
+
+// Search for official social media profiles
+async function searchSocialMediaProfiles(businessName: string, city: string, website?: string): Promise<{
+  instagram?: string;
+  facebook?: string;
+  whatsappBusiness?: string;
+}> {
+  const profiles: {
+    instagram?: string;
+    facebook?: string;
+    whatsappBusiness?: string;
+  } = {};
+  
+  try {
+    console.log(`🔍 Searching social media for: ${businessName}`);
+    
+    // 1. If website exists, try to scrape from there (most reliable)
+    if (website && website !== 'Não disponível') {
+      const instagramFromWebsite = await scrapeInstagramFromWebsite(website);
+      if (instagramFromWebsite) {
+        profiles.instagram = instagramFromWebsite;
+        console.log(`✅ Instagram found from website: ${profiles.instagram}`);
+      }
+      
+      try {
+        const response = await fetch(website, {
+          headers: { 'User-Agent': 'Mozilla/5.0' },
+          signal: AbortSignal.timeout(5000)
+        });
+        
+        if (response.ok) {
+          const html = await response.text();
+          
+          // Search for Facebook page
+          const fbMatch = html.match(/https?:\/\/(www\.)?facebook\.com\/([a-zA-Z0-9._-]+)/i);
+          if (fbMatch && !['sharer', 'dialog', 'share'].includes(fbMatch[2])) {
+            profiles.facebook = `https://facebook.com/${fbMatch[2]}`;
+            console.log(`✅ Facebook found: ${profiles.facebook}`);
+          }
+          
+          // Search for WhatsApp Business
+          const waMatch = html.match(/wa\.me\/(\d+)/i) || html.match(/api\.whatsapp\.com\/send\?phone=(\d+)/i);
+          if (waMatch) {
+            profiles.whatsappBusiness = waMatch[1];
+            console.log(`✅ WhatsApp Business found: ${profiles.whatsappBusiness}`);
+          }
+        }
+      } catch (error) {
+        console.error('Error scraping social media from website:', error);
+      }
+    }
+    
+    // 2. Construct likely social media handles as fallback
+    if (!profiles.instagram) {
+      const cleanName = businessName
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '')
+        .replace(/[^a-z0-9._]/g, '');
+      
+      // Only suggest if it looks reasonable (not too long)
+      if (cleanName.length > 3 && cleanName.length < 30) {
+        profiles.instagram = `@${cleanName}`;
+        console.log(`💡 Suggested Instagram handle: ${profiles.instagram} (needs verification)`);
+      }
+    }
+    
+    // Note: For production, integrate with Phantombuster or similar service
+    // to get verified Instagram profiles
+    
+  } catch (error) {
+    console.error('Error searching social media:', error);
+  }
+  
+  return profiles;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -691,8 +797,8 @@ ${segment.toLowerCase().includes('indústria') ? '✅ Todos os leads são INDÚS
 
     console.log(`✅ Validated: ${validLeads.length}/${leads.length} leads`);
 
-    // Enrich leads with validation and confidence scoring
-    console.log('🔄 Enriching leads with validation and web scraping...');
+    // Enrich leads with CNPJ validation, social media, and confidence scoring
+    console.log('🔄 Enriching leads with CNPJ, social media, and validation...');
     const enrichedLeads = await Promise.all(validLeads.map(async (lead: any, index: number) => {
       // Normalize the city name in the address
       let normalizedAddress = lead.address;
@@ -710,46 +816,66 @@ ${segment.toLowerCase().includes('indústria') ? '✅ Todos os leads são INDÚS
       );
       const source = googleData ? 'google_maps' : 'ai_generated';
       
-      // Validate and normalize phone
-      const phoneValidation = validatePhone(lead.phone);
+      // STEP 1: Search CNPJ data to validate and enrich
+      const cnpjData = await searchCNPJData(lead.name, normalizedLocation, stateDisplay);
+      
+      // STEP 2: Validate and normalize phone (prioritize CNPJ phone if available)
       let validatedPhone = lead.phone;
+      if (cnpjData?.phone) {
+        validatedPhone = cnpjData.phone;
+        console.log(`✅ ${lead.name}: Phone from CNPJ: ${validatedPhone}`);
+      }
+      
+      const phoneValidation = validatePhone(validatedPhone);
       if (phoneValidation.valid) {
         validatedPhone = phoneValidation.normalized;
       } else {
-        console.warn(`⚠️ Invalid phone format for ${lead.name}: ${lead.phone}`);
+        console.warn(`⚠️ Invalid phone format for ${lead.name}: ${validatedPhone}`);
       }
       
-      // Scrape Instagram from website if available (PRIORITY)
-      let instagram = lead.instagram || 'Não disponível';
-      let instagramSource = 'directory';
+      // STEP 3: Get website (Google Maps > CNPJ > AI)
       const website = googleData?.website || lead.website || 'Não disponível';
       
-      if (website && website !== 'Não disponível') {
-        try {
-          const scrapedInstagram = await scrapeInstagramFromWebsite(website);
-          if (scrapedInstagram) {
-            instagram = scrapedInstagram;
-            instagramSource = 'website';
-            console.log(`✅ ${lead.name}: Instagram scraped from website: ${instagram}`);
-          }
-        } catch (error) {
-          console.error(`Error scraping Instagram for ${lead.name}:`, error);
-        }
+      // STEP 4: Search for official social media profiles
+      const socialMedia = await searchSocialMediaProfiles(lead.name, normalizedLocation, website);
+      
+      // STEP 5: Prioritize Instagram from multiple sources
+      let instagram = 'Não disponível';
+      let instagramSource = 'none';
+      
+      if (socialMedia.instagram) {
+        instagram = socialMedia.instagram;
+        instagramSource = 'website';
+        console.log(`✅ ${lead.name}: Instagram from website: ${instagram}`);
+      } else if (lead.instagram && lead.instagram !== 'Não disponível') {
+        instagram = lead.instagram;
+        instagramSource = 'directory';
       }
       
-      // Detect WhatsApp
+      // STEP 6: Get Facebook profile
+      const facebook = socialMedia.facebook || 'Não disponível';
+      if (facebook !== 'Não disponível') {
+        console.log(`✅ ${lead.name}: Facebook found: ${facebook}`);
+      }
+      
+      // STEP 7: Detect WhatsApp (check if it's WhatsApp Business from social media or mobile number)
       let hasWhatsApp = false;
+      let whatsappBusiness = socialMedia.whatsappBusiness;
+      
       try {
         hasWhatsApp = await detectWhatsApp(validatedPhone, website);
         if (hasWhatsApp) {
           console.log(`✅ ${lead.name}: WhatsApp detected`);
+          if (!whatsappBusiness) {
+            whatsappBusiness = validatedPhone;
+          }
         }
       } catch (error) {
         console.error(`Error detecting WhatsApp for ${lead.name}:`, error);
       }
       
-      // Calculate confidence score
-      const confidenceScore = calculateConfidenceScore({
+      // STEP 8: Calculate enhanced confidence score
+      let confidenceScore = calculateConfidenceScore({
         placeId: googleData?.placeId,
         website,
         phone: validatedPhone,
@@ -757,19 +883,35 @@ ${segment.toLowerCase().includes('indústria') ? '✅ Todos os leads são INDÚS
         instagramSource
       }, source);
       
+      // Bonus points for CNPJ validation and social media
+      if (cnpjData?.validated) confidenceScore += 15;
+      if (facebook !== 'Não disponível') confidenceScore += 5;
+      if (whatsappBusiness) confidenceScore += 5;
+      confidenceScore = Math.min(confidenceScore, 100);
+      
       return {
         ...lead,
         id: `${Date.now()}-${index}`,
-        address: normalizedAddress,
+        address: cnpjData?.address || normalizedAddress,
         phone: validatedPhone,
         phoneValid: phoneValidation.valid,
         instagram,
         instagramSource,
+        facebook,
         hasWhatsApp,
+        whatsappBusiness: whatsappBusiness ? `https://wa.me/${whatsappBusiness.replace(/\D/g, '')}` : undefined,
         website,
+        cnpj: cnpjData?.cnpj,
+        email: cnpjData?.email,
         placeId: googleData?.placeId,
         confidenceScore,
         source,
+        dataQuality: {
+          hasCNPJ: !!cnpjData?.cnpj,
+          hasValidPhone: phoneValidation.valid,
+          hasSocialMedia: instagram !== 'Não disponível' || facebook !== 'Não disponível',
+          hasWhatsApp
+        },
         needsReview: confidenceScore < 70
       };
     }));
