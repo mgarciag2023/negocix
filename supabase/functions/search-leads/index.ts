@@ -289,9 +289,20 @@ serve(async (req) => {
     console.log('Searching Google Maps via Apify API...');
     const stateCode = state || 'SC'; // Default to SC if not provided
     
-    // Use the EXACT search term provided by the user
-    const searchQuery = `${segment} ${location} ${stateCode}`;
-    console.log(`🔍 Exact search query for Apify: "${searchQuery}"`);
+    // Build a more specific search query that focuses on the product/service
+    // Extract the core product from the segment (e.g., "pão de queijo" from "Indústrias de Pão de Queijo")
+    const segmentLower = segment.toLowerCase();
+    let searchQuery = segment;
+    
+    // For product-specific searches, create multiple targeted queries
+    if (segmentLower.includes('pão de queijo') || segmentLower.includes('pao de queijo')) {
+      searchQuery = `fabricante pão de queijo ${location} ${stateCode}`;
+      console.log(`🎯 Product-specific search for: pão de queijo`);
+    } else {
+      searchQuery = `${segment} ${location} ${stateCode}`;
+    }
+    
+    console.log(`🔍 Optimized search query for Apify: "${searchQuery}"`);
     
     let apifyResults: any[] = [];
     try {
@@ -350,65 +361,70 @@ serve(async (req) => {
         const normalizeString = (str: string) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         const locationLower = normalizeString(location.toLowerCase());
         const stateDisplayLower = normalizeString(stateCode.toLowerCase());
-        
-        // Define retail categories to EXCLUDE when searching for industries/manufacturers
-        const retailCategories = [
-          'padaria', 'bakery', 'restaurante', 'restaurant', 'cafeteria', 'cafe', 
-          'lanchonete', 'snack bar', 'coffee shop', 'confeitaria', 'pastry shop',
-          'delicatessen', 'food establishment', 'eatery', 'bar', 'pub'
-        ];
-        
-        const industryKeywords = [
-          'indústria', 'fabrica', 'fábrica', 'manufatura', 'factory', 'manufacturer', 
-          'industrial', 'production', 'produção', 'distribuidor', 'distribuidora'
-        ];
-        
-        // Check if user is searching for industries/manufacturers
         const segmentLower = normalizeString(segment.toLowerCase());
-        const isIndustrySearch = industryKeywords.some(keyword => 
-          segmentLower.includes(keyword)
-        );
         
-        console.log(`🏭 Industry search mode: ${isIndustrySearch}`);
+        // Extract the product/service being searched for
+        let productKeywords: string[] = [];
+        if (segmentLower.includes('pao de queijo') || segmentLower.includes('pão de queijo')) {
+          productKeywords = ['pao de queijo', 'pão de queijo', 'paodequeijo'];
+        }
+        
+        const isProductSearch = productKeywords.length > 0;
+        console.log(`🎯 Product search mode: ${isProductSearch} - Keywords: ${productKeywords.join(', ')}`);
+        
+        // Generic categories to EXCLUDE (not related to any specific product)
+        const genericRestaurantCategories = [
+          'buffet', 'churrascaria', 'pizzaria', 'hamburgueria', 'steakhouse',
+          'sushi', 'japanese restaurant', 'italian restaurant', 'chinese restaurant',
+          'bar e restaurante', 'pub', 'night club', 'bar'
+        ];
         
         apifyResults = apifyResults.filter((place: any) => {
           const address = normalizeString((place.address || '').toLowerCase());
+          const title = normalizeString((place.title || '').toLowerCase());
+          const categoryName = normalizeString((place.categoryName || '').toLowerCase());
+          const categories = (place.categories || []).map((cat: string) => normalizeString(cat.toLowerCase()));
           
-          // Location validation
+          // 1. Location validation - MUST be in the correct city
           const hasCity = address.includes(locationLower);
           const hasState = address.includes(stateDisplayLower);
           const hasCityStateFormat = new RegExp(`\\b${locationLower}\\s*[\\-,/]\\s*${stateDisplayLower}\\b`).test(address);
           
           if (!hasCity || !hasState || !hasCityStateFormat) {
-            console.log(`🚫 Filtered out - wrong location: ${place.title} at ${place.address}`);
+            console.log(`🚫 Wrong location: ${place.title} at ${place.address}`);
             return false;
           }
           
-          // Business type validation for industry searches
-          if (isIndustrySearch) {
-            const categories = (place.categories || []).map((cat: string) => normalizeString(cat.toLowerCase()));
-            const title = normalizeString((place.title || '').toLowerCase());
-            const categoryName = normalizeString((place.categoryName || '').toLowerCase());
-            
-            // Exclude if it's clearly a retail/commercial establishment
-            const isRetail = retailCategories.some(retail => 
-              categories.some((cat: string) => cat.includes(retail)) ||
-              categoryName.includes(retail)
+          // 2. For product-specific searches (e.g., pão de queijo)
+          if (isProductSearch) {
+            // Check if the business name or category mentions the product
+            const mentionsProduct = productKeywords.some(keyword =>
+              title.includes(keyword) ||
+              categoryName.includes(keyword) ||
+              categories.some((cat: string) => cat.includes(keyword))
             );
             
-            if (isRetail) {
-              console.log(`❌ Excluded retail: ${place.title} (${place.categoryName || 'no category'})`);
+            // Exclude generic restaurants that don't specialize in the product
+            const isGenericRestaurant = genericRestaurantCategories.some(generic =>
+              categoryName.includes(generic) ||
+              categories.some((cat: string) => cat.includes(generic))
+            );
+            
+            if (isGenericRestaurant && !mentionsProduct) {
+              console.log(`❌ Generic restaurant (not specialized): ${place.title} (${categoryName})`);
               return false;
             }
             
-            // For industry searches, log what we're keeping
-            const hasIndustryKeyword = industryKeywords.some(keyword =>
-              title.includes(keyword) || 
-              categories.some((cat: string) => cat.includes(keyword)) ||
-              categoryName.includes(keyword)
-            );
+            // Only keep if it mentions the product OR is a manufacturer/factory
+            const isManufacturer = ['fabricante', 'manufacturer', 'factory', 'fabrica', 'producao', 'industrial']
+              .some(word => categoryName.includes(word) || categories.some((cat: string) => cat.includes(word)));
             
-            console.log(`✅ Kept: ${place.title} (${place.categoryName || 'no category'}) - Industry keyword: ${hasIndustryKeyword}`);
+            if (!mentionsProduct && !isManufacturer) {
+              console.log(`❌ Not related to ${productKeywords[0]}: ${place.title} (${categoryName})`);
+              return false;
+            }
+            
+            console.log(`✅ Relevant: ${place.title} (${categoryName}) - Product: ${mentionsProduct}, Manufacturer: ${isManufacturer}`);
           }
           
           return true;
