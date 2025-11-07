@@ -208,7 +208,7 @@ serve(async (req) => {
       const cityCoords = coordinates[location] || { lat: -29.6868, lng: -53.8149 };
       
       const apifyResponse = await fetch(
-        'https://api.apify.com/v2/actor-tasks/exclusive_ravel~google-maps-scraper-task/run-sync-get-dataset-items?token=apify_api_4VVzISqyOszKRn62CZERtBuigK5eKa0SbQjA',
+        'https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=apify_api_4VVzISqyOszKRn62CZERtBuigK5eKa0SbQjA',
         {
           method: 'POST',
           headers: {
