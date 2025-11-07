@@ -289,15 +289,9 @@ serve(async (req) => {
     console.log('Searching Google Maps via Apify API...');
     const stateCode = state || 'SC'; // Default to SC if not provided
     
-    // Make the search query broader to get more real results
-    // Extract key terms from segment (e.g., "Indústrias de Pão de Queijo" -> "Pão de Queijo")
-    let searchTerm = segment;
-    if (segment.toLowerCase().includes('indústria')) {
-      // Remove "indústrias de" or "indústria de" to broaden search
-      searchTerm = segment.replace(/indústrias?\s+de\s+/gi, '').trim();
-    }
-    
-    const searchQuery = `${searchTerm} ${location} ${stateCode}`;
+    // Use the EXACT search term provided by the user
+    const searchQuery = `${segment} ${location} ${stateCode}`;
+    console.log(`🔍 Exact search query for Apify: "${searchQuery}"`);
     
     let apifyResults: any[] = [];
     try {
@@ -308,6 +302,11 @@ serve(async (req) => {
       const coordinates: { [key: string]: { lat: number; lng: number } } = {
         'Santa Maria': { lat: -29.6868, lng: -53.8149 },
         'Blumenau': { lat: -26.9194, lng: -49.0661 },
+        'Porto Alegre': { lat: -30.0346, lng: -51.2177 },
+        'Florianópolis': { lat: -27.5954, lng: -48.5480 },
+        'Curitiba': { lat: -25.4284, lng: -49.2733 },
+        'São Paulo': { lat: -23.5505, lng: -46.6333 },
+        'Rio de Janeiro': { lat: -22.9068, lng: -43.1729 },
         // Add more cities as needed
       };
       
@@ -324,11 +323,15 @@ serve(async (req) => {
             searchStringsArray: [searchQuery],
             lat: cityCoords.lat,
             lng: cityCoords.lng,
-            radius: 20000, // 20 km radius
-            exactMatch: true,
-            maxCrawledPlacesPerSearch: 25,
+            radius: 25000, // 25 km radius for better coverage
+            exactMatch: true, // Exact match for precise results
+            maxCrawledPlacesPerSearch: 30, // Get more results
             language: 'pt-BR',
             deeperCityScrape: true,
+            // Add category filtering if the segment contains specific keywords
+            ...(segment.toLowerCase().includes('indústria') && {
+              categoryFilters: ['manufacturer', 'factory', 'industrial_company']
+            })
           }),
         }
       );
