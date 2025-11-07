@@ -5,6 +5,165 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Phone validation with international format
+function validatePhone(phone: string): { valid: boolean; normalized: string; isWhatsApp: boolean } {
+  if (!phone) return { valid: false, normalized: '', isWhatsApp: false };
+  
+  // Remove all non-digit characters
+  const digitsOnly = phone.replace(/\D/g, '');
+  
+  // Brazilian phone format: +55 followed by 10 or 11 digits (DDD + number)
+  const brazilRegex = /^55(\d{10,11})$/;
+  const match = digitsOnly.match(brazilRegex);
+  
+  if (match) {
+    const normalized = `+55${match[1]}`;
+    // Check if it's a mobile number (11 digits with 9 as first digit after DDD)
+    const isMobile = match[1].length === 11 && match[1].charAt(2) === '9';
+    return { valid: true, normalized, isWhatsApp: isMobile };
+  }
+  
+  // Also accept if starts with +55 and has correct length
+  if (digitsOnly.startsWith('55') && (digitsOnly.length === 12 || digitsOnly.length === 13)) {
+    return { valid: true, normalized: `+${digitsOnly}`, isWhatsApp: digitsOnly.length === 13 };
+  }
+  
+  return { valid: false, normalized: '', isWhatsApp: false };
+}
+
+// Scrape Instagram from website
+async function scrapeInstagramFromWebsite(url: string): Promise<string | null> {
+  try {
+    console.log(`🔍 Scraping Instagram from: ${url}`);
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      signal: AbortSignal.timeout(5000) // 5 second timeout
+    });
+    
+    if (!response.ok) return null;
+    
+    const html = await response.text();
+    
+    // Priority 1: <link rel="me"> tag
+    const relMeMatch = html.match(/<link[^>]*rel=["']me["'][^>]*href=["']([^"']*instagram\.com[^"']*)["']/i) ||
+                       html.match(/<link[^>]*href=["']([^"']*instagram\.com[^"']*)["'][^>]*rel=["']me["']/i);
+    if (relMeMatch) {
+      const instagram = extractInstagramHandle(relMeMatch[1]);
+      if (instagram) {
+        console.log(`✅ Found Instagram via rel="me": ${instagram}`);
+        return instagram;
+      }
+    }
+    
+    // Priority 2: <meta property="og:url"> with Instagram
+    const ogUrlMatch = html.match(/<meta[^>]*property=["']og:url["'][^>]*content=["']([^"']*instagram\.com[^"']*)["']/i) ||
+                       html.match(/<meta[^>]*content=["']([^"']*instagram\.com[^"']*)["'][^>]*property=["']og:url["']/i);
+    if (ogUrlMatch) {
+      const instagram = extractInstagramHandle(ogUrlMatch[1]);
+      if (instagram) {
+        console.log(`✅ Found Instagram via og:url: ${instagram}`);
+        return instagram;
+      }
+    }
+    
+    // Priority 3: Direct instagram.com links in HTML
+    const instagramLinks = html.match(/https?:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9._]+/gi);
+    if (instagramLinks && instagramLinks.length > 0) {
+      const instagram = extractInstagramHandle(instagramLinks[0]);
+      if (instagram) {
+        console.log(`✅ Found Instagram via direct link: ${instagram}`);
+        return instagram;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`Error scraping website ${url}:`, error);
+    return null;
+  }
+}
+
+function extractInstagramHandle(url: string): string | null {
+  const match = url.match(/instagram\.com\/([a-zA-Z0-9._]+)/i);
+  if (match && match[1] && !['explore', 'p', 'reel', 'tv', 'stories'].includes(match[1].toLowerCase())) {
+    return `@${match[1]}`;
+  }
+  return null;
+}
+
+// Check if website or content has WhatsApp indicators
+async function detectWhatsApp(phone: string, website?: string): Promise<boolean> {
+  // First check if phone format indicates WhatsApp (mobile number)
+  const phoneValidation = validatePhone(phone);
+  if (!phoneValidation.valid) return false;
+  if (phoneValidation.isWhatsApp) return true;
+  
+  // If website exists, check for WhatsApp links
+  if (website) {
+    try {
+      const response = await fetch(website, {
+        headers: { 'User-Agent': 'Mozilla/5.0' },
+        signal: AbortSignal.timeout(5000)
+      });
+      
+      if (response.ok) {
+        const html = await response.text();
+        const digitsOnly = phone.replace(/\D/g, '');
+        
+        // Check for WhatsApp links with this phone number
+        const hasWhatsAppLink = html.includes('wa.me') || 
+                               html.includes('api.whatsapp.com/send') ||
+                               html.includes('whatsapp://send');
+        
+        if (hasWhatsAppLink && html.includes(digitsOnly.slice(-10))) {
+          return true;
+        }
+      }
+    } catch (error) {
+      console.error('Error checking WhatsApp:', error);
+    }
+  }
+  
+  return false;
+}
+
+// Calculate confidence score based on data sources
+function calculateConfidenceScore(lead: any, source: 'google_maps' | 'ai_generated'): number {
+  let score = 0;
+  
+  // Source scoring
+  if (source === 'google_maps') {
+    score += 50; // Google Maps data is highly reliable
+  } else {
+    score += 10; // AI generated needs verification
+  }
+  
+  // place_id from Google Maps
+  if (lead.placeId) {
+    score += 30;
+  }
+  
+  // Website validation
+  if (lead.website && lead.website !== 'Não disponível') {
+    score += 15;
+  }
+  
+  // Phone validation
+  const phoneValidation = validatePhone(lead.phone);
+  if (phoneValidation.valid) {
+    score += 10;
+  }
+  
+  // Instagram validation (if scraped from website)
+  if (lead.instagramSource === 'website') {
+    score += 10;
+  } else if (lead.instagram && lead.instagram !== 'Não disponível') {
+    score += 5;
+  }
+  
+  return Math.min(score, 100); // Cap at 100
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -239,6 +398,7 @@ ${JSON.stringify(apifyResults.slice(0, 25).map(place => ({
   address: place.address,
   phone: place.phone,
   website: place.website,
+  placeId: place.placeId,
   rating: place.totalScore,
   reviews: place.reviewsCount,
   category: place.categoryName,
@@ -353,6 +513,9 @@ ${segment.toLowerCase().includes('indústria') ? '✅ Todos os leads são INDÚS
       }),
     });
 
+    // Process and enrich leads with validation
+    console.log('🔄 Processing and enriching leads...');
+    
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Limite de requisições atingido. Tente novamente mais tarde." }), {
@@ -528,30 +691,99 @@ ${segment.toLowerCase().includes('indústria') ? '✅ Todos os leads são INDÚS
 
     console.log(`✅ Validated: ${validLeads.length}/${leads.length} leads`);
 
-    // Normalize city names in addresses and add unique IDs
-    const leadsWithIds = validLeads.map((lead: any, index: number) => {
+    // Enrich leads with validation and confidence scoring
+    console.log('🔄 Enriching leads with validation and web scraping...');
+    const enrichedLeads = await Promise.all(validLeads.map(async (lead: any, index: number) => {
       // Normalize the city name in the address
       let normalizedAddress = lead.address;
-      
-      // Replace any occurrence of the city name with the properly capitalized version
       const normalizeString = (str: string) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       const locationPattern = new RegExp(
         normalizeString(location.toLowerCase()).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
         'gi'
       );
-      
       normalizedAddress = normalizedAddress.replace(locationPattern, normalizedLocation);
+      
+      // Determine source
+      const googleData = apifyResults.find((place: any) => 
+        place.title === lead.name || 
+        normalizeString(place.address?.toLowerCase() || '').includes(normalizeString(lead.name.toLowerCase()))
+      );
+      const source = googleData ? 'google_maps' : 'ai_generated';
+      
+      // Validate and normalize phone
+      const phoneValidation = validatePhone(lead.phone);
+      let validatedPhone = lead.phone;
+      if (phoneValidation.valid) {
+        validatedPhone = phoneValidation.normalized;
+      } else {
+        console.warn(`⚠️ Invalid phone format for ${lead.name}: ${lead.phone}`);
+      }
+      
+      // Scrape Instagram from website if available (PRIORITY)
+      let instagram = lead.instagram || 'Não disponível';
+      let instagramSource = 'directory';
+      const website = googleData?.website || lead.website || 'Não disponível';
+      
+      if (website && website !== 'Não disponível') {
+        try {
+          const scrapedInstagram = await scrapeInstagramFromWebsite(website);
+          if (scrapedInstagram) {
+            instagram = scrapedInstagram;
+            instagramSource = 'website';
+            console.log(`✅ ${lead.name}: Instagram scraped from website: ${instagram}`);
+          }
+        } catch (error) {
+          console.error(`Error scraping Instagram for ${lead.name}:`, error);
+        }
+      }
+      
+      // Detect WhatsApp
+      let hasWhatsApp = false;
+      try {
+        hasWhatsApp = await detectWhatsApp(validatedPhone, website);
+        if (hasWhatsApp) {
+          console.log(`✅ ${lead.name}: WhatsApp detected`);
+        }
+      } catch (error) {
+        console.error(`Error detecting WhatsApp for ${lead.name}:`, error);
+      }
+      
+      // Calculate confidence score
+      const confidenceScore = calculateConfidenceScore({
+        placeId: googleData?.placeId,
+        website,
+        phone: validatedPhone,
+        instagram,
+        instagramSource
+      }, source);
       
       return {
         ...lead,
-        address: normalizedAddress,
         id: `${Date.now()}-${index}`,
+        address: normalizedAddress,
+        phone: validatedPhone,
+        phoneValid: phoneValidation.valid,
+        instagram,
+        instagramSource,
+        hasWhatsApp,
+        website,
+        placeId: googleData?.placeId,
+        confidenceScore,
+        source,
+        needsReview: confidenceScore < 70
       };
-    });
+    }));
 
-    console.log("Final processed leads:", leadsWithIds);
+    // Sort by confidence score (highest first)
+    enrichedLeads.sort((a, b) => b.confidenceScore - a.confidenceScore);
 
-    return new Response(JSON.stringify({ leads: leadsWithIds }), {
+    console.log(`✅ Enriched ${enrichedLeads.length} leads`);
+    console.log(`📊 Confidence scores: ${enrichedLeads.map(l => `${l.name}: ${l.confidenceScore}`).join(', ')}`);
+    console.log(`📱 WhatsApp detected: ${enrichedLeads.filter(l => l.hasWhatsApp).length} leads`);
+    console.log(`📸 Instagram from website: ${enrichedLeads.filter(l => l.instagramSource === 'website').length} leads`);
+    console.log(`⚠️ Needs review (confidence < 70): ${enrichedLeads.filter(l => l.needsReview).length} leads`);
+
+    return new Response(JSON.stringify({ leads: enrichedLeads }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
