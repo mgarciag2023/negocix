@@ -351,21 +351,70 @@ serve(async (req) => {
         const locationLower = normalizeString(location.toLowerCase());
         const stateDisplayLower = normalizeString(stateCode.toLowerCase());
         
+        // Define retail categories to EXCLUDE when searching for industries/manufacturers
+        const retailCategories = [
+          'padaria', 'bakery', 'restaurante', 'restaurant', 'cafeteria', 'cafe', 
+          'lanchonete', 'snack bar', 'coffee shop', 'confeitaria', 'pastry shop',
+          'delicatessen', 'food establishment', 'eatery', 'bar', 'pub'
+        ];
+        
+        const industryKeywords = [
+          'indústria', 'fabrica', 'fábrica', 'manufatura', 'factory', 'manufacturer', 
+          'industrial', 'production', 'produção', 'distribuidor', 'distribuidora'
+        ];
+        
+        // Check if user is searching for industries/manufacturers
+        const segmentLower = normalizeString(segment.toLowerCase());
+        const isIndustrySearch = industryKeywords.some(keyword => 
+          segmentLower.includes(keyword)
+        );
+        
+        console.log(`🏭 Industry search mode: ${isIndustrySearch}`);
+        
         apifyResults = apifyResults.filter((place: any) => {
           const address = normalizeString((place.address || '').toLowerCase());
-          // Strict validation: address must contain both city and state in proper format
+          
+          // Location validation
           const hasCity = address.includes(locationLower);
           const hasState = address.includes(stateDisplayLower);
           const hasCityStateFormat = new RegExp(`\\b${locationLower}\\s*[\\-,/]\\s*${stateDisplayLower}\\b`).test(address);
           
-          const isValid = hasCity && hasState && hasCityStateFormat;
-          if (!isValid) {
-            console.log(`🚫 Filtered out Apify result - wrong location: ${place.title} at ${place.address}`);
+          if (!hasCity || !hasState || !hasCityStateFormat) {
+            console.log(`🚫 Filtered out - wrong location: ${place.title} at ${place.address}`);
+            return false;
           }
-          return isValid;
+          
+          // Business type validation for industry searches
+          if (isIndustrySearch) {
+            const categories = (place.categories || []).map((cat: string) => normalizeString(cat.toLowerCase()));
+            const title = normalizeString((place.title || '').toLowerCase());
+            const categoryName = normalizeString((place.categoryName || '').toLowerCase());
+            
+            // Exclude if it's clearly a retail/commercial establishment
+            const isRetail = retailCategories.some(retail => 
+              categories.some((cat: string) => cat.includes(retail)) ||
+              categoryName.includes(retail)
+            );
+            
+            if (isRetail) {
+              console.log(`❌ Excluded retail: ${place.title} (${place.categoryName || 'no category'})`);
+              return false;
+            }
+            
+            // For industry searches, log what we're keeping
+            const hasIndustryKeyword = industryKeywords.some(keyword =>
+              title.includes(keyword) || 
+              categories.some((cat: string) => cat.includes(keyword)) ||
+              categoryName.includes(keyword)
+            );
+            
+            console.log(`✅ Kept: ${place.title} (${place.categoryName || 'no category'}) - Industry keyword: ${hasIndustryKeyword}`);
+          }
+          
+          return true;
         });
         
-        console.log(`✅ After location filtering: ${apifyResults.length} valid places from Google Maps`);
+        console.log(`✅ After filtering: ${apifyResults.length} valid places from Google Maps`);
       }
       
     } catch (error) {
