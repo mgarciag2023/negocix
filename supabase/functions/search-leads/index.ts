@@ -397,34 +397,65 @@ serve(async (req) => {
           
           // 2. For product-specific searches (e.g., pão de queijo)
           if (isProductSearch) {
-            // Check if the business name or category mentions the product
-            const mentionsProduct = productKeywords.some(keyword =>
-              title.includes(keyword) ||
+            // Check if the business name mentions the product (PRIORITY)
+            const mentionsProductInName = productKeywords.some(keyword => title.includes(keyword));
+            
+            // If product is in the name, it's highly relevant regardless of category
+            if (mentionsProductInName) {
+              console.log(`✅ Product in name: ${place.title} (${categoryName})`);
+              return true;
+            }
+            
+            // Check if category mentions the product
+            const mentionsProductInCategory = productKeywords.some(keyword =>
               categoryName.includes(keyword) ||
               categories.some((cat: string) => cat.includes(keyword))
             );
             
-            // Exclude generic restaurants that don't specialize in the product
-            const isGenericRestaurant = genericRestaurantCategories.some(generic =>
-              categoryName.includes(generic) ||
-              categories.some((cat: string) => cat.includes(generic))
+            // Accept food-related businesses that mention the product in category
+            const isFoodBusiness = ['cafeteria', 'padaria', 'confeitaria', 'lanchonete', 'loja', 
+                                     'bakery', 'cafe', 'food', 'alimentos'].some(word =>
+              categoryName.includes(word) || categories.some((cat: string) => cat.includes(word))
             );
             
-            if (isGenericRestaurant && !mentionsProduct) {
-              console.log(`❌ Generic restaurant (not specialized): ${place.title} (${categoryName})`);
+            if (mentionsProductInCategory && isFoodBusiness) {
+              console.log(`✅ Food business with product: ${place.title} (${categoryName})`);
+              return true;
+            }
+            
+            // Accept manufacturers/factories even without product mention
+            const isManufacturer = ['fabricante', 'manufacturer', 'factory', 'fabrica', 'producao', 'industrial', 
+                                     'congelados', 'frozen'].some(word => 
+              categoryName.includes(word) || categories.some((cat: string) => cat.includes(word))
+            );
+            
+            if (isManufacturer) {
+              console.log(`✅ Manufacturer: ${place.title} (${categoryName})`);
+              return true;
+            }
+            
+            // Exclude generic restaurants/bars that don't mention the product
+            const isGenericRestaurant = genericRestaurantCategories.some(generic =>
+              categoryName.includes(generic) || categories.some((cat: string) => cat.includes(generic))
+            );
+            
+            if (isGenericRestaurant) {
+              console.log(`❌ Generic restaurant: ${place.title} (${categoryName})`);
               return false;
             }
             
-            // Only keep if it mentions the product OR is a manufacturer/factory
-            const isManufacturer = ['fabricante', 'manufacturer', 'factory', 'fabrica', 'producao', 'industrial']
-              .some(word => categoryName.includes(word) || categories.some((cat: string) => cat.includes(word)));
+            // Exclude supermarkets/stores unless they specialize in the product
+            const isRetailStore = ['supermercado', 'atacadista', 'hipermercado', 'mercado'].some(word =>
+              categoryName.includes(word) || categories.some((cat: string) => cat.includes(word))
+            );
             
-            if (!mentionsProduct && !isManufacturer) {
-              console.log(`❌ Not related to ${productKeywords[0]}: ${place.title} (${categoryName})`);
+            if (isRetailStore) {
+              console.log(`❌ Retail store: ${place.title} (${categoryName})`);
               return false;
             }
             
-            console.log(`✅ Relevant: ${place.title} (${categoryName}) - Product: ${mentionsProduct}, Manufacturer: ${isManufacturer}`);
+            console.log(`❌ Not related to ${productKeywords[0]}: ${place.title} (${categoryName})`);
+            return false;
           }
           
           return true;
