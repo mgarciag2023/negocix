@@ -290,6 +290,19 @@ serve(async (req) => {
         const categoryName = normalizeString((place.categoryName || '').toLowerCase());
         const categories = (place.categories || []).map((cat: string) => normalizeString(cat.toLowerCase()));
         
+        // 0. MUST NOT be permanently closed
+        if (place.closed === true || place.permanentlyClosed === true || place.isAdvertisement === true) {
+          console.log(`🚫 Establishment closed: ${place.title}`);
+          return false;
+        }
+        
+        // Check if title indicates closure
+        const closureIndicators = ['fechado', 'encerrado', 'closed', 'desativado', 'inativo'];
+        if (closureIndicators.some(indicator => title.includes(indicator))) {
+          console.log(`🚫 Title indicates closure: ${place.title}`);
+          return false;
+        }
+        
         // 1. MUST have valid phone
         if (!place.phone || place.phone.trim() === '') {
           console.log(`🚫 No phone: ${place.title}`);
