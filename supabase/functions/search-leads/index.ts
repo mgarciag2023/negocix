@@ -200,17 +200,8 @@ serve(async (req) => {
     // Use Apify Google Maps Scraper for real data - ONLY SOURCE OF TRUTH
     console.log('📡 Searching Google Maps via Apify API (ONLY real data)...');
     
-    // Build search query
-    const segmentLower = segment.toLowerCase();
-    let searchQuery = segment;
-    
-    if (segmentLower.includes('pão de queijo') || segmentLower.includes('pao de queijo')) {
-      searchQuery = `fabricante pão de queijo ${location} ${stateDisplay}`;
-      console.log(`🎯 Product-specific search for: pão de queijo`);
-    } else {
-      searchQuery = `${segment} ${location} ${stateDisplay}`;
-    }
-    
+    // Build search query - use exact segment without modifications
+    const searchQuery = `${segment} ${location} ${stateDisplay}`;
     console.log(`🔍 Search query: "${searchQuery}"`);
     
     // Define coordinates for the location
@@ -240,9 +231,9 @@ serve(async (req) => {
           searchStringsArray: [searchQuery],
           lat: cityCoords.lat,
           lng: cityCoords.lng,
-          radius: 25000, // 25 km radius
-          exactMatch: true,
-          maxCrawledPlacesPerSearch: 100, // Get maximum results
+          radius: 50000, // 50 km radius for better coverage
+          exactMatch: false, // Allow broader matches
+          maxCrawledPlacesPerSearch: 150, // Get maximum results
           language: 'pt-BR',
           deeperCityScrape: true,
           ...(segment.toLowerCase().includes('indústria') && {
@@ -309,17 +300,17 @@ serve(async (req) => {
           return false;
         }
         
-        // 2. MUST be in correct city
+        // 2. MUST be in correct city (be more flexible if address is incomplete)
         const hasCity = address.includes(locationLower);
         const hasState = address.includes(stateDisplayLower);
-        const hasCityStateFormat = new RegExp(`\\b${locationLower}\\s*[\\-,/]\\s*${stateDisplayLower}\\b`).test(address);
         
-        if (!hasCity || !hasState || !hasCityStateFormat) {
+        // Allow if city is present, or if both title and address suggest correct location
+        if (!hasCity && !hasState) {
           console.log(`🚫 Wrong location: ${place.title} at ${place.address}`);
           return false;
         }
         
-        // 3. For product-specific searches
+        // 3. For product-specific searches - be more lenient
         if (isProductSearch) {
           const mentionsProduct = productKeywords.some(keyword =>
             title.includes(keyword) ||
@@ -327,21 +318,14 @@ serve(async (req) => {
             categories.some((cat: string) => cat.includes(keyword))
           );
           
+          // Only exclude obvious non-matches (generic restaurants that don't mention product)
           const isGenericRestaurant = genericRestaurantCategories.some(generic =>
             categoryName.includes(generic) ||
             categories.some((cat: string) => cat.includes(generic))
           );
           
           if (isGenericRestaurant && !mentionsProduct) {
-            console.log(`❌ Generic restaurant: ${place.title}`);
-            return false;
-          }
-          
-          const isManufacturer = ['fabricante', 'manufacturer', 'factory', 'fabrica', 'producao', 'industrial']
-            .some(word => categoryName.includes(word) || categories.some((cat: string) => cat.includes(word)));
-          
-          if (!mentionsProduct && !isManufacturer) {
-            console.log(`❌ Not related to ${productKeywords[0]}: ${place.title}`);
+            console.log(`❌ Generic restaurant without product: ${place.title}`);
             return false;
           }
           
