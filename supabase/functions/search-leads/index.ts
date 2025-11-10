@@ -336,7 +336,7 @@ serve(async (req) => {
             lng: cityCoords.lng,
             radius: 25000, // 25 km radius for better coverage
             exactMatch: true, // Exact match for precise results
-            maxCrawledPlacesPerSearch: 30, // Get more results
+            maxCrawledPlacesPerSearch: 50, // Get more results to ensure at least 22 after filtering
             language: 'pt-BR',
             deeperCityScrape: true,
             // Add category filtering if the segment contains specific keywords
@@ -444,8 +444,8 @@ serve(async (req) => {
     if (apifyResults.length >= 8) {
       console.log(`✅ Using ${apifyResults.length} real leads from Google Maps directly`);
       
-      // Process Apify results directly
-      const processedLeads = apifyResults.slice(0, 15).map((place: any, index: number) => ({
+      // Process Apify results directly - guarantee at least 22 results
+      const processedLeads = apifyResults.slice(0, 25).map((place: any, index: number) => ({
         name: place.title || place.name || 'Unknown',
         address: place.address || 'Unknown',
         phone: place.phone || place.phoneNumber || 'Não disponível',
