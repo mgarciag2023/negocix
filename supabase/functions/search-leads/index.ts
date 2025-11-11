@@ -609,10 +609,10 @@ serve(async (req) => {
     // Sort by confidence score
     enrichedLeads.sort((a, b) => b.confidenceScore - a.confidenceScore);
     
-    // Limit to maximum 30 leads
-    const finalLeads = enrichedLeads.slice(0, 30);
+    // Limit to maximum 50 leads
+    const finalLeads = enrichedLeads.slice(0, 50);
     
-    console.log(`✅ FINAL: ${finalLeads.length} verified leads from Google Maps (limited to 30 max)`);
+    console.log(`✅ FINAL: ${finalLeads.length} verified leads from Google Maps (limited to 50 max)`);
     console.log(`📊 Top 5 confidence scores: ${finalLeads.slice(0, 5).map(l => `${l.name}: ${l.confidenceScore}`).join(', ')}`);
     console.log(`📱 WhatsApp: ${finalLeads.filter(l => l.hasWhatsApp).length} leads`);
     console.log(`📸 Instagram: ${finalLeads.filter(l => l.instagram !== 'Não disponível').length} leads`);
