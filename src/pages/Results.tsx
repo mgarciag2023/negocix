@@ -146,8 +146,8 @@ const Results = () => {
           localStorage.setItem('cachedLeads', JSON.stringify(data.leads));
         } else if (data?.error) {
           toast({
-            title: "Nenhum lead encontrado",
-            description: data.error,
+            title: "Erro ao buscar leads",
+            description: data.error + (data.details ? ` ${data.details}` : ''),
             variant: "destructive",
           });
         } else {

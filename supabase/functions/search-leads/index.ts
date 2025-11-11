@@ -284,7 +284,27 @@ serve(async (req) => {
     if (!apifyResponse.ok) {
       const errorText = await apifyResponse.text();
       console.error(`❌ Apify API error: ${apifyResponse.status}`, errorText);
-      throw new Error(`Erro ao buscar no Google Maps: ${apifyResponse.status}`);
+      
+      // Parse error for more specific messages
+      let errorMessage = `Erro ao buscar no Google Maps: ${apifyResponse.status}`;
+      try {
+        const errorData = JSON.parse(errorText);
+        if (errorData.error?.type === 'platform-feature-disabled') {
+          errorMessage = 'Limite mensal da API do Apify excedido. Por favor, atualize sua chave da API ou aguarde o próximo ciclo de cobrança.';
+        } else if (errorData.error?.message) {
+          errorMessage = `Erro da API: ${errorData.error.message}`;
+        }
+      } catch (e) {
+        // Keep default message if can't parse
+      }
+      
+      return new Response(JSON.stringify({ 
+        error: errorMessage,
+        details: 'Por favor, verifique sua conta Apify ou entre em contato com o suporte.'
+      }), {
+        status: apifyResponse.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     let apifyResults = await apifyResponse.json();
