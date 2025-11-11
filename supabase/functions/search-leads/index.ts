@@ -609,16 +609,13 @@ serve(async (req) => {
     // Sort by confidence score
     enrichedLeads.sort((a, b) => b.confidenceScore - a.confidenceScore);
     
-    // Limit to maximum 50 leads
-    const finalLeads = enrichedLeads.slice(0, 50);
+    console.log(`✅ FINAL: ${enrichedLeads.length} verified leads from Google Maps`);
+    console.log(`📊 Top 5 confidence scores: ${enrichedLeads.slice(0, 5).map(l => `${l.name}: ${l.confidenceScore}`).join(', ')}`);
+    console.log(`📱 WhatsApp: ${enrichedLeads.filter(l => l.hasWhatsApp).length} leads`);
+    console.log(`📸 Instagram: ${enrichedLeads.filter(l => l.instagram !== 'Não disponível').length} leads`);
+    console.log(`🌐 Website: ${enrichedLeads.filter(l => l.website !== 'Não disponível').length} leads`);
     
-    console.log(`✅ FINAL: ${finalLeads.length} verified leads from Google Maps (limited to 50 max)`);
-    console.log(`📊 Top 5 confidence scores: ${finalLeads.slice(0, 5).map(l => `${l.name}: ${l.confidenceScore}`).join(', ')}`);
-    console.log(`📱 WhatsApp: ${finalLeads.filter(l => l.hasWhatsApp).length} leads`);
-    console.log(`📸 Instagram: ${finalLeads.filter(l => l.instagram !== 'Não disponível').length} leads`);
-    console.log(`🌐 Website: ${finalLeads.filter(l => l.website !== 'Não disponível').length} leads`);
-    
-    return new Response(JSON.stringify({ leads: finalLeads }), {
+    return new Response(JSON.stringify({ leads: enrichedLeads }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
     
