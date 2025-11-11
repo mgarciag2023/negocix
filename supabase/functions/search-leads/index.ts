@@ -31,6 +31,30 @@ function validatePhone(phone: string): { valid: boolean; normalized: string; isW
   return { valid: false, normalized: '', isWhatsApp: false };
 }
 
+// Validate if Instagram profile exists
+async function validateInstagramProfile(handle: string): Promise<boolean> {
+  try {
+    const username = handle.replace('@', '');
+    console.log(`🔍 Validating Instagram profile: ${username}`);
+    
+    // Make a HEAD request to check if profile exists (faster than GET)
+    const response = await fetch(`https://www.instagram.com/${username}/`, {
+      method: 'HEAD',
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      signal: AbortSignal.timeout(5000),
+      redirect: 'follow'
+    });
+    
+    // Profile exists if we get 200 OK
+    const exists = response.ok;
+    console.log(`${exists ? '✅' : '❌'} Instagram @${username}: ${response.status}`);
+    return exists;
+  } catch (error) {
+    console.error(`Error validating Instagram ${handle}:`, error);
+    return false;
+  }
+}
+
 // Scrape Instagram from website
 async function scrapeInstagramFromWebsite(url: string): Promise<string | null> {
   try {
@@ -50,8 +74,14 @@ async function scrapeInstagramFromWebsite(url: string): Promise<string | null> {
     if (relMeMatch) {
       const instagram = extractInstagramHandle(relMeMatch[1]);
       if (instagram) {
-        console.log(`✅ Found Instagram via rel="me": ${instagram}`);
-        return instagram;
+        // VALIDATE before returning
+        const isValid = await validateInstagramProfile(instagram);
+        if (isValid) {
+          console.log(`✅ Found Instagram via rel="me": ${instagram}`);
+          return instagram;
+        } else {
+          console.log(`❌ Instagram ${instagram} does not exist (rel="me")`);
+        }
       }
     }
     
@@ -61,8 +91,14 @@ async function scrapeInstagramFromWebsite(url: string): Promise<string | null> {
     if (ogUrlMatch) {
       const instagram = extractInstagramHandle(ogUrlMatch[1]);
       if (instagram) {
-        console.log(`✅ Found Instagram via og:url: ${instagram}`);
-        return instagram;
+        // VALIDATE before returning
+        const isValid = await validateInstagramProfile(instagram);
+        if (isValid) {
+          console.log(`✅ Found Instagram via og:url: ${instagram}`);
+          return instagram;
+        } else {
+          console.log(`❌ Instagram ${instagram} does not exist (og:url)`);
+        }
       }
     }
     
@@ -71,8 +107,14 @@ async function scrapeInstagramFromWebsite(url: string): Promise<string | null> {
     if (instagramLinks && instagramLinks.length > 0) {
       const instagram = extractInstagramHandle(instagramLinks[0]);
       if (instagram) {
-        console.log(`✅ Found Instagram via direct link: ${instagram}`);
-        return instagram;
+        // VALIDATE before returning
+        const isValid = await validateInstagramProfile(instagram);
+        if (isValid) {
+          console.log(`✅ Found Instagram via direct link: ${instagram}`);
+          return instagram;
+        } else {
+          console.log(`❌ Instagram ${instagram} does not exist (direct link)`);
+        }
       }
     }
     
@@ -253,7 +295,7 @@ serve(async (req) => {
     // Build Apify request body
     const apifyRequestBody: any = {
       searchStringsArray: [searchQuery],
-      maxCrawledPlacesPerSearch: 200, // Increase to get more results
+      maxCrawledPlacesPerSearch: 300, // Increase to get more results
       language: 'pt-BR',
       deeperCityScrape: true,
       exactMatch: false,
@@ -310,10 +352,11 @@ serve(async (req) => {
     let apifyResults = await apifyResponse.json();
     console.log(`📊 Apify returned ${apifyResults.length} places`);
     
-    // If we got very few results (less than 5), try a broader search without coordinates
-    if (apifyResults.length < 5 && cityCoords) {
-      console.log(`⚠️ Only ${apifyResults.length} results with coordinates. Trying broader search without coordinates...`);
+    // If we got few results (less than 12), try multiple strategies to get more
+    if (apifyResults.length < 12 && cityCoords) {
+      console.log(`⚠️ Only ${apifyResults.length} results. Trying broader search strategies...`);
       
+      // Strategy 1: Broader search without coordinates
       const broadSearchResponse = await fetch(
         `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
         {
@@ -321,7 +364,7 @@ serve(async (req) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             searchStringsArray: [searchQuery],
-            maxCrawledPlacesPerSearch: 200,
+            maxCrawledPlacesPerSearch: 300,
             language: 'pt-BR',
             deeperCityScrape: true,
             exactMatch: false,
@@ -332,11 +375,41 @@ serve(async (req) => {
       if (broadSearchResponse.ok) {
         const broadResults = await broadSearchResponse.json();
         console.log(`📊 Broader search returned ${broadResults.length} places`);
-        // Merge results, avoiding duplicates by placeId
         const existingIds = new Set(apifyResults.map((r: any) => r.placeId));
         const newResults = broadResults.filter((r: any) => !existingIds.has(r.placeId));
         apifyResults = [...apifyResults, ...newResults];
-        console.log(`✅ Combined total: ${apifyResults.length} places`);
+        console.log(`✅ After broader search: ${apifyResults.length} places`);
+      }
+      
+      // Strategy 2: If still not enough, expand radius significantly
+      if (apifyResults.length < 12) {
+        console.log(`⚠️ Still only ${apifyResults.length} results. Expanding radius to 200km...`);
+        const expandedSearchResponse = await fetch(
+          `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              searchStringsArray: [searchQuery],
+              maxCrawledPlacesPerSearch: 300,
+              language: 'pt-BR',
+              deeperCityScrape: true,
+              exactMatch: false,
+              lat: cityCoords.lat,
+              lng: cityCoords.lng,
+              radius: 200000, // 200 km radius
+            }),
+          }
+        );
+        
+        if (expandedSearchResponse.ok) {
+          const expandedResults = await expandedSearchResponse.json();
+          console.log(`📊 Expanded radius search returned ${expandedResults.length} places`);
+          const existingIds = new Set(apifyResults.map((r: any) => r.placeId));
+          const newResults = expandedResults.filter((r: any) => !existingIds.has(r.placeId));
+          apifyResults = [...apifyResults, ...newResults];
+          console.log(`✅ After expanded radius: ${apifyResults.length} places`);
+        }
       }
     }
     
@@ -536,13 +609,16 @@ serve(async (req) => {
     // Sort by confidence score
     enrichedLeads.sort((a, b) => b.confidenceScore - a.confidenceScore);
     
-    console.log(`✅ FINAL: ${enrichedLeads.length} verified leads from Google Maps`);
-    console.log(`📊 Top 5 confidence scores: ${enrichedLeads.slice(0, 5).map(l => `${l.name}: ${l.confidenceScore}`).join(', ')}`);
-    console.log(`📱 WhatsApp: ${enrichedLeads.filter(l => l.hasWhatsApp).length} leads`);
-    console.log(`📸 Instagram: ${enrichedLeads.filter(l => l.instagram !== 'Não disponível').length} leads`);
-    console.log(`🌐 Website: ${enrichedLeads.filter(l => l.website !== 'Não disponível').length} leads`);
+    // Limit to maximum 30 leads
+    const finalLeads = enrichedLeads.slice(0, 30);
     
-    return new Response(JSON.stringify({ leads: enrichedLeads }), {
+    console.log(`✅ FINAL: ${finalLeads.length} verified leads from Google Maps (limited to 30 max)`);
+    console.log(`📊 Top 5 confidence scores: ${finalLeads.slice(0, 5).map(l => `${l.name}: ${l.confidenceScore}`).join(', ')}`);
+    console.log(`📱 WhatsApp: ${finalLeads.filter(l => l.hasWhatsApp).length} leads`);
+    console.log(`📸 Instagram: ${finalLeads.filter(l => l.instagram !== 'Não disponível').length} leads`);
+    console.log(`🌐 Website: ${finalLeads.filter(l => l.website !== 'Não disponível').length} leads`);
+    
+    return new Response(JSON.stringify({ leads: finalLeads }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
     
