@@ -204,22 +204,72 @@ serve(async (req) => {
     const searchQuery = `${segment} ${location} ${stateDisplay}`;
     console.log(`🔍 Search query: "${searchQuery}"`);
     
-    // Define coordinates for the location
+    // Define coordinates for major cities in Brazil
     const coordinates: { [key: string]: { lat: number; lng: number } } = {
-      'Santa Maria': { lat: -29.6868, lng: -53.8149 },
-      'Blumenau': { lat: -26.9194, lng: -49.0661 },
-      'Porto Alegre': { lat: -30.0346, lng: -51.2177 },
+      // Santa Catarina
       'Florianópolis': { lat: -27.5954, lng: -48.5480 },
+      'Blumenau': { lat: -26.9194, lng: -49.0661 },
+      'Joinville': { lat: -26.3045, lng: -48.8487 },
+      'Chapecó': { lat: -27.1004, lng: -52.6156 },
+      'Criciúma': { lat: -28.6773, lng: -49.3697 },
+      'Itajaí': { lat: -26.9077, lng: -48.6619 },
+      'São José': { lat: -27.5969, lng: -48.6335 },
+      'Lages': { lat: -27.8167, lng: -50.3264 },
+      'Balneário Camboriú': { lat: -26.9906, lng: -48.6350 },
+      'Palhoça': { lat: -27.6453, lng: -48.6704 },
+      'Brusque': { lat: -27.0979, lng: -48.9139 },
+      'Tubarão': { lat: -28.4667, lng: -49.0069 },
+      'Jaraguá do Sul': { lat: -26.4856, lng: -49.0676 },
+      'Balneário Piçarras': { lat: -26.7686, lng: -48.6714 },
+      'Penha': { lat: -26.7706, lng: -48.6444 },
+      'Barra Velha': { lat: -26.6317, lng: -48.6856 },
+      'Navegantes': { lat: -26.8979, lng: -48.6545 },
+      'Camboriú': { lat: -27.0247, lng: -48.6544 },
+      'Piçarras': { lat: -26.7686, lng: -48.6714 },
+      // Rio Grande do Sul
+      'Porto Alegre': { lat: -30.0346, lng: -51.2177 },
+      'Santa Maria': { lat: -29.6868, lng: -53.8149 },
+      'Caxias do Sul': { lat: -29.1634, lng: -51.1797 },
+      'Pelotas': { lat: -31.7654, lng: -52.3376 },
+      'Canoas': { lat: -29.9177, lng: -51.1844 },
+      // Paraná
       'Curitiba': { lat: -25.4284, lng: -49.2733 },
+      'Londrina': { lat: -23.3045, lng: -51.1696 },
+      'Maringá': { lat: -23.4273, lng: -51.9375 },
+      // São Paulo
       'São Paulo': { lat: -23.5505, lng: -46.6333 },
+      'Campinas': { lat: -22.9099, lng: -47.0626 },
+      // Rio de Janeiro
       'Rio de Janeiro': { lat: -22.9068, lng: -43.1729 },
     };
     
-    const cityCoords = coordinates[location] || { lat: -29.6868, lng: -53.8149 };
+    const cityCoords = coordinates[location.trim()];
     
     const APIFY_API_KEY = Deno.env.get("APIFY_API_KEY");
     if (!APIFY_API_KEY) {
       throw new Error("APIFY_API_KEY is not configured");
+    }
+    
+    // Build Apify request body
+    const apifyRequestBody: any = {
+      searchStringsArray: [searchQuery],
+      maxCrawledPlacesPerSearch: 200, // Increase to get more results
+      language: 'pt-BR',
+      deeperCityScrape: true,
+      exactMatch: false,
+      ...(segment.toLowerCase().includes('indústria') && {
+        categoryFilters: ['manufacturer', 'factory', 'industrial_company']
+      })
+    };
+    
+    // Add coordinates if available, otherwise let Apify search by city name
+    if (cityCoords) {
+      apifyRequestBody.lat = cityCoords.lat;
+      apifyRequestBody.lng = cityCoords.lng;
+      apifyRequestBody.radius = 100000; // 100 km radius for better coverage
+      console.log(`📍 Using coordinates: ${cityCoords.lat}, ${cityCoords.lng} with 100km radius`);
+    } else {
+      console.log(`📍 No coordinates found for ${location}, using city name search only`);
     }
     
     const apifyResponse = await fetch(
@@ -227,19 +277,7 @@ serve(async (req) => {
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          searchStringsArray: [searchQuery],
-          lat: cityCoords.lat,
-          lng: cityCoords.lng,
-          radius: 50000, // 50 km radius for better coverage
-          exactMatch: false, // Allow broader matches
-          maxCrawledPlacesPerSearch: 150, // Get maximum results
-          language: 'pt-BR',
-          deeperCityScrape: true,
-          ...(segment.toLowerCase().includes('indústria') && {
-            categoryFilters: ['manufacturer', 'factory', 'industrial_company']
-          })
-        }),
+        body: JSON.stringify(apifyRequestBody),
       }
     );
 
@@ -251,6 +289,36 @@ serve(async (req) => {
 
     let apifyResults = await apifyResponse.json();
     console.log(`📊 Apify returned ${apifyResults.length} places`);
+    
+    // If we got very few results (less than 5), try a broader search without coordinates
+    if (apifyResults.length < 5 && cityCoords) {
+      console.log(`⚠️ Only ${apifyResults.length} results with coordinates. Trying broader search without coordinates...`);
+      
+      const broadSearchResponse = await fetch(
+        `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            searchStringsArray: [searchQuery],
+            maxCrawledPlacesPerSearch: 200,
+            language: 'pt-BR',
+            deeperCityScrape: true,
+            exactMatch: false,
+          }),
+        }
+      );
+      
+      if (broadSearchResponse.ok) {
+        const broadResults = await broadSearchResponse.json();
+        console.log(`📊 Broader search returned ${broadResults.length} places`);
+        // Merge results, avoiding duplicates by placeId
+        const existingIds = new Set(apifyResults.map((r: any) => r.placeId));
+        const newResults = broadResults.filter((r: any) => !existingIds.has(r.placeId));
+        apifyResults = [...apifyResults, ...newResults];
+        console.log(`✅ Combined total: ${apifyResults.length} places`);
+      }
+    }
     
     // CRITICAL FILTERING: Only exact city, valid phone, relevant business
     if (apifyResults.length > 0) {
@@ -300,14 +368,22 @@ serve(async (req) => {
           return false;
         }
         
-        // 2. MUST be in correct city (be more flexible if address is incomplete)
+        // 2. Location validation - more flexible to accept nearby cities
         const hasCity = address.includes(locationLower);
         const hasState = address.includes(stateDisplayLower);
         
-        // Allow if city is present, or if both title and address suggest correct location
+        // Accept if has city, OR if has state and is close enough (from same region)
+        // Don't reject if address is in the same state but different city (could be nearby)
         if (!hasCity && !hasState) {
           console.log(`🚫 Wrong location: ${place.title} at ${place.address}`);
           return false;
+        }
+        
+        // If has state but not city, only accept if it's a reasonable match
+        // (not from a completely different part of the state)
+        if (!hasCity && hasState) {
+          // Allow it through - city-level filtering might be too strict
+          console.log(`⚠️ Different city but same state: ${place.title} at ${place.address}`);
         }
         
         // 3. For product-specific searches - be more lenient
