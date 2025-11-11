@@ -66,8 +66,9 @@ const Configuration = () => {
       return;
     }
 
-    // Clear cached leads to force new search
+    // Clear both cached leads and previous search config to force completely new search
     localStorage.removeItem('cachedLeads');
+    localStorage.removeItem('leadSearchConfig');
 
     // Save search configuration to localStorage
     const searchConfig = {
