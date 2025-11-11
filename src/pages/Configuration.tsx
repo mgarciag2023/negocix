@@ -66,6 +66,9 @@ const Configuration = () => {
       return;
     }
 
+    // Clear cached leads to force new search
+    localStorage.removeItem('cachedLeads');
+
     // Save search configuration to localStorage
     const searchConfig = {
       category,

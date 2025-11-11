@@ -88,6 +88,15 @@ const Results = () => {
   useEffect(() => {
     const fetchLeads = async () => {
       try {
+        // Check if we have cached leads first
+        const cachedLeadsStr = localStorage.getItem('cachedLeads');
+        if (cachedLeadsStr) {
+          const cachedLeads = JSON.parse(cachedLeadsStr);
+          setLeads(cachedLeads);
+          setLoading(false);
+          return;
+        }
+
         // Get search configuration from localStorage
         const searchConfigStr = localStorage.getItem('leadSearchConfig');
         if (!searchConfigStr) {
@@ -96,6 +105,7 @@ const Results = () => {
             description: "Configure sua busca primeiro",
             variant: "destructive",
           });
+          setLoading(false);
           return;
         }
 
@@ -122,11 +132,14 @@ const Results = () => {
             description: "Tente novamente mais tarde",
             variant: "destructive",
           });
+          setLoading(false);
           return;
         }
 
         if (data?.leads) {
           setLeads(data.leads);
+          // Cache the leads
+          localStorage.setItem('cachedLeads', JSON.stringify(data.leads));
         }
       } catch (error) {
         console.error('Error fetching leads:', error);
