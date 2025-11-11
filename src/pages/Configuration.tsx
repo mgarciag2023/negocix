@@ -40,6 +40,10 @@ const Configuration = () => {
     "Lojas de Ferramentas",
     "Chaveiros",
     "Indústrias de Pão de Queijo",
+    "Escolinhas de Futebol",
+    "Escolinhas de Basquete",
+    "Escolinhas de Natação",
+    "Escolinhas de Artes Marciais",
   ];
 
   const handleCustomerToggle = (customer: string) => {
