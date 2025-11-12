@@ -322,7 +322,13 @@ serve(async (req) => {
     
     // Build Apify request body - UNLIMITED LEADS MODE with MULTIPLE SEARCHES
     // For high-priority categories: run multiple searches and combine results
-    const placesPerSearch = searchQueries.length > 1 ? 500 : 1000; // Split quota when using multiple terms
+    // SPECIAL: MAXIMIZE for Penha and Barra Velha region
+    const isSpecialRegion = location.toLowerCase().includes('penha') || location.toLowerCase().includes('barra velha');
+    let placesPerSearch = searchQueries.length > 1 ? 500 : 1000;
+    if (isSpecialRegion) {
+      placesPerSearch = searchQueries.length > 1 ? 800 : 1500; // MAXIMIZE for Penha/Barra Velha
+      console.log(`🎯 SPECIAL REGION DETECTED: ${location} - MAXIMIZING RESULTS to ${placesPerSearch} places per search`);
+    }
     
     const apifyRequestBody: any = {
       searchStringsArray: searchQueries, // Can be multiple search terms
@@ -332,6 +338,9 @@ serve(async (req) => {
       exactMatch: false,
       ...(segment.toLowerCase().includes('indústria') && {
         categoryFilters: ['manufacturer', 'factory', 'industrial_company']
+      }),
+      ...(isSpecialRegion && {
+        maxAutomaticZoomOut: 3, // Expand search area more aggressively for Penha/Barra Velha
       })
     };
     
@@ -387,7 +396,8 @@ serve(async (req) => {
     if (apifyResults.length < 12 && cityCoords) {
       console.log(`⚠️ Only ${apifyResults.length} results. Trying broader search strategies...`);
       
-      // Strategy 1: Broader search without coordinates (300 places)
+      // Strategy 1: Broader search without coordinates
+      const broadPlaces = isSpecialRegion ? 500 : 300; // More places for special regions
       const broadSearchResponse = await fetch(
         `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
         {
@@ -395,7 +405,7 @@ serve(async (req) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             searchStringsArray: searchQueries,
-            maxCrawledPlacesPerSearch: 300,
+            maxCrawledPlacesPerSearch: broadPlaces,
             language: 'pt-BR',
             deeperCityScrape: true,
             exactMatch: false,
@@ -412,8 +422,9 @@ serve(async (req) => {
         console.log(`✅ After broader search: ${apifyResults.length} places`);
       }
       
-      // Strategy 2: If still not enough, expand radius significantly (300 places)
+      // Strategy 2: If still not enough, expand radius significantly
       if (apifyResults.length < 12) {
+        const expandedPlaces = isSpecialRegion ? 500 : 300; // More places for special regions
         console.log(`⚠️ Still only ${apifyResults.length} results. Expanding radius to 200km...`);
         const expandedSearchResponse = await fetch(
           `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
@@ -422,7 +433,7 @@ serve(async (req) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               searchStringsArray: searchQueries,
-              maxCrawledPlacesPerSearch: 300,
+              maxCrawledPlacesPerSearch: expandedPlaces,
               language: 'pt-BR',
               deeperCityScrape: true,
               exactMatch: false,
