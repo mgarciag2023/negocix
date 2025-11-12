@@ -437,6 +437,8 @@ serve(async (req) => {
         'bar e restaurante', 'pub', 'night club', 'bar'
       ];
       
+      console.log(`📊 Raw results from Apify BEFORE filtering: ${apifyResults.length}`);
+      
       apifyResults = apifyResults.filter((place: any) => {
         const address = normalizeString((place.address || '').toLowerCase());
         const title = normalizeString((place.title || '').toLowerCase());
@@ -450,34 +452,27 @@ serve(async (req) => {
         }
         
         // Check if title indicates closure
-        const closureIndicators = ['fechado', 'encerrado', 'closed', 'desativado', 'inativo'];
+        const closureIndicators = ['fechado permanente', 'encerrado definitivo', 'closed permanently'];
         if (closureIndicators.some(indicator => title.includes(indicator))) {
           console.log(`🚫 Title indicates closure: ${place.title}`);
           return false;
         }
         
-        // 1. MUST have valid phone
-        if (!place.phone || place.phone.trim() === '') {
-          console.log(`🚫 No phone: ${place.title}`);
+        // 1. Phone validation - more lenient, accept if has any contact info
+        const hasPhone = place.phone && place.phone.trim() !== '';
+        const hasWebsite = place.website && place.website.trim() !== '';
+        
+        if (!hasPhone && !hasWebsite) {
+          console.log(`🚫 No contact info: ${place.title}`);
           return false;
         }
         
-        // 2. Location validation - more flexible to accept nearby cities
-        const hasCity = address.includes(locationLower);
+        // 2. Location validation - accept if has state (more flexible)
         const hasState = address.includes(stateDisplayLower);
         
-        // Accept if has city, OR if has state and is close enough (from same region)
-        // Don't reject if address is in the same state but different city (could be nearby)
-        if (!hasCity && !hasState) {
-          console.log(`🚫 Wrong location: ${place.title} at ${place.address}`);
+        if (!hasState) {
+          console.log(`🚫 Wrong state: ${place.title} at ${place.address}`);
           return false;
-        }
-        
-        // If has state but not city, only accept if it's a reasonable match
-        // (not from a completely different part of the state)
-        if (!hasCity && hasState) {
-          // Allow it through - city-level filtering might be too strict
-          console.log(`⚠️ Different city but same state: ${place.title} at ${place.address}`);
         }
         
         // 3. For product-specific searches - be more lenient
@@ -523,13 +518,18 @@ serve(async (req) => {
     
     // Process ALL results (not just 25) and enrich
     const enrichedLeads = await Promise.all(apifyResults.map(async (place: any, index: number) => {
-      // Validate phone
-      let validatedPhone = place.phone;
-      const phoneValidation = validatePhone(validatedPhone);
-      if (phoneValidation.valid) {
-        validatedPhone = phoneValidation.normalized;
-      } else {
-        console.warn(`⚠️ Invalid phone for ${place.title}: ${validatedPhone}`);
+      // Validate phone if exists
+      let validatedPhone = place.phone || 'Não disponível';
+      let phoneValid = false;
+      
+      if (validatedPhone !== 'Não disponível') {
+        const phoneValidation = validatePhone(validatedPhone);
+        if (phoneValidation.valid) {
+          validatedPhone = phoneValidation.normalized;
+          phoneValid = true;
+        } else {
+          console.warn(`⚠️ Invalid phone for ${place.title}: ${validatedPhone}`);
+        }
       }
       
       // Get website
@@ -565,17 +565,18 @@ serve(async (req) => {
       }
       
       // Calculate confidence (Google Maps data is highly reliable)
-      let confidenceScore = 70; // Base score for verified Google Maps with phone
-      if (phoneValidation.valid) confidenceScore += 15;
+      let confidenceScore = 60; // Base score for verified Google Maps
+      if (phoneValid) confidenceScore += 20;
       if (website !== 'Não disponível') confidenceScore += 10;
       if (instagram !== 'Não disponível') confidenceScore += 5;
+      if (hasWhatsApp) confidenceScore += 5;
       
       return {
         id: `gm-${place.placeId || Date.now()}-${index}`,
         name: place.title,
         address: place.address,
         phone: validatedPhone,
-        phoneValid: phoneValidation.valid,
+        phoneValid: phoneValid,
         website,
         instagram,
         instagramSource,
@@ -598,7 +599,7 @@ serve(async (req) => {
           `Localização confirmada: ${location} - ${stateDisplay}`
         ],
         dataQuality: {
-          hasValidPhone: phoneValidation.valid,
+          hasValidPhone: phoneValid,
           hasSocialMedia: instagram !== 'Não disponível' || facebook !== 'Não disponível',
           hasWhatsApp,
           fromGoogleMaps: true
