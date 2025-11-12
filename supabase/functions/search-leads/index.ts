@@ -292,10 +292,12 @@ serve(async (req) => {
       throw new Error("APIFY_API_KEY is not configured");
     }
     
-    // Build Apify request body
+    // Build Apify request body - COST CONTROL: ~$0.50 per search
+    // Apify pricing: ~$0.20 per 100 places crawled
+    // Target: 100 places + 2x75 fallbacks = 250 places max = ~$0.50
     const apifyRequestBody: any = {
       searchStringsArray: [searchQuery],
-      maxCrawledPlacesPerSearch: 300, // Increase to get more results
+      maxCrawledPlacesPerSearch: 100, // Primary search: 100 places (~$0.20)
       language: 'pt-BR',
       deeperCityScrape: true,
       exactMatch: false,
@@ -356,7 +358,7 @@ serve(async (req) => {
     if (apifyResults.length < 12 && cityCoords) {
       console.log(`⚠️ Only ${apifyResults.length} results. Trying broader search strategies...`);
       
-      // Strategy 1: Broader search without coordinates
+      // Strategy 1: Broader search without coordinates (75 places = ~$0.15)
       const broadSearchResponse = await fetch(
         `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
         {
@@ -364,7 +366,7 @@ serve(async (req) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             searchStringsArray: [searchQuery],
-            maxCrawledPlacesPerSearch: 300,
+            maxCrawledPlacesPerSearch: 75,
             language: 'pt-BR',
             deeperCityScrape: true,
             exactMatch: false,
@@ -381,7 +383,7 @@ serve(async (req) => {
         console.log(`✅ After broader search: ${apifyResults.length} places`);
       }
       
-      // Strategy 2: If still not enough, expand radius significantly
+      // Strategy 2: If still not enough, expand radius significantly (75 places = ~$0.15)
       if (apifyResults.length < 12) {
         console.log(`⚠️ Still only ${apifyResults.length} results. Expanding radius to 200km...`);
         const expandedSearchResponse = await fetch(
@@ -391,7 +393,7 @@ serve(async (req) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               searchStringsArray: [searchQuery],
-              maxCrawledPlacesPerSearch: 300,
+              maxCrawledPlacesPerSearch: 75,
               language: 'pt-BR',
               deeperCityScrape: true,
               exactMatch: false,
