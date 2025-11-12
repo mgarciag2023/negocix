@@ -452,26 +452,24 @@ serve(async (req) => {
         }
         
         // Check if title indicates closure
-        const closureIndicators = ['fechado permanente', 'encerrado definitivo', 'closed permanently'];
+        const closureIndicators = ['fechado', 'encerrado', 'closed', 'desativado', 'inativo'];
         if (closureIndicators.some(indicator => title.includes(indicator))) {
           console.log(`🚫 Title indicates closure: ${place.title}`);
           return false;
         }
         
-        // 1. Phone validation - more lenient, accept if has any contact info
-        const hasPhone = place.phone && place.phone.trim() !== '';
-        const hasWebsite = place.website && place.website.trim() !== '';
-        
-        if (!hasPhone && !hasWebsite) {
-          console.log(`🚫 No contact info: ${place.title}`);
+        // 1. MUST have valid phone (QUALITY REQUIREMENT)
+        if (!place.phone || place.phone.trim() === '') {
+          console.log(`🚫 No phone: ${place.title}`);
           return false;
         }
         
-        // 2. Location validation - accept if has state (more flexible)
+        // 2. Location validation - MUST match city AND state (QUALITY REQUIREMENT)
+        const hasCity = address.includes(locationLower);
         const hasState = address.includes(stateDisplayLower);
         
-        if (!hasState) {
-          console.log(`🚫 Wrong state: ${place.title} at ${place.address}`);
+        if (!hasCity || !hasState) {
+          console.log(`🚫 Wrong location: ${place.title} at ${place.address} (need: ${location}, ${stateDisplay})`);
           return false;
         }
         
@@ -518,18 +516,15 @@ serve(async (req) => {
     
     // Process ALL results (not just 25) and enrich
     const enrichedLeads = await Promise.all(apifyResults.map(async (place: any, index: number) => {
-      // Validate phone if exists
-      let validatedPhone = place.phone || 'Não disponível';
-      let phoneValid = false;
+      // Validate phone (all leads have phone due to filter)
+      let validatedPhone = place.phone;
+      const phoneValidation = validatePhone(validatedPhone);
+      let phoneValid = phoneValidation.valid;
       
-      if (validatedPhone !== 'Não disponível') {
-        const phoneValidation = validatePhone(validatedPhone);
-        if (phoneValidation.valid) {
-          validatedPhone = phoneValidation.normalized;
-          phoneValid = true;
-        } else {
-          console.warn(`⚠️ Invalid phone for ${place.title}: ${validatedPhone}`);
-        }
+      if (phoneValid) {
+        validatedPhone = phoneValidation.normalized;
+      } else {
+        console.warn(`⚠️ Invalid phone format for ${place.title}: ${validatedPhone}`);
       }
       
       // Get website
@@ -565,11 +560,10 @@ serve(async (req) => {
       }
       
       // Calculate confidence (Google Maps data is highly reliable)
-      let confidenceScore = 60; // Base score for verified Google Maps
-      if (phoneValid) confidenceScore += 20;
+      let confidenceScore = 70; // Base score for verified Google Maps with phone
+      if (phoneValid) confidenceScore += 15;
       if (website !== 'Não disponível') confidenceScore += 10;
       if (instagram !== 'Não disponível') confidenceScore += 5;
-      if (hasWhatsApp) confidenceScore += 5;
       
       return {
         id: `gm-${place.placeId || Date.now()}-${index}`,
