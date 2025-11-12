@@ -293,10 +293,10 @@ serve(async (req) => {
     }
     
     // Build Apify request body - UNLIMITED LEADS MODE
-    // Maximizing results: 500 places + 2x100 fallbacks = 700 places max
+    // Maximizing results: 1000 places + 2x300 fallbacks = 1600 places max
     const apifyRequestBody: any = {
       searchStringsArray: [searchQuery],
-      maxCrawledPlacesPerSearch: 500, // Primary search: 500 places
+      maxCrawledPlacesPerSearch: 1000, // Primary search: 1000 places
       language: 'pt-BR',
       deeperCityScrape: true,
       exactMatch: false,
@@ -357,7 +357,7 @@ serve(async (req) => {
     if (apifyResults.length < 12 && cityCoords) {
       console.log(`⚠️ Only ${apifyResults.length} results. Trying broader search strategies...`);
       
-      // Strategy 1: Broader search without coordinates (100 places)
+      // Strategy 1: Broader search without coordinates (300 places)
       const broadSearchResponse = await fetch(
         `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
         {
@@ -365,7 +365,7 @@ serve(async (req) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             searchStringsArray: [searchQuery],
-            maxCrawledPlacesPerSearch: 100,
+            maxCrawledPlacesPerSearch: 300,
             language: 'pt-BR',
             deeperCityScrape: true,
             exactMatch: false,
@@ -382,7 +382,7 @@ serve(async (req) => {
         console.log(`✅ After broader search: ${apifyResults.length} places`);
       }
       
-      // Strategy 2: If still not enough, expand radius significantly (100 places)
+      // Strategy 2: If still not enough, expand radius significantly (300 places)
       if (apifyResults.length < 12) {
         console.log(`⚠️ Still only ${apifyResults.length} results. Expanding radius to 200km...`);
         const expandedSearchResponse = await fetch(
@@ -392,7 +392,7 @@ serve(async (req) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               searchStringsArray: [searchQuery],
-              maxCrawledPlacesPerSearch: 100,
+              maxCrawledPlacesPerSearch: 300,
               language: 'pt-BR',
               deeperCityScrape: true,
               exactMatch: false,
