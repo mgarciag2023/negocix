@@ -293,11 +293,11 @@ serve(async (req) => {
     }
     
     // Build Apify request body - COST CONTROL: ~$0.50 per search
-    // Apify pricing: ~$0.20 per 100 places crawled
-    // Target: 100 places + 2x75 fallbacks = 250 places max = ~$0.50
+    // Apify pricing: ~$0.002 per place crawled
+    // Target: 200 places + 2x25 fallbacks = 250 places max = ~$0.50
     const apifyRequestBody: any = {
       searchStringsArray: [searchQuery],
-      maxCrawledPlacesPerSearch: 100, // Primary search: 100 places (~$0.20)
+      maxCrawledPlacesPerSearch: 200, // Primary search: 200 places (~$0.40)
       language: 'pt-BR',
       deeperCityScrape: true,
       exactMatch: false,
@@ -358,7 +358,7 @@ serve(async (req) => {
     if (apifyResults.length < 12 && cityCoords) {
       console.log(`⚠️ Only ${apifyResults.length} results. Trying broader search strategies...`);
       
-      // Strategy 1: Broader search without coordinates (75 places = ~$0.15)
+      // Strategy 1: Broader search without coordinates (25 places = ~$0.05)
       const broadSearchResponse = await fetch(
         `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
         {
@@ -366,7 +366,7 @@ serve(async (req) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             searchStringsArray: [searchQuery],
-            maxCrawledPlacesPerSearch: 75,
+            maxCrawledPlacesPerSearch: 25,
             language: 'pt-BR',
             deeperCityScrape: true,
             exactMatch: false,
@@ -383,7 +383,7 @@ serve(async (req) => {
         console.log(`✅ After broader search: ${apifyResults.length} places`);
       }
       
-      // Strategy 2: If still not enough, expand radius significantly (75 places = ~$0.15)
+      // Strategy 2: If still not enough, expand radius significantly (25 places = ~$0.05)
       if (apifyResults.length < 12) {
         console.log(`⚠️ Still only ${apifyResults.length} results. Expanding radius to 200km...`);
         const expandedSearchResponse = await fetch(
@@ -393,7 +393,7 @@ serve(async (req) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               searchStringsArray: [searchQuery],
-              maxCrawledPlacesPerSearch: 75,
+              maxCrawledPlacesPerSearch: 25,
               language: 'pt-BR',
               deeperCityScrape: true,
               exactMatch: false,
