@@ -292,12 +292,11 @@ serve(async (req) => {
       throw new Error("APIFY_API_KEY is not configured");
     }
     
-    // Build Apify request body - COST CONTROL: ~$0.50 per search
-    // Apify pricing: ~$0.002 per place crawled
-    // Target: 200 places + 2x25 fallbacks = 250 places max = ~$0.50
+    // Build Apify request body - UNLIMITED LEADS MODE
+    // Maximizing results: 500 places + 2x100 fallbacks = 700 places max
     const apifyRequestBody: any = {
       searchStringsArray: [searchQuery],
-      maxCrawledPlacesPerSearch: 200, // Primary search: 200 places (~$0.40)
+      maxCrawledPlacesPerSearch: 500, // Primary search: 500 places
       language: 'pt-BR',
       deeperCityScrape: true,
       exactMatch: false,
@@ -358,7 +357,7 @@ serve(async (req) => {
     if (apifyResults.length < 12 && cityCoords) {
       console.log(`⚠️ Only ${apifyResults.length} results. Trying broader search strategies...`);
       
-      // Strategy 1: Broader search without coordinates (25 places = ~$0.05)
+      // Strategy 1: Broader search without coordinates (100 places)
       const broadSearchResponse = await fetch(
         `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
         {
@@ -366,7 +365,7 @@ serve(async (req) => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             searchStringsArray: [searchQuery],
-            maxCrawledPlacesPerSearch: 25,
+            maxCrawledPlacesPerSearch: 100,
             language: 'pt-BR',
             deeperCityScrape: true,
             exactMatch: false,
@@ -383,7 +382,7 @@ serve(async (req) => {
         console.log(`✅ After broader search: ${apifyResults.length} places`);
       }
       
-      // Strategy 2: If still not enough, expand radius significantly (25 places = ~$0.05)
+      // Strategy 2: If still not enough, expand radius significantly (100 places)
       if (apifyResults.length < 12) {
         console.log(`⚠️ Still only ${apifyResults.length} results. Expanding radius to 200km...`);
         const expandedSearchResponse = await fetch(
@@ -393,7 +392,7 @@ serve(async (req) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               searchStringsArray: [searchQuery],
-              maxCrawledPlacesPerSearch: 25,
+              maxCrawledPlacesPerSearch: 100,
               language: 'pt-BR',
               deeperCityScrape: true,
               exactMatch: false,
