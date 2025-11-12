@@ -242,9 +242,37 @@ serve(async (req) => {
     // Use Apify Google Maps Scraper for real data - ONLY SOURCE OF TRUTH
     console.log('📡 Searching Google Maps via Apify API (ONLY real data)...');
     
-    // Build search query - use exact segment without modifications
-    const searchQuery = `${segment} ${location} ${stateDisplay}`;
-    console.log(`🔍 Search query: "${searchQuery}"`);
+    // Enhanced search terms for specific categories - MAXIMIZE RESULTS
+    const categorySearchTerms: { [key: string]: string[] } = {
+      'materiais elétricos': ['materiais elétricos', 'loja elétrica', 'material eletrico', 'distribuidora elétrica', 'eletrônica'],
+      'agropecuária': ['agropecuária', 'loja agropecuaria', 'produtos agropecuários', 'insumos agrícolas', 'casa agropecuaria', 'loja fazenda'],
+      'e-commerce': ['loja online', 'loja virtual', 'comércio eletrônico', 'e-commerce', 'vendas online'],
+      'ferramentas': ['ferramentas', 'loja de ferramentas', 'ferragens e ferramentas', 'equipamentos', 'casa das ferramentas'],
+      'chaveiro': ['chaveiro', 'chaveiro 24h', 'cópia de chaves', 'serviço de chaveiro', 'chaves'],
+      'materiais de construção': ['materiais de construção', 'materiais construcao', 'loja construção', 'casa construção', 'depósito construção', 'construmateriais']
+    };
+    
+    // Build search queries - use multiple terms for better coverage
+    const segmentLowerNorm = segment.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    let searchQueries: string[] = [];
+    
+    // Check if this is a high-priority category
+    const matchedCategory = Object.keys(categorySearchTerms).find(key => 
+      segmentLowerNorm.includes(key.toLowerCase())
+    );
+    
+    if (matchedCategory) {
+      // Use all search terms for this category
+      searchQueries = categorySearchTerms[matchedCategory].map(term => 
+        `${term} ${location} ${stateDisplay}`
+      );
+      console.log(`🎯 High-priority category detected: "${matchedCategory}"`);
+      console.log(`📋 Using ${searchQueries.length} search terms:`, searchQueries);
+    } else {
+      // Standard single search query
+      searchQueries = [`${segment} ${location} ${stateDisplay}`];
+      console.log(`🔍 Standard search query: "${searchQueries[0]}"`);
+    }
     
     // Define coordinates for major cities in Brazil
     const coordinates: { [key: string]: { lat: number; lng: number } } = {
@@ -292,11 +320,13 @@ serve(async (req) => {
       throw new Error("APIFY_API_KEY is not configured");
     }
     
-    // Build Apify request body - UNLIMITED LEADS MODE
-    // Maximizing results: 1000 places + 2x300 fallbacks = 1600 places max
+    // Build Apify request body - UNLIMITED LEADS MODE with MULTIPLE SEARCHES
+    // For high-priority categories: run multiple searches and combine results
+    const placesPerSearch = searchQueries.length > 1 ? 500 : 1000; // Split quota when using multiple terms
+    
     const apifyRequestBody: any = {
-      searchStringsArray: [searchQuery],
-      maxCrawledPlacesPerSearch: 1000, // Primary search: 1000 places
+      searchStringsArray: searchQueries, // Can be multiple search terms
+      maxCrawledPlacesPerSearch: placesPerSearch,
       language: 'pt-BR',
       deeperCityScrape: true,
       exactMatch: false,
@@ -364,7 +394,7 @@ serve(async (req) => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            searchStringsArray: [searchQuery],
+            searchStringsArray: searchQueries,
             maxCrawledPlacesPerSearch: 300,
             language: 'pt-BR',
             deeperCityScrape: true,
@@ -391,7 +421,7 @@ serve(async (req) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              searchStringsArray: [searchQuery],
+              searchStringsArray: searchQueries,
               maxCrawledPlacesPerSearch: 300,
               language: 'pt-BR',
               deeperCityScrape: true,
