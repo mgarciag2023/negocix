@@ -124,7 +124,10 @@ const Configuration = () => {
                       <SelectItem value="tecnologia">Tecnologia</SelectItem>
                       <SelectItem value="roupas">Roupas/Moda</SelectItem>
                       <SelectItem value="cosmeticos">Cosméticos</SelectItem>
-                      <SelectItem value="construcao">Materiais de Construção, ferramentas, ferragens, Materiais Elétricos</SelectItem>
+                      <SelectItem value="materiais-construcao">Materiais de Construção</SelectItem>
+                      <SelectItem value="ferramentas">Ferramentas</SelectItem>
+                      <SelectItem value="ferragens">Ferragens</SelectItem>
+                      <SelectItem value="materiais-eletricos">Materiais Elétricos</SelectItem>
                       <SelectItem value="outros">Outros</SelectItem>
                     </SelectContent>
                   </Select>
