@@ -320,14 +320,13 @@ serve(async (req) => {
       throw new Error("APIFY_API_KEY is not configured");
     }
     
-    // Build Apify request body - ULTRA MAXIMIZED LEADS MODE
-    // For high-priority categories: run multiple searches and combine results
-    // MAXIMIZE LEADS: Request as many as possible from Apify
+    // Build Apify request body - OPTIMIZED MODE (max ~220 leads)
+    // Balanced between cost and results
     const isSpecialRegion = location.toLowerCase().includes('penha') || location.toLowerCase().includes('barra velha');
-    let placesPerSearch = searchQueries.length > 1 ? 5000 : 8000; // ULTRA MAXIMIZED: 5000-8000 places
+    let placesPerSearch = searchQueries.length > 1 ? 200 : 350; // Optimized: 200-350 places
     if (isSpecialRegion) {
-      placesPerSearch = searchQueries.length > 1 ? 6000 : 10000; // ULTRA MAXIMIZE for Penha/Barra Velha: 6000-10000
-      console.log(`🎯 SPECIAL REGION DETECTED: ${location} - ULTRA MAXIMIZING RESULTS to ${placesPerSearch} places per search`);
+      placesPerSearch = searchQueries.length > 1 ? 250 : 400; // Optimized for Penha/Barra Velha: 250-400
+      console.log(`🎯 SPECIAL REGION DETECTED: ${location} - OPTIMIZED RESULTS to ${placesPerSearch} places per search`);
     }
     console.log(`📊 Requesting ${placesPerSearch} places per search query`);
     
@@ -340,7 +339,7 @@ serve(async (req) => {
       ...(segment.toLowerCase().includes('indústria') && {
         categoryFilters: ['manufacturer', 'factory', 'industrial_company']
       }),
-      maxAutomaticZoomOut: isSpecialRegion ? 8 : 6, // Expand search area very aggressively
+      maxAutomaticZoomOut: isSpecialRegion ? 3 : 2, // Controlled search area expansion
     };
     
     // Add coordinates if available, otherwise let Apify search by city name
@@ -391,12 +390,12 @@ serve(async (req) => {
     let apifyResults = await apifyResponse.json();
     console.log(`📊 Apify returned ${apifyResults.length} places`);
     
-    // If we got few results (less than 30), try multiple strategies to get more
-    if (apifyResults.length < 30 && cityCoords) {
-      console.log(`⚠️ Only ${apifyResults.length} results. Trying broader search strategies...`);
+    // If we got few results (less than 15), try broader search
+    if (apifyResults.length < 15 && cityCoords) {
+      console.log(`⚠️ Only ${apifyResults.length} results. Trying broader search...`);
       
-      // Strategy 1: Broader search without coordinates
-      const broadPlaces = isSpecialRegion ? 8000 : 6000; // ULTRA MAXIMIZED: 6000-8000 places
+      // Broader search without coordinates
+      const broadPlaces = isSpecialRegion ? 250 : 200; // Optimized: 200-250 places
       const broadSearchResponse = await fetch(
         `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
         {
@@ -421,10 +420,10 @@ serve(async (req) => {
         console.log(`✅ After broader search: ${apifyResults.length} places`);
       }
       
-      // Strategy 2: If still not enough, expand radius significantly
-      if (apifyResults.length < 30) {
-        const expandedPlaces = isSpecialRegion ? 8000 : 6000; // ULTRA MAXIMIZED: 6000-8000 places
-        console.log(`⚠️ Still only ${apifyResults.length} results. Expanding radius to 200km...`);
+      // If still not enough, expand radius moderately
+      if (apifyResults.length < 15) {
+        const expandedPlaces = isSpecialRegion ? 250 : 200; // Optimized: 200-250 places
+        console.log(`⚠️ Still only ${apifyResults.length} results. Expanding radius to 100km...`);
         const expandedSearchResponse = await fetch(
           `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
           {
@@ -438,7 +437,7 @@ serve(async (req) => {
               exactMatch: false,
               lat: cityCoords.lat,
               lng: cityCoords.lng,
-              radius: 200000, // 200 km radius
+              radius: 100000, // 100 km radius
             }),
           }
         );
