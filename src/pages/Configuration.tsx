@@ -44,6 +44,9 @@ const Configuration = () => {
     "Escolinhas de Basquete",
     "Escolinhas de Natação",
     "Escolinhas de Artes Marciais",
+    "Arenas de Beach Tennis",
+    "Quadras de Tênis",
+    "Clubes Esportivos",
   ];
 
   const handleCustomerToggle = (customer: string) => {
