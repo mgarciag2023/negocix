@@ -116,10 +116,10 @@ const Configuration = () => {
                     Eu sou representante de: *
                   </Label>
                   <Select value={category} onValueChange={setCategory}>
-                    <SelectTrigger className="mt-2">
+                    <SelectTrigger className="mt-2" id="category">
                       <SelectValue placeholder="Selecione uma categoria" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent sideOffset={5}>
                       <SelectItem value="bebidas">Bebidas</SelectItem>
                       <SelectItem value="alimentos">Alimentos</SelectItem>
                       <SelectItem value="limpeza">Material de Limpeza</SelectItem>
@@ -193,10 +193,10 @@ const Configuration = () => {
                       Estado: *
                     </Label>
                     <Select value={state} onValueChange={setState}>
-                      <SelectTrigger className="mt-2">
+                      <SelectTrigger className="mt-2" id="state">
                         <SelectValue placeholder="UF" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent sideOffset={5}>
                         <SelectItem value="AC">AC - Acre</SelectItem>
                         <SelectItem value="AL">AL - Alagoas</SelectItem>
                         <SelectItem value="AP">AP - Amapá</SelectItem>
