@@ -320,12 +320,12 @@ serve(async (req) => {
       throw new Error("APIFY_API_KEY is not configured");
     }
     
-    // Build Apify request body - OPTIMIZED MODE (max ~220 leads)
-    // Balanced between cost and results
+    // Build Apify request body - OPTIMIZED MODE (max 150 leads)
+    // Controlled for cost and quality
     const isSpecialRegion = location.toLowerCase().includes('penha') || location.toLowerCase().includes('barra velha');
-    let placesPerSearch = searchQueries.length > 1 ? 200 : 350; // Optimized: 200-350 places
+    let placesPerSearch = searchQueries.length > 1 ? 75 : 150; // Optimized: 75-150 places
     if (isSpecialRegion) {
-      placesPerSearch = searchQueries.length > 1 ? 250 : 400; // Optimized for Penha/Barra Velha: 250-400
+      placesPerSearch = searchQueries.length > 1 ? 100 : 150; // Optimized for Penha/Barra Velha: 100-150
       console.log(`🎯 SPECIAL REGION DETECTED: ${location} - OPTIMIZED RESULTS to ${placesPerSearch} places per search`);
     }
     console.log(`📊 Requesting ${placesPerSearch} places per search query`);
@@ -395,7 +395,7 @@ serve(async (req) => {
       console.log(`⚠️ Only ${apifyResults.length} results. Trying broader search...`);
       
       // Broader search without coordinates
-      const broadPlaces = isSpecialRegion ? 250 : 200; // Optimized: 200-250 places
+      const broadPlaces = isSpecialRegion ? 100 : 75; // Optimized: 75-100 places
       const broadSearchResponse = await fetch(
         `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
         {
@@ -422,7 +422,7 @@ serve(async (req) => {
       
       // If still not enough, expand radius moderately
       if (apifyResults.length < 15) {
-        const expandedPlaces = isSpecialRegion ? 250 : 200; // Optimized: 200-250 places
+        const expandedPlaces = isSpecialRegion ? 100 : 75; // Optimized: 75-100 places
         console.log(`⚠️ Still only ${apifyResults.length} results. Expanding radius to 100km...`);
         const expandedSearchResponse = await fetch(
           `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
