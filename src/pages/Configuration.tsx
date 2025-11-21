@@ -29,6 +29,8 @@ const Configuration = () => {
     "Lanchonetes",
     "Mercados",
     "Mercearias",
+    "Atacadistas de Alimentos",
+    "Distribuidores de Alimentos",
     "Farmácias",
     "Lojas de Roupas",
     "Salões de Beleza",
