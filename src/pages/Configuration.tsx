@@ -119,12 +119,12 @@ const Configuration = () => {
               <div className="space-y-6 md:space-y-8">
                 {/* Category */}
                 <div>
-                  <Label htmlFor="category" className="text-base font-semibold">
+                  <Label htmlFor="category" className="text-base font-semibold" translate="no">
                     Eu sou representante de: *
                   </Label>
                   <Select value={category} onValueChange={setCategory}>
                     <SelectTrigger className="mt-2" id="category" translate="no">
-                      <SelectValue placeholder="Selecione uma categoria" />
+                      <SelectValue placeholder="Selecione uma categoria" translate="no" />
                     </SelectTrigger>
                     <SelectContent sideOffset={5} translate="no">
                       <SelectItem value="bebidas">Bebidas</SelectItem>
@@ -148,34 +148,37 @@ const Configuration = () => {
 
                 {/* Products */}
                 <div>
-                  <Label htmlFor="products" className="text-base font-semibold">
+                  <Label htmlFor="products" className="text-base font-semibold" translate="no">
                     Produtos específicos que vendo: *
                   </Label>
-                  <Input
-                    id="products"
-                    value={products}
-                    onChange={(e) => setProducts(e.target.value)}
-                    placeholder='Ex: "Refrigerantes, sucos, energéticos"'
-                    className="mt-2"
-                  />
+                    <Input
+                      id="products"
+                      value={products}
+                      onChange={(e) => setProducts(e.target.value)}
+                      placeholder='Ex: "Refrigerantes, sucos, energéticos"'
+                      className="mt-2"
+                      translate="no"
+                    />
                 </div>
 
                 {/* Customer Types */}
                 <div>
-                  <Label className="text-base font-semibold mb-4 block">
+                  <Label className="text-base font-semibold mb-4 block" translate="no">
                     Clientes que quero encontrar: *
                   </Label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4" translate="no">
                     {customerTypes.map((customer) => (
-                      <div key={customer} className="flex items-center space-x-2">
+                      <div key={customer} className="flex items-center space-x-2" translate="no">
                         <Checkbox
                           id={customer}
                           checked={selectedCustomers.includes(customer)}
                           onCheckedChange={() => handleCustomerToggle(customer)}
+                          translate="no"
                         />
                         <label
                           htmlFor={customer}
                           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                          translate="no"
                         >
                           {customer}
                         </label>
@@ -187,7 +190,7 @@ const Configuration = () => {
                 {/* Location */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="md:col-span-2">
-                    <Label htmlFor="location" className="text-base font-semibold">
+                    <Label htmlFor="location" className="text-base font-semibold" translate="no">
                       Cidade: *
                     </Label>
                     <Input
@@ -196,15 +199,16 @@ const Configuration = () => {
                       onChange={(e) => setLocation(e.target.value)}
                       placeholder="Ex: São Paulo, Blumenau, Porto Alegre"
                       className="mt-2"
+                      translate="no"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="state" className="text-base font-semibold">
+                    <Label htmlFor="state" className="text-base font-semibold" translate="no">
                       Estado: *
                     </Label>
                     <Select value={state} onValueChange={setState}>
                       <SelectTrigger className="mt-2" id="state" translate="no">
-                        <SelectValue placeholder="UF" />
+                        <SelectValue placeholder="UF" translate="no" />
                       </SelectTrigger>
                       <SelectContent sideOffset={5} translate="no">
                         <SelectItem value="AC">AC - Acre</SelectItem>
@@ -241,31 +245,31 @@ const Configuration = () => {
 
                 {/* Company Size */}
                 <div>
-                  <Label className="text-base font-semibold mb-4 block">
+                  <Label className="text-base font-semibold mb-4 block" translate="no">
                     Tamanho do cliente:
                   </Label>
                   <RadioGroup value={companySize} onValueChange={setCompanySize}>
                     <div className="flex items-center space-x-2" translate="no">
                       <RadioGroupItem value="small" id="small" />
-                      <Label htmlFor="small" className="font-normal cursor-pointer">
+                      <Label htmlFor="small" className="font-normal cursor-pointer" translate="no">
                         Pequeno (até 10 funcionários)
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2" translate="no">
                       <RadioGroupItem value="medium" id="medium" />
-                      <Label htmlFor="medium" className="font-normal cursor-pointer">
+                      <Label htmlFor="medium" className="font-normal cursor-pointer" translate="no">
                         Médio (11-50 funcionários)
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2" translate="no">
                       <RadioGroupItem value="large" id="large" />
-                      <Label htmlFor="large" className="font-normal cursor-pointer">
+                      <Label htmlFor="large" className="font-normal cursor-pointer" translate="no">
                         Grande (+50 funcionários)
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2" translate="no">
                       <RadioGroupItem value="all" id="all" />
-                      <Label htmlFor="all" className="font-normal cursor-pointer">
+                      <Label htmlFor="all" className="font-normal cursor-pointer" translate="no">
                         Todos os tamanhos
                       </Label>
                     </div>
