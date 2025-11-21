@@ -47,6 +47,13 @@ const Configuration = () => {
     "Arenas de Beach Tennis",
     "Quadras de Tênis",
     "Clubes Esportivos",
+    "Confecções",
+    "Lojas de Tecidos",
+    "Ateliês de Costura",
+    "Indústrias Têxteis",
+    "Bordados",
+    "Lojas de Aviamentos",
+    "Malharias",
   ];
 
   const handleCustomerToggle = (customer: string) => {
@@ -131,6 +138,9 @@ const Configuration = () => {
                       <SelectItem value="ferramentas">Ferramentas</SelectItem>
                       <SelectItem value="ferragens">Ferragens</SelectItem>
                       <SelectItem value="materiais-eletricos">Materiais Elétricos</SelectItem>
+                      <SelectItem value="tecidos">Tecidos</SelectItem>
+                      <SelectItem value="aviamentos">Aviamentos</SelectItem>
+                      <SelectItem value="fios-linhas">Fios e Linhas</SelectItem>
                       <SelectItem value="outros">Outros</SelectItem>
                     </SelectContent>
                   </Select>
