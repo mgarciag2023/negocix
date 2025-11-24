@@ -1,4 +1,4 @@
-import { MapPin, Phone, Instagram, User, TrendingUp, Calendar, Heart } from "lucide-react";
+import { MapPin, Phone, Instagram, User, TrendingUp, Calendar, Heart, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ interface LeadCardProps {
   name: string;
   address: string;
   phone: string;
+  email?: string;
   instagram?: string;
   responsible?: string;
   matchScore: number;
@@ -24,6 +25,7 @@ const LeadCard = ({
   name,
   address,
   phone,
+  email,
   instagram,
   responsible,
   matchScore,
@@ -101,6 +103,12 @@ const LeadCard = ({
           <Phone className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
           <a href={`tel:${phone}`} className="text-primary hover:underline truncate">{phone}</a>
         </div>
+        {email && email !== 'Não disponível' && (
+          <div className="flex items-center gap-2 text-xs md:text-sm">
+            <Mail className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+            <a href={`mailto:${email}`} className="text-primary hover:underline truncate">{email}</a>
+          </div>
+        )}
         {instagram && (
           <div className="flex items-center gap-2 text-xs md:text-sm">
             <Instagram className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
@@ -121,7 +129,7 @@ const LeadCard = ({
             to={`/lead/${id}`}
             state={{ 
               lead: { 
-                id, name, address, phone, instagram, responsible, 
+                id, name, address, phone, email, instagram, responsible, 
                 matchScore, reasons, revenue, openedDate, category 
               } 
             }}
@@ -130,8 +138,13 @@ const LeadCard = ({
           </Link>
         </Button>
         <Button variant="outline" asChild className="flex-1 text-sm md:text-base h-9 md:h-10">
+          <a href={`tel:${phone}`}>
+            Ligar
+          </a>
+        </Button>
+        <Button variant="outline" asChild className="flex-1 text-sm md:text-base h-9 md:h-10">
           <a href={`https://wa.me/${phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
-            Contatar
+            WhatsApp
           </a>
         </Button>
       </div>

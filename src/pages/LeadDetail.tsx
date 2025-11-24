@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   MapPin, Phone, Instagram, User, TrendingUp, Calendar, 
-  ArrowLeft, Heart, MessageCircle 
+  ArrowLeft, Heart, MessageCircle, Mail 
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useEffect } from "react";
@@ -161,6 +161,20 @@ const LeadDetail = () => {
                     </a>
                   </div>
                 </div>
+                
+                {lead.email && lead.email !== 'Não disponível' && (
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-lg bg-primary-light flex-shrink-0">
+                      <Mail className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs md:text-sm text-muted-foreground">Email</p>
+                      <a href={`mailto:${lead.email}`} className="font-medium text-sm md:text-base text-primary hover:underline truncate block">
+                        {lead.email}
+                      </a>
+                    </div>
+                  </div>
+                )}
                 
                 <div className="flex items-center gap-3">
                   <div className="flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-lg bg-primary-light flex-shrink-0">
