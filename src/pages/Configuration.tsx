@@ -27,10 +27,14 @@ const Configuration = () => {
     "Padarias",
     "Bares",
     "Lanchonetes",
+    "Supermercados",
+    "Hipermercados",
     "Mercados",
     "Mercearias",
     "Atacadistas de Alimentos",
     "Distribuidores de Alimentos",
+    "Cestas Básicas",
+    "Cestas Natalinas",
     "Farmácias",
     "Lojas de Roupas",
     "Salões de Beleza",
@@ -78,12 +82,9 @@ const Configuration = () => {
       return;
     }
 
-    // Clear both cached leads and previous search config to force completely new search
-    localStorage.removeItem('cachedLeads');
-    localStorage.removeItem('leadSearchConfig');
-
-    // Save search configuration to localStorage
-    const searchConfig = {
+    // Check if search config actually changed
+    const previousConfigStr = localStorage.getItem('leadSearchConfig');
+    const newSearchConfig = {
       category,
       products,
       selectedCustomers,
@@ -91,7 +92,19 @@ const Configuration = () => {
       state,
       companySize,
     };
-    localStorage.setItem('leadSearchConfig', JSON.stringify(searchConfig));
+    
+    const newConfigStr = JSON.stringify(newSearchConfig);
+    
+    // Only clear cached leads if the search configuration actually changed
+    if (previousConfigStr !== newConfigStr) {
+      console.log('🔄 Search config changed, clearing cache');
+      localStorage.removeItem('cachedLeads');
+    } else {
+      console.log('✅ Same search config, keeping cache');
+    }
+    
+    // Save search configuration to localStorage
+    localStorage.setItem('leadSearchConfig', newConfigStr);
 
     toast({
       title: "Busca configurada!",
