@@ -610,6 +610,7 @@ serve(async (req) => {
         address: place.address,
         phone: validatedPhone,
         phoneValid: phoneValid,
+        email: place.email || 'Não disponível',
         website,
         instagram,
         instagramSource,

@@ -13,6 +13,7 @@ interface Lead {
   name: string;
   address: string;
   phone: string;
+  email?: string;
   instagram?: string;
   responsible: string;
   matchScore: number;
