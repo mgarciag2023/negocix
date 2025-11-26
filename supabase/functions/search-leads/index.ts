@@ -169,16 +169,102 @@ async function detectWhatsApp(phone: string, website?: string): Promise<boolean>
   return false;
 }
 
-// Search for official social media profiles
+// Extract emails from website
+async function scrapeEmailFromWebsite(url: string): Promise<string | null> {
+  try {
+    console.log(`📧 Scraping email from: ${url}`);
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      signal: AbortSignal.timeout(5000)
+    });
+    
+    if (!response.ok) return null;
+    
+    const html = await response.text();
+    
+    // Priority 1: <a href="mailto:"> links
+    const mailtoMatch = html.match(/href=["']mailto:([^"']+)["']/i);
+    if (mailtoMatch && mailtoMatch[1]) {
+      const email = mailtoMatch[1].split('?')[0].trim(); // Remove query params
+      if (isValidEmail(email)) {
+        console.log(`✅ Found email via mailto: ${email}`);
+        return email;
+      }
+    }
+    
+    // Priority 2: Email in meta tags
+    const metaEmailMatch = html.match(/<meta[^>]*content=["']([^"']*@[^"']+)["']/i);
+    if (metaEmailMatch && metaEmailMatch[1]) {
+      const email = metaEmailMatch[1].trim();
+      if (isValidEmail(email)) {
+        console.log(`✅ Found email in meta: ${email}`);
+        return email;
+      }
+    }
+    
+    // Priority 3: Common email patterns in visible text
+    const emailPattern = /\b[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/g;
+    const emails = html.match(emailPattern);
+    
+    if (emails && emails.length > 0) {
+      // Filter out common noise patterns
+      const validEmails = emails.filter(email => {
+        const lowerEmail = email.toLowerCase();
+        return isValidEmail(email) &&
+               !lowerEmail.includes('example.com') &&
+               !lowerEmail.includes('test.com') &&
+               !lowerEmail.includes('domain.com') &&
+               !lowerEmail.includes('wixpress.com') &&
+               !lowerEmail.includes('sentry.io');
+      });
+      
+      // Prioritize business emails (contato, vendas, comercial, etc)
+      const businessEmails = validEmails.filter(email => {
+        const lowerEmail = email.toLowerCase();
+        return lowerEmail.includes('contato') ||
+               lowerEmail.includes('vendas') ||
+               lowerEmail.includes('comercial') ||
+               lowerEmail.includes('atendimento') ||
+               lowerEmail.includes('info') ||
+               lowerEmail.includes('contact');
+      });
+      
+      if (businessEmails.length > 0) {
+        console.log(`✅ Found business email: ${businessEmails[0]}`);
+        return businessEmails[0];
+      }
+      
+      if (validEmails.length > 0) {
+        console.log(`✅ Found email: ${validEmails[0]}`);
+        return validEmails[0];
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`Error scraping email from ${url}:`, error);
+    return null;
+  }
+}
+
+// Validate email format
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return emailRegex.test(email) && !email.includes('..') && email.length <= 254;
+}
+
+// Search for official social media profiles and email
 async function searchSocialMediaProfiles(businessName: string, city: string, website?: string): Promise<{
   instagram?: string;
   facebook?: string;
   whatsappBusiness?: string;
+  email?: string;
 }> {
   const profiles: {
     instagram?: string;
     facebook?: string;
     whatsappBusiness?: string;
+    email?: string;
   } = {};
   
   try {
@@ -190,6 +276,13 @@ async function searchSocialMediaProfiles(businessName: string, city: string, web
       if (instagramFromWebsite) {
         profiles.instagram = instagramFromWebsite;
         console.log(`✅ Instagram found from website: ${profiles.instagram}`);
+      }
+      
+      // Extract email from website
+      const emailFromWebsite = await scrapeEmailFromWebsite(website);
+      if (emailFromWebsite) {
+        profiles.email = emailFromWebsite;
+        console.log(`✅ Email found from website: ${profiles.email}`);
       }
       
       try {
@@ -574,6 +667,7 @@ serve(async (req) => {
       let instagramSource = 'none';
       let facebook = 'Não disponível';
       let whatsappBusiness = undefined;
+      let emailFromWebsite = undefined;
       
       if (website !== 'Não disponível') {
         try {
@@ -582,6 +676,7 @@ serve(async (req) => {
           instagramSource = socialMedia.instagram ? 'website' : 'none';
           facebook = socialMedia.facebook || facebook;
           whatsappBusiness = socialMedia.whatsappBusiness;
+          emailFromWebsite = socialMedia.email;
         } catch (error) {
           console.error(`Error getting social media for ${place.title}:`, error);
         }
@@ -598,11 +693,15 @@ serve(async (req) => {
         console.error(`Error detecting WhatsApp for ${place.title}:`, error);
       }
       
+      // Determine final email (prioritize Google Maps, fallback to website)
+      const finalEmail = place.email || emailFromWebsite || 'Não disponível';
+      
       // Calculate confidence (Google Maps data is highly reliable)
       let confidenceScore = 70; // Base score for verified Google Maps with phone
       if (phoneValid) confidenceScore += 15;
       if (website !== 'Não disponível') confidenceScore += 10;
       if (instagram !== 'Não disponível') confidenceScore += 5;
+      if (finalEmail !== 'Não disponível') confidenceScore += 5;
       
       return {
         id: `gm-${place.placeId || Date.now()}-${index}`,
@@ -610,7 +709,7 @@ serve(async (req) => {
         address: place.address,
         phone: validatedPhone,
         phoneValid: phoneValid,
-        email: place.email || 'Não disponível',
+        email: finalEmail,
         website,
         instagram,
         instagramSource,
