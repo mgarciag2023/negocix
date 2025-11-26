@@ -43,6 +43,7 @@ const Results = () => {
       'Nome': lead.name,
       'Endereço': lead.address,
       'Telefone': lead.phone,
+      'Email': lead.email || 'N/A',
       'Instagram': lead.instagram || 'N/A',
       'Responsável': lead.responsible,
       'Categoria': lead.category,
@@ -64,6 +65,7 @@ const Results = () => {
       { wch: 30 }, // Nome
       { wch: 40 }, // Endereço
       { wch: 15 }, // Telefone
+      { wch: 30 }, // Email
       { wch: 20 }, // Instagram
       { wch: 25 }, // Responsável
       { wch: 15 }, // Categoria
