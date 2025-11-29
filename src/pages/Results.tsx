@@ -91,18 +91,28 @@ const Results = () => {
   useEffect(() => {
     const fetchLeads = async () => {
       try {
-        // Check if we have cached leads first
+        // ALWAYS check cache first - critical for avoiding duplicate API calls
         const cachedLeadsStr = localStorage.getItem('cachedLeads');
+        const searchConfigStr = localStorage.getItem('leadSearchConfig');
+        
         if (cachedLeadsStr) {
-          const cachedLeads = JSON.parse(cachedLeadsStr);
-          console.log('📦 Using cached leads:', cachedLeads.length);
-          setLeads(cachedLeads);
-          setLoading(false);
-          return;
+          try {
+            const cachedLeads = JSON.parse(cachedLeadsStr);
+            if (Array.isArray(cachedLeads) && cachedLeads.length > 0) {
+              console.log('📦 Cache HIT - Using cached leads:', cachedLeads.length);
+              setLeads(cachedLeads);
+              setLoading(false);
+              return; // STOP HERE - Don't make API call
+            }
+          } catch (parseError) {
+            console.error('❌ Error parsing cached leads, will fetch new ones:', parseError);
+            localStorage.removeItem('cachedLeads'); // Clear corrupted cache
+          }
         }
 
+        console.log('💾 Cache MISS - Will fetch from API');
+
         // Get search configuration from localStorage
-        const searchConfigStr = localStorage.getItem('leadSearchConfig');
         if (!searchConfigStr) {
           toast({
             title: "Erro",
@@ -114,7 +124,7 @@ const Results = () => {
         }
 
         const searchConfig = JSON.parse(searchConfigStr);
-        console.log('🔍 Searching with config:', searchConfig);
+        console.log('🔍 Fetching NEW leads with config:', searchConfig);
         
         // Call the edge function
         const { data, error } = await supabase.functions.invoke('search-leads', {
@@ -141,12 +151,14 @@ const Results = () => {
           return;
         }
 
-        console.log('✅ Received leads:', data?.leads?.length || 0);
+        console.log('✅ API returned leads:', data?.leads?.length || 0);
         
         if (data?.leads && data.leads.length > 0) {
           setLeads(data.leads);
-          // Cache the leads
-          localStorage.setItem('cachedLeads', JSON.stringify(data.leads));
+          // Cache the leads with timestamp for debugging
+          const cacheData = JSON.stringify(data.leads);
+          localStorage.setItem('cachedLeads', cacheData);
+          console.log('💾 Leads cached successfully:', data.leads.length);
         } else if (data?.error) {
           toast({
             title: "Erro ao buscar leads",
@@ -173,7 +185,7 @@ const Results = () => {
     };
 
     fetchLeads();
-  }, [toast]);
+  }, []); // Empty deps - only run once on mount
 
   if (loading) {
     return (
