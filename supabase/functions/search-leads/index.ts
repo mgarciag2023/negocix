@@ -413,15 +413,14 @@ serve(async (req) => {
       throw new Error("APIFY_API_KEY is not configured");
     }
     
-    // Build Apify request body - AGGRESSIVE MODE (max 150 leads)
-    // Aim for minimum 50, maximum 150
+    // Build Apify request body - MAXIMUM AGGRESSIVE MODE (max 150 leads)
+    // Aim for minimum 50, maximum 150 - ALWAYS PUSH FOR MORE
     const isSpecialRegion = location.toLowerCase().includes('penha') || location.toLowerCase().includes('barra velha');
-    let placesPerSearch = searchQueries.length > 1 ? 100 : 150; // Aggressive: 100-150 places
+    const placesPerSearch = 150; // MAXIMUM: Always 150 places per search
     if (isSpecialRegion) {
-      placesPerSearch = searchQueries.length > 1 ? 125 : 150; // Maximum for Penha/Barra Velha: 125-150
-      console.log(`🎯 SPECIAL REGION DETECTED: ${location} - AGGRESSIVE MODE: ${placesPerSearch} places per search`);
+      console.log(`🎯 SPECIAL REGION DETECTED: ${location} - MAXIMUM AGGRESSIVE MODE: ${placesPerSearch} places per search`);
     }
-    console.log(`📊 Requesting ${placesPerSearch} places per search query`);
+    console.log(`📊 Requesting ${placesPerSearch} places per search query (${searchQueries.length} queries)`);
     
     const apifyRequestBody: any = {
       searchStringsArray: searchQueries, // Can be multiple search terms
@@ -483,12 +482,12 @@ serve(async (req) => {
     let apifyResults = await apifyResponse.json();
     console.log(`📊 Apify returned ${apifyResults.length} places`);
     
-    // If we got few results (less than 50), try broader search
-    if (apifyResults.length < 50 && cityCoords) {
+    // If we got few results (less than 35), try broader search - LOWER THRESHOLD
+    if (apifyResults.length < 35 && cityCoords) {
       console.log(`⚠️ Only ${apifyResults.length} results. Trying broader search...`);
       
-      // Broader search without coordinates
-      const broadPlaces = isSpecialRegion ? 125 : 100; // Aggressive: 100-125 places
+      // Broader search without coordinates - MAXIMUM AGGRESSIVE
+      const broadPlaces = 150; // MAXIMUM: 150 places
       const broadSearchResponse = await fetch(
         `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
         {
@@ -513,10 +512,10 @@ serve(async (req) => {
         console.log(`✅ After broader search: ${apifyResults.length} places`);
       }
       
-      // If still not enough, expand radius moderately
-      if (apifyResults.length < 50) {
-        const expandedPlaces = isSpecialRegion ? 125 : 100; // Aggressive: 100-125 places
-        console.log(`⚠️ Still only ${apifyResults.length} results. Expanding radius to 125km...`);
+      // If still not enough, expand radius aggressively - LOWER THRESHOLD
+      if (apifyResults.length < 35) {
+        const expandedPlaces = 150; // MAXIMUM: 150 places
+        console.log(`⚠️ Still only ${apifyResults.length} results. Expanding radius to 150km...`);
         const expandedSearchResponse = await fetch(
           `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
           {
@@ -530,7 +529,7 @@ serve(async (req) => {
               exactMatch: false,
               lat: cityCoords.lat,
               lng: cityCoords.lng,
-              radius: 125000, // 125 km radius
+              radius: 150000, // 150 km radius - MAXIMUM REACH
             }),
           }
         );
