@@ -428,18 +428,21 @@ serve(async (req) => {
       language: 'pt-BR',
       deeperCityScrape: true,
       exactMatch: false,
+      scrapeReviewsNumber: 0, // Skip reviews to get more places faster
+      skipClosedPlaces: true, // Skip closed places automatically
       ...(segment.toLowerCase().includes('indústria') && {
         categoryFilters: ['manufacturer', 'factory', 'industrial_company']
       }),
-      maxAutomaticZoomOut: isSpecialRegion ? 3 : 2, // Controlled search area expansion
+      maxAutomaticZoomOut: 5, // MAXIMUM zoom out for broader coverage
+      includeSearchResultsNearby: true, // Include nearby results
     };
     
     // Add coordinates if available, otherwise let Apify search by city name
     if (cityCoords) {
       apifyRequestBody.lat = cityCoords.lat;
       apifyRequestBody.lng = cityCoords.lng;
-      apifyRequestBody.radius = 100000; // 100 km radius for better coverage
-      console.log(`📍 Using coordinates: ${cityCoords.lat}, ${cityCoords.lng} with 100km radius`);
+      apifyRequestBody.radius = 150000; // 150 km radius MAXIMUM for better coverage
+      console.log(`📍 Using coordinates: ${cityCoords.lat}, ${cityCoords.lng} with 150km radius`);
     } else {
       console.log(`📍 No coordinates found for ${location}, using city name search only`);
     }
@@ -482,9 +485,9 @@ serve(async (req) => {
     let apifyResults = await apifyResponse.json();
     console.log(`📊 Apify returned ${apifyResults.length} places`);
     
-    // If we got few results (less than 35), try broader search - LOWER THRESHOLD
-    if (apifyResults.length < 35 && cityCoords) {
-      console.log(`⚠️ Only ${apifyResults.length} results. Trying broader search...`);
+    // If we got few results (less than 30), try broader search - VERY LOW THRESHOLD
+    if (apifyResults.length < 30) {
+      console.log(`⚠️ Only ${apifyResults.length} results. Trying broader search without coordinates...`);
       
       // Broader search without coordinates - MAXIMUM AGGRESSIVE
       const broadPlaces = 150; // MAXIMUM: 150 places
@@ -499,6 +502,10 @@ serve(async (req) => {
             language: 'pt-BR',
             deeperCityScrape: true,
             exactMatch: false,
+            maxAutomaticZoomOut: 5,
+            includeSearchResultsNearby: true,
+            scrapeReviewsNumber: 0,
+            skipClosedPlaces: true,
           }),
         }
       );
@@ -512,10 +519,10 @@ serve(async (req) => {
         console.log(`✅ After broader search: ${apifyResults.length} places`);
       }
       
-      // If still not enough, expand radius aggressively - LOWER THRESHOLD
-      if (apifyResults.length < 35) {
+      // If still not enough, expand radius aggressively - VERY LOW THRESHOLD
+      if (apifyResults.length < 30 && cityCoords) {
         const expandedPlaces = 150; // MAXIMUM: 150 places
-        console.log(`⚠️ Still only ${apifyResults.length} results. Expanding radius to 150km...`);
+        console.log(`⚠️ Still only ${apifyResults.length} results. Expanding radius to 200km...`);
         const expandedSearchResponse = await fetch(
           `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
           {
@@ -527,9 +534,13 @@ serve(async (req) => {
               language: 'pt-BR',
               deeperCityScrape: true,
               exactMatch: false,
+              maxAutomaticZoomOut: 5,
+              includeSearchResultsNearby: true,
+              scrapeReviewsNumber: 0,
+              skipClosedPlaces: true,
               lat: cityCoords.lat,
               lng: cityCoords.lng,
-              radius: 150000, // 150 km radius - MAXIMUM REACH
+              radius: 200000, // 200 km radius - ULTRA MAXIMUM REACH
             }),
           }
         );
