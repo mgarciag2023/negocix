@@ -587,16 +587,47 @@ serve(async (req) => {
         const categoryName = normalizeString((place.categoryName || '').toLowerCase());
         const categories = (place.categories || []).map((cat: string) => normalizeString(cat.toLowerCase()));
         
-        // 0. MUST NOT be permanently closed
-        if (place.closed === true || place.permanentlyClosed === true || place.isAdvertisement === true) {
-          console.log(`🚫 Establishment closed: ${place.title}`);
+        // 0. COMPREHENSIVE CLOSURE CHECK - MUST NOT be closed in any way
+        // Check all possible closed indicators from Apify
+        if (place.closed === true || 
+            place.permanentlyClosed === true || 
+            place.temporarilyClosed === true ||
+            place.isAdvertisement === true ||
+            place.businessStatus === 'CLOSED_PERMANENTLY' ||
+            place.businessStatus === 'CLOSED_TEMPORARILY' ||
+            place.status === 'CLOSED' ||
+            place.operationalStatus === 'CLOSED_PERMANENTLY' ||
+            place.operationalStatus === 'CLOSED_TEMPORARILY') {
+          console.log(`🚫 Establishment closed (status flag): ${place.title}`);
           return false;
         }
         
-        // Check if title indicates closure
-        const closureIndicators = ['fechado', 'encerrado', 'closed', 'desativado', 'inativo'];
+        // Check opening hours for closure indicators
+        const openingHours = place.openingHours || place.workingHours || '';
+        const openingHoursLower = (typeof openingHours === 'string' ? openingHours : JSON.stringify(openingHours)).toLowerCase();
+        if (openingHoursLower.includes('permanently closed') || 
+            openingHoursLower.includes('fechado permanentemente') ||
+            openingHoursLower.includes('encerrado')) {
+          console.log(`🚫 Opening hours indicate closure: ${place.title}`);
+          return false;
+        }
+        
+        // Check if title or description indicates closure
+        const closureIndicators = [
+          'fechado', 'encerrado', 'closed', 'desativado', 'inativo', 
+          'permanentemente fechado', 'temporarily closed', 'fechou', 
+          'nao funciona mais', 'não funciona mais', 'extinto', 'desativada',
+          'encerrou atividades', 'fechado definitivamente', 'out of business'
+        ];
         if (closureIndicators.some(indicator => title.includes(indicator))) {
           console.log(`🚫 Title indicates closure: ${place.title}`);
+          return false;
+        }
+        
+        // Check description for closure indicators
+        const description = normalizeString((place.description || place.additionalInfo || '').toLowerCase());
+        if (closureIndicators.some(indicator => description.includes(indicator))) {
+          console.log(`🚫 Description indicates closure: ${place.title}`);
           return false;
         }
         
