@@ -60,6 +60,16 @@ const Configuration = () => {
     "Bordados",
     "Lojas de Aviamentos",
     "Malharias",
+    "Transportadoras",
+    "Frotistas",
+    "Empresas com Frota Própria",
+    "Vans Escolares",
+    "Táxis e Cooperativas de Táxi",
+    "Motoristas de Aplicativo",
+    "Empresas de Logística",
+    "Empresas de Entrega",
+    "Locadoras de Veículos",
+    "Empresas de Turismo",
   ];
 
   const handleCustomerToggle = (customer: string) => {
@@ -156,6 +166,7 @@ const Configuration = () => {
                       <SelectItem value="tecidos">Tecidos</SelectItem>
                       <SelectItem value="aviamentos">Aviamentos</SelectItem>
                       <SelectItem value="fios-linhas">Fios e Linhas</SelectItem>
+                      <SelectItem value="protecao-veicular">Proteção Veicular</SelectItem>
                       <SelectItem value="outros">Outros</SelectItem>
                     </SelectContent>
                   </Select>
