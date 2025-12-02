@@ -91,11 +91,16 @@ const Results = () => {
   useEffect(() => {
     const fetchLeads = async () => {
       try {
-        // ALWAYS check cache first - critical for avoiding duplicate API calls
+        // Check if we should use cache - only if it exists AND was created for current search
         const cachedLeadsStr = localStorage.getItem('cachedLeads');
         const searchConfigStr = localStorage.getItem('leadSearchConfig');
+        const cacheTimestamp = localStorage.getItem('cacheTimestamp');
         
-        if (cachedLeadsStr) {
+        // Cache validity: must have leads, config, and be less than 30 minutes old
+        const cacheMaxAge = 30 * 60 * 1000; // 30 minutes
+        const isCacheValid = cacheTimestamp && (Date.now() - parseInt(cacheTimestamp)) < cacheMaxAge;
+        
+        if (cachedLeadsStr && isCacheValid) {
           try {
             const cachedLeads = JSON.parse(cachedLeadsStr);
             if (Array.isArray(cachedLeads) && cachedLeads.length > 0) {
@@ -106,8 +111,13 @@ const Results = () => {
             }
           } catch (parseError) {
             console.error('❌ Error parsing cached leads, will fetch new ones:', parseError);
-            localStorage.removeItem('cachedLeads'); // Clear corrupted cache
+            localStorage.removeItem('cachedLeads');
+            localStorage.removeItem('cacheTimestamp');
           }
+        } else if (cachedLeadsStr && !isCacheValid) {
+          console.log('🕐 Cache expired, fetching fresh data');
+          localStorage.removeItem('cachedLeads');
+          localStorage.removeItem('cacheTimestamp');
         }
 
         console.log('💾 Cache MISS - Will fetch from API');
@@ -155,9 +165,9 @@ const Results = () => {
         
         if (data?.leads && data.leads.length > 0) {
           setLeads(data.leads);
-          // Cache the leads with timestamp for debugging
-          const cacheData = JSON.stringify(data.leads);
-          localStorage.setItem('cachedLeads', cacheData);
+          // Cache the leads with timestamp
+          localStorage.setItem('cachedLeads', JSON.stringify(data.leads));
+          localStorage.setItem('cacheTimestamp', Date.now().toString());
           console.log('💾 Leads cached successfully:', data.leads.length);
         } else if (data?.error) {
           toast({

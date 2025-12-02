@@ -109,6 +109,7 @@ const Configuration = () => {
     if (previousConfigStr !== newConfigStr) {
       console.log('🔄 Search config changed, clearing cache');
       localStorage.removeItem('cachedLeads');
+      localStorage.removeItem('cacheTimestamp');
     } else {
       console.log('✅ Same search config, keeping cache');
     }
