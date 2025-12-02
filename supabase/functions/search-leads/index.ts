@@ -342,7 +342,17 @@ serve(async (req) => {
       'e-commerce': ['loja online', 'loja virtual', 'comércio eletrônico', 'e-commerce', 'vendas online'],
       'ferramentas': ['ferramentas', 'loja de ferramentas', 'ferragens e ferramentas', 'equipamentos', 'casa das ferramentas'],
       'chaveiro': ['chaveiro', 'chaveiro 24h', 'cópia de chaves', 'serviço de chaveiro', 'chaves'],
-      'materiais de construção': ['materiais de construção', 'materiais construcao', 'loja construção', 'casa construção', 'depósito construção', 'construmateriais']
+      'materiais de construção': ['materiais de construção', 'materiais construcao', 'loja construção', 'casa construção', 'depósito construção', 'construmateriais'],
+      'transportadoras': ['transportadora', 'transporte de cargas', 'empresa de transporte', 'frete', 'logística'],
+      'frotistas': ['frotista', 'gestão de frota', 'frota de veículos', 'empresa com frota'],
+      'empresas com frota própria': ['empresa com frota', 'frota própria', 'veículos empresa'],
+      'vans escolares': ['van escolar', 'transporte escolar', 'escolar'],
+      'táxis': ['táxi', 'cooperativa de táxi', 'ponto de táxi', 'taxi'],
+      'motoristas de aplicativo': ['motorista de aplicativo', 'uber', '99', 'ponto de apoio motorista'],
+      'empresas de logística': ['logística', 'empresa de logística', 'distribuição', 'centro de distribuição'],
+      'empresas de entrega': ['entrega', 'delivery', 'motoboy', 'empresa de entregas', 'serviço de entrega'],
+      'locadoras de veículos': ['locadora de veículos', 'aluguel de carros', 'rent a car', 'locadora'],
+      'empresas de turismo': ['turismo', 'van de turismo', 'agência de turismo', 'excursões', 'fretamento']
     };
     
     // Build search queries - use multiple terms for better coverage
