@@ -445,14 +445,17 @@ serve(async (req) => {
       throw new Error("APIFY_API_KEY is not configured");
     }
     
-    // Build Apify request body - MAXIMUM AGGRESSIVE MODE (max 150 leads)
-    // Aim for minimum 50, maximum 150 - ALWAYS PUSH FOR MORE
+    // Build Apify request body - CONTROLLED MODE (max 150 leads TOTAL)
+    // Distribute limit across all search queries to control costs
+    const MAX_TOTAL_LEADS = 150;
+    const numQueries = searchQueries.length;
+    const placesPerSearch = Math.ceil(MAX_TOTAL_LEADS / numQueries); // Distribute evenly
+    
     const isSpecialRegion = location.toLowerCase().includes('penha') || location.toLowerCase().includes('barra velha');
-    const placesPerSearch = 150; // MAXIMUM: Always 150 places per search
     if (isSpecialRegion) {
-      console.log(`🎯 SPECIAL REGION DETECTED: ${location} - MAXIMUM AGGRESSIVE MODE: ${placesPerSearch} places per search`);
+      console.log(`🎯 SPECIAL REGION DETECTED: ${location}`);
     }
-    console.log(`📊 Requesting ${placesPerSearch} places per search query (${searchQueries.length} queries)`);
+    console.log(`📊 Requesting ${placesPerSearch} places per search query (${numQueries} queries = max ${placesPerSearch * numQueries} total, limited to ${MAX_TOTAL_LEADS})`);
     
     const apifyRequestBody: any = {
       searchStringsArray: searchQueries, // Can be multiple search terms
@@ -706,6 +709,12 @@ serve(async (req) => {
       });
       
       console.log(`✅ After filtering: ${apifyResults.length} valid places`);
+      
+      // HARD LIMIT: Maximum 150 leads to control Apify costs
+      if (apifyResults.length > MAX_TOTAL_LEADS) {
+        console.log(`⚠️ Limiting from ${apifyResults.length} to ${MAX_TOTAL_LEADS} leads`);
+        apifyResults = apifyResults.slice(0, MAX_TOTAL_LEADS);
+      }
     }
     
     // If no results, return error - NO AI FALLBACK
