@@ -343,26 +343,37 @@ serve(async (req) => {
       'ferramentas': ['ferramentas', 'loja de ferramentas', 'ferragens e ferramentas', 'equipamentos', 'casa das ferramentas'],
       'chaveiro': ['chaveiro', 'chaveiro 24h', 'cópia de chaves', 'serviço de chaveiro', 'chaves'],
       'materiais de construção': ['materiais de construção', 'materiais construcao', 'loja construção', 'casa construção', 'depósito construção', 'construmateriais'],
-      'transportadoras': ['transportadora', 'transporte de cargas', 'empresa de transporte', 'frete', 'logística'],
-      'frotistas': ['frotista', 'gestão de frota', 'frota de veículos', 'empresa com frota'],
-      'empresas com frota própria': ['empresa com frota', 'frota própria', 'veículos empresa'],
-      'vans escolares': ['van escolar', 'transporte escolar', 'escolar'],
-      'táxis': ['táxi', 'cooperativa de táxi', 'ponto de táxi', 'taxi'],
-      'motoristas de aplicativo': ['motorista de aplicativo', 'uber', '99', 'ponto de apoio motorista'],
-      'empresas de logística': ['logística', 'empresa de logística', 'distribuição', 'centro de distribuição'],
-      'empresas de entrega': ['entrega', 'delivery', 'motoboy', 'empresa de entregas', 'serviço de entrega'],
-      'locadoras de veículos': ['locadora de veículos', 'aluguel de carros', 'rent a car', 'locadora'],
-      'empresas de turismo': ['turismo', 'van de turismo', 'agência de turismo', 'excursões', 'fretamento']
+      'transportadoras': ['transportadora', 'transporte de cargas', 'empresa de transporte', 'frete', 'logística', 'transportes', 'cargas', 'mudanças', 'transportadora de cargas'],
+      'frotistas': ['frota', 'gestão de frota', 'empresa de veículos', 'locadora', 'transportadora'],
+      'empresas com frota própria': ['distribuidora', 'atacadista', 'indústria', 'fábrica', 'empresa grande'],
+      'vans escolares': ['transporte escolar', 'van escolar', 'escolar', 'transporte de alunos', 'transporte coletivo'],
+      'táxis': ['táxi', 'taxi', 'cooperativa de táxi', 'ponto de táxi', 'radiotáxi', 'cooperativa táxi'],
+      'cooperativas de táxi': ['cooperativa táxi', 'táxi', 'taxi', 'ponto de táxi', 'radiotáxi'],
+      'motoristas de aplicativo': ['uber', '99', 'motorista', 'transporte particular', 'aplicativo de transporte'],
+      'empresas de logística': ['logística', 'distribuição', 'armazém', 'centro de distribuição', 'operador logístico', 'supply chain'],
+      'empresas de entrega': ['entregas', 'delivery', 'motoboy', 'courier', 'serviço de entrega', 'express', 'entregas rápidas'],
+      'locadoras de veículos': ['locadora', 'aluguel de carros', 'rent a car', 'locadora de veículos', 'rental', 'aluguel de veículos'],
+      'empresas de turismo': ['turismo', 'agência de turismo', 'excursões', 'fretamento', 'viagens', 'receptivo', 'turismo receptivo'],
+      // Combined search for proteção veicular - searches ALL vehicle-related businesses
+      'protecao-veicular': ['transportadora', 'logística', 'transporte escolar', 'táxi', 'locadora de veículos', 'turismo', 'entregas', 'distribuidora']
     };
     
     // Build search queries - use multiple terms for better coverage
     const segmentLowerNorm = segment.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     let searchQueries: string[] = [];
     
+    // Check if this is proteção veicular category (from filters)
+    const isProtecaoVeicular = filters?.category === 'protecao-veicular';
+    
     // Check if this is a high-priority category
-    const matchedCategory = Object.keys(categorySearchTerms).find(key => 
+    let matchedCategory = Object.keys(categorySearchTerms).find(key => 
       segmentLowerNorm.includes(key.toLowerCase())
     );
+    
+    // If proteção veicular, use combined search terms for ALL vehicle types
+    if (isProtecaoVeicular) {
+      matchedCategory = 'protecao-veicular';
+    }
     
     if (matchedCategory) {
       // Use all search terms for this category
@@ -634,8 +645,10 @@ serve(async (req) => {
           return false;
         }
         
-        // Check description for closure indicators
-        const description = normalizeString((place.description || place.additionalInfo || '').toLowerCase());
+        // Check description for closure indicators (safely handle objects)
+        const descriptionRaw = place.description || place.additionalInfo || '';
+        const descriptionStr = typeof descriptionRaw === 'string' ? descriptionRaw : JSON.stringify(descriptionRaw);
+        const description = normalizeString(descriptionStr.toLowerCase());
         if (closureIndicators.some(indicator => description.includes(indicator))) {
           console.log(`🚫 Description indicates closure: ${place.title}`);
           return false;
