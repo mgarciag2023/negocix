@@ -365,28 +365,39 @@ serve(async (req) => {
     // Check if this is proteção veicular category (from filters)
     const isProtecaoVeicular = filters?.category === 'protecao-veicular';
     
-    // Check if this is a high-priority category
-    let matchedCategory = Object.keys(categorySearchTerms).find(key => 
-      segmentLowerNorm.includes(key.toLowerCase())
-    );
-    
-    // If proteção veicular, use combined search terms for ALL vehicle types
+    // If proteção veicular, use comprehensive vehicle search terms
     if (isProtecaoVeicular) {
-      matchedCategory = 'protecao-veicular';
-    }
-    
-    if (matchedCategory) {
-      // Use all search terms for this category
-      searchQueries = categorySearchTerms[matchedCategory].map(term => 
+      searchQueries = categorySearchTerms['protecao-veicular'].map(term => 
         `${term} ${location} ${stateDisplay}`
       );
-      console.log(`🎯 High-priority category detected: "${matchedCategory}"`);
+      console.log(`🎯 Proteção Veicular detected - using comprehensive vehicle search`);
       console.log(`📋 Using ${searchQueries.length} search terms:`, searchQueries);
     } else {
-      // Standard single search query
-      searchQueries = [`${segment} ${location} ${stateDisplay}`];
-      console.log(`🔍 Standard search query: "${searchQueries[0]}"`);
+      // Collect ALL matching categories from the segment (supports multiple selected)
+      const allMatchedTerms: string[] = [];
+      Object.keys(categorySearchTerms).forEach(key => {
+        if (segmentLowerNorm.includes(key.toLowerCase()) || 
+            segmentLowerNorm.includes(key.replace(/ /g, '').toLowerCase())) {
+          allMatchedTerms.push(...categorySearchTerms[key]);
+          console.log(`🎯 Matched category: "${key}"`);
+        }
+      });
+      
+      if (allMatchedTerms.length > 0) {
+        // Remove duplicates and limit to avoid too many API calls
+        const uniqueTerms = [...new Set(allMatchedTerms)].slice(0, 10);
+        searchQueries = uniqueTerms.map(term => 
+          `${term} ${location} ${stateDisplay}`
+        );
+        console.log(`📋 Using ${searchQueries.length} unique search terms from ${allMatchedTerms.length} total`);
+      } else {
+        // Standard single search query - extract first customer type
+        const firstCustomer = segment.split(',')[0].trim();
+        searchQueries = [`${firstCustomer} ${location} ${stateDisplay}`];
+        console.log(`🔍 Standard search query: "${searchQueries[0]}"`);
+      }
     }
+    console.log(`📋 Final search queries:`, searchQueries);
     
     // Define coordinates for major cities in Brazil
     const coordinates: { [key: string]: { lat: number; lng: number } } = {
