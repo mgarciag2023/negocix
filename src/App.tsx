@@ -8,6 +8,7 @@ import Configuration from "./pages/Configuration";
 import Results from "./pages/Results";
 import LeadDetail from "./pages/LeadDetail";
 import Favorites from "./pages/Favorites";
+import CreateApproach from "./pages/CreateApproach";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/resultados" element={<Results />} />
           <Route path="/lead/:id" element={<LeadDetail />} />
           <Route path="/favoritos" element={<Favorites />} />
+          <Route path="/abordagem" element={<CreateApproach />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
