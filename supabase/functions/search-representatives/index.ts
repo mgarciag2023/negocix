@@ -329,18 +329,19 @@ serve(async (req) => {
     
     const searchQueries: string[] = [];
     
+    // Use only the FIRST search term per segment to minimize API calls
     for (const segment of segments) {
       if (professionalSearchTerms[segment]) {
-        searchQueries.push(...professionalSearchTerms[segment].map(term => `${term} ${location} ${state}`));
+        searchQueries.push(`${professionalSearchTerms[segment][0]} ${location} ${state}`);
       } else if (representativeSearchTerms[segment]) {
-        searchQueries.push(...representativeSearchTerms[segment].map(term => `${term} ${location} ${state}`));
+        searchQueries.push(`${representativeSearchTerms[segment][0]} ${location} ${state}`);
       } else {
         searchQueries.push(`representante comercial ${segment} ${location} ${state}`);
-        searchQueries.push(`agência representação ${segment} ${location} ${state}`);
       }
     }
     
-    const uniqueQueries = [...new Set(searchQueries)].slice(0, 6);
+    // LIMIT TO MAX 2 QUERIES to save Apify credits
+    const uniqueQueries = [...new Set(searchQueries)].slice(0, 2);
     console.log(`🔍 Search queries (${uniqueQueries.length}):`, uniqueQueries);
 
     let coords = coordinates[location];
