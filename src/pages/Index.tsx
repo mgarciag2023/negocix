@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Building2, Target, TrendingUp, Zap, MessageSquare, Sparkles } from "lucide-react";
+import { Building2, Target, TrendingUp, Zap, MessageSquare, Sparkles, Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
 
 const Index = () => {
@@ -14,17 +14,23 @@ const Index = () => {
           <div className="container mx-auto px-4">
             <div className="mx-auto max-w-3xl text-center">
               <h1 className="mb-4 md:mb-6 text-3xl md:text-5xl font-bold leading-tight">
-                Encontre Clientes e Crie Abordagens Perfeitas
+                Encontre Clientes, Representantes e Crie Abordagens Perfeitas
               </h1>
               <p className="mb-6 md:mb-8 text-base md:text-xl text-white/90">
-                IA poderosa que encontra os melhores leads e cria abordagens profissionais personalizadas.
+                IA poderosa que encontra os melhores leads, representantes comerciais e cria abordagens profissionais personalizadas.
                 Economize tempo e converta mais vendas.
               </p>
-              <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
+              <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center flex-wrap">
                 <Button size="lg" asChild className="bg-success hover:bg-success-hover text-white shadow-success w-full sm:w-auto">
                   <Link to="/configuracao">
                     <Target className="mr-2 h-5 w-5" />
                     Buscar Leads
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild className="bg-white/10 text-white border-white/30 hover:bg-white/20 w-full sm:w-auto">
+                  <Link to="/search-representatives">
+                    <Users className="mr-2 h-5 w-5" />
+                    Buscar Representantes
                   </Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild className="bg-white/10 text-white border-white/30 hover:bg-white/20 w-full sm:w-auto">
