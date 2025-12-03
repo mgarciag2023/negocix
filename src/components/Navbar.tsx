@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Building2, Heart, Settings, Sparkles } from "lucide-react";
+import { Building2, Heart, Settings, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Navbar = () => {
@@ -28,6 +28,18 @@ const Navbar = () => {
               <Link to="/configuracao">
                 <Settings className="h-3 w-3 md:h-4 md:w-4 md:mr-2" />
                 <span className="hidden sm:inline">Buscar</span>
+              </Link>
+            </Button>
+            
+            <Button
+              variant={isActive("/search-representatives") ? "default" : "ghost"}
+              size="sm"
+              className="h-8 md:h-9 text-xs md:text-sm px-2 md:px-3"
+              asChild
+            >
+              <Link to="/search-representatives">
+                <Users className="h-3 w-3 md:h-4 md:w-4 md:mr-2" />
+                <span className="hidden sm:inline">Representantes</span>
               </Link>
             </Button>
             

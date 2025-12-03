@@ -9,6 +9,8 @@ import Results from "./pages/Results";
 import LeadDetail from "./pages/LeadDetail";
 import Favorites from "./pages/Favorites";
 import CreateApproach from "./pages/CreateApproach";
+import SearchRepresentatives from "./pages/SearchRepresentatives";
+import RepresentativesResults from "./pages/RepresentativesResults";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +28,8 @@ const App = () => (
           <Route path="/lead/:id" element={<LeadDetail />} />
           <Route path="/favoritos" element={<Favorites />} />
           <Route path="/abordagem" element={<CreateApproach />} />
+          <Route path="/search-representatives" element={<SearchRepresentatives />} />
+          <Route path="/representatives-results" element={<RepresentativesResults />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
