@@ -23,52 +23,128 @@ interface Representative {
   experience?: string;
   source?: string;
   sourceUrl?: string;
+  website?: string;
+  address?: string;
+  rating?: number;
+  reviewCount?: number;
 }
 
-// Mapeamento de estados para DDDs
-const stateDDDs: Record<string, string[]> = {
-  "AC": ["68"],
-  "AL": ["82"],
-  "AP": ["96"],
-  "AM": ["92", "97"],
-  "BA": ["71", "73", "74", "75", "77"],
-  "CE": ["85", "88"],
-  "DF": ["61"],
-  "ES": ["27", "28"],
-  "GO": ["62", "64"],
-  "MA": ["98", "99"],
-  "MT": ["65", "66"],
-  "MS": ["67"],
-  "MG": ["31", "32", "33", "34", "35", "37", "38"],
-  "PA": ["91", "93", "94"],
-  "PB": ["83"],
-  "PR": ["41", "42", "43", "44", "45", "46"],
-  "PE": ["81", "87"],
-  "PI": ["86", "89"],
-  "RJ": ["21", "22", "24"],
-  "RN": ["84"],
-  "RS": ["51", "53", "54", "55"],
-  "RO": ["69"],
-  "RR": ["95"],
-  "SC": ["47", "48", "49"],
-  "SP": ["11", "12", "13", "14", "15", "16", "17", "18", "19"],
-  "SE": ["79"],
-  "TO": ["63"],
+// Phone validation
+function validatePhone(phone: string): { valid: boolean; normalized: string; isWhatsApp: boolean } {
+  if (!phone) return { valid: false, normalized: '', isWhatsApp: false };
+  
+  const digitsOnly = phone.replace(/\D/g, '');
+  
+  if (digitsOnly.startsWith('55') && (digitsOnly.length === 12 || digitsOnly.length === 13)) {
+    const isMobile = digitsOnly.length === 13 && digitsOnly.charAt(4) === '9';
+    return { valid: true, normalized: `+${digitsOnly}`, isWhatsApp: isMobile };
+  }
+  
+  if (digitsOnly.length === 10 || digitsOnly.length === 11) {
+    const isMobile = digitsOnly.length === 11 && digitsOnly.charAt(2) === '9';
+    return { valid: true, normalized: `+55${digitsOnly}`, isWhatsApp: isMobile };
+  }
+  
+  return { valid: false, normalized: '', isWhatsApp: false };
+}
+
+// Extract email from website
+async function scrapeEmailFromWebsite(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      signal: AbortSignal.timeout(5000)
+    });
+    
+    if (!response.ok) return null;
+    const html = await response.text();
+    
+    const mailtoMatch = html.match(/href=["']mailto:([^"']+)["']/i);
+    if (mailtoMatch && mailtoMatch[1]) {
+      const email = mailtoMatch[1].split('?')[0].trim();
+      if (isValidEmail(email)) return email;
+    }
+    
+    const emailPattern = /\b[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/g;
+    const emails = html.match(emailPattern);
+    
+    if (emails && emails.length > 0) {
+      const validEmails = emails.filter(email => {
+        const lowerEmail = email.toLowerCase();
+        return isValidEmail(email) && !lowerEmail.includes('example.com') && !lowerEmail.includes('wixpress.com');
+      });
+      if (validEmails.length > 0) return validEmails[0];
+    }
+    
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return emailRegex.test(email) && !email.includes('..') && email.length <= 254;
+}
+
+const coordinates: { [key: string]: { lat: number; lng: number } } = {
+  'Florianópolis': { lat: -27.5954, lng: -48.5480 },
+  'Blumenau': { lat: -26.9194, lng: -49.0661 },
+  'Joinville': { lat: -26.3045, lng: -48.8487 },
+  'São Paulo': { lat: -23.5505, lng: -46.6333 },
+  'Campinas': { lat: -22.9099, lng: -47.0626 },
+  'Rio de Janeiro': { lat: -22.9068, lng: -43.1729 },
+  'Curitiba': { lat: -25.4284, lng: -49.2733 },
+  'Porto Alegre': { lat: -30.0346, lng: -51.2177 },
+  'Belo Horizonte': { lat: -19.9167, lng: -43.9345 },
+  'Salvador': { lat: -12.9714, lng: -38.5014 },
+  'Recife': { lat: -8.0476, lng: -34.8770 },
+  'Fortaleza': { lat: -3.7172, lng: -38.5433 },
+  'Goiânia': { lat: -16.6869, lng: -49.2648 },
+  'Brasília': { lat: -15.7942, lng: -47.8822 },
 };
 
-// Nomes de cidades importantes por estado
-const majorCities: Record<string, string[]> = {
-  "SP": ["São Paulo", "Campinas", "Ribeirão Preto", "Santos", "São José dos Campos", "Sorocaba"],
-  "RJ": ["Rio de Janeiro", "Niterói", "Petrópolis", "Campos dos Goytacazes"],
-  "MG": ["Belo Horizonte", "Uberlândia", "Contagem", "Juiz de Fora", "Betim"],
-  "RS": ["Porto Alegre", "Caxias do Sul", "Pelotas", "Canoas", "Santa Maria"],
-  "PR": ["Curitiba", "Londrina", "Maringá", "Ponta Grossa", "Cascavel"],
-  "SC": ["Florianópolis", "Joinville", "Blumenau", "São José", "Chapecó"],
-  "BA": ["Salvador", "Feira de Santana", "Vitória da Conquista", "Camaçari"],
-  "PE": ["Recife", "Jaboatão dos Guararapes", "Olinda", "Caruaru"],
-  "CE": ["Fortaleza", "Caucaia", "Juazeiro do Norte", "Maracanaú"],
-  "GO": ["Goiânia", "Aparecida de Goiânia", "Anápolis", "Rio Verde"],
-  "DF": ["Brasília", "Taguatinga", "Ceilândia", "Águas Claras"],
+const stateCapitals: { [key: string]: string } = {
+  'AC': 'Rio Branco', 'AL': 'Maceió', 'AP': 'Macapá', 'AM': 'Manaus',
+  'BA': 'Salvador', 'CE': 'Fortaleza', 'DF': 'Brasília', 'ES': 'Vitória',
+  'GO': 'Goiânia', 'MA': 'São Luís', 'MT': 'Cuiabá', 'MS': 'Campo Grande',
+  'MG': 'Belo Horizonte', 'PA': 'Belém', 'PB': 'João Pessoa', 'PR': 'Curitiba',
+  'PE': 'Recife', 'PI': 'Teresina', 'RJ': 'Rio de Janeiro', 'RN': 'Natal',
+  'RS': 'Porto Alegre', 'RO': 'Porto Velho', 'RR': 'Boa Vista', 'SC': 'Florianópolis',
+  'SP': 'São Paulo', 'SE': 'Aracaju', 'TO': 'Palmas'
+};
+
+const professionalSearchTerms: { [key: string]: string[] } = {
+  'Engenheiros': ['escritório de engenharia', 'engenheiro civil', 'engenharia'],
+  'Arquitetos': ['escritório de arquitetura', 'arquiteto', 'arquitetura'],
+  'Contadores': ['escritório de contabilidade', 'contador', 'contabilidade'],
+  'Eletricistas': ['eletricista', 'instalações elétricas', 'serviços elétricos'],
+  'Advogados': ['escritório de advocacia', 'advogado', 'advocacia'],
+  'Médicos': ['clínica médica', 'consultório médico', 'médico'],
+  'Dentistas': ['clínica odontológica', 'dentista', 'odontologia'],
+  'Nutricionistas': ['nutricionista', 'consultório de nutrição'],
+  'Psicólogos': ['psicólogo', 'clínica de psicologia'],
+  'Fisioterapeutas': ['fisioterapia', 'clínica de fisioterapia', 'fisioterapeuta'],
+};
+
+const representativeSearchTerms: { [key: string]: string[] } = {
+  'Alimentos': ['representante comercial alimentos', 'distribuidora alimentos'],
+  'Bebidas': ['representante comercial bebidas', 'distribuidora bebidas'],
+  'Cosméticos': ['representante comercial cosméticos', 'distribuidora cosméticos'],
+  'Vestuário': ['representante comercial vestuário', 'representante moda'],
+  'Automotivo': ['representante comercial automotivo', 'autopeças'],
+  'Construção Civil': ['representante comercial construção', 'materiais construção'],
+  'Farmacêutico': ['representante comercial farmacêutico', 'distribuidora medicamentos'],
+  'Energia Solar': ['representante energia solar', 'empresa energia solar'],
+  'Tecnologia': ['representante comercial tecnologia', 'distribuidora informática'],
+  'Saúde': ['representante comercial saúde', 'equipamentos médicos'],
+  'Ferramentas': ['representante ferramentas', 'distribuidora ferramentas'],
+  'Material de Escritório': ['representante material escritório', 'papelaria atacado'],
+  'Segurança': ['representante comercial segurança', 'equipamentos segurança'],
+  'Descartáveis': ['representante descartáveis', 'distribuidora descartáveis'],
+  'Plásticos': ['representante plásticos', 'distribuidora plásticos'],
+  'EPIs': ['representante EPIs', 'equipamentos proteção'],
+  'Utilidades Domésticas': ['representante utilidades domésticas', 'bazar atacado'],
 };
 
 serve(async (req) => {
@@ -89,246 +165,164 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      console.error("LOVABLE_API_KEY not configured");
-      throw new Error("LOVABLE_API_KEY not configured");
+    const APIFY_API_KEY = Deno.env.get("APIFY_API_KEY");
+    if (!APIFY_API_KEY) {
+      console.error("APIFY_API_KEY not configured");
+      throw new Error("APIFY_API_KEY not configured");
     }
 
-    const location = city ? `${city}, ${state}` : state;
-    const segmentList = segments.join(", ");
-    
-    // DDDs do estado
-    const ddds = stateDDDs[state] || ["11"];
-    const cities = majorCities[state] || [city || "Capital"];
-    
-    // Profissionais liberais - buscar os próprios profissionais, não representantes
-    const professionalSegments = [
-      "Engenheiros", "Arquitetos", "Contadores", "Eletricistas", 
-      "Advogados", "Médicos", "Dentistas", "Nutricionistas", 
-      "Psicólogos", "Fisioterapeutas"
-    ];
-    
+    const location = city || stateCapitals[state] || state;
+    const professionalSegments = Object.keys(professionalSearchTerms);
     const isProfessionalSearch = segments.some(s => professionalSegments.includes(s));
-    const professionalTerms = segments.filter(s => professionalSegments.includes(s));
-    const representativeTerms = segments.filter(s => !professionalSegments.includes(s));
     
-    console.log("Searching for:", segmentList, "in", location);
-    console.log("Is professional search:", isProfessionalSearch);
-    console.log("State DDDs:", ddds.join(", "));
-
-    const systemPrompt = isProfessionalSearch 
-      ? `Você é um especialista em encontrar profissionais qualificados no Brasil. Seu conhecimento inclui:
-- Padrões de nomenclatura de escritórios e profissionais brasileiros
-- Registros profissionais (CREA, CAU, CRC, CREFITO, CRM, CRO, CRN, CRP, etc.)
-- Especializações comuns de cada profissão
-- Regiões de atuação típicas
-
-REGRAS OBRIGATÓRIAS:
-1. Gere nomes REALISTAS de profissionais e empresas brasileiras - use nomes próprios comuns (Silva, Santos, Oliveira, Souza, Lima, Pereira, Costa, Ferreira, Rodrigues, Almeida) combinados com primeiros nomes populares
-2. Para escritórios, use formatos como: "Escritório [Sobrenome] & Associados", "[Nome Sobrenome] Arquitetura", "[Sobrenome] Consultoria", etc.
-3. Use EXCLUSIVAMENTE DDDs da região ${state}: ${ddds.join(", ")}
-4. Telefones no formato: (${ddds[0]}) 9XXXX-XXXX (celular) ou (${ddds[0]}) XXXX-XXXX (fixo)
-5. Emails devem ter domínios profissionais: @gmail.com, @hotmail.com, @outlook.com, ou domínios próprios como @[sobrenome]arquitetura.com.br
-6. Descrições devem mencionar especializações reais da área e tempo de experiência
-7. A região de atuação deve incluir ${city || "cidades da região"} e cidades próximas
-8. Gere entre 12 a 18 profissionais variados com diferentes especializações
-
-ESPECIALIZAÇÕES POR ÁREA:
-- Engenheiros: Civil, Elétrico, Mecânico, de Produção, Ambiental, de Software, Químico
-- Arquitetos: Residencial, Comercial, Interiores, Paisagismo, Restauração, Urbanismo
-- Contadores: Tributário, Fiscal, Auditoria, Perícia, Controladoria, Consultoria Empresarial
-- Eletricistas: Residencial, Comercial, Industrial, Manutenção, Instalações, Automação
-- Advogados: Trabalhista, Civil, Criminal, Tributário, Empresarial, Família, Imobiliário
-- Médicos: Clínico Geral, Cardiologista, Ortopedista, Dermatologista, Pediatra, etc.
-- Dentistas: Clínico, Ortodontista, Implantodontista, Endodontista, Periodontista
-- Nutricionistas: Clínica, Esportiva, Hospitalar, Estética, Funcional
-- Psicólogos: Clínica, Organizacional, Escolar, Hospitalar, Terapia de Casal
-- Fisioterapeutas: Ortopédica, Neurológica, Respiratória, Esportiva, Geriátrica`
-      : `Você é um especialista em representação comercial no Brasil. Seu conhecimento inclui:
-- Estrutura do mercado de representantes comerciais brasileiro
-- Associações e sindicatos da categoria (CORE, sindicatos regionais)
-- Padrões de atuação por região e segmento
-- Tipos de representação (autônomo, agência, multinível)
-
-REGRAS OBRIGATÓRIAS:
-1. Gere nomes REALISTAS de empresas e representantes brasileiros
-2. Use formatos como: "[Sobrenome] Representações", "[Nome] & Filhos Representações Comerciais", "Grupo [Nome]", "[Sigla] Representações", "Agência [Sobrenome]"
-3. Use EXCLUSIVAMENTE DDDs da região ${state}: ${ddds.join(", ")}
-4. Telefones no formato: (${ddds[0]}) 9XXXX-XXXX (celular) ou (${ddds[0]}) XXXX-XXXX (comercial)
-5. Emails profissionais: contato@, comercial@, vendas@, representante@
-6. Descrições devem mencionar experiência, carteira de clientes, região de cobertura
-7. A região deve cobrir ${city || "todo o estado de " + state} e cidades próximas
-8. Inclua representantes de diferentes perfis: autônomos experientes, agências consolidadas, novos empreendedores
-9. Gere entre 12 a 18 representantes variados
-
-TIPOS DE REPRESENTANTES:
-- Representante Autônomo: Profissional individual com registro no CORE
-- Agência de Representação: Empresa com equipe de vendedores
-- Representante Regional: Foco em uma microrregião específica
-- Representante Multilinhas: Trabalha com várias marcas complementares
-
-PERFIS DE EXPERIÊNCIA:
-- Júnior: 1-3 anos, buscando crescer, flexível em comissões
-- Pleno: 4-8 anos, carteira estabelecida, networking sólido
-- Sênior: 9+ anos, relacionamentos de longo prazo, seletivo com marcas`;
-
-    const userPrompt = isProfessionalSearch
-      ? `Gere uma lista detalhada de profissionais das seguintes áreas: ${professionalTerms.join(", ")}${representativeTerms.length > 0 ? `\n\nE também representantes comerciais dos segmentos: ${representativeTerms.join(", ")}` : ''}
-
-Localização principal: ${location}, Brasil
-Cidades da região para atuação: ${cities.slice(0, 4).join(", ")}
-DDDs válidos: ${ddds.join(", ")}
-
-IMPORTANTE: Retorne APENAS um JSON válido, sem texto antes ou depois:
-{
-  "representatives": [
-    {
-      "name": "Dr. João Carlos Silva - Engenheiro Civil",
-      "phone": "(${ddds[0]}) 99XXX-XXXX",
-      "email": "joao.silva@email.com",
-      "region": "${city || cities[0]} e região metropolitana",
-      "segments": ["Engenheiros"],
-      "description": "Engenheiro Civil com CREA ativo, especializado em projetos residenciais e comerciais. Atua há 12 anos na região com foco em construções sustentáveis.",
-      "experience": "12 anos",
-      "source": "Conselho Regional"
+    const searchQueries: string[] = [];
+    
+    for (const segment of segments) {
+      if (professionalSearchTerms[segment]) {
+        searchQueries.push(...professionalSearchTerms[segment].map(term => `${term} ${location} ${state}`));
+      } else if (representativeSearchTerms[segment]) {
+        searchQueries.push(...representativeSearchTerms[segment].map(term => `${term} ${location} ${state}`));
+      } else {
+        searchQueries.push(`representante comercial ${segment} ${location} ${state}`);
+        searchQueries.push(`agência representação ${segment} ${location} ${state}`);
+      }
     }
-  ]
-}
+    
+    const uniqueQueries = [...new Set(searchQueries)].slice(0, 6);
+    console.log(`🔍 Search queries (${uniqueQueries.length}):`, uniqueQueries);
 
-Gere 12 a 18 profissionais diferentes com dados variados e realistas.`
-      : `Gere uma lista detalhada de representantes comerciais que atuam nos segmentos: ${segmentList}
-
-Localização principal: ${location}, Brasil
-Cidades da região para cobertura: ${cities.slice(0, 4).join(", ")}
-DDDs válidos: ${ddds.join(", ")}
-
-IMPORTANTE: Retorne APENAS um JSON válido, sem texto antes ou depois:
-{
-  "representatives": [
-    {
-      "name": "Silva & Oliveira Representações Comerciais",
-      "phone": "(${ddds[0]}) 99XXX-XXXX",
-      "email": "contato@silvaeoliveira.com.br",
-      "region": "${city || cities[0]} e região",
-      "segments": ["${segments[0]}"${segments.length > 1 ? `, "${segments[1]}"` : ''}],
-      "description": "Agência de representação com 15 anos no mercado, especializada em ${segments[0].toLowerCase()}. Carteira ativa de 120+ clientes entre varejistas e atacadistas da região.",
-      "experience": "15 anos",
-      "source": "CORE-${state}"
+    let coords = coordinates[location];
+    if (!coords) {
+      const capital = stateCapitals[state];
+      coords = coordinates[capital] || { lat: -23.5505, lng: -46.6333 };
     }
-  ]
-}
+    
+    console.log(`📍 Using coordinates for ${location}:`, coords);
 
-Gere 12 a 18 representantes diferentes com perfis variados (autônomos, agências, regionais) e dados realistas.`;
+    const allResults: any[] = [];
+    
+    for (const query of uniqueQueries) {
+      console.log(`🔎 Searching: "${query}"`);
+      
+      try {
+        const apifyResponse = await fetch(
+          `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              searchStringsArray: [query],
+              locationQuery: `${location}, ${state}, Brazil`,
+              lat: coords.lat.toString(),
+              lng: coords.lng.toString(),
+              maxCrawledPlacesPerSearch: 25,
+              maxAutomaticZoomOut: 3,
+              skipClosedPlaces: true,
+              scrapeReviewsNumber: 0,
+              language: 'pt-BR',
+              searchMatching: 'all',
+            }),
+          }
+        );
 
-    console.log("Calling Lovable AI with enhanced prompt...");
+        if (apifyResponse.ok) {
+          const results = await apifyResponse.json();
+          console.log(`✅ Got ${results.length} results for "${query}"`);
+          allResults.push(...results);
+        } else {
+          const errorText = await apifyResponse.text();
+          console.error(`❌ Apify error for "${query}":`, apifyResponse.status, errorText);
+          
+          if (apifyResponse.status === 402) {
+            return new Response(
+              JSON.stringify({ error: "Créditos Apify insuficientes", representatives: [] }),
+              { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+        }
+      } catch (error) {
+        console.error(`Error searching "${query}":`, error);
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: 0.8, // Mais criatividade para variedade
-      }),
+    console.log(`📊 Total raw results: ${allResults.length}`);
+
+    const seenIds = new Set<string>();
+    const uniqueResults = allResults.filter(place => {
+      const id = place.placeId || place.title;
+      if (seenIds.has(id)) return false;
+      seenIds.add(id);
+      return true;
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("AI Gateway error:", response.status, errorText);
-      
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns minutos.", representatives: [] }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Créditos insuficientes. Adicione créditos à sua conta.", representatives: [] }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      
-      throw new Error(`AI Gateway error: ${response.status}`);
-    }
+    console.log(`📊 Unique results after dedup: ${uniqueResults.length}`);
 
-    const aiResponse = await response.json();
-    const content = aiResponse.choices?.[0]?.message?.content || "";
+    const representatives: Representative[] = [];
     
-    console.log("AI Response received, length:", content.length);
-
-    let representatives: Representative[] = [];
-    
-    try {
-      // Clean the response - remove markdown code blocks if present
-      let cleanContent = content.trim();
+    for (const place of uniqueResults.slice(0, 50)) {
+      const phoneRaw = place.phone || place.phoneUnformatted;
+      const phoneValidation = validatePhone(phoneRaw);
       
-      // Remove various markdown formats
-      if (cleanContent.startsWith("```json")) {
-        cleanContent = cleanContent.slice(7);
-      } else if (cleanContent.startsWith("```")) {
-        cleanContent = cleanContent.slice(3);
-      }
-      if (cleanContent.endsWith("```")) {
-        cleanContent = cleanContent.slice(0, -3);
-      }
-      cleanContent = cleanContent.trim();
-      
-      // Try to find JSON object in the response
-      const jsonMatch = cleanContent.match(/\{[\s\S]*"representatives"[\s\S]*\}/);
-      if (jsonMatch) {
-        cleanContent = jsonMatch[0];
+      if (!phoneValidation.valid) {
+        console.log(`⏭️ Skipping "${place.title}" - no valid phone`);
+        continue;
       }
 
-      const parsed = JSON.parse(cleanContent);
-      
-      if (parsed.representatives && Array.isArray(parsed.representatives)) {
-        representatives = parsed.representatives.map((rep: any, index: number) => ({
-          id: `rep-${Date.now()}-${index}`,
-          name: rep.name || "Representante",
-          phone: rep.phone,
-          whatsapp: rep.whatsapp || rep.phone,
-          email: rep.email,
-          region: rep.region || location,
-          segments: Array.isArray(rep.segments) ? rep.segments : segments.slice(0, 2),
-          description: rep.description,
-          experience: rep.experience,
-          source: rep.source || "Indicação",
-          sourceUrl: rep.sourceUrl,
-        }));
+      let email: string | undefined;
+      if (place.website) {
+        email = await scrapeEmailFromWebsite(place.website) || undefined;
       }
+
+      const placeSegments: string[] = [];
+      const categoryLower = (place.categoryName || place.category || '').toLowerCase();
+      const titleLower = (place.title || '').toLowerCase();
       
-      console.log(`Parsed ${representatives.length} representatives successfully`);
-    } catch (parseError) {
-      console.error("Error parsing AI response:", parseError);
-      console.error("Raw content preview:", content.substring(0, 1000));
-      
-      // Fallback: tentar extrair dados mesmo com erro de parse
-      try {
-        const nameMatches = content.match(/"name":\s*"([^"]+)"/g);
-        if (nameMatches && nameMatches.length > 0) {
-          console.log("Attempting fallback extraction...");
+      if (isProfessionalSearch) {
+        for (const seg of segments) {
+          const terms = professionalSearchTerms[seg] || [];
+          if (terms.some(t => categoryLower.includes(t.toLowerCase()) || titleLower.includes(t.toLowerCase()))) {
+            placeSegments.push(seg);
+          }
         }
-      } catch (e) {
-        console.error("Fallback extraction also failed");
+      } else {
+        placeSegments.push(...segments.slice(0, 2));
       }
+
+      if (placeSegments.length === 0) {
+        placeSegments.push(segments[0]);
+      }
+
+      const representative: Representative = {
+        id: place.placeId || `rep-${Date.now()}-${representatives.length}`,
+        name: place.title || 'Sem nome',
+        phone: phoneValidation.normalized,
+        whatsapp: phoneValidation.isWhatsApp ? phoneValidation.normalized : undefined,
+        email,
+        region: place.city ? `${place.city}, ${place.state || state}` : `${location}, ${state}`,
+        segments: placeSegments,
+        description: place.description || place.categoryName || categoryLower,
+        website: place.website,
+        address: place.address || place.street,
+        rating: place.totalScore || place.rating,
+        reviewCount: place.reviewsCount,
+        source: 'Google Maps',
+        sourceUrl: place.url,
+      };
+
+      representatives.push(representative);
     }
+
+    console.log(`✅ Final representatives: ${representatives.length}`);
 
     return new Response(
       JSON.stringify({ 
         representatives,
         meta: {
           total: representatives.length,
-          location,
-          segments: segmentList,
+          location: `${location}, ${state}`,
+          segments: segments.join(", "),
           searchType: isProfessionalSearch ? "professionals" : "representatives"
         }
       }),
