@@ -50,9 +50,48 @@ serve(async (req) => {
     const location = city ? `${city}, ${state}` : state;
     const segmentList = segments.join(", ");
     
-    console.log("Searching representatives for:", segmentList, "in", location);
+    // Profissionais liberais - buscar os próprios profissionais, não representantes
+    const professionalSegments = [
+      "Engenheiros", "Arquitetos", "Contadores", "Eletricistas", 
+      "Advogados", "Médicos", "Dentistas", "Nutricionistas", 
+      "Psicólogos", "Fisioterapeutas"
+    ];
+    
+    const isProfessionalSearch = segments.some(s => professionalSegments.includes(s));
+    const professionalTerms = segments.filter(s => professionalSegments.includes(s));
+    const representativeTerms = segments.filter(s => !professionalSegments.includes(s));
+    
+    console.log("Searching for:", segmentList, "in", location);
+    console.log("Is professional search:", isProfessionalSearch);
 
-    const systemPrompt = `Você é um especialista em encontrar representantes comerciais no Brasil. 
+    const systemPrompt = isProfessionalSearch 
+      ? `Você é um especialista em encontrar profissionais e prestadores de serviço no Brasil.
+
+Sua tarefa é gerar uma lista realista de profissionais que atuam na região especificada.
+
+IMPORTANTE:
+- Para profissionais liberais (engenheiros, arquitetos, contadores, eletricistas, advogados, médicos, dentistas, nutricionistas, psicólogos, fisioterapeutas), gere os PRÓPRIOS PROFISSIONAIS, não representantes
+- Gere nomes de profissionais/empresas brasileiras realistas
+- Use padrões de telefone brasileiros válidos (DDD + 9 dígitos para celular)
+- A região de atuação deve ser coerente com a localização solicitada
+- Inclua descrições profissionais e relevantes
+- Gere entre 10 a 20 profissionais variados
+
+Para telefones, use o formato: (DDD) 9XXXX-XXXX
+Exemplos de DDDs por estado:
+- SP: 11, 12, 13, 14, 15, 16, 17, 18, 19
+- RJ: 21, 22, 24
+- MG: 31, 32, 33, 34, 35, 37, 38
+- RS: 51, 53, 54, 55
+- PR: 41, 42, 43, 44, 45, 46
+- SC: 47, 48, 49
+- BA: 71, 73, 74, 75, 77
+- PE: 81, 87
+- CE: 85, 88
+- GO: 62, 64
+- DF: 61
+- outros estados: pesquise o DDD correto`
+      : `Você é um especialista em encontrar representantes comerciais no Brasil. 
 
 Sua tarefa é gerar uma lista realista de representantes comerciais que poderiam atuar nos segmentos solicitados na região especificada.
 
@@ -62,7 +101,7 @@ IMPORTANTE:
 - A região de atuação deve ser coerente com a localização solicitada
 - Os segmentos devem corresponder aos solicitados
 - Inclua descrições profissionais e relevantes
-- Gere entre 8 a 15 representantes variados
+- Gere entre 10 a 20 representantes variados
 
 Para telefones, use o formato: (DDD) 9XXXX-XXXX
 Exemplos de DDDs por estado:
@@ -79,7 +118,24 @@ Exemplos de DDDs por estado:
 - DF: 61
 - outros estados: pesquise o DDD correto`;
 
-    const userPrompt = `Gere uma lista de representantes comerciais que atuam nos segmentos: ${segmentList}
+    const userPrompt = isProfessionalSearch
+      ? `Gere uma lista de profissionais das seguintes áreas: ${professionalTerms.join(", ")}${representativeTerms.length > 0 ? `\nE também representantes comerciais dos segmentos: ${representativeTerms.join(", ")}` : ''}
+Localização: ${location}, Brasil
+
+Retorne APENAS um JSON válido no seguinte formato, sem texto adicional:
+{
+  "representatives": [
+    {
+      "name": "Nome do Profissional ou Empresa",
+      "phone": "(DDD) 9XXXX-XXXX",
+      "region": "${location} e região",
+      "segments": ["Área de atuação"],
+      "description": "Breve descrição da atuação, especialidade e experiência",
+      "source": "Indicação profissional"
+    }
+  ]
+}`
+      : `Gere uma lista de representantes comerciais que atuam nos segmentos: ${segmentList}
 Localização: ${location}, Brasil
 
 Retorne APENAS um JSON válido no seguinte formato, sem texto adicional:
