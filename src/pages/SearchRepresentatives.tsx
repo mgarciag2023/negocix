@@ -6,8 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Users, MapPin, Briefcase, Award } from "lucide-react";
+import { Search, Users, MapPin, Briefcase } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const segments = [
@@ -31,22 +30,16 @@ const segments = [
   "Pet",
   "Higiene e Limpeza",
   "Suplementos",
-];
-
-const actuationTypes = [
-  { id: "autonomo", label: "Representante Autônomo" },
-  { id: "agencia", label: "Agência de Representação" },
-  { id: "regional", label: "Representante Regional" },
-  { id: "varejo", label: "Representante para Varejo" },
-  { id: "atacado", label: "Representante para Atacado" },
-  { id: "industria", label: "Representante para Indústria" },
-];
-
-const experienceLevels = [
-  { value: "iniciante", label: "Iniciante (até 2 anos)" },
-  { value: "intermediario", label: "Intermediário (2-5 anos)" },
-  { value: "experiente", label: "Experiente (5+ anos)" },
-  { value: "qualquer", label: "Qualquer nível" },
+  "Energia Solar",
+  "Tecnologia",
+  "Saúde",
+  "Ferramentas",
+  "Material de Escritório",
+  "Segurança",
+  "Descartáveis",
+  "Plásticos",
+  "EPIs",
+  "Utilidades Domésticas",
 ];
 
 const brazilianStates = [
@@ -62,8 +55,6 @@ export default function SearchRepresentatives() {
   const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
-  const [selectedActuationTypes, setSelectedActuationTypes] = useState<string[]>([]);
-  const [experienceLevel, setExperienceLevel] = useState("qualquer");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSegmentToggle = (segment: string) => {
@@ -71,14 +62,6 @@ export default function SearchRepresentatives() {
       prev.includes(segment)
         ? prev.filter(s => s !== segment)
         : [...prev, segment]
-    );
-  };
-
-  const handleActuationToggle = (typeId: string) => {
-    setSelectedActuationTypes(prev =>
-      prev.includes(typeId)
-        ? prev.filter(t => t !== typeId)
-        : [...prev, typeId]
     );
   };
 
@@ -105,8 +88,6 @@ export default function SearchRepresentatives() {
       segments: selectedSegments,
       city,
       state,
-      actuationTypes: selectedActuationTypes,
-      experienceLevel,
     };
 
     localStorage.setItem("representativeSearchConfig", JSON.stringify(searchConfig));
@@ -197,62 +178,6 @@ export default function SearchRepresentatives() {
                     />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Tipo de Atuação */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5" />
-                  Tipo de Atuação
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Selecione os tipos de representante que procura (opcional)
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {actuationTypes.map((type) => (
-                    <div
-                      key={type.id}
-                      className="flex items-center space-x-2"
-                    >
-                      <Checkbox
-                        id={type.id}
-                        checked={selectedActuationTypes.includes(type.id)}
-                        onCheckedChange={() => handleActuationToggle(type.id)}
-                      />
-                      <Label htmlFor={type.id} className="cursor-pointer">
-                        {type.label}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Nível de Experiência */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Award className="w-5 h-5" />
-                  Nível de Experiência
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Select value={experienceLevel} onValueChange={setExperienceLevel}>
-                  <SelectTrigger className="w-full md:w-[300px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {experienceLevels.map((level) => (
-                      <SelectItem key={level.value} value={level.value}>
-                        {level.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </CardContent>
             </Card>
 

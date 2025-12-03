@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
@@ -12,7 +12,6 @@ import {
   MapPin, 
   Briefcase, 
   MessageCircle,
-  ExternalLink,
   RefreshCw
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -27,9 +26,6 @@ interface Representative {
   segments: string[];
   description?: string;
   source?: string;
-  sourceUrl?: string;
-  actuationType?: string;
-  experience?: string;
 }
 
 export default function RepresentativesResults() {
@@ -61,15 +57,28 @@ export default function RepresentativesResults() {
     setIsLoading(true);
     
     try {
+      console.log("Calling search-representatives with:", config);
+      
       const { data, error } = await supabase.functions.invoke("search-representatives", {
         body: config,
       });
+
+      console.log("Response:", data, error);
 
       if (error) {
         console.error("Error searching representatives:", error);
         toast({
           title: "Erro na busca",
-          description: "Não foi possível buscar representantes. Tente novamente.",
+          description: error.message || "Não foi possível buscar representantes. Tente novamente.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data?.error) {
+        toast({
+          title: "Erro",
+          description: data.error,
           variant: "destructive",
         });
         return;
@@ -199,24 +208,11 @@ export default function RepresentativesResults() {
                             {rep.name}
                           </h3>
                           {rep.source && (
-                            <p className="text-xs text-muted-foreground flex items-center gap-1">
-                              Encontrado em: {rep.source}
-                              {rep.sourceUrl && (
-                                <a
-                                  href={rep.sourceUrl}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-primary hover:underline"
-                                >
-                                  <ExternalLink className="w-3 h-3" />
-                                </a>
-                              )}
+                            <p className="text-xs text-muted-foreground">
+                              Fonte: {rep.source}
                             </p>
                           )}
                         </div>
-                        {rep.experience && (
-                          <Badge variant="secondary">{rep.experience}</Badge>
-                        )}
                       </div>
 
                       {/* Region */}
@@ -237,14 +233,6 @@ export default function RepresentativesResults() {
                         </div>
                       )}
 
-                      {/* Actuation Type */}
-                      {rep.actuationType && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Users className="w-4 h-4" />
-                          <span>{rep.actuationType}</span>
-                        </div>
-                      )}
-
                       {/* Description */}
                       {rep.description && (
                         <p className="text-sm text-muted-foreground border-l-2 border-primary/20 pl-3">
@@ -254,26 +242,26 @@ export default function RepresentativesResults() {
 
                       {/* Contact Buttons */}
                       <div className="flex gap-2 pt-2">
-                        {(rep.whatsapp || rep.phone) && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleWhatsAppClick(rep.whatsapp || rep.phone!, rep.name)}
-                            className="gap-2 bg-green-600 hover:bg-green-700"
-                          >
-                            <MessageCircle className="w-4 h-4" />
-                            WhatsApp
-                          </Button>
-                        )}
                         {rep.phone && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleCallClick(rep.phone!)}
-                            className="gap-2"
-                          >
-                            <Phone className="w-4 h-4" />
-                            Ligar
-                          </Button>
+                          <>
+                            <Button
+                              size="sm"
+                              onClick={() => handleWhatsAppClick(rep.phone!, rep.name)}
+                              className="gap-2 bg-green-600 hover:bg-green-700"
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                              WhatsApp
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleCallClick(rep.phone!)}
+                              className="gap-2"
+                            >
+                              <Phone className="w-4 h-4" />
+                              Ligar
+                            </Button>
+                          </>
                         )}
                       </div>
                     </div>
