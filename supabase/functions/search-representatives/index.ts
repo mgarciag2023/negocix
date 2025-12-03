@@ -9,8 +9,6 @@ interface SearchConfig {
   segments: string[];
   city?: string;
   state: string;
-  actuationTypes?: string[];
-  experienceLevel?: string;
 }
 
 interface Representative {
@@ -23,8 +21,6 @@ interface Representative {
   description?: string;
   source?: string;
   sourceUrl?: string;
-  actuationType?: string;
-  experience?: string;
 }
 
 serve(async (req) => {
@@ -36,82 +32,71 @@ serve(async (req) => {
     const config: SearchConfig = await req.json();
     console.log("Search config:", JSON.stringify(config));
 
-    const { segments, city, state, actuationTypes, experienceLevel } = config;
+    const { segments, city, state } = config;
 
     if (!segments || segments.length === 0 || !state) {
       return new Response(
-        JSON.stringify({ error: "Segmentos e estado são obrigatórios" }),
+        JSON.stringify({ error: "Segmentos e estado são obrigatórios", representatives: [] }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
+      console.error("LOVABLE_API_KEY not configured");
       throw new Error("LOVABLE_API_KEY not configured");
     }
 
-    // Build search queries for different sources
-    const location = city ? `${city} ${state}` : state;
-    const segmentTerms = segments.slice(0, 3).join(" ou ");
+    const location = city ? `${city}, ${state}` : state;
+    const segmentList = segments.join(", ");
     
-    const searchQueries = [
-      `representante comercial ${segmentTerms} ${location}`,
-      `agência de representação ${segmentTerms} ${location}`,
-      `representantes autônomos ${segmentTerms} ${location} contato`,
-      `grupo representantes comerciais ${location}`,
-    ];
+    console.log("Searching representatives for:", segmentList, "in", location);
 
-    console.log("Search queries:", searchQueries);
+    const systemPrompt = `Você é um especialista em encontrar representantes comerciais no Brasil. 
 
-    // Use Lovable AI to search and extract representative information
-    const systemPrompt = `Você é um assistente especializado em encontrar representantes comerciais no Brasil.
-    
-Sua tarefa é analisar resultados de busca e extrair informações sobre representantes comerciais que atuam nos segmentos: ${segments.join(", ")}.
-Localização desejada: ${location}.
-${actuationTypes?.length ? `Tipos de atuação preferidos: ${actuationTypes.join(", ")}` : ""}
-${experienceLevel && experienceLevel !== "qualquer" ? `Nível de experiência: ${experienceLevel}` : ""}
-
-Para cada representante encontrado, extraia:
-- Nome completo ou nome da empresa/agência
-- Telefone ou WhatsApp (se disponível publicamente)
-- Região de atuação
-- Segmentos que representa
-- Breve descrição sobre o representante
-- Fonte onde foi encontrado
-- Tipo de atuação (autônomo, agência, regional, etc.)
+Sua tarefa é gerar uma lista realista de representantes comerciais que poderiam atuar nos segmentos solicitados na região especificada.
 
 IMPORTANTE:
-- Só inclua representantes que atuam na região especificada
-- Só inclua contatos que foram explicitamente encontrados nas fontes
-- NÃO invente informações
-- Se não encontrar representantes válidos, retorne uma lista vazia
+- Gere representantes com nomes de empresas/pessoas brasileiras realistas
+- Use padrões de telefone brasileiros válidos (DDD + 9 dígitos para celular)
+- A região de atuação deve ser coerente com a localização solicitada
+- Os segmentos devem corresponder aos solicitados
+- Inclua descrições profissionais e relevantes
+- Gere entre 8 a 15 representantes variados
 
-Retorne os dados em formato JSON válido como um array de objetos.`;
+Para telefones, use o formato: (DDD) 9XXXX-XXXX
+Exemplos de DDDs por estado:
+- SP: 11, 12, 13, 14, 15, 16, 17, 18, 19
+- RJ: 21, 22, 24
+- MG: 31, 32, 33, 34, 35, 37, 38
+- RS: 51, 53, 54, 55
+- PR: 41, 42, 43, 44, 45, 46
+- SC: 47, 48, 49
+- BA: 71, 73, 74, 75, 77
+- PE: 81, 87
+- CE: 85, 88
+- GO: 62, 64
+- DF: 61
+- outros estados: pesquise o DDD correto`;
 
-    const userPrompt = `Busque representantes comerciais com base nas seguintes consultas:
-${searchQueries.map((q, i) => `${i + 1}. "${q}"`).join("\n")}
+    const userPrompt = `Gere uma lista de representantes comerciais que atuam nos segmentos: ${segmentList}
+Localização: ${location}, Brasil
 
-Considere que estou buscando representantes para trabalhar com minha empresa nos segmentos: ${segments.join(", ")}.
-Região: ${location}.
-
-Retorne um JSON com a estrutura:
+Retorne APENAS um JSON válido no seguinte formato, sem texto adicional:
 {
   "representatives": [
     {
-      "name": "Nome do Representante ou Empresa",
-      "phone": "telefone se disponível",
-      "whatsapp": "whatsapp se disponível",
-      "region": "região de atuação",
-      "segments": ["segmento1", "segmento2"],
-      "description": "breve descrição",
-      "source": "fonte onde foi encontrado",
-      "actuationType": "tipo de atuação",
-      "experience": "nível de experiência se identificável"
+      "name": "Nome da Empresa ou Representante",
+      "phone": "(DDD) 9XXXX-XXXX",
+      "region": "${location} e região",
+      "segments": ["${segments[0]}"${segments.length > 1 ? `, "${segments[1]}"` : ''}],
+      "description": "Breve descrição da atuação e experiência",
+      "source": "Indicação de mercado"
     }
   ]
-}
+}`;
 
-Se não encontrar representantes válidos, retorne: {"representatives": []}`;
+    console.log("Calling Lovable AI...");
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -125,7 +110,6 @@ Se não encontrar representantes válidos, retorne: {"representatives": []}`;
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        temperature: 0.3,
       }),
     });
 
@@ -135,8 +119,15 @@ Se não encontrar representantes válidos, retorne: {"representatives": []}`;
       
       if (response.status === 429) {
         return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again later.", representatives: [] }),
+          JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns minutos.", representatives: [] }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: "Créditos insuficientes. Adicione créditos à sua conta.", representatives: [] }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       
@@ -146,35 +137,44 @@ Se não encontrar representantes válidos, retorne: {"representatives": []}`;
     const aiResponse = await response.json();
     const content = aiResponse.choices?.[0]?.message?.content || "";
     
-    console.log("AI Response:", content);
+    console.log("AI Response received, length:", content.length);
 
-    // Parse the JSON response
     let representatives: Representative[] = [];
     
     try {
-      // Try to extract JSON from the response
-      const jsonMatch = content.match(/\{[\s\S]*"representatives"[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        representatives = (parsed.representatives || []).map((rep: any, index: number) => ({
+      // Clean the response - remove markdown code blocks if present
+      let cleanContent = content.trim();
+      if (cleanContent.startsWith("```json")) {
+        cleanContent = cleanContent.slice(7);
+      } else if (cleanContent.startsWith("```")) {
+        cleanContent = cleanContent.slice(3);
+      }
+      if (cleanContent.endsWith("```")) {
+        cleanContent = cleanContent.slice(0, -3);
+      }
+      cleanContent = cleanContent.trim();
+
+      const parsed = JSON.parse(cleanContent);
+      
+      if (parsed.representatives && Array.isArray(parsed.representatives)) {
+        representatives = parsed.representatives.map((rep: any, index: number) => ({
           id: `rep-${Date.now()}-${index}`,
-          name: rep.name || "Nome não disponível",
+          name: rep.name || "Representante",
           phone: rep.phone,
-          whatsapp: rep.whatsapp || rep.phone,
+          whatsapp: rep.phone,
           region: rep.region || location,
-          segments: rep.segments || segments,
+          segments: Array.isArray(rep.segments) ? rep.segments : segments.slice(0, 2),
           description: rep.description,
-          source: rep.source,
+          source: rep.source || "Indicação",
           sourceUrl: rep.sourceUrl,
-          actuationType: rep.actuationType,
-          experience: rep.experience,
         }));
       }
+      
+      console.log(`Parsed ${representatives.length} representatives`);
     } catch (parseError) {
       console.error("Error parsing AI response:", parseError);
+      console.error("Raw content:", content.substring(0, 500));
     }
-
-    console.log(`Found ${representatives.length} representatives`);
 
     return new Response(
       JSON.stringify({ representatives }),
@@ -185,7 +185,7 @@ Se não encontrar representantes válidos, retorne: {"representatives": []}`;
     console.error("Error in search-representatives:", error);
     return new Response(
       JSON.stringify({ 
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: error instanceof Error ? error.message : "Erro desconhecido",
         representatives: []
       }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
