@@ -70,6 +70,39 @@ const Configuration = () => {
     "Empresas de Entrega",
     "Locadoras de Veículos",
     "Empresas de Turismo",
+    // Setor Saúde - Telemedicina
+    "Telemedicina",
+    "Clínicas de Telemedicina",
+    "Plataformas de Atendimento Online",
+    "Clínicas Populares",
+    "Laboratórios de Análises Clínicas",
+    "Consultórios Médicos",
+    "Clínicas de Especialidades",
+    "Planos de Saúde",
+    "Home Care",
+    "Clínicas de Fisioterapia",
+    "Clínicas de Psicologia",
+    "Psicólogos",
+    "Nutricionistas",
+    "Fonoaudiólogos",
+    "Clínicas de Odontologia",
+    // Indústria Gráfica & Comunicação Visual
+    "Gráficas",
+    "Gráficas Rápidas",
+    "Gráficas Online",
+    "Comunicação Visual",
+    "Impressão Digital",
+    "Impressoras de Grande Formato",
+    "Agências de Publicidade",
+    "Estúdios de Design",
+    "Produtoras de Conteúdo",
+    "Lojas de Sinalização",
+    "Serigrafias",
+    "Estamparias",
+    "Fábricas de Embalagens",
+    "Empresas de Adesivos e Banners",
+    "Impressão de Rótulos e Etiquetas",
+    "Editoras",
   ];
 
   const handleCustomerToggle = (customer: string) => {
@@ -168,6 +201,8 @@ const Configuration = () => {
                       <SelectItem value="aviamentos">Aviamentos</SelectItem>
                       <SelectItem value="fios-linhas">Fios e Linhas</SelectItem>
                       <SelectItem value="protecao-veicular">Proteção Veicular</SelectItem>
+                      <SelectItem value="telemedicina">Telemedicina / Saúde</SelectItem>
+                      <SelectItem value="grafica">Gráfica / Comunicação Visual</SelectItem>
                       <SelectItem value="outros">Outros</SelectItem>
                     </SelectContent>
                   </Select>
