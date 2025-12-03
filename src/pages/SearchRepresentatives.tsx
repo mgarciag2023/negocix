@@ -40,6 +40,16 @@ const segments = [
   "Plásticos",
   "EPIs",
   "Utilidades Domésticas",
+  "Engenheiros",
+  "Arquitetos",
+  "Contadores",
+  "Eletricistas",
+  "Advogados",
+  "Médicos",
+  "Dentistas",
+  "Nutricionistas",
+  "Psicólogos",
+  "Fisioterapeutas",
 ];
 
 const brazilianStates = [
