@@ -115,10 +115,10 @@ export default function SearchRepresentatives() {
               <Users className="w-8 h-8 text-primary" />
             </div>
             <h1 className="text-3xl font-bold text-foreground mb-2">
-              Buscar Profissionais
+              Buscar Representantes
             </h1>
             <p className="text-muted-foreground">
-              Encontre representantes comerciais e profissionais liberais para sua empresa
+              Encontre representantes comerciais para trabalharem com sua empresa
             </p>
           </div>
 

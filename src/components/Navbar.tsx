@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Users, Search, Heart } from "lucide-react";
+import { Building2, Heart, Settings, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const Navbar = () => {
@@ -13,12 +13,24 @@ const Navbar = () => {
         <div className="flex h-14 md:h-16 items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-lg bg-gradient-primary">
-              <Users className="h-5 w-5 md:h-6 md:w-6 text-white" />
+              <Building2 className="h-5 w-5 md:h-6 md:w-6 text-white" />
             </div>
-            <span className="text-lg md:text-xl font-bold text-primary">RepFinder</span>
+            <span className="text-lg md:text-xl font-bold text-primary">Negocix</span>
           </Link>
           
           <div className="flex items-center gap-1 md:gap-2">
+            <Button
+              variant={isActive("/configuracao") ? "default" : "ghost"}
+              size="sm"
+              className="h-8 md:h-9 text-xs md:text-sm px-2 md:px-3"
+              asChild
+            >
+              <Link to="/configuracao">
+                <Settings className="h-3 w-3 md:h-4 md:w-4 md:mr-2" />
+                <span className="hidden sm:inline">Buscar</span>
+              </Link>
+            </Button>
+            
             <Button
               variant={isActive("/search-representatives") ? "default" : "ghost"}
               size="sm"
@@ -26,8 +38,20 @@ const Navbar = () => {
               asChild
             >
               <Link to="/search-representatives">
-                <Search className="h-3 w-3 md:h-4 md:w-4 md:mr-2" />
-                <span className="hidden sm:inline">Buscar</span>
+                <Users className="h-3 w-3 md:h-4 md:w-4 md:mr-2" />
+                <span className="hidden sm:inline">Representantes</span>
+              </Link>
+            </Button>
+            
+            <Button
+              variant={isActive("/abordagem") ? "default" : "ghost"}
+              size="sm"
+              className="h-8 md:h-9 text-xs md:text-sm px-2 md:px-3"
+              asChild
+            >
+              <Link to="/abordagem">
+                <Sparkles className="h-3 w-3 md:h-4 md:w-4 md:mr-2" />
+                <span className="hidden sm:inline">Abordagem</span>
               </Link>
             </Button>
             

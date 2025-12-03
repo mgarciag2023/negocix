@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Users, Search, MapPin, Briefcase, Phone, MessageSquare } from "lucide-react";
+import { Building2, Target, TrendingUp, Zap, MessageSquare, Sparkles } from "lucide-react";
 import Navbar from "@/components/Navbar";
 
 const Index = () => {
@@ -14,17 +14,26 @@ const Index = () => {
           <div className="container mx-auto px-4">
             <div className="mx-auto max-w-3xl text-center">
               <h1 className="mb-4 md:mb-6 text-3xl md:text-5xl font-bold leading-tight">
-                Encontre Representantes e Profissionais
+                Encontre Clientes e Crie Abordagens Perfeitas
               </h1>
               <p className="mb-6 md:mb-8 text-base md:text-xl text-white/90">
-                Conecte-se com representantes comerciais, engenheiros, arquitetos, contadores e outros profissionais qualificados para sua empresa.
+                IA poderosa que encontra os melhores leads e cria abordagens profissionais personalizadas.
+                Economize tempo e converta mais vendas.
               </p>
-              <Button size="lg" asChild className="bg-success hover:bg-success-hover text-white shadow-success">
-                <Link to="/search-representatives">
-                  <Search className="mr-2 h-5 w-5" />
-                  Começar Busca
-                </Link>
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
+                <Button size="lg" asChild className="bg-success hover:bg-success-hover text-white shadow-success w-full sm:w-auto">
+                  <Link to="/configuracao">
+                    <Target className="mr-2 h-5 w-5" />
+                    Buscar Leads
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild className="bg-white/10 text-white border-white/30 hover:bg-white/20 w-full sm:w-auto">
+                  <Link to="/abordagem">
+                    <Sparkles className="mr-2 h-5 w-5" />
+                    Criar Abordagem
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
         </section>
@@ -32,79 +41,46 @@ const Index = () => {
         {/* Features */}
         <section className="py-12 md:py-16">
           <div className="container mx-auto px-4">
-            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12 text-foreground">
-              Como Funciona
-            </h2>
             <div className="grid gap-6 md:gap-8 md:grid-cols-2 lg:grid-cols-4">
               <div className="text-center">
                 <div className="mx-auto mb-4 flex h-14 w-14 md:h-16 md:w-16 items-center justify-center rounded-full bg-primary-light">
-                  <Briefcase className="h-7 w-7 md:h-8 md:w-8 text-primary" />
+                  <Zap className="h-7 w-7 md:h-8 md:w-8 text-primary" />
                 </div>
-                <h3 className="mb-2 text-lg md:text-xl font-bold text-foreground">Escolha o Segmento</h3>
+                <h3 className="mb-2 text-lg md:text-xl font-bold text-foreground">Busca Inteligente</h3>
                 <p className="text-sm md:text-base text-muted-foreground">
-                  Selecione entre representantes comerciais ou profissionais liberais
+                  Encontre leads reais do Google Maps com dados verificados e atualizados
                 </p>
               </div>
               
               <div className="text-center">
                 <div className="mx-auto mb-4 flex h-14 w-14 md:h-16 md:w-16 items-center justify-center rounded-full bg-success-light">
-                  <MapPin className="h-7 w-7 md:h-8 md:w-8 text-success" />
+                  <Target className="h-7 w-7 md:h-8 md:w-8 text-success" />
                 </div>
-                <h3 className="mb-2 text-lg md:text-xl font-bold text-foreground">Defina a Região</h3>
+                <h3 className="mb-2 text-lg md:text-xl font-bold text-foreground">Alta Precisão</h3>
                 <p className="text-sm md:text-base text-muted-foreground">
-                  Filtre por estado e cidade para encontrar profissionais perto de você
+                  Score de compatibilidade e filtros avançados para encontrar o cliente ideal
                 </p>
               </div>
               
               <div className="text-center">
                 <div className="mx-auto mb-4 flex h-14 w-14 md:h-16 md:w-16 items-center justify-center rounded-full bg-primary-light">
-                  <Users className="h-7 w-7 md:h-8 md:w-8 text-primary" />
+                  <MessageSquare className="h-7 w-7 md:h-8 md:w-8 text-primary" />
                 </div>
-                <h3 className="mb-2 text-lg md:text-xl font-bold text-foreground">Veja os Resultados</h3>
+                <h3 className="mb-2 text-lg md:text-xl font-bold text-foreground">Abordagens com IA</h3>
                 <p className="text-sm md:text-base text-muted-foreground">
-                  Receba uma lista de profissionais com nome, contato e área de atuação
+                  Crie mensagens profissionais e personalizadas para cada cliente
                 </p>
               </div>
               
               <div className="text-center">
                 <div className="mx-auto mb-4 flex h-14 w-14 md:h-16 md:w-16 items-center justify-center rounded-full bg-success-light">
-                  <Phone className="h-7 w-7 md:h-8 md:w-8 text-success" />
+                  <TrendingUp className="h-7 w-7 md:h-8 md:w-8 text-success" />
                 </div>
-                <h3 className="mb-2 text-lg md:text-xl font-bold text-foreground">Entre em Contato</h3>
+                <h3 className="mb-2 text-lg md:text-xl font-bold text-foreground">Mais Conversões</h3>
                 <p className="text-sm md:text-base text-muted-foreground">
-                  Ligue ou envie mensagem diretamente pelo WhatsApp
+                  Aborde os clientes certos com a mensagem certa e feche mais negócios
                 </p>
               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Segments Section */}
-        <section className="bg-muted py-12 md:py-16">
-          <div className="container mx-auto px-4">
-            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-foreground">
-              Profissionais Disponíveis
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4 max-w-4xl mx-auto">
-              {[
-                "Representantes Comerciais",
-                "Engenheiros",
-                "Arquitetos",
-                "Contadores",
-                "Eletricistas",
-                "Advogados",
-                "Médicos",
-                "Dentistas",
-                "Nutricionistas",
-                "Psicólogos",
-              ].map((segment) => (
-                <div
-                  key={segment}
-                  className="bg-card rounded-lg p-3 md:p-4 text-center border shadow-sm"
-                >
-                  <span className="text-sm md:text-base font-medium text-foreground">{segment}</span>
-                </div>
-              ))}
             </div>
           </div>
         </section>
@@ -113,17 +89,26 @@ const Index = () => {
         <section className="bg-primary-light py-12 md:py-16">
           <div className="container mx-auto px-4 text-center">
             <h2 className="mb-3 md:mb-4 text-2xl md:text-3xl font-bold text-foreground">
-              Encontre o Profissional Ideal
+              Pronto para Revolucionar Suas Vendas?
             </h2>
             <p className="mb-6 md:mb-8 text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-              Representantes comerciais para expandir suas vendas ou profissionais liberais para projetos específicos.
+              Encontre clientes em segundos e crie abordagens que realmente convertem. 
+              Tudo com inteligência artificial.
             </p>
-            <Button size="lg" asChild className="bg-success hover:bg-success-hover shadow-success">
-              <Link to="/search-representatives">
-                <Search className="mr-2 h-5 w-5" />
-                Buscar Agora
-              </Link>
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button size="lg" asChild className="bg-success hover:bg-success-hover shadow-success w-full sm:w-auto">
+                <Link to="/configuracao">
+                  <Building2 className="mr-2 h-5 w-5" />
+                  Começar Busca
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" asChild className="w-full sm:w-auto">
+                <Link to="/abordagem">
+                  <Sparkles className="mr-2 h-5 w-5" />
+                  Criar Abordagem
+                </Link>
+              </Button>
+            </div>
           </div>
         </section>
       </main>
