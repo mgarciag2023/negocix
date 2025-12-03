@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Users, MapPin, Briefcase } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-const segments = [
+// Segmentos de representação comercial
+const representativeSegments = [
   "Alimentos",
   "Bebidas",
   "Cosméticos",
@@ -40,6 +41,47 @@ const segments = [
   "Plásticos",
   "EPIs",
   "Utilidades Domésticas",
+  "Joias e Bijuterias",
+  "Calçados",
+  "Bolsas e Acessórios",
+  "Perfumaria",
+  "Cama, Mesa e Banho",
+  "Informática",
+  "Celulares e Acessórios",
+  "Ar Condicionado",
+  "Refrigeração",
+  "Iluminação",
+  "Tintas e Pintura",
+  "Hidráulica",
+  "Jardinagem",
+  "Piscinas",
+  "Fitness",
+  "Instrumentos Musicais",
+  "Artigos Religiosos",
+  "Artesanato",
+  "Decoração",
+  "Vidros",
+  "Madeira",
+  "Aço e Metalurgia",
+  "Borrachas",
+  "Lubrificantes",
+  "Alimentos Congelados",
+  "Doces e Chocolates",
+  "Café",
+  "Cereais e Grãos",
+  "Laticínios",
+  "Carnes",
+  "Pescados",
+  "Orgânicos",
+  "Sucos e Polpas",
+  "Água Mineral",
+  "Sorvetes",
+  "Padaria",
+  "Rotisseria",
+];
+
+// Profissões / Profissionais liberais
+const professionalSegments = [
   "Engenheiros",
   "Arquitetos",
   "Contadores",
@@ -50,6 +92,26 @@ const segments = [
   "Nutricionistas",
   "Psicólogos",
   "Fisioterapeutas",
+  "Veterinários",
+  "Fonoaudiólogos",
+  "Terapeutas Ocupacionais",
+  "Enfermeiros",
+  "Farmacêuticos",
+  "Biomédicos",
+  "Corretores de Imóveis",
+  "Corretores de Seguros",
+  "Despachantes",
+  "Personal Trainers",
+  "Tradutores",
+  "Designers",
+  "Programadores",
+  "Consultores",
+  "Economistas",
+  "Administradores",
+  "Publicitários",
+  "Jornalistas",
+  "Fotógrafos",
+  "Videomakers",
 ];
 
 const brazilianStates = [
@@ -123,26 +185,56 @@ export default function SearchRepresentatives() {
           </div>
 
           <div className="space-y-6">
-            {/* Segmentos */}
+            {/* Segmentos de Representação */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Briefcase className="w-5 h-5" />
-                  Segmentos de Representação
+                  Segmentos de Representação Comercial
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Selecione os segmentos em que deseja encontrar representantes
+                  Selecione os segmentos em que deseja encontrar representantes comerciais
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {segments.map((segment) => (
+                  {representativeSegments.map((segment) => (
                     <div
                       key={segment}
                       onClick={() => handleSegmentToggle(segment)}
                       className={`p-3 rounded-lg border cursor-pointer transition-all ${
                         selectedSegments.includes(segment)
                           ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-card hover:bg-accent border-border"
+                      }`}
+                    >
+                      <span className="text-sm font-medium">{segment}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Profissionais Liberais */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Profissionais Liberais
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Ou busque profissionais autônomos e liberais
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {professionalSegments.map((segment) => (
+                    <div
+                      key={segment}
+                      onClick={() => handleSegmentToggle(segment)}
+                      className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                        selectedSegments.includes(segment)
+                          ? "bg-secondary text-secondary-foreground border-secondary"
                           : "bg-card hover:bg-accent border-border"
                       }`}
                     >
