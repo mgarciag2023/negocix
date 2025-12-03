@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.generate-approach]
 verify_jwt = false
+
+[functions.search-representatives]
+verify_jwt = false
