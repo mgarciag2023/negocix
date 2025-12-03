@@ -114,38 +114,90 @@ const stateCapitals: { [key: string]: string } = {
   'SP': 'São Paulo', 'SE': 'Aracaju', 'TO': 'Palmas'
 };
 
+// Keywords to filter OUT non-representative results
+const excludeKeywords = [
+  'loja', 'store', 'shopping', 'mercado', 'supermercado', 'restaurante', 
+  'bar', 'padaria', 'farmácia', 'posto de gasolina', 'hotel', 'pousada',
+  'academia', 'salão', 'barbearia', 'escola', 'curso', 'igreja'
+];
+
+// Keywords that indicate real representatives/agencies
+const includeKeywords = [
+  'representante', 'representação', 'representações', 'agência', 'agencia',
+  'comercial', 'vendas externas', 'atacado', 'distribuidor', 'distribuidora',
+  'escritório', 'consultório', 'clínica', 'assessoria', 'consultoria'
+];
+
 const professionalSearchTerms: { [key: string]: string[] } = {
-  'Engenheiros': ['escritório de engenharia', 'engenheiro civil', 'engenharia'],
-  'Arquitetos': ['escritório de arquitetura', 'arquiteto', 'arquitetura'],
-  'Contadores': ['escritório de contabilidade', 'contador', 'contabilidade'],
-  'Eletricistas': ['eletricista', 'instalações elétricas', 'serviços elétricos'],
-  'Advogados': ['escritório de advocacia', 'advogado', 'advocacia'],
-  'Médicos': ['clínica médica', 'consultório médico', 'médico'],
-  'Dentistas': ['clínica odontológica', 'dentista', 'odontologia'],
-  'Nutricionistas': ['nutricionista', 'consultório de nutrição'],
-  'Psicólogos': ['psicólogo', 'clínica de psicologia'],
-  'Fisioterapeutas': ['fisioterapia', 'clínica de fisioterapia', 'fisioterapeuta'],
+  'Engenheiros': ['escritório de engenharia civil', 'empresa de engenharia', 'engenheiro autônomo'],
+  'Arquitetos': ['escritório de arquitetura', 'arquiteto autônomo', 'estúdio de arquitetura'],
+  'Contadores': ['escritório de contabilidade', 'contador autônomo', 'contabilidade empresarial'],
+  'Eletricistas': ['eletricista autônomo', 'empresa de instalações elétricas', 'eletricista industrial'],
+  'Advogados': ['escritório de advocacia', 'advogado autônomo', 'banca de advogados'],
+  'Médicos': ['consultório médico', 'médico autônomo', 'clínica médica particular'],
+  'Dentistas': ['consultório odontológico', 'dentista autônomo', 'clínica odontológica'],
+  'Nutricionistas': ['nutricionista clínico', 'consultório de nutrição', 'nutricionista esportivo'],
+  'Psicólogos': ['psicólogo clínico', 'consultório de psicologia', 'psicólogo autônomo'],
+  'Fisioterapeutas': ['fisioterapeuta autônomo', 'clínica de fisioterapia', 'estúdio de fisioterapia'],
 };
 
 const representativeSearchTerms: { [key: string]: string[] } = {
-  'Alimentos': ['representante comercial alimentos', 'distribuidora alimentos'],
-  'Bebidas': ['representante comercial bebidas', 'distribuidora bebidas'],
-  'Cosméticos': ['representante comercial cosméticos', 'distribuidora cosméticos'],
-  'Vestuário': ['representante comercial vestuário', 'representante moda'],
-  'Automotivo': ['representante comercial automotivo', 'autopeças'],
-  'Construção Civil': ['representante comercial construção', 'materiais construção'],
-  'Farmacêutico': ['representante comercial farmacêutico', 'distribuidora medicamentos'],
-  'Energia Solar': ['representante energia solar', 'empresa energia solar'],
-  'Tecnologia': ['representante comercial tecnologia', 'distribuidora informática'],
-  'Saúde': ['representante comercial saúde', 'equipamentos médicos'],
-  'Ferramentas': ['representante ferramentas', 'distribuidora ferramentas'],
-  'Material de Escritório': ['representante material escritório', 'papelaria atacado'],
-  'Segurança': ['representante comercial segurança', 'equipamentos segurança'],
-  'Descartáveis': ['representante descartáveis', 'distribuidora descartáveis'],
-  'Plásticos': ['representante plásticos', 'distribuidora plásticos'],
-  'EPIs': ['representante EPIs', 'equipamentos proteção'],
-  'Utilidades Domésticas': ['representante utilidades domésticas', 'bazar atacado'],
+  'Alimentos': ['representante comercial alimentos', 'representação comercial alimentos', 'agência de representação alimentos'],
+  'Bebidas': ['representante comercial bebidas', 'representação comercial bebidas', 'agência representação bebidas'],
+  'Cosméticos': ['representante comercial cosméticos', 'representação cosméticos', 'vendedor externo cosméticos'],
+  'Vestuário': ['representante comercial vestuário', 'representação moda', 'agência de moda atacado'],
+  'Automotivo': ['representante comercial autopeças', 'representação automotiva', 'agência autopeças'],
+  'Construção Civil': ['representante comercial construção', 'representação materiais construção', 'agência construção civil'],
+  'Farmacêutico': ['representante comercial farmacêutico', 'representação farmacêutica', 'propagandista médico'],
+  'Energia Solar': ['representante energia solar', 'representação energia solar', 'vendedor energia solar'],
+  'Tecnologia': ['representante comercial tecnologia', 'representação tecnologia', 'agência de tecnologia'],
+  'Saúde': ['representante comercial saúde', 'representação equipamentos médicos', 'vendedor equipamentos hospitalares'],
+  'Ferramentas': ['representante comercial ferramentas', 'representação ferramentas', 'agência ferramentas'],
+  'Material de Escritório': ['representante material escritório', 'representação papelaria', 'agência material escritório'],
+  'Segurança': ['representante comercial segurança', 'representação equipamentos segurança', 'agência segurança eletrônica'],
+  'Descartáveis': ['representante comercial descartáveis', 'representação descartáveis', 'agência embalagens'],
+  'Plásticos': ['representante comercial plásticos', 'representação plásticos', 'agência plásticos'],
+  'EPIs': ['representante comercial EPIs', 'representação equipamentos proteção', 'agência EPIs'],
+  'Utilidades Domésticas': ['representante comercial utilidades', 'representação utilidades domésticas', 'agência bazar'],
 };
+
+// Function to check if a place is likely a real representative/professional
+function isLikelyRepresentative(place: any, isProfessional: boolean): boolean {
+  const title = (place.title || '').toLowerCase();
+  const category = (place.categoryName || place.category || '').toLowerCase();
+  const description = (place.description || '').toLowerCase();
+  const combined = `${title} ${category} ${description}`;
+  
+  // Check for exclude keywords
+  for (const keyword of excludeKeywords) {
+    if (title.includes(keyword) && !title.includes('representante') && !title.includes('representação')) {
+      console.log(`⛔ Excluding "${place.title}" - contains exclude keyword: ${keyword}`);
+      return false;
+    }
+  }
+  
+  // For professionals, check for professional indicators
+  if (isProfessional) {
+    const professionalIndicators = ['escritório', 'consultório', 'clínica', 'estúdio', 'autônomo', 'dr.', 'dra.'];
+    const hasIndicator = professionalIndicators.some(ind => combined.includes(ind));
+    if (!hasIndicator && !category.includes('engineer') && !category.includes('architect') && 
+        !category.includes('lawyer') && !category.includes('doctor') && !category.includes('dentist') &&
+        !category.includes('accountant') && !category.includes('consultant')) {
+      console.log(`⛔ Excluding "${place.title}" - no professional indicator found`);
+      return false;
+    }
+  } else {
+    // For representatives, must have representative-related keywords
+    const repIndicators = ['representante', 'representação', 'representações', 'agência', 'comercial', 'distribuidor'];
+    const hasRepIndicator = repIndicators.some(ind => combined.includes(ind));
+    if (!hasRepIndicator) {
+      console.log(`⛔ Excluding "${place.title}" - no representative indicator found`);
+      return false;
+    }
+  }
+  
+  return true;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -261,7 +313,12 @@ serve(async (req) => {
 
     const representatives: Representative[] = [];
     
-    for (const place of uniqueResults.slice(0, 50)) {
+    for (const place of uniqueResults.slice(0, 100)) {
+      // First check if it's likely a real representative/professional
+      if (!isLikelyRepresentative(place, isProfessionalSearch)) {
+        continue;
+      }
+      
       const phoneRaw = place.phone || place.phoneUnformatted;
       const phoneValidation = validatePhone(phoneRaw);
       
@@ -312,6 +369,9 @@ serve(async (req) => {
       };
 
       representatives.push(representative);
+      
+      // Limit to 50 verified representatives
+      if (representatives.length >= 50) break;
     }
 
     console.log(`✅ Final representatives: ${representatives.length}`);
