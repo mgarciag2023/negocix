@@ -231,34 +231,64 @@ const representativeSearchTerms: { [key: string]: string[] } = {
   'Rotisseria': ['representante comercial rotisseria', 'representação alimentos prontos'],
 };
 
+// Normalize text for comparison (remove accents and lowercase)
+function normalizeText(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
 // Function to check if a place is likely a real representative/professional
 function isLikelyRepresentative(place: any, isProfessional: boolean): boolean {
-  const title = (place.title || '').toLowerCase();
-  const category = (place.categoryName || place.category || '').toLowerCase();
-  const description = (place.description || '').toLowerCase();
+  const title = normalizeText(place.title || '');
+  const category = normalizeText(place.categoryName || place.category || '');
+  const description = normalizeText(place.description || '');
   const combined = `${title} ${category} ${description}`;
   
-  // Check for exclude keywords
-  for (const keyword of excludeKeywords) {
-    if (title.includes(keyword) && !title.includes('representante') && !title.includes('representação')) {
-      console.log(`⛔ Excluding "${place.title}" - contains exclude keyword: ${keyword}`);
+  // Check for exclude keywords (but be less aggressive)
+  const strictExcludes = ['supermercado', 'restaurante', 'padaria', 'farmacia', 'hotel', 'pousada', 'academia', 'igreja'];
+  for (const keyword of strictExcludes) {
+    if (title.includes(keyword) && !title.includes('representante') && !title.includes('representacao')) {
+      console.log(`⛔ Excluding "${place.title}" - contains strict exclude keyword: ${keyword}`);
       return false;
     }
   }
   
-  // For professionals, check for professional indicators
+  // For professionals, be more permissive - accept if category matches or has professional terms
   if (isProfessional) {
-    const professionalIndicators = ['escritório', 'consultório', 'clínica', 'estúdio', 'autônomo', 'dr.', 'dra.'];
+    const professionalIndicators = [
+      'escritorio', 'consultorio', 'clinica', 'estudio', 'autonomo', 
+      'dr.', 'dra.', 'engenharia', 'arquitetura', 'contabilidade', 
+      'advocacia', 'advogado', 'contador', 'engenheiro', 'arquiteto',
+      'medico', 'dentista', 'psicologo', 'nutricionista', 'fisioterapeuta',
+      'veterinario', 'corretor', 'designer', 'fotografo', 'consultor'
+    ];
+    const categoryIndicators = [
+      'engineer', 'architect', 'lawyer', 'doctor', 'dentist', 'accountant', 
+      'consultant', 'veterinarian', 'psychologist', 'nutritionist', 'physical therapist',
+      'real estate agent', 'insurance agent', 'photographer', 'designer'
+    ];
+    
     const hasIndicator = professionalIndicators.some(ind => combined.includes(ind));
-    if (!hasIndicator && !category.includes('engineer') && !category.includes('architect') && 
-        !category.includes('lawyer') && !category.includes('doctor') && !category.includes('dentist') &&
-        !category.includes('accountant') && !category.includes('consultant')) {
-      console.log(`⛔ Excluding "${place.title}" - no professional indicator found`);
-      return false;
+    const hasCategoryMatch = categoryIndicators.some(ind => category.includes(ind));
+    
+    // Accept if has any indicator or category match
+    if (!hasIndicator && !hasCategoryMatch) {
+      // Last chance: check if title contains profession-related words
+      const professionWords = ['engenharia', 'arquitetura', 'contabil', 'advocacia', 'veterinar', 'odonto', 'fisio'];
+      const hasProfessionWord = professionWords.some(w => title.includes(w));
+      if (!hasProfessionWord) {
+        console.log(`⛔ Excluding "${place.title}" - no professional indicator found`);
+        return false;
+      }
     }
   } else {
-    // For representatives, must have representative-related keywords
-    const repIndicators = ['representante', 'representação', 'representações', 'agência', 'comercial', 'distribuidor'];
+    // For representatives, check for representative-related keywords
+    const repIndicators = [
+      'representante', 'representacao', 'representacoes', 'agencia', 
+      'comercial', 'distribuidor', 'distribuidora', 'atacado', 'vendas'
+    ];
     const hasRepIndicator = repIndicators.some(ind => combined.includes(ind));
     if (!hasRepIndicator) {
       console.log(`⛔ Excluding "${place.title}" - no representative indicator found`);
