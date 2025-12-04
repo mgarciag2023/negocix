@@ -122,6 +122,12 @@ const Configuration = () => {
     "Instaladores de Pisos",
     "Gesseiros",
     "Telhadistas",
+    // Setor Industrial / Eletrônica
+    "Indústrias que utilizam eletrônica",
+    "Indústrias automotivas",
+    "Indústrias de equipamentos hospitalares e de segurança",
+    "Indústrias de automação e tecnologia",
+    "Indústrias de iluminação e LED",
   ];
 
   const handleCustomerToggle = (customer: string) => {
