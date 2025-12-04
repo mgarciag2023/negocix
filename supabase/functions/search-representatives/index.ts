@@ -28,7 +28,10 @@ interface Representative {
   reviewCount?: number;
 }
 
-// Phone validation
+// ============================================
+// UTILITIES
+// ============================================
+
 function validatePhone(phone: string): { valid: boolean; normalized: string; isWhatsApp: boolean } {
   if (!phone) return { valid: false, normalized: '', isWhatsApp: false };
   
@@ -52,32 +55,29 @@ function isValidEmail(email: string): boolean {
   return emailRegex.test(email) && !email.includes('..') && email.length <= 254;
 }
 
-// Extract email from website using Apify
 async function scrapeEmailFromWebsite(url: string): Promise<string | null> {
   try {
     const response = await fetch(url, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
-      signal: AbortSignal.timeout(5000)
+      signal: AbortSignal.timeout(4000)
     });
     
     if (!response.ok) return null;
     const html = await response.text();
     
-    const mailtoMatch = html.match(/href=["']mailto:([^"']+)["']/i);
-    if (mailtoMatch && mailtoMatch[1]) {
-      const email = mailtoMatch[1].split('?')[0].trim();
-      if (isValidEmail(email)) return email;
-    }
+    // Try mailto first
+    const mailtoMatch = html.match(/href=["']mailto:([^"'?]+)/i);
+    if (mailtoMatch && isValidEmail(mailtoMatch[1])) return mailtoMatch[1];
     
+    // Then search for emails
     const emailPattern = /\b[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/g;
-    const emails = html.match(emailPattern);
+    const emails = html.match(emailPattern) || [];
     
-    if (emails && emails.length > 0) {
-      const validEmails = emails.filter(email => {
-        const lowerEmail = email.toLowerCase();
-        return isValidEmail(email) && !lowerEmail.includes('example.com') && !lowerEmail.includes('wixpress.com');
-      });
-      if (validEmails.length > 0) return validEmails[0];
+    for (const email of emails) {
+      const lower = email.toLowerCase();
+      if (isValidEmail(email) && !lower.includes('example') && !lower.includes('wix') && !lower.includes('sentry')) {
+        return email;
+      }
     }
     
     return null;
@@ -85,6 +85,10 @@ async function scrapeEmailFromWebsite(url: string): Promise<string | null> {
     return null;
   }
 }
+
+// ============================================
+// LOCATION DATA
+// ============================================
 
 const stateCapitals: { [key: string]: string } = {
   'AC': 'Rio Branco', 'AL': 'Maceió', 'AP': 'Macapá', 'AM': 'Manaus',
@@ -97,136 +101,208 @@ const stateCapitals: { [key: string]: string } = {
 };
 
 const coordinates: { [key: string]: { lat: number; lng: number } } = {
+  'Rio Branco': { lat: -9.9754, lng: -67.8249 },
+  'Maceió': { lat: -9.6658, lng: -35.7350 },
+  'Macapá': { lat: 0.0349, lng: -51.0694 },
+  'Manaus': { lat: -3.1190, lng: -60.0217 },
+  'Salvador': { lat: -12.9714, lng: -38.5014 },
+  'Fortaleza': { lat: -3.7172, lng: -38.5433 },
+  'Brasília': { lat: -15.7942, lng: -47.8822 },
+  'Vitória': { lat: -20.3155, lng: -40.3128 },
+  'Goiânia': { lat: -16.6869, lng: -49.2648 },
+  'São Luís': { lat: -2.5387, lng: -44.2826 },
+  'Cuiabá': { lat: -15.6014, lng: -56.0979 },
+  'Campo Grande': { lat: -20.4697, lng: -54.6201 },
+  'Belo Horizonte': { lat: -19.9167, lng: -43.9345 },
+  'Belém': { lat: -1.4558, lng: -48.4902 },
+  'João Pessoa': { lat: -7.1195, lng: -34.8450 },
+  'Curitiba': { lat: -25.4284, lng: -49.2733 },
+  'Recife': { lat: -8.0476, lng: -34.8770 },
+  'Teresina': { lat: -5.0892, lng: -42.8019 },
+  'Rio de Janeiro': { lat: -22.9068, lng: -43.1729 },
+  'Natal': { lat: -5.7793, lng: -35.2009 },
+  'Porto Alegre': { lat: -30.0346, lng: -51.2177 },
+  'Porto Velho': { lat: -8.7612, lng: -63.9039 },
+  'Boa Vista': { lat: 2.8235, lng: -60.6758 },
   'Florianópolis': { lat: -27.5954, lng: -48.5480 },
+  'São Paulo': { lat: -23.5505, lng: -46.6333 },
+  'Aracaju': { lat: -10.9472, lng: -37.0731 },
+  'Palmas': { lat: -10.2128, lng: -48.3603 },
   'Blumenau': { lat: -26.9194, lng: -49.0661 },
   'Joinville': { lat: -26.3045, lng: -48.8487 },
-  'São Paulo': { lat: -23.5505, lng: -46.6333 },
   'Campinas': { lat: -22.9099, lng: -47.0626 },
-  'Rio de Janeiro': { lat: -22.9068, lng: -43.1729 },
-  'Curitiba': { lat: -25.4284, lng: -49.2733 },
-  'Porto Alegre': { lat: -30.0346, lng: -51.2177 },
-  'Belo Horizonte': { lat: -19.9167, lng: -43.9345 },
-  'Salvador': { lat: -12.9714, lng: -38.5014 },
-  'Recife': { lat: -8.0476, lng: -34.8770 },
-  'Fortaleza': { lat: -3.7172, lng: -38.5433 },
-  'Goiânia': { lat: -16.6869, lng: -49.2648 },
-  'Brasília': { lat: -15.7942, lng: -47.8822 },
-  'Manaus': { lat: -3.1190, lng: -60.0217 },
-  'Belém': { lat: -1.4558, lng: -48.4902 },
-  'Vitória': { lat: -20.3155, lng: -40.3128 },
-  'Natal': { lat: -5.7793, lng: -35.2009 },
-  'Maceió': { lat: -9.6658, lng: -35.7350 },
-  'João Pessoa': { lat: -7.1195, lng: -34.8450 },
-  'Teresina': { lat: -5.0892, lng: -42.8019 },
-  'Campo Grande': { lat: -20.4697, lng: -54.6201 },
-  'Cuiabá': { lat: -15.6014, lng: -56.0979 },
-  'Aracaju': { lat: -10.9472, lng: -37.0731 },
+  'Ribeirão Preto': { lat: -21.1775, lng: -47.8103 },
+  'Uberlândia': { lat: -18.9186, lng: -48.2772 },
+  'Londrina': { lat: -23.3045, lng: -51.1696 },
+  'Maringá': { lat: -23.4205, lng: -51.9333 },
 };
 
-// Professional search terms - searches for the professionals themselves
-const professionalSearchTerms: { [key: string]: string } = {
-  'Engenheiros': 'engenheiro civil estrutural',
-  'Arquitetos': 'arquiteto designer interiores',
-  'Contadores': 'contador escritório contabilidade',
-  'Eletricistas': 'eletricista instalador elétrico',
-  'Advogados': 'advogado escritório advocacia',
-  'Médicos': 'médico clínico consultório',
-  'Dentistas': 'dentista consultório odontológico',
-  'Nutricionistas': 'nutricionista clínico',
-  'Psicólogos': 'psicólogo clínico terapeuta',
-  'Fisioterapeutas': 'fisioterapeuta clínica fisioterapia',
-  'Veterinários': 'veterinário clínica veterinária',
-  'Fonoaudiólogos': 'fonoaudiólogo clínica',
-  'Terapeutas Ocupacionais': 'terapeuta ocupacional',
-  'Enfermeiros': 'enfermeiro home care',
-  'Farmacêuticos': 'farmacêutico consultor',
-  'Biomédicos': 'biomédico laboratório',
-  'Corretores de Imóveis': 'corretor imóveis imobiliária',
-  'Corretores de Seguros': 'corretor seguros corretora',
-  'Despachantes': 'despachante documentalista',
-  'Personal Trainers': 'personal trainer treinador',
-  'Tradutores': 'tradutor juramentado',
-  'Designers': 'designer gráfico freelancer',
-  'Programadores': 'programador desenvolvedor TI',
-  'Consultores': 'consultor empresarial',
-  'Economistas': 'economista consultoria',
-  'Administradores': 'administrador empresas',
-  'Publicitários': 'publicitário agência marketing',
-  'Jornalistas': 'jornalista assessoria imprensa',
-  'Fotógrafos': 'fotógrafo profissional estúdio',
-  'Videomakers': 'videomaker produtora vídeo',
+// ============================================
+// SEARCH TERMS - Multiple variations per segment
+// ============================================
+
+const professionalSearchTerms: { [key: string]: string[] } = {
+  'Engenheiros': ['engenheiro civil', 'escritório engenharia', 'engenheiro estrutural'],
+  'Arquitetos': ['arquiteto', 'escritório arquitetura', 'arquiteto interiores'],
+  'Contadores': ['contador', 'escritório contabilidade', 'contabilidade empresarial'],
+  'Eletricistas': ['eletricista', 'instalador elétrico', 'empresa elétrica'],
+  'Advogados': ['advogado', 'escritório advocacia', 'advogado empresarial'],
+  'Médicos': ['médico', 'consultório médico', 'clínica médica'],
+  'Dentistas': ['dentista', 'consultório odontológico', 'clínica odontologia'],
+  'Nutricionistas': ['nutricionista', 'consultório nutrição', 'nutricionista clínico'],
+  'Psicólogos': ['psicólogo', 'consultório psicologia', 'psicólogo clínico'],
+  'Fisioterapeutas': ['fisioterapeuta', 'clínica fisioterapia', 'fisioterapia'],
+  'Veterinários': ['veterinário', 'clínica veterinária', 'hospital veterinário'],
+  'Fonoaudiólogos': ['fonoaudiólogo', 'clínica fonoaudiologia'],
+  'Terapeutas Ocupacionais': ['terapeuta ocupacional', 'terapia ocupacional'],
+  'Enfermeiros': ['enfermeiro', 'home care enfermagem', 'cuidador idosos'],
+  'Farmacêuticos': ['farmacêutico', 'consultoria farmacêutica'],
+  'Biomédicos': ['biomédico', 'laboratório análises'],
+  'Corretores de Imóveis': ['corretor imóveis', 'imobiliária', 'consultor imobiliário'],
+  'Corretores de Seguros': ['corretor seguros', 'corretora seguros'],
+  'Despachantes': ['despachante', 'despachante documentalista'],
+  'Personal Trainers': ['personal trainer', 'treinador pessoal'],
+  'Tradutores': ['tradutor juramentado', 'tradutor'],
+  'Designers': ['designer gráfico', 'estúdio design', 'designer freelancer'],
+  'Programadores': ['programador', 'desenvolvedor software', 'consultoria TI'],
+  'Consultores': ['consultor empresarial', 'consultoria empresarial'],
+  'Economistas': ['economista', 'consultoria econômica'],
+  'Administradores': ['administrador empresas', 'consultoria administrativa'],
+  'Publicitários': ['agência publicidade', 'marketing digital', 'agência marketing'],
+  'Jornalistas': ['jornalista', 'assessoria imprensa'],
+  'Fotógrafos': ['fotógrafo profissional', 'estúdio fotografia', 'fotógrafo eventos'],
+  'Videomakers': ['videomaker', 'produtora vídeo', 'editor vídeo'],
 };
 
-// Representative search terms
-const representativeSearchTerms: { [key: string]: string } = {
-  'Alimentos': 'representante comercial alimentos',
-  'Bebidas': 'representante comercial bebidas',
-  'Cosméticos': 'representante comercial cosméticos',
-  'Vestuário': 'representante comercial vestuário moda',
-  'Automotivo': 'representante comercial autopeças',
-  'Construção Civil': 'representante materiais construção',
-  'Farmacêutico': 'representante comercial farmacêutico',
-  'Energia Solar': 'representante energia solar fotovoltaico',
-  'Tecnologia': 'representante comercial tecnologia',
-  'Saúde': 'representante equipamentos médicos',
-  'Ferramentas': 'representante comercial ferramentas',
-  'Material de Escritório': 'representante material escritório',
-  'Segurança': 'representante equipamentos segurança',
-  'Descartáveis': 'representante comercial descartáveis',
-  'Plásticos': 'representante comercial plásticos',
-  'EPIs': 'representante comercial EPIs segurança',
-  'Utilidades Domésticas': 'representante utilidades domésticas',
-  'Eletrônicos': 'representante comercial eletrônicos',
-  'Materiais Elétricos': 'representante materiais elétricos',
-  'Agropecuária': 'representante comercial agropecuária',
-  'Têxtil': 'representante comercial têxtil tecidos',
-  'Químico': 'representante produtos químicos',
-  'Embalagens': 'representante comercial embalagens',
-  'Máquinas e Equipamentos': 'representante máquinas industriais',
-  'Móveis': 'representante comercial móveis',
-  'Papelaria': 'representante comercial papelaria',
-  'Brinquedos': 'representante comercial brinquedos',
-  'Pet': 'representante comercial pet shop',
-  'Higiene e Limpeza': 'representante produtos limpeza',
-  'Suplementos': 'representante comercial suplementos',
-  'Joias e Bijuterias': 'representante comercial joias',
-  'Calçados': 'representante comercial calçados',
-  'Bolsas e Acessórios': 'representante bolsas acessórios',
-  'Perfumaria': 'representante comercial perfumes',
-  'Cama, Mesa e Banho': 'representante cama mesa banho',
-  'Informática': 'representante comercial informática',
-  'Celulares e Acessórios': 'representante celulares acessórios',
-  'Ar Condicionado': 'representante ar condicionado',
-  'Refrigeração': 'representante comercial refrigeração',
-  'Iluminação': 'representante comercial iluminação',
-  'Tintas e Pintura': 'representante comercial tintas',
-  'Hidráulica': 'representante materiais hidráulicos',
-  'Jardinagem': 'representante comercial jardinagem',
-  'Piscinas': 'representante equipamentos piscina',
-  'Fitness': 'representante equipamentos fitness',
-  'Instrumentos Musicais': 'representante instrumentos musicais',
-  'Artigos Religiosos': 'representante artigos religiosos',
-  'Artesanato': 'representante comercial artesanato',
-  'Decoração': 'representante comercial decoração',
-  'Vidros': 'representante comercial vidros',
-  'Madeira': 'representante comercial madeira',
-  'Aço e Metalurgia': 'representante comercial aço',
-  'Borrachas': 'representante comercial borrachas',
-  'Lubrificantes': 'representante comercial lubrificantes',
-  'Alimentos Congelados': 'representante alimentos congelados',
-  'Doces e Chocolates': 'representante doces chocolates',
-  'Café': 'representante comercial café',
-  'Cereais e Grãos': 'representante comercial cereais',
-  'Laticínios': 'representante comercial laticínios',
-  'Carnes': 'representante comercial carnes',
-  'Pescados': 'representante comercial pescados',
-  'Orgânicos': 'representante produtos orgânicos',
-  'Sucos e Polpas': 'representante comercial sucos',
-  'Água Mineral': 'representante água mineral',
-  'Sorvetes': 'representante comercial sorvetes',
-  'Padaria': 'representante comercial panificação',
-  'Rotisseria': 'representante alimentos prontos',
+const representativeSearchTerms: { [key: string]: string[] } = {
+  'Alimentos': ['representante comercial alimentos', 'distribuidor alimentos', 'atacado alimentos'],
+  'Bebidas': ['representante comercial bebidas', 'distribuidor bebidas', 'atacado bebidas'],
+  'Cosméticos': ['representante comercial cosméticos', 'distribuidor cosméticos', 'atacado cosméticos'],
+  'Vestuário': ['representante comercial confecção', 'atacado roupas', 'representante moda'],
+  'Automotivo': ['representante comercial autopeças', 'distribuidor autopeças', 'atacado autopeças'],
+  'Construção Civil': ['representante materiais construção', 'distribuidor construção', 'atacado construção'],
+  'Farmacêutico': ['representante comercial farmacêutico', 'distribuidor medicamentos'],
+  'Energia Solar': ['representante energia solar', 'distribuidor painéis solares', 'energia fotovoltaica'],
+  'Tecnologia': ['representante comercial tecnologia', 'distribuidor informática', 'atacado tecnologia'],
+  'Saúde': ['representante equipamentos médicos', 'distribuidor hospitalar'],
+  'Ferramentas': ['representante comercial ferramentas', 'distribuidor ferramentas', 'atacado ferramentas'],
+  'Material de Escritório': ['representante material escritório', 'distribuidor papelaria', 'atacado escritório'],
+  'Segurança': ['representante equipamentos segurança', 'distribuidor CFTV', 'atacado segurança'],
+  'Descartáveis': ['representante comercial descartáveis', 'distribuidor descartáveis', 'atacado embalagens'],
+  'Plásticos': ['representante comercial plásticos', 'distribuidor plásticos'],
+  'EPIs': ['representante comercial EPIs', 'distribuidor EPIs', 'atacado segurança trabalho'],
+  'Utilidades Domésticas': ['representante utilidades domésticas', 'distribuidor bazar', 'atacado utilidades'],
+  'Eletrônicos': ['representante comercial eletrônicos', 'distribuidor eletrônicos', 'atacado eletrônicos'],
+  'Materiais Elétricos': ['representante materiais elétricos', 'distribuidor material elétrico', 'atacado elétrico'],
+  'Agropecuária': ['representante comercial agropecuária', 'distribuidor insumos agrícolas', 'atacado agro'],
+  'Têxtil': ['representante comercial têxtil', 'distribuidor tecidos', 'atacado tecidos'],
+  'Químico': ['representante produtos químicos', 'distribuidor químicos'],
+  'Embalagens': ['representante comercial embalagens', 'distribuidor embalagens'],
+  'Máquinas e Equipamentos': ['representante máquinas industriais', 'distribuidor equipamentos'],
+  'Móveis': ['representante comercial móveis', 'atacado móveis', 'distribuidor móveis'],
+  'Papelaria': ['representante comercial papelaria', 'distribuidor papelaria', 'atacado papelaria'],
+  'Brinquedos': ['representante comercial brinquedos', 'distribuidor brinquedos', 'atacado brinquedos'],
+  'Pet': ['representante comercial pet', 'distribuidor pet shop', 'atacado pet'],
+  'Higiene e Limpeza': ['representante produtos limpeza', 'distribuidor limpeza', 'atacado higiene'],
+  'Suplementos': ['representante comercial suplementos', 'distribuidor suplementos'],
+  'Joias e Bijuterias': ['representante comercial joias', 'atacado bijuterias', 'distribuidor joias'],
+  'Calçados': ['representante comercial calçados', 'atacado calçados', 'distribuidor calçados'],
+  'Bolsas e Acessórios': ['representante bolsas acessórios', 'atacado bolsas'],
+  'Perfumaria': ['representante comercial perfumes', 'distribuidor perfumaria', 'atacado perfumes'],
+  'Cama, Mesa e Banho': ['representante cama mesa banho', 'atacado cama mesa banho'],
+  'Informática': ['representante comercial informática', 'distribuidor informática', 'atacado computadores'],
+  'Celulares e Acessórios': ['representante celulares', 'distribuidor celulares', 'atacado celulares'],
+  'Ar Condicionado': ['representante ar condicionado', 'distribuidor climatização'],
+  'Refrigeração': ['representante comercial refrigeração', 'distribuidor refrigeração'],
+  'Iluminação': ['representante comercial iluminação', 'distribuidor iluminação', 'atacado lâmpadas'],
+  'Tintas e Pintura': ['representante comercial tintas', 'distribuidor tintas'],
+  'Hidráulica': ['representante materiais hidráulicos', 'distribuidor hidráulica'],
+  'Jardinagem': ['representante comercial jardinagem', 'distribuidor jardinagem'],
+  'Piscinas': ['representante equipamentos piscina', 'distribuidor piscinas'],
+  'Fitness': ['representante equipamentos fitness', 'distribuidor fitness', 'atacado academia'],
+  'Instrumentos Musicais': ['representante instrumentos musicais', 'distribuidor instrumentos'],
+  'Artigos Religiosos': ['representante artigos religiosos', 'distribuidor religiosos'],
+  'Artesanato': ['representante comercial artesanato', 'atacado artesanato'],
+  'Decoração': ['representante comercial decoração', 'atacado decoração'],
+  'Vidros': ['representante comercial vidros', 'distribuidor vidros'],
+  'Madeira': ['representante comercial madeira', 'distribuidor madeira'],
+  'Aço e Metalurgia': ['representante comercial aço', 'distribuidor aço', 'metalurgia'],
+  'Borrachas': ['representante comercial borrachas', 'distribuidor borrachas'],
+  'Lubrificantes': ['representante comercial lubrificantes', 'distribuidor lubrificantes'],
+  'Alimentos Congelados': ['representante alimentos congelados', 'distribuidor congelados'],
+  'Doces e Chocolates': ['representante doces chocolates', 'distribuidor doces', 'atacado chocolates'],
+  'Café': ['representante comercial café', 'distribuidor café'],
+  'Cereais e Grãos': ['representante comercial cereais', 'distribuidor cereais grãos'],
+  'Laticínios': ['representante comercial laticínios', 'distribuidor laticínios'],
+  'Carnes': ['representante comercial carnes', 'distribuidor carnes', 'atacado carnes'],
+  'Pescados': ['representante comercial pescados', 'distribuidor pescados'],
+  'Orgânicos': ['representante produtos orgânicos', 'distribuidor orgânicos'],
+  'Sucos e Polpas': ['representante comercial sucos', 'distribuidor sucos polpas'],
+  'Água Mineral': ['representante água mineral', 'distribuidor água'],
+  'Sorvetes': ['representante comercial sorvetes', 'distribuidor sorvetes'],
+  'Padaria': ['representante comercial panificação', 'distribuidor padaria'],
+  'Rotisseria': ['representante alimentos prontos', 'distribuidor rotisseria'],
 };
+
+// ============================================
+// APIFY SEARCH FUNCTION
+// ============================================
+
+async function searchApify(
+  query: string, 
+  location: string, 
+  state: string, 
+  coords: { lat: number; lng: number },
+  apiKey: string,
+  maxResults: number = 40
+): Promise<any[]> {
+  console.log(`🔎 Apify search: "${query}" in ${location}`);
+  
+  try {
+    const response = await fetch(
+      `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          searchStringsArray: [query],
+          locationQuery: `${location}, ${state}, Brazil`,
+          lat: coords.lat.toString(),
+          lng: coords.lng.toString(),
+          maxCrawledPlacesPerSearch: maxResults,
+          maxAutomaticZoomOut: 5,
+          skipClosedPlaces: true,
+          scrapeReviewsNumber: 0,
+          language: 'pt-BR',
+          searchMatching: 'all',
+        }),
+      }
+    );
+
+    if (response.ok) {
+      const results = await response.json();
+      console.log(`✅ Got ${results.length} results`);
+      return results;
+    } else {
+      const status = response.status;
+      console.error(`❌ Apify error: ${status}`);
+      if (status === 402) {
+        throw new Error('INSUFFICIENT_CREDITS');
+      }
+      return [];
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message === 'INSUFFICIENT_CREDITS') {
+      throw error;
+    }
+    console.error(`❌ Search error:`, error);
+    return [];
+  }
+}
+
+// ============================================
+// MAIN HANDLER
+// ============================================
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -235,7 +311,7 @@ serve(async (req) => {
 
   try {
     const config: SearchConfig = await req.json();
-    console.log("🔍 Search config:", JSON.stringify(config));
+    console.log("🚀 Search config:", JSON.stringify(config));
 
     const { segments, city, state } = config;
 
@@ -248,7 +324,6 @@ serve(async (req) => {
 
     const APIFY_API_KEY = Deno.env.get("APIFY_API_KEY");
     if (!APIFY_API_KEY) {
-      console.error("❌ APIFY_API_KEY not configured");
       throw new Error("APIFY_API_KEY not configured");
     }
 
@@ -256,82 +331,85 @@ serve(async (req) => {
     const professionalSegments = Object.keys(professionalSearchTerms);
     const isProfessional = segments.some(s => professionalSegments.includes(s));
     
-    // Build search queries - ONE per segment, simple and direct
-    const searchQueries: string[] = [];
-    for (const segment of segments) {
-      if (professionalSearchTerms[segment]) {
-        searchQueries.push(`${professionalSearchTerms[segment]} ${location}`);
-      } else if (representativeSearchTerms[segment]) {
-        searchQueries.push(`${representativeSearchTerms[segment]} ${location}`);
-      } else {
-        searchQueries.push(`representante comercial ${segment} ${location}`);
-      }
-    }
-    
-    // Limit to 2 queries max to save API credits
-    const uniqueQueries = [...new Set(searchQueries)].slice(0, 2);
-    console.log(`📋 Search queries (${uniqueQueries.length}):`, uniqueQueries);
-
     // Get coordinates
     let coords = coordinates[location];
     if (!coords) {
       const capital = stateCapitals[state];
       coords = coordinates[capital] || { lat: -23.5505, lng: -46.6333 };
     }
-    console.log(`📍 Coordinates for ${location}:`, coords);
+    console.log(`📍 Location: ${location}, ${state} (${coords.lat}, ${coords.lng})`);
 
-    const allResults: any[] = [];
+    // ============================================
+    // STRATEGY: Multiple searches with variations
+    // ============================================
     
-    for (const query of uniqueQueries) {
-      console.log(`🔎 Searching: "${query}"`);
+    const allResults: any[] = [];
+    const searchedQueries = new Set<string>();
+    
+    // Phase 1: Primary searches (one per segment, first term)
+    console.log("\n📋 Phase 1: Primary searches");
+    for (const segment of segments.slice(0, 3)) { // Max 3 segments
+      const terms = isProfessional 
+        ? professionalSearchTerms[segment] 
+        : representativeSearchTerms[segment];
       
-      try {
-        const apifyResponse = await fetch(
-          `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              searchStringsArray: [query],
-              locationQuery: `${location}, ${state}, Brazil`,
-              lat: coords.lat.toString(),
-              lng: coords.lng.toString(),
-              maxCrawledPlacesPerSearch: 50, // Increased for more results
-              maxAutomaticZoomOut: 5,
-              skipClosedPlaces: true,
-              scrapeReviewsNumber: 0,
-              language: 'pt-BR',
-              searchMatching: 'all',
-            }),
-          }
-        );
-
-        if (apifyResponse.ok) {
-          const results = await apifyResponse.json();
-          console.log(`✅ Got ${results.length} results for "${query}"`);
+      if (terms && terms[0]) {
+        const query = `${terms[0]} ${location}`;
+        if (!searchedQueries.has(query)) {
+          searchedQueries.add(query);
+          const results = await searchApify(query, location, state, coords, APIFY_API_KEY, 40);
           allResults.push(...results);
-        } else {
-          const errorText = await apifyResponse.text();
-          console.error(`❌ Apify error for "${query}":`, apifyResponse.status, errorText.slice(0, 200));
-          
-          if (apifyResponse.status === 402) {
-            return new Response(
-              JSON.stringify({ error: "Créditos Apify insuficientes", representatives: [] }),
-              { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
+          await new Promise(r => setTimeout(r, 200));
+        }
+      }
+    }
+    
+    // Phase 2: Fallback searches if we have < 20 results
+    if (allResults.length < 20) {
+      console.log("\n📋 Phase 2: Fallback searches (need more results)");
+      
+      for (const segment of segments.slice(0, 2)) {
+        const terms = isProfessional 
+          ? professionalSearchTerms[segment] 
+          : representativeSearchTerms[segment];
+        
+        // Try second variation
+        if (terms && terms[1]) {
+          const query = `${terms[1]} ${location}`;
+          if (!searchedQueries.has(query)) {
+            searchedQueries.add(query);
+            const results = await searchApify(query, location, state, coords, APIFY_API_KEY, 30);
+            allResults.push(...results);
+            await new Promise(r => setTimeout(r, 200));
           }
         }
-      } catch (error) {
-        console.error(`❌ Error searching "${query}":`, error);
+        
+        if (allResults.length >= 40) break;
       }
+    }
+    
+    // Phase 3: Generic fallback if still < 15 results
+    if (allResults.length < 15) {
+      console.log("\n📋 Phase 3: Generic fallback");
+      const genericQuery = isProfessional 
+        ? `profissional autônomo ${segments[0]} ${location}`
+        : `representante comercial ${location}`;
       
-      await new Promise(resolve => setTimeout(resolve, 300));
+      if (!searchedQueries.has(genericQuery)) {
+        const results = await searchApify(genericQuery, location, state, coords, APIFY_API_KEY, 50);
+        allResults.push(...results);
+      }
     }
 
-    console.log(`📊 Total raw results: ${allResults.length}`);
+    console.log(`\n📊 Total raw results: ${allResults.length}`);
 
-    // Deduplicate by placeId
+    // ============================================
+    // PROCESS RESULTS
+    // ============================================
+    
+    // Deduplicate
     const seenIds = new Set<string>();
+    const seenPhones = new Set<string>();
     const uniqueResults = allResults.filter(place => {
       const id = place.placeId || place.title;
       if (seenIds.has(id)) return false;
@@ -343,23 +421,24 @@ serve(async (req) => {
 
     const representatives: Representative[] = [];
     
-    // Process ALL results - NO FILTERING except for valid phone
     for (const place of uniqueResults) {
+      // Validate phone
       const phoneRaw = place.phone || place.phoneUnformatted;
       const phoneValidation = validatePhone(phoneRaw);
       
-      // Only require valid phone - that's it!
-      if (!phoneValidation.valid) {
-        continue;
-      }
+      if (!phoneValidation.valid) continue;
+      
+      // Skip duplicate phones
+      if (seenPhones.has(phoneValidation.normalized)) continue;
+      seenPhones.add(phoneValidation.normalized);
 
-      // Try to get email from website
+      // Try to get email (non-blocking, with timeout)
       let email: string | undefined;
       if (place.website) {
         try {
           email = await scrapeEmailFromWebsite(place.website) || undefined;
         } catch {
-          // Ignore email scraping errors
+          // Ignore
         }
       }
 
@@ -381,13 +460,12 @@ serve(async (req) => {
       };
 
       representatives.push(representative);
-      console.log(`✅ Added: ${representative.name} - ${representative.phone}`);
       
-      // Limit to 50 results
       if (representatives.length >= 50) break;
     }
 
-    console.log(`✅ Final representatives: ${representatives.length}`);
+    console.log(`\n✅ Final representatives: ${representatives.length}`);
+    console.log(`📞 Total API calls: ${searchedQueries.size}`);
 
     return new Response(
       JSON.stringify({ 
@@ -396,20 +474,25 @@ serve(async (req) => {
           total: representatives.length,
           location: `${location}, ${state}`,
           segments: segments.join(", "),
-          searchType: isProfessional ? "professionals" : "representatives"
+          searchType: isProfessional ? "professionals" : "representatives",
+          apiCalls: searchedQueries.size
         }
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error) {
-    console.error("❌ Error in search-representatives:", error);
+    console.error("❌ Error:", error);
+    
+    const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+    const status = errorMessage === 'INSUFFICIENT_CREDITS' ? 402 : 500;
+    
     return new Response(
       JSON.stringify({ 
-        error: error instanceof Error ? error.message : "Erro desconhecido",
+        error: errorMessage === 'INSUFFICIENT_CREDITS' ? 'Créditos Apify insuficientes' : errorMessage,
         representatives: []
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
