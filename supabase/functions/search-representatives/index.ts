@@ -54,61 +54,47 @@ function generateId(): string {
   return crypto.randomUUID();
 }
 
-// Check if name looks like a person (not a company)
-function isPersonName(name: string): boolean {
-  if (!name || name.length < 4) return false;
-  
+// Check if looks like a company (to exclude)
+function isCompanyName(name: string): boolean {
   const lower = name.toLowerCase();
-  
-  // Exclude obvious companies
   const companyKeywords = [
-    'ltda', 'eireli', 's.a', 's/a', 'industria', 'indústria', 'comercio', 'comércio',
-    'distribuidora', 'atacado', 'loja', 'representações', 'representacoes',
-    'group', 'grupo', 'cia', 'corporation', 'corp', 'inc', 'solutions', 'services',
-    'comercial', 'agencia', 'agência', 'consultoria', 'assessoria', 'empreendimentos',
-    'matriz', 'filial', 'brasil', 'international', 'global', 'company', 'home', 'page',
-    'contato', 'sobre', 'quem somos', 'produtos', 'serviços', 'blog', 'notícias'
+    'ltda', 'eireli', 's.a', 's/a', 'me ', ' me', 'epp', 'cnpj',
+    'industria', 'indústria', 'comercio', 'comércio', 'distribuidora',
+    'atacado', 'loja', 'representações', 'representacoes', 'group', 'grupo',
+    'cia', 'corporation', 'corp', 'inc', 'solutions', 'services', 'comercial',
+    'empreendimentos', 'matriz', 'filial', 'brasil', 'international', 'global',
+    'company', 'home page', 'contato', 'sobre nós', 'quem somos', 'produtos',
+    'serviços', 'blog', 'notícias', 'linkedin', 'facebook', 'instagram'
   ];
   
   for (const keyword of companyKeywords) {
-    if (lower.includes(keyword)) return false;
+    if (lower.includes(keyword)) return true;
   }
-  
-  // Should have at least 2 words (first + last name)
-  const words = name.trim().split(/\s+/).filter(w => w.length >= 2);
-  if (words.length < 2) return false;
-  
-  // First word should start with uppercase (like a name)
-  if (!/^[A-ZÁÉÍÓÚÃÕÂÊÎÔÛ]/.test(words[0])) return false;
-  
-  return true;
+  return false;
 }
 
-// Extract person name from text
+// Extract usable name from text
 function extractName(text: string): string | null {
-  if (!text) return null;
+  if (!text || text.length < 3) return null;
   
   // Clean up
   let cleaned = text
     .replace(/\s+/g, ' ')
-    .replace(/[|•\-–—]/g, ' ')
-    .trim();
+    .replace(/[|•\-–—:]/g, ' ')
+    .replace(/\d+/g, '')
+    .trim()
+    .slice(0, 60);
   
-  // Try to extract name patterns
-  const patterns = [
-    /^([A-ZÁÉÍÓÚÃÕÂÊÎÔÛ][a-záéíóúãõâêîôû]+\s+[A-ZÁÉÍÓÚÃÕÂÊÎÔÛ][a-záéíóúãõâêîôû]+(?:\s+[A-ZÁÉÍÓÚÃÕÂÊÎÔÛ][a-záéíóúãõâêîôû]+)?)/,
-    /([A-ZÁÉÍÓÚÃÕÂÊÎÔÛ][a-záéíóúãõâêîôû]+\s+(?:da\s+|de\s+|dos\s+|das\s+)?[A-ZÁÉÍÓÚÃÕÂÊÎÔÛ][a-záéíóúãõâêîôû]+)/,
-  ];
+  if (isCompanyName(cleaned)) return null;
   
-  for (const pattern of patterns) {
-    const match = cleaned.match(pattern);
-    if (match && isPersonName(match[1])) {
-      return match[1].slice(0, 50);
-    }
+  // Try to extract "First Last" pattern
+  const nameMatch = cleaned.match(/([A-ZÁÉÍÓÚÃÕÂÊÎÔÛ][a-záéíóúãõâêîôû]+(?:\s+(?:da|de|dos|das|e)?\s*[A-ZÁÉÍÓÚÃÕÂÊÎÔÛ]?[a-záéíóúãõâêîôû]+)+)/);
+  if (nameMatch && nameMatch[1].length >= 5 && !isCompanyName(nameMatch[1])) {
+    return nameMatch[1].slice(0, 40);
   }
   
-  // If the whole text looks like a name
-  if (isPersonName(cleaned) && cleaned.length <= 50) {
+  // If cleaned looks usable
+  if (cleaned.length >= 5 && cleaned.length <= 40 && cleaned.includes(' ')) {
     return cleaned;
   }
   
@@ -140,7 +126,7 @@ const stateCapitals: { [key: string]: string } = {
 };
 
 // ============================================
-// FAST SEARCH - Minimal processing
+// SEARCH FUNCTION
 // ============================================
 
 interface RawResult {
@@ -156,7 +142,7 @@ async function quickSearch(query: string, apiKey: string): Promise<RawResult[]> 
   
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
+    const timeout = setTimeout(() => controller.abort(), 12000);
     
     const response = await fetch('https://api.firecrawl.dev/v1/search', {
       method: 'POST',
@@ -166,7 +152,7 @@ async function quickSearch(query: string, apiKey: string): Promise<RawResult[]> 
       },
       body: JSON.stringify({
         query: query,
-        limit: 20,
+        limit: 25,
         scrapeOptions: { formats: ['markdown'], onlyMainContent: true }
       }),
       signal: controller.signal
@@ -186,49 +172,59 @@ async function quickSearch(query: string, apiKey: string): Promise<RawResult[]> 
       const markdown = item.markdown || '';
       const allContent = `${title} ${description} ${markdown}`;
       
-      // Skip useless URLs
+      // Skip social media
       if (url.includes('facebook.com') || url.includes('youtube.com') || 
-          url.includes('wikipedia.org') || url.includes('twitter.com')) {
+          url.includes('wikipedia.org') || url.includes('twitter.com') ||
+          url.includes('tiktok.com')) {
         continue;
       }
       
-      // Try to find a person name
+      // Try to find a name
       let personName = extractName(title);
       
       if (!personName) {
-        // Try finding name in content
-        const namePatterns = [
-          /(?:contato|responsável|proprietário|sou|chamo)[:\s]+([A-ZÁÉÍÓÚÃÕ][a-záéíóúãõ]+\s+[A-ZÁÉÍÓÚÃÕ][a-záéíóúãõ]+)/i,
-          /([A-ZÁÉÍÓÚÃÕ][a-záéíóúãõ]+\s+[A-ZÁÉÍÓÚÃÕ][a-záéíóúãõ]+)\s*[-–|]\s*(?:representante|vendedor|consultor)/i,
+        // Try finding name in content with patterns
+        const patterns = [
+          /(?:contato|responsável|proprietário|sou o|sou a|me chamo)[:\s]+([A-ZÁÉÍÓÚÃÕ][a-záéíóúãõ]+(?:\s+[A-Za-záéíóúãõ]+)+)/i,
+          /([A-ZÁÉÍÓÚÃÕ][a-záéíóúãõ]+\s+[A-ZÁÉÍÓÚÃÕ][a-záéíóúãõ]+)\s*[-–|]\s*(?:representante|vendedor|consultor|profissional)/i,
+          /representante[:\s]+([A-ZÁÉÍÓÚÃÕ][a-záéíóúãõ]+\s+[A-Za-záéíóúãõ]+)/i,
         ];
         
-        for (const pattern of namePatterns) {
+        for (const pattern of patterns) {
           const match = allContent.match(pattern);
-          if (match) {
+          if (match && match[1]) {
             personName = extractName(match[1]);
             if (personName) break;
           }
         }
       }
       
-      if (!personName) continue;
-      
       // Find phone
       let phone: string | undefined;
-      const phoneMatch = allContent.match(/\(?\d{2}\)?\s*9?\d{4}[-.\s]?\d{4}/);
-      if (phoneMatch) phone = phoneMatch[0];
+      const phonePatterns = [
+        /\(?\d{2}\)?\s*9\d{4}[-.\s]?\d{4}/,
+        /\(?\d{2}\)?\s*[2-5]\d{3}[-.\s]?\d{4}/,
+        /\d{2}[-.\s]?\d{4,5}[-.\s]?\d{4}/,
+      ];
+      for (const p of phonePatterns) {
+        const match = allContent.match(p);
+        if (match) { phone = match[0]; break; }
+      }
       
       // Find email
       const emailMatch = allContent.match(/[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
       const email = emailMatch && isValidEmail(emailMatch[0]) ? emailMatch[0] : undefined;
       
-      results.push({
-        name: personName,
-        phone,
-        email,
-        description: description.slice(0, 150),
-        url
-      });
+      // Include if has name OR has phone (for fallback)
+      if (personName || phone) {
+        results.push({
+          name: personName || `Representante - ${new URL(url).hostname.replace('www.', '')}`,
+          phone,
+          email,
+          description: description.slice(0, 120),
+          url
+        });
+      }
     }
     
   } catch (error) {
@@ -267,32 +263,33 @@ serve(async (req) => {
 
     const location = city || stateCapitals[state] || state;
     const stateName = stateNames[state] || state;
-    
-    // Build focused search queries
     const segmentTerms = segments?.slice(0, 2).join(' ') || '';
     
+    // More search queries to guarantee 8+ results
     const queries = [
-      `representante comercial ${location} telefone contato`,
-      `vendedor ${segmentTerms} ${stateName} whatsapp`,
-      `consultor vendas ${location} celular`,
-      `representante ${segmentTerms} ${location}`,
-      `agente comercial ${stateName} telefone`,
-      `profissional vendas ${location} contato`,
+      `representante comercial ${location} telefone`,
+      `vendedor externo ${segmentTerms} ${stateName} contato`,
+      `consultor vendas ${location} whatsapp celular`,
+      `representante ${segmentTerms} ${location} telefone`,
+      `agente comercial ${stateName} contato`,
+      `profissional vendas ${location}`,
+      `representante autônomo ${stateName} telefone`,
+      `vendedor ${location} whatsapp`,
     ];
 
-    console.log(`📍 ${location}, ${state} - Running ${queries.length} searches in parallel`);
+    console.log(`📍 ${location}, ${state} - ${queries.length} searches`);
 
-    // Run ALL searches in parallel for speed
+    // Run ALL in parallel
     const searchPromises = queries.map(q => quickSearch(q, FIRECRAWL_API_KEY));
     const allResults = await Promise.all(searchPromises);
     
-    // Flatten and deduplicate
+    // Flatten and deduplicate by name
     const flatResults: RawResult[] = [];
     const seenNames = new Set<string>();
     
     for (const results of allResults) {
       for (const r of results) {
-        const nameKey = r.name.toLowerCase();
+        const nameKey = r.name.toLowerCase().slice(0, 25);
         if (!seenNames.has(nameKey)) {
           seenNames.add(nameKey);
           flatResults.push(r);
@@ -300,16 +297,22 @@ serve(async (req) => {
       }
     }
     
-    console.log(`📊 Found ${flatResults.length} unique people`);
+    console.log(`📊 Found ${flatResults.length} unique results`);
 
-    // Sort: phone first
+    // Sort: phone first, then real names
     flatResults.sort((a, b) => {
+      // Priority 1: Has phone
       if (a.phone && !b.phone) return -1;
       if (!a.phone && b.phone) return 1;
+      // Priority 2: Real name (not "Representante -")
+      const aHasRealName = !a.name.startsWith('Representante -');
+      const bHasRealName = !b.name.startsWith('Representante -');
+      if (aHasRealName && !bHasRealName) return -1;
+      if (!aHasRealName && bHasRealName) return 1;
       return 0;
     });
 
-    // Build final list
+    // Build final list - minimum 8
     const representatives: Representative[] = [];
     const seenPhones = new Set<string>();
     
