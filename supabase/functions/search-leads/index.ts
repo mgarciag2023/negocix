@@ -337,25 +337,63 @@ serve(async (req) => {
     
     // Enhanced search terms for specific categories - MAXIMIZE RESULTS
     const categorySearchTerms: { [key: string]: string[] } = {
-      'materiais elétricos': ['materiais elétricos', 'loja elétrica', 'material eletrico', 'distribuidora elétrica', 'eletrônica'],
-      'agropecuária': ['agropecuária', 'loja agropecuaria', 'produtos agropecuários', 'insumos agrícolas', 'casa agropecuaria', 'loja fazenda'],
-      'e-commerce': ['loja online', 'loja virtual', 'comércio eletrônico', 'e-commerce', 'vendas online'],
-      'ferramentas': ['ferramentas', 'loja de ferramentas', 'ferragens e ferramentas', 'equipamentos', 'casa das ferramentas'],
-      'chaveiro': ['chaveiro', 'chaveiro 24h', 'cópia de chaves', 'serviço de chaveiro', 'chaves'],
-      'materiais de construção': ['materiais de construção', 'materiais construcao', 'loja construção', 'casa construção', 'depósito construção', 'construmateriais'],
-      'transportadoras': ['transportadora', 'transporte de cargas', 'empresa de transporte', 'frete', 'logística', 'transportes', 'cargas', 'mudanças', 'transportadora de cargas'],
+      // Materiais e Construção
+      'materiais elétricos': ['materiais elétricos', 'loja elétrica', 'material eletrico', 'distribuidora elétrica', 'casa de elétrica', 'componentes elétricos'],
+      'materiais de construção': ['materiais de construção', 'materiais construcao', 'loja construção', 'casa construção', 'depósito construção', 'construmateriais', 'home center'],
+      'ferramentas': ['ferramentas', 'loja de ferramentas', 'ferragens e ferramentas', 'equipamentos', 'casa das ferramentas', 'ferramentaria'],
+      'chaveiro': ['chaveiro', 'chaveiro 24h', 'cópia de chaves', 'serviço de chaveiro', 'chaveiro automotivo'],
+      
+      // Agropecuária
+      'agropecuária': ['agropecuária', 'loja agropecuaria', 'produtos agropecuários', 'insumos agrícolas', 'casa agropecuaria', 'loja rural', 'veterinária agro'],
+      
+      // E-commerce
+      'e-commerce': ['loja online', 'loja virtual', 'comércio eletrônico', 'e-commerce', 'vendas online', 'marketplace'],
+      
+      // Transporte e Veículos
+      'transportadoras': ['transportadora', 'transporte de cargas', 'empresa de transporte', 'frete', 'logística', 'transportes', 'cargas', 'mudanças'],
       'frotistas': ['frota', 'gestão de frota', 'empresa de veículos', 'locadora', 'transportadora'],
       'empresas com frota própria': ['distribuidora', 'atacadista', 'indústria', 'fábrica', 'empresa grande'],
-      'vans escolares': ['transporte escolar', 'van escolar', 'escolar', 'transporte de alunos', 'transporte coletivo'],
-      'táxis': ['táxi', 'taxi', 'cooperativa de táxi', 'ponto de táxi', 'radiotáxi', 'cooperativa táxi'],
-      'cooperativas de táxi': ['cooperativa táxi', 'táxi', 'taxi', 'ponto de táxi', 'radiotáxi'],
-      'motoristas de aplicativo': ['uber', '99', 'motorista', 'transporte particular', 'aplicativo de transporte'],
-      'empresas de logística': ['logística', 'distribuição', 'armazém', 'centro de distribuição', 'operador logístico', 'supply chain'],
-      'empresas de entrega': ['entregas', 'delivery', 'motoboy', 'courier', 'serviço de entrega', 'express', 'entregas rápidas'],
-      'locadoras de veículos': ['locadora', 'aluguel de carros', 'rent a car', 'locadora de veículos', 'rental', 'aluguel de veículos'],
-      'empresas de turismo': ['turismo', 'agência de turismo', 'excursões', 'fretamento', 'viagens', 'receptivo', 'turismo receptivo'],
-      // Combined search for proteção veicular - searches ALL vehicle-related businesses
-      'protecao-veicular': ['transportadora', 'logística', 'transporte escolar', 'táxi', 'locadora de veículos', 'turismo', 'entregas', 'distribuidora']
+      'vans escolares': ['transporte escolar', 'van escolar', 'escolar', 'transporte de alunos'],
+      'táxis': ['táxi', 'taxi', 'cooperativa de táxi', 'ponto de táxi', 'radiotáxi'],
+      'cooperativas de táxi': ['cooperativa táxi', 'táxi', 'taxi', 'radiotáxi'],
+      'motoristas de aplicativo': ['uber', '99', 'motorista particular', 'transporte particular'],
+      'empresas de logística': ['logística', 'distribuição', 'armazém', 'centro de distribuição', 'operador logístico'],
+      'empresas de entrega': ['entregas', 'delivery', 'motoboy', 'courier', 'serviço de entrega', 'entregas rápidas'],
+      'locadoras de veículos': ['locadora', 'aluguel de carros', 'rent a car', 'locadora de veículos', 'rental'],
+      'empresas de turismo': ['turismo', 'agência de turismo', 'excursões', 'fretamento', 'viagens', 'receptivo'],
+      'protecao-veicular': ['transportadora', 'logística', 'transporte escolar', 'táxi', 'locadora de veículos', 'turismo', 'entregas'],
+      
+      // INDÚSTRIAS (NOVAS CATEGORIAS)
+      'indústrias que utilizam eletrônica': ['indústria eletrônica', 'fábrica eletrônicos', 'montagem eletrônica', 'componentes eletrônicos', 'placas eletrônicas', 'manufatura eletrônica'],
+      'indústrias automotivas': ['indústria automotiva', 'autopeças', 'fábrica automotiva', 'peças automotivas', 'montadora', 'indústria de autopeças', 'fabricante automotivo'],
+      'indústrias de equipamentos hospitalares': ['equipamentos hospitalares', 'equipamentos médicos', 'indústria hospitalar', 'dispositivos médicos', 'fabricante hospitalar'],
+      'indústrias de equipamentos de segurança': ['equipamentos de segurança', 'EPI', 'fabricante segurança', 'indústria segurança', 'equipamentos proteção'],
+      'indústrias de automação': ['automação industrial', 'indústria automação', 'sistemas automação', 'robótica industrial', 'fábrica automação'],
+      'indústrias de tecnologia': ['indústria tecnologia', 'fábrica software', 'empresa tecnologia', 'TI industrial', 'fabricante tecnologia'],
+      'indústrias de iluminação': ['indústria iluminação', 'fábrica iluminação', 'fabricante LED', 'lâmpadas LED', 'iluminação industrial', 'luminárias LED'],
+      
+      // Têxtil
+      'tecidos': ['loja de tecidos', 'tecidos', 'armarinho', 'aviamentos'],
+      'confecções': ['confecção', 'fábrica de roupas', 'indústria têxtil', 'malharia'],
+      'ateliês de costura': ['ateliê', 'costura', 'alfaiataria', 'modista'],
+      
+      // Supermercados
+      'supermercados': ['supermercado', 'mercado', 'hipermercado', 'atacadão', 'atacarejo'],
+      
+      // Gráficas
+      'gráfica': ['gráfica', 'gráfica rápida', 'impressão digital', 'comunicação visual', 'serigrafia'],
+      
+      // Saúde
+      'telemedicina': ['telemedicina', 'clínica', 'consultório médico', 'laboratório', 'clínica popular'],
+      
+      // Arenas Esportivas
+      'arenas de beach tennis': ['beach tennis', 'quadra beach tennis', 'arena beach tennis', 'esporte areia'],
+      'quadras de tênis': ['tênis', 'quadra de tênis', 'clube de tênis', 'escola de tênis'],
+      'clubes esportivos': ['clube esportivo', 'academia', 'centro esportivo', 'clube recreativo'],
+      
+      // Atacadistas
+      'atacadistas de alimentos': ['atacadista', 'atacado alimentos', 'distribuidora alimentos', 'atacarejo'],
+      'distribuidores de alimentos': ['distribuidor alimentos', 'distribuidora', 'atacado', 'food service'],
     };
     
     // Build search queries - use multiple terms for better coverage
@@ -376,8 +414,9 @@ serve(async (req) => {
       // Collect ALL matching categories from the segment (supports multiple selected)
       const allMatchedTerms: string[] = [];
       Object.keys(categorySearchTerms).forEach(key => {
-        if (segmentLowerNorm.includes(key.toLowerCase()) || 
-            segmentLowerNorm.includes(key.replace(/ /g, '').toLowerCase())) {
+        const keyNorm = key.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        if (segmentLowerNorm.includes(keyNorm) || 
+            segmentLowerNorm.includes(keyNorm.replace(/ /g, ''))) {
           allMatchedTerms.push(...categorySearchTerms[key]);
           console.log(`🎯 Matched category: "${key}"`);
         }
@@ -385,21 +424,29 @@ serve(async (req) => {
       
       if (allMatchedTerms.length > 0) {
         // Remove duplicates and limit to avoid too many API calls
-        const uniqueTerms = [...new Set(allMatchedTerms)].slice(0, 10);
+        const uniqueTerms = [...new Set(allMatchedTerms)].slice(0, 8);
         searchQueries = uniqueTerms.map(term => 
           `${term} ${location} ${stateDisplay}`
         );
         console.log(`📋 Using ${searchQueries.length} unique search terms from ${allMatchedTerms.length} total`);
       } else {
-        // Standard single search query - extract first customer type
+        // Standard search - use segment directly but also add variations
         const firstCustomer = segment.split(',')[0].trim();
-        searchQueries = [`${firstCustomer} ${location} ${stateDisplay}`];
-        console.log(`🔍 Standard search query: "${searchQueries[0]}"`);
+        const baseQuery = `${firstCustomer} ${location} ${stateDisplay}`;
+        searchQueries = [baseQuery];
+        
+        // Add industry-specific searches if segment mentions indústria
+        if (segmentLowerNorm.includes('industria') || segmentLowerNorm.includes('fábrica')) {
+          searchQueries.push(`fábrica ${firstCustomer} ${location} ${stateDisplay}`);
+          searchQueries.push(`fabricante ${location} ${stateDisplay}`);
+        }
+        
+        console.log(`🔍 Standard search queries: ${searchQueries.join(' | ')}`);
       }
     }
     console.log(`📋 Final search queries:`, searchQueries);
     
-    // Define coordinates for major cities in Brazil
+    // Define coordinates for major cities in Brazil - EXPANDED COVERAGE
     const coordinates: { [key: string]: { lat: number; lng: number } } = {
       // Santa Catarina
       'Florianópolis': { lat: -27.5954, lng: -48.5480 },
@@ -421,21 +468,76 @@ serve(async (req) => {
       'Navegantes': { lat: -26.8979, lng: -48.6545 },
       'Camboriú': { lat: -27.0247, lng: -48.6544 },
       'Piçarras': { lat: -26.7686, lng: -48.6714 },
+      'São Bento do Sul': { lat: -26.2507, lng: -49.3787 },
+      'Concórdia': { lat: -27.2343, lng: -52.0278 },
+      'Rio do Sul': { lat: -27.2142, lng: -49.6432 },
+      'Caçador': { lat: -26.7755, lng: -51.0090 },
+      'Gaspar': { lat: -26.9314, lng: -48.9596 },
+      'Indaial': { lat: -26.8978, lng: -49.2316 },
+      'Pomerode': { lat: -26.7409, lng: -49.1764 },
       // Rio Grande do Sul
       'Porto Alegre': { lat: -30.0346, lng: -51.2177 },
       'Santa Maria': { lat: -29.6868, lng: -53.8149 },
       'Caxias do Sul': { lat: -29.1634, lng: -51.1797 },
       'Pelotas': { lat: -31.7654, lng: -52.3376 },
       'Canoas': { lat: -29.9177, lng: -51.1844 },
+      'Novo Hamburgo': { lat: -29.6873, lng: -51.1326 },
+      'São Leopoldo': { lat: -29.7545, lng: -51.1496 },
+      'Gravataí': { lat: -29.9389, lng: -50.9920 },
+      'Passo Fundo': { lat: -28.2624, lng: -52.4067 },
+      'Bento Gonçalves': { lat: -29.1699, lng: -51.5188 },
       // Paraná
       'Curitiba': { lat: -25.4284, lng: -49.2733 },
       'Londrina': { lat: -23.3045, lng: -51.1696 },
       'Maringá': { lat: -23.4273, lng: -51.9375 },
+      'Ponta Grossa': { lat: -25.0945, lng: -50.1633 },
+      'Cascavel': { lat: -24.9554, lng: -53.4560 },
+      'Foz do Iguaçu': { lat: -25.5478, lng: -54.5882 },
+      'São José dos Pinhais': { lat: -25.5304, lng: -49.2089 },
+      'Colombo': { lat: -25.2927, lng: -49.2237 },
       // São Paulo
       'São Paulo': { lat: -23.5505, lng: -46.6333 },
       'Campinas': { lat: -22.9099, lng: -47.0626 },
+      'Santos': { lat: -23.9608, lng: -46.3336 },
+      'São Bernardo do Campo': { lat: -23.6914, lng: -46.5646 },
+      'Santo André': { lat: -23.6737, lng: -46.5432 },
+      'Ribeirão Preto': { lat: -21.1767, lng: -47.8208 },
+      'Sorocaba': { lat: -23.5015, lng: -47.4526 },
+      'São José dos Campos': { lat: -23.2237, lng: -45.9009 },
+      'Osasco': { lat: -23.5324, lng: -46.7917 },
+      'Guarulhos': { lat: -23.4543, lng: -46.5337 },
+      'Jundiaí': { lat: -23.1857, lng: -46.8978 },
+      'Piracicaba': { lat: -22.7255, lng: -47.6492 },
       // Rio de Janeiro
       'Rio de Janeiro': { lat: -22.9068, lng: -43.1729 },
+      'Niterói': { lat: -22.8832, lng: -43.1034 },
+      'Duque de Caxias': { lat: -22.7858, lng: -43.3116 },
+      'Nova Iguaçu': { lat: -22.7592, lng: -43.4511 },
+      'Petrópolis': { lat: -22.5112, lng: -43.1779 },
+      // Minas Gerais
+      'Belo Horizonte': { lat: -19.9167, lng: -43.9345 },
+      'Uberlândia': { lat: -18.9146, lng: -48.2754 },
+      'Contagem': { lat: -19.9317, lng: -44.0539 },
+      'Juiz de Fora': { lat: -21.7642, lng: -43.3503 },
+      'Betim': { lat: -19.9679, lng: -44.1983 },
+      // Bahia
+      'Salvador': { lat: -12.9714, lng: -38.5014 },
+      'Feira de Santana': { lat: -12.2669, lng: -38.9667 },
+      // Nordeste
+      'Recife': { lat: -8.0476, lng: -34.8770 },
+      'Fortaleza': { lat: -3.7172, lng: -38.5433 },
+      'Natal': { lat: -5.7793, lng: -35.2009 },
+      'João Pessoa': { lat: -7.1195, lng: -34.8450 },
+      'Maceió': { lat: -9.6658, lng: -35.7350 },
+      'Aracaju': { lat: -10.9472, lng: -37.0731 },
+      // Centro-Oeste
+      'Brasília': { lat: -15.7942, lng: -47.8825 },
+      'Goiânia': { lat: -16.6869, lng: -49.2648 },
+      'Campo Grande': { lat: -20.4697, lng: -54.6201 },
+      'Cuiabá': { lat: -15.5989, lng: -56.0949 },
+      // Norte
+      'Manaus': { lat: -3.1190, lng: -60.0217 },
+      'Belém': { lat: -1.4558, lng: -48.4902 },
     };
     
     const cityCoords = coordinates[location.trim()];
