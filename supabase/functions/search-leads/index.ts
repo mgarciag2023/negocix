@@ -445,17 +445,11 @@ serve(async (req) => {
       throw new Error("APIFY_API_KEY is not configured");
     }
     
-    // Build Apify request body - CONTROLLED MODE (max 150 leads TOTAL)
-    // Distribute limit across all search queries to control costs
+    // Build Apify request body - SINGLE CALL MODE (max 150 leads)
     const MAX_TOTAL_LEADS = 150;
-    const numQueries = searchQueries.length;
-    const placesPerSearch = Math.ceil(MAX_TOTAL_LEADS / numQueries); // Distribute evenly
+    const placesPerSearch = MAX_TOTAL_LEADS; // Single call with max 150 results
     
-    const isSpecialRegion = location.toLowerCase().includes('penha') || location.toLowerCase().includes('barra velha');
-    if (isSpecialRegion) {
-      console.log(`🎯 SPECIAL REGION DETECTED: ${location}`);
-    }
-    console.log(`📊 Requesting ${placesPerSearch} places per search query (${numQueries} queries = max ${placesPerSearch * numQueries} total, limited to ${MAX_TOTAL_LEADS})`);
+    console.log(`📊 Single API call requesting ${placesPerSearch} places (max ${MAX_TOTAL_LEADS} leads)`);
     
     const apifyRequestBody: any = {
       searchStringsArray: searchQueries, // Can be multiple search terms
@@ -518,78 +512,8 @@ serve(async (req) => {
     }
 
     let apifyResults = await apifyResponse.json();
-    console.log(`📊 Apify returned ${apifyResults.length} places`);
-    
-    // If we got few results (less than 30), try broader search - VERY LOW THRESHOLD
-    if (apifyResults.length < 30) {
-      console.log(`⚠️ Only ${apifyResults.length} results. Trying broader search without coordinates...`);
-      
-      // Broader search without coordinates - MAXIMUM AGGRESSIVE
-      const broadPlaces = 150; // MAXIMUM: 150 places
-      const broadSearchResponse = await fetch(
-        `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            searchStringsArray: searchQueries,
-            maxCrawledPlacesPerSearch: broadPlaces,
-            language: 'pt-BR',
-            deeperCityScrape: true,
-            exactMatch: false,
-            maxAutomaticZoomOut: 5,
-            includeSearchResultsNearby: true,
-            scrapeReviewsNumber: 0,
-            skipClosedPlaces: true,
-          }),
-        }
-      );
-      
-      if (broadSearchResponse.ok) {
-        const broadResults = await broadSearchResponse.json();
-        console.log(`📊 Broader search returned ${broadResults.length} places`);
-        const existingIds = new Set(apifyResults.map((r: any) => r.placeId));
-        const newResults = broadResults.filter((r: any) => !existingIds.has(r.placeId));
-        apifyResults = [...apifyResults, ...newResults];
-        console.log(`✅ After broader search: ${apifyResults.length} places`);
-      }
-      
-      // If still not enough, expand radius aggressively - VERY LOW THRESHOLD
-      if (apifyResults.length < 30 && cityCoords) {
-        const expandedPlaces = 150; // MAXIMUM: 150 places
-        console.log(`⚠️ Still only ${apifyResults.length} results. Expanding radius to 200km...`);
-        const expandedSearchResponse = await fetch(
-          `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              searchStringsArray: searchQueries,
-              maxCrawledPlacesPerSearch: expandedPlaces,
-              language: 'pt-BR',
-              deeperCityScrape: true,
-              exactMatch: false,
-              maxAutomaticZoomOut: 5,
-              includeSearchResultsNearby: true,
-              scrapeReviewsNumber: 0,
-              skipClosedPlaces: true,
-              lat: cityCoords.lat,
-              lng: cityCoords.lng,
-              radius: 200000, // 200 km radius - ULTRA MAXIMUM REACH
-            }),
-          }
-        );
-        
-        if (expandedSearchResponse.ok) {
-          const expandedResults = await expandedSearchResponse.json();
-          console.log(`📊 Expanded radius search returned ${expandedResults.length} places`);
-          const existingIds = new Set(apifyResults.map((r: any) => r.placeId));
-          const newResults = expandedResults.filter((r: any) => !existingIds.has(r.placeId));
-          apifyResults = [...apifyResults, ...newResults];
-          console.log(`✅ After expanded radius: ${apifyResults.length} places`);
-        }
-      }
-    }
+    console.log(`📊 Apify returned ${apifyResults.length} places (single API call)`);
+    console.log(`📞 Total API calls: 1`);
     
     // CRITICAL FILTERING: Only exact city, valid phone, relevant business
     if (apifyResults.length > 0) {
