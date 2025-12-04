@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import FirecrawlApp from "https://esm.sh/@mendable/firecrawl-js@4.7.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -87,7 +86,7 @@ const stateCapitals: { [key: string]: string } = {
 };
 
 // ============================================
-// FIRECRAWL SEARCH
+// FIRECRAWL API (REST)
 // ============================================
 
 interface ScrapedResult {
@@ -101,44 +100,55 @@ interface ScrapedResult {
   sourceUrl: string;
 }
 
-async function searchWithFirecrawl(
+async function firecrawlSearch(
   query: string,
-  firecrawl: any
+  apiKey: string
 ): Promise<ScrapedResult[]> {
   const results: ScrapedResult[] = [];
   
   try {
     console.log(`🔥 Firecrawl search: "${query}"`);
     
-    const response = await firecrawl.search(query, {
-      limit: 20,
+    const response = await fetch('https://api.firecrawl.dev/v1/search', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        query: query,
+        limit: 20,
+      }),
     });
     
-    // Handle different response formats
-    const data = Array.isArray(response) ? response : (response?.data || response?.results || []);
-    
-    if (!data || data.length === 0) {
-      console.log(`❌ Firecrawl search returned no results`);
+    if (!response.ok) {
+      const error = await response.text();
+      console.log(`❌ Firecrawl error: ${response.status} - ${error}`);
       return results;
     }
     
-    console.log(`✅ Firecrawl found ${data.length} results`);
+    const data = await response.json();
+    console.log(`📊 Firecrawl response:`, JSON.stringify(data).slice(0, 500));
     
-    for (const item of data) {
+    const items = data.data || data.results || [];
+    console.log(`✅ Firecrawl found ${items.length} results`);
+    
+    for (const item of items) {
       const url = item.url || item.link || '';
       const title = item.title || item.name || '';
-      const description = item.description || item.snippet || '';
+      const description = item.description || item.snippet || item.markdown?.slice(0, 300) || '';
       
       // Skip social media
       if (url.includes('facebook.com') ||
           url.includes('instagram.com') ||
           url.includes('linkedin.com') ||
           url.includes('twitter.com') ||
-          url.includes('youtube.com')) {
+          url.includes('youtube.com') ||
+          url.includes('wikipedia.org')) {
         continue;
       }
       
-      // Extract phone from description/title
+      // Extract phone
       const textContent = `${title} ${description}`;
       const phoneMatch = textContent.match(/\(?\d{2}\)?\s*\d{4,5}[-.\s]?\d{4}/);
       
@@ -146,7 +156,7 @@ async function searchWithFirecrawl(
       const emailMatch = textContent.match(/[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
       
       results.push({
-        name: cleanText(title).slice(0, 100),
+        name: cleanText(title).slice(0, 100) || new URL(url).hostname,
         description: cleanText(description).slice(0, 200),
         phone: phoneMatch ? phoneMatch[0] : undefined,
         email: emailMatch && isValidEmail(emailMatch[0]) ? emailMatch[0] : undefined,
@@ -163,21 +173,34 @@ async function searchWithFirecrawl(
   return results;
 }
 
-async function scrapeWebsiteDetails(
+async function firecrawlScrape(
   url: string,
-  firecrawl: any
+  apiKey: string
 ): Promise<{ phone?: string; email?: string; description?: string }> {
   const result: { phone?: string; email?: string; description?: string } = {};
   
   try {
     console.log(`🔍 Scraping: ${url}`);
     
-    const response = await firecrawl.scrape(url, {
-      formats: ['markdown'],
-      onlyMainContent: true,
+    const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        url: url,
+        formats: ['markdown'],
+        onlyMainContent: true,
+      }),
     });
     
-    const content = response?.markdown || response?.content || '';
+    if (!response.ok) {
+      return result;
+    }
+    
+    const data = await response.json();
+    const content = data.data?.markdown || data.markdown || '';
     
     if (!content) {
       return result;
@@ -206,16 +229,10 @@ async function scrapeWebsiteDetails(
       result.email = emailMatch[0];
     }
     
-    // Get description from first paragraph
-    const descMatch = content.match(/^[A-Z][^.!?]*[.!?]/m);
-    if (descMatch) {
-      result.description = cleanText(descMatch[0]).slice(0, 200);
-    }
-    
     console.log(`✅ Scraped: phone=${!!result.phone}, email=${!!result.email}`);
     
   } catch (error) {
-    // Ignore errors
+    // Ignore
   }
   
   return result;
@@ -248,66 +265,71 @@ serve(async (req) => {
       throw new Error("FIRECRAWL_API_KEY not configured");
     }
 
-    const firecrawl = new FirecrawlApp({ apiKey: FIRECRAWL_API_KEY });
-
     const location = city || stateCapitals[state] || state;
     const stateName = stateNames[state] || state;
     console.log(`📍 Location: ${location}, ${state}`);
 
     // ============================================
-    // SEARCH STRATEGY
+    // SEARCH STRATEGY - Multiple queries
     // ============================================
     
     const allResults: ScrapedResult[] = [];
     
-    // Search queries focused on region
+    // Varied search queries to get more results
     const searchQueries = [
-      `representante comercial ${location} ${stateName}`,
+      `representante comercial ${location}`,
       `representantes comerciais ${stateName}`,
-      `agência representação comercial ${location}`,
+      `agência representação ${location}`,
+      `distribuidor atacadista ${location}`,
+      `representante vendas ${stateName}`,
     ];
     
     console.log("\n📋 Phase 1: Firecrawl search");
     
     for (const query of searchQueries) {
-      const results = await searchWithFirecrawl(query, firecrawl);
+      const results = await firecrawlSearch(query, FIRECRAWL_API_KEY);
       allResults.push(...results.map(r => ({ ...r, region: `${location}, ${state}` })));
       
-      if (allResults.length >= 40) break;
+      console.log(`📊 Running total: ${allResults.length} results`);
       
-      await new Promise(r => setTimeout(r, 300));
+      if (allResults.length >= 60) break;
+      
+      await new Promise(r => setTimeout(r, 500));
     }
     
     console.log(`\n📊 Total search results: ${allResults.length}`);
     
-    // Deduplicate
-    const seenWebsites = new Set<string>();
+    // Deduplicate by domain
+    const seenDomains = new Set<string>();
     const uniqueResults = allResults.filter(r => {
       if (!r.website) return true;
-      const key = r.website.toLowerCase().replace(/^https?:\/\/(www\.)?/, '').split('/')[0];
-      if (seenWebsites.has(key)) return false;
-      seenWebsites.add(key);
-      return true;
+      try {
+        const domain = new URL(r.website).hostname.replace('www.', '');
+        if (seenDomains.has(domain)) return false;
+        seenDomains.add(domain);
+        return true;
+      } catch {
+        return true;
+      }
     });
     
     console.log(`📊 Unique results: ${uniqueResults.length}`);
     
-    // Phase 2: Enrich top results without phone
+    // Phase 2: Enrich results that don't have phone
     console.log("\n📋 Phase 2: Enriching results");
     const enrichedResults: ScrapedResult[] = [];
     let enrichCount = 0;
     
     for (const result of uniqueResults) {
-      if (!result.phone && result.website && enrichCount < 10) {
-        const details = await scrapeWebsiteDetails(result.website, firecrawl);
+      if (!result.phone && result.website && enrichCount < 15) {
+        const details = await firecrawlScrape(result.website, FIRECRAWL_API_KEY);
         enrichedResults.push({
           ...result,
           phone: details.phone || result.phone,
           email: details.email || result.email,
-          description: details.description || result.description
         });
         enrichCount++;
-        await new Promise(r => setTimeout(r, 200));
+        await new Promise(r => setTimeout(r, 300));
       } else {
         enrichedResults.push(result);
       }
@@ -326,6 +348,7 @@ serve(async (req) => {
     for (const result of enrichedResults) {
       if (!result.name || result.name.length < 3) continue;
       
+      // Skip duplicates by name
       const nameKey = result.name.toLowerCase().slice(0, 30);
       if (seenNames.has(nameKey)) continue;
       seenNames.add(nameKey);
