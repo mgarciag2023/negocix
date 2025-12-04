@@ -11,6 +11,8 @@ import Favorites from "./pages/Favorites";
 import CreateApproach from "./pages/CreateApproach";
 import SearchRepresentatives from "./pages/SearchRepresentatives";
 import RepresentativesResults from "./pages/RepresentativesResults";
+import SearchSuppliers from "./pages/SearchSuppliers";
+import SuppliersResults from "./pages/SuppliersResults";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +32,8 @@ const App = () => (
           <Route path="/abordagem" element={<CreateApproach />} />
           <Route path="/search-representatives" element={<SearchRepresentatives />} />
           <Route path="/representatives-results" element={<RepresentativesResults />} />
+          <Route path="/search-suppliers" element={<SearchSuppliers />} />
+          <Route path="/suppliers-results" element={<SuppliersResults />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

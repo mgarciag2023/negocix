@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Building2, Target, TrendingUp, Zap, MessageSquare, Sparkles, Users } from "lucide-react";
+import { Building2, Target, TrendingUp, Zap, MessageSquare, Sparkles, Users, Package } from "lucide-react";
 import Navbar from "@/components/Navbar";
 
 const Index = () => {
@@ -31,6 +31,12 @@ const Index = () => {
                   <Link to="/search-representatives">
                     <Users className="mr-2 h-5 w-5" />
                     Buscar Representantes
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" asChild className="bg-white/10 text-white border-white/30 hover:bg-white/20 w-full sm:w-auto">
+                  <Link to="/search-suppliers">
+                    <Package className="mr-2 h-5 w-5" />
+                    Buscar Fornecedores
                   </Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild className="bg-white/10 text-white border-white/30 hover:bg-white/20 w-full sm:w-auto">

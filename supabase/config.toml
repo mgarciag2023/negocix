@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.search-representatives]
 verify_jwt = false
+
+[functions.search-suppliers]
+verify_jwt = false
