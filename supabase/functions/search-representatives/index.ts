@@ -318,17 +318,16 @@ serve(async (req) => {
       `escritório representação ${location}`,
     ];
     
-    console.log("\n📋 Phase 1: Firecrawl search with scraping");
+    console.log("\n📋 Phase 1: Firecrawl search (parallel)");
     
-    for (const query of searchQueries) {
-      const results = await firecrawlSearch(query, FIRECRAWL_API_KEY);
+    // Run searches in parallel for speed
+    const searchPromises = searchQueries.slice(0, 4).map(query => 
+      firecrawlSearch(query, FIRECRAWL_API_KEY)
+    );
+    
+    const searchResults = await Promise.all(searchPromises);
+    for (const results of searchResults) {
       allResults.push(...results.map(r => ({ ...r, region: `${location}, ${state}` })));
-      
-      console.log(`📊 Running total: ${allResults.length} results`);
-      
-      if (allResults.length >= 60) break;
-      
-      await new Promise(r => setTimeout(r, 400));
     }
     
     console.log(`\n📊 Total search results: ${allResults.length}`);
@@ -349,22 +348,26 @@ serve(async (req) => {
     
     console.log(`📊 Unique results: ${uniqueResults.length}`);
     
-    // Phase 2: Scrape EVERY result that doesn't have phone
-    console.log("\n📋 Phase 2: Scraping ALL results without phone");
-    const enrichedResults: ScrapedResult[] = [];
+    // Phase 2: Scrape results without phone (parallel, batches of 5)
+    console.log("\n📋 Phase 2: Scraping results without phone (parallel)");
+    const toEnrich = uniqueResults.filter(r => !r.phone && r.website);
+    const alreadyHavePhone = uniqueResults.filter(r => r.phone || !r.website);
     
-    for (const result of uniqueResults) {
-      if (!result.phone && result.website) {
-        const details = await firecrawlScrape(result.website, FIRECRAWL_API_KEY);
-        enrichedResults.push({
+    const enrichedResults: ScrapedResult[] = [...alreadyHavePhone];
+    
+    // Process in batches of 5 for speed
+    for (let i = 0; i < toEnrich.length; i += 5) {
+      const batch = toEnrich.slice(i, i + 5);
+      const batchPromises = batch.map(async (result) => {
+        const details = await firecrawlScrape(result.website!, FIRECRAWL_API_KEY);
+        return {
           ...result,
           phone: details.phone || result.phone,
           email: details.email || result.email,
-        });
-        await new Promise(r => setTimeout(r, 300));
-      } else {
-        enrichedResults.push(result);
-      }
+        };
+      });
+      const batchResults = await Promise.all(batchPromises);
+      enrichedResults.push(...batchResults);
     }
     
     console.log(`📊 Enriched: ${enrichedResults.length}`);
