@@ -445,11 +445,13 @@ serve(async (req) => {
       throw new Error("APIFY_API_KEY is not configured");
     }
     
-    // Build Apify request body - SINGLE CALL MODE (max 150 leads)
+    // Build Apify request body - SINGLE CALL MODE (max 150 leads TOTAL)
     const MAX_TOTAL_LEADS = 150;
-    const placesPerSearch = MAX_TOTAL_LEADS; // Single call with max 150 results
+    // CRITICAL FIX: Divide max by number of search queries to ensure total never exceeds 150
+    const numQueries = searchQueries.length;
+    const placesPerSearch = Math.max(10, Math.floor(MAX_TOTAL_LEADS / numQueries));
     
-    console.log(`📊 Single API call requesting ${placesPerSearch} places (max ${MAX_TOTAL_LEADS} leads)`);
+    console.log(`📊 ${numQueries} search queries, requesting ${placesPerSearch} places each (max ${MAX_TOTAL_LEADS} total leads)`);
     
     const apifyRequestBody: any = {
       searchStringsArray: searchQueries, // Can be multiple search terms
