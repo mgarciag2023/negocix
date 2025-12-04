@@ -103,6 +103,25 @@ const Configuration = () => {
     "Empresas de Adesivos e Banners",
     "Impressão de Rótulos e Etiquetas",
     "Editoras",
+    // Setor Construção Civil
+    "Construtoras",
+    "Empreiteiras",
+    "Incorporadoras",
+    "Engenheiros Civis",
+    "Arquitetos",
+    "Escritórios de Arquitetura",
+    "Pedreiros",
+    "Pintores",
+    "Encanadores",
+    "Eletricistas",
+    "Marmorarias",
+    "Vidraçarias",
+    "Serralherias",
+    "Imobiliárias",
+    "Obras e Reformas",
+    "Instaladores de Pisos",
+    "Gesseiros",
+    "Telhadistas",
   ];
 
   const handleCustomerToggle = (customer: string) => {
