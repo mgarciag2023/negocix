@@ -132,15 +132,15 @@ const SuppliersResults = () => {
       <Navbar />
       
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <Button variant="ghost" asChild className="mb-2">
+            <Button variant="ghost" asChild className="mb-2 -ml-2">
               <Link to="/search-suppliers">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Nova Busca
               </Link>
             </Button>
-            <h1 className="text-2xl font-bold text-foreground">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">
               {suppliers.length} Fornecedor(es) Encontrado(s)
             </h1>
           </div>
@@ -162,25 +162,25 @@ const SuppliersResults = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {suppliers.map((supplier) => (
               <Card key={supplier.id} className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg line-clamp-2">
+                <CardHeader className="pb-2 p-4">
+                  <CardTitle className="text-base sm:text-lg line-clamp-2">
                     {supplier.name}
                   </CardTitle>
                   <span className="text-xs text-primary bg-primary/10 px-2 py-1 rounded-full w-fit">
                     {supplier.category}
                   </span>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                <CardContent className="space-y-2 sm:space-y-3 p-4 pt-0">
+                  <div className="flex items-start gap-2 text-xs sm:text-sm text-muted-foreground">
                     <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
                     <span className="line-clamp-2">{supplier.address}</span>
                   </div>
                   
-                  <div className="flex items-center gap-2 text-sm">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex items-center gap-2 text-xs sm:text-sm">
+                    <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                     <a
                       href={`tel:${formatPhoneForCall(supplier.phone)}`}
                       className="text-primary hover:underline"
@@ -190,8 +190,8 @@ const SuppliersResults = () => {
                   </div>
 
                   {supplier.website && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Globe className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex items-center gap-2 text-xs sm:text-sm">
+                      <Globe className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                       <a
                         href={supplier.website}
                         target="_blank"
@@ -207,18 +207,18 @@ const SuppliersResults = () => {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="flex-1"
+                      className="flex-1 text-xs sm:text-sm h-9"
                       asChild
                     >
                       <a href={`tel:${formatPhoneForCall(supplier.phone)}`}>
-                        <Phone className="mr-1 h-4 w-4" />
+                        <Phone className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />
                         Ligar
                       </a>
                     </Button>
                     {supplier.hasWhatsApp && (
                       <Button
                         size="sm"
-                        className="flex-1 bg-[#25D366] hover:bg-[#128C7E]"
+                        className="flex-1 bg-[#25D366] hover:bg-[#128C7E] text-xs sm:text-sm h-9"
                         asChild
                       >
                         <a
@@ -226,7 +226,7 @@ const SuppliersResults = () => {
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          <MessageCircle className="mr-1 h-4 w-4" />
+                          <MessageCircle className="mr-1 h-3 w-3 sm:h-4 sm:w-4" />
                           WhatsApp
                         </a>
                       </Button>

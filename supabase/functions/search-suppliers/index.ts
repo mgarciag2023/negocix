@@ -113,7 +113,7 @@ serve(async (req) => {
     const limitedQueries = searchQueries.slice(0, 5);
     console.log(`📋 Search queries (${limitedQueries.length}):`, limitedQueries);
 
-    const MAX_TOTAL_SUPPLIERS = 100;
+    const MAX_TOTAL_SUPPLIERS = 30;
     const placesPerSearch = Math.max(10, Math.floor(MAX_TOTAL_SUPPLIERS / limitedQueries.length));
 
     const apifyRequestBody = {

@@ -179,9 +179,13 @@ const SearchSuppliers = () => {
                   <Label className="text-base font-semibold">
                     Que tipo de produtos você procura? *
                   </Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-64 overflow-y-auto border rounded-lg p-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-72 overflow-y-auto border rounded-lg p-3">
                     {productCategories.map((product) => (
-                      <div key={product} className="flex items-center space-x-2">
+                      <div 
+                        key={product} 
+                        className="flex items-center space-x-2 p-2 rounded-md hover:bg-accent/50 transition-colors"
+                        onClick={() => handleProductToggle(product)}
+                      >
                         <Checkbox
                           id={product}
                           checked={selectedProducts.includes(product)}
@@ -189,7 +193,7 @@ const SearchSuppliers = () => {
                         />
                         <label
                           htmlFor={product}
-                          className="text-sm cursor-pointer leading-tight"
+                          className="text-sm cursor-pointer leading-tight flex-1"
                         >
                           {product}
                         </label>

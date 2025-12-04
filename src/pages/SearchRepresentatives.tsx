@@ -197,18 +197,18 @@ export default function SearchRepresentatives() {
                 <p className="text-sm text-muted-foreground mb-4">
                   Selecione os segmentos em que deseja encontrar representantes comerciais
                 </p>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 max-h-64 overflow-y-auto">
                   {representativeSegments.map((segment) => (
                     <div
                       key={segment}
                       onClick={() => handleSegmentToggle(segment)}
-                      className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                      className={`p-2 sm:p-3 rounded-lg border cursor-pointer transition-all text-center ${
                         selectedSegments.includes(segment)
                           ? "bg-primary text-primary-foreground border-primary"
                           : "bg-card hover:bg-accent border-border"
                       }`}
                     >
-                      <span className="text-sm font-medium">{segment}</span>
+                      <span className="text-xs sm:text-sm font-medium">{segment}</span>
                     </div>
                   ))}
                 </div>
@@ -227,18 +227,18 @@ export default function SearchRepresentatives() {
                 <p className="text-sm text-muted-foreground mb-4">
                   Ou busque profissionais autônomos e liberais
                 </p>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 max-h-48 overflow-y-auto">
                   {professionalSegments.map((segment) => (
                     <div
                       key={segment}
                       onClick={() => handleSegmentToggle(segment)}
-                      className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                      className={`p-2 sm:p-3 rounded-lg border cursor-pointer transition-all text-center ${
                         selectedSegments.includes(segment)
                           ? "bg-secondary text-secondary-foreground border-secondary"
                           : "bg-card hover:bg-accent border-border"
                       }`}
                     >
-                      <span className="text-sm font-medium">{segment}</span>
+                      <span className="text-xs sm:text-sm font-medium">{segment}</span>
                     </div>
                   ))}
                 </div>
