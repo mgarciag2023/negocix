@@ -61,6 +61,65 @@ function cleanText(text: string): string {
   return text.replace(/\s+/g, ' ').replace(/<[^>]*>/g, '').trim();
 }
 
+// Common Brazilian first names for validation
+const commonNames = [
+  'rafael', 'joao', 'pedro', 'paulo', 'carlos', 'jose', 'antonio', 'francisco', 'luiz', 'luis',
+  'marcos', 'marcio', 'mario', 'ricardo', 'roberto', 'andre', 'anderson', 'bruno', 'daniel', 'diego',
+  'eduardo', 'fabio', 'felipe', 'fernando', 'gabriel', 'guilherme', 'gustavo', 'henrique', 'hugo', 'igor',
+  'ivan', 'jean', 'jorge', 'julio', 'leandro', 'leonardo', 'lucas', 'luciano', 'marcelo', 'mateus',
+  'matheus', 'mauricio', 'nelson', 'nilton', 'rafael', 'renan', 'renato', 'rodrigo', 'rogerio', 'sergio',
+  'thiago', 'tiago', 'vinicius', 'vitor', 'wagner', 'wellington', 'william', 'wilson', 'alex', 'alexandre',
+  'raissa', 'maria', 'ana', 'juliana', 'fernanda', 'patricia', 'camila', 'amanda', 'bruna', 'carla',
+  'carolina', 'claudia', 'cristina', 'daniela', 'debora', 'eliane', 'fabiana', 'flavia', 'gabriela', 'jessica',
+  'joana', 'julia', 'karen', 'larissa', 'leticia', 'luana', 'luciana', 'marcia', 'mariana', 'marina',
+  'natalia', 'paula', 'priscila', 'renata', 'roberta', 'sandra', 'simone', 'talita', 'tatiana', 'vanessa',
+  'viviane', 'adriana', 'aline', 'beatriz', 'bianca', 'cintia', 'daiane', 'elaine', 'gisele', 'helena',
+];
+
+function extractPersonName(text: string): string | null {
+  if (!text) return null;
+  
+  const cleaned = text.toLowerCase().trim();
+  
+  // Check if it looks like a company name (skip these)
+  const companyKeywords = [
+    'ltda', 'eireli', 'me ', 's.a', 's/a', 'industria', 'indústria', 'comercio', 'comércio',
+    'distribuidora', 'atacado', 'loja', 'empresa', 'representações', 'representacoes',
+    'group', 'grupo', 'cia', 'corporation', 'corp', 'inc', 'solutions', 'services',
+    'comercial', 'agencia', 'agência', 'consultoria', 'assessoria'
+  ];
+  
+  for (const keyword of companyKeywords) {
+    if (cleaned.includes(keyword)) {
+      return null;
+    }
+  }
+  
+  // Check if contains a common Brazilian name
+  const words = text.split(/[\s,.-]+/).filter(w => w.length >= 3);
+  
+  for (const word of words) {
+    const wordLower = word.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (commonNames.includes(wordLower)) {
+      // Found a real name - try to get first + last name
+      const idx = words.findIndex(w => 
+        w.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') === wordLower
+      );
+      
+      if (idx >= 0 && idx < words.length - 1) {
+        // Capitalize properly
+        const firstName = words[idx].charAt(0).toUpperCase() + words[idx].slice(1).toLowerCase();
+        const lastName = words[idx + 1].charAt(0).toUpperCase() + words[idx + 1].slice(1).toLowerCase();
+        return `${firstName} ${lastName}`;
+      } else if (idx >= 0) {
+        return words[idx].charAt(0).toUpperCase() + words[idx].slice(1).toLowerCase();
+      }
+    }
+  }
+  
+  return null;
+}
+
 // ============================================
 // STATE DATA
 // ============================================
@@ -86,28 +145,27 @@ const stateCapitals: { [key: string]: string } = {
 };
 
 // ============================================
-// FIRECRAWL API (REST) - Search and Scrape
+// FIRECRAWL API - Search for people
 // ============================================
 
-interface ScrapedResult {
+interface PersonResult {
   name: string;
   phone?: string;
   email?: string;
   region?: string;
   description?: string;
   website?: string;
-  source: string;
   sourceUrl: string;
 }
 
-async function firecrawlSearch(
+async function searchPeople(
   query: string,
   apiKey: string
-): Promise<ScrapedResult[]> {
-  const results: ScrapedResult[] = [];
+): Promise<PersonResult[]> {
+  const results: PersonResult[] = [];
   
   try {
-    console.log(`🔥 Firecrawl search: "${query}"`);
+    console.log(`🔥 Searching: "${query}"`);
     
     const response = await fetch('https://api.firecrawl.dev/v1/search', {
       method: 'POST',
@@ -117,7 +175,7 @@ async function firecrawlSearch(
       },
       body: JSON.stringify({
         query: query,
-        limit: 10,
+        limit: 15,
         scrapeOptions: {
           formats: ['markdown'],
           onlyMainContent: true,
@@ -127,13 +185,13 @@ async function firecrawlSearch(
     
     if (!response.ok) {
       const error = await response.text();
-      console.log(`❌ Firecrawl error: ${response.status} - ${error}`);
+      console.log(`❌ Error: ${response.status} - ${error}`);
       return results;
     }
     
     const data = await response.json();
     const items = data.data || data.results || [];
-    console.log(`✅ Firecrawl found ${items.length} results`);
+    console.log(`✅ Found ${items.length} results`);
     
     for (const item of items) {
       const url = item.url || item.link || '';
@@ -141,23 +199,53 @@ async function firecrawlSearch(
       const description = item.description || item.snippet || '';
       const markdown = item.markdown || '';
       
-      // Skip social media
-      if (url.includes('facebook.com') ||
-          url.includes('instagram.com') ||
-          url.includes('linkedin.com') ||
-          url.includes('twitter.com') ||
+      // Skip social media main pages
+      if (url.includes('facebook.com/groups') ||
           url.includes('youtube.com') ||
           url.includes('wikipedia.org')) {
         continue;
       }
       
-      // Extract contact info from ALL available content
       const allContent = `${title} ${description} ${markdown}`;
       
-      // Find phone - multiple patterns
+      // Try to extract person names from content
+      const namePatterns = [
+        // "Meu nome é João Silva"
+        /(?:meu nome (?:é|e)|me chamo|sou o|sou a)\s+([A-Z][a-záéíóúãõç]+(?:\s+[A-Z][a-záéíóúãõç]+)+)/gi,
+        // "João Silva - Representante"
+        /([A-Z][a-záéíóúãõç]+\s+[A-Z][a-záéíóúãõç]+)\s*[-–]\s*(?:representante|vendedor|consultor)/gi,
+        // "Contato: João Silva"
+        /(?:contato|responsável|proprietário|dono):\s*([A-Z][a-záéíóúãõç]+\s+[A-Z][a-záéíóúãõç]+)/gi,
+        // LinkedIn style
+        /([A-Z][a-záéíóúãõç]+\s+[A-Z][a-záéíóúãõç]+)\s*\|\s*(?:representante|vendedor|consultor|linkedin)/gi,
+      ];
+      
+      let personName: string | null = null;
+      
+      // First try extracting from title
+      personName = extractPersonName(title);
+      
+      // If not found in title, try patterns in content
+      if (!personName) {
+        for (const pattern of namePatterns) {
+          const match = allContent.match(pattern);
+          if (match) {
+            const extracted = match[1] || match[0];
+            personName = extractPersonName(extracted);
+            if (personName) break;
+          }
+        }
+      }
+      
+      // Skip if no person name found
+      if (!personName) {
+        continue;
+      }
+      
+      // Find phone
       let phone: string | undefined;
       const phonePatterns = [
-        /(?:tel|telefone|whatsapp|fone|celular)[:\s]*\(?\d{2}\)?\s*\d{4,5}[-.\s]?\d{4}/gi,
+        /(?:tel|telefone|whatsapp|fone|celular|zap)[:\s]*\(?\d{2}\)?\s*\d{4,5}[-.\s]?\d{4}/gi,
         /\(?\d{2}\)?\s*9\d{4}[-.\s]?\d{4}/g,
         /\(?\d{2}\)?\s*[2-5]\d{3}[-.\s]?\d{4}/g,
         /\d{2}[\s.-]?\d{4,5}[\s.-]?\d{4}/g,
@@ -176,28 +264,27 @@ async function firecrawlSearch(
       const email = emailMatch && isValidEmail(emailMatch[0]) ? emailMatch[0] : undefined;
       
       results.push({
-        name: cleanText(title).slice(0, 100) || (url ? new URL(url).hostname : 'Desconhecido'),
-        description: cleanText(description || markdown.slice(0, 300)).slice(0, 200),
+        name: personName,
+        description: cleanText(description || markdown.slice(0, 200)).slice(0, 150),
         phone,
         email,
         website: url,
-        source: 'Firecrawl',
         sourceUrl: url
       });
     }
     
   } catch (error) {
-    console.error('❌ Firecrawl error:', error);
+    console.error('❌ Search error:', error);
   }
   
   return results;
 }
 
-async function firecrawlScrape(
+async function scrapeForContact(
   url: string,
   apiKey: string
-): Promise<{ phone?: string; email?: string; description?: string }> {
-  const result: { phone?: string; email?: string; description?: string } = {};
+): Promise<{ phone?: string; email?: string; name?: string }> {
+  const result: { phone?: string; email?: string; name?: string } = {};
   
   try {
     console.log(`🔍 Scraping: ${url}`);
@@ -211,7 +298,7 @@ async function firecrawlScrape(
       body: JSON.stringify({
         url: url,
         formats: ['markdown'],
-        onlyMainContent: false, // Get full page to find contact info
+        onlyMainContent: false,
       }),
     });
     
@@ -226,7 +313,23 @@ async function firecrawlScrape(
       return result;
     }
     
-    // Find ALL phones
+    // Try to find person name
+    const namePatterns = [
+      /(?:meu nome (?:é|e)|me chamo|sou o|sou a)\s+([A-Z][a-záéíóúãõç]+(?:\s+[A-Z][a-záéíóúãõç]+)+)/gi,
+      /([A-Z][a-záéíóúãõç]+\s+[A-Z][a-záéíóúãõç]+)\s*[-–]\s*(?:representante|vendedor|consultor)/gi,
+      /(?:contato|responsável):\s*([A-Z][a-záéíóúãõç]+\s+[A-Z][a-záéíóúãõç]+)/gi,
+    ];
+    
+    for (const pattern of namePatterns) {
+      const match = content.match(pattern);
+      if (match) {
+        const extracted = match[1] || match[0];
+        result.name = extractPersonName(extracted) || undefined;
+        if (result.name) break;
+      }
+    }
+    
+    // Find phone
     const phonePatterns = [
       /(?:tel|telefone|whatsapp|fone|celular|contato)[:\s]*\(?\d{2}\)?\s*\d{4,5}[-.\s]?\d{4}/gi,
       /\(?\d{2}\)?\s*9\d{4}[-.\s]?\d{4}/g,
@@ -237,7 +340,6 @@ async function firecrawlScrape(
     for (const pattern of phonePatterns) {
       const matches = content.match(pattern);
       if (matches && matches.length > 0) {
-        // Get the first valid phone
         for (const match of matches) {
           const validation = validatePhone(match);
           if (validation.valid) {
@@ -255,17 +357,16 @@ async function firecrawlScrape(
       if (isValidEmail(email) && 
           !email.toLowerCase().includes('example') &&
           !email.toLowerCase().includes('wix') &&
-          !email.toLowerCase().includes('wordpress') &&
-          !email.toLowerCase().includes('sentry')) {
+          !email.toLowerCase().includes('wordpress')) {
         result.email = email;
         break;
       }
     }
     
-    console.log(`✅ Scraped: phone=${result.phone || 'none'}, email=${result.email || 'none'}`);
+    console.log(`✅ Found: name=${result.name || 'none'}, phone=${result.phone || 'none'}`);
     
   } catch (error) {
-    console.error(`❌ Scrape error for ${url}:`, error);
+    console.error(`❌ Scrape error:`, error);
   }
   
   return result;
@@ -303,26 +404,31 @@ serve(async (req) => {
     console.log(`📍 Location: ${location}, ${state}`);
 
     // ============================================
-    // SEARCH STRATEGY - Multiple queries with scrapeOptions
+    // SEARCH FOR REAL PEOPLE - Not companies
     // ============================================
     
-    const allResults: ScrapedResult[] = [];
+    const allResults: PersonResult[] = [];
     
-    // Varied search queries to get more results
+    // Build segment terms
+    const segmentTerms = segments && segments.length > 0 
+      ? segments.slice(0, 2).join(' ')
+      : 'vendas';
+    
+    // Search queries focused on finding PEOPLE with names
     const searchQueries = [
-      `representante comercial ${location} ${stateName} telefone contato`,
-      `representantes comerciais ${stateName} contato whatsapp`,
-      `agência representação comercial ${location} telefone`,
-      `distribuidor atacadista ${location} contato`,
-      `representante vendas ${stateName} telefone email`,
-      `escritório representação ${location}`,
+      `"representante comercial" "${location}" contato telefone nome`,
+      `"vendedor externo" "${stateName}" whatsapp telefone`,
+      `"consultor de vendas" "${location}" contato celular`,
+      `representante ${segmentTerms} "${location}" telefone nome`,
+      `"agente comercial" "${stateName}" contato whatsapp`,
+      `"profissional de vendas" "${location}" telefone`,
     ];
     
-    console.log("\n📋 Phase 1: Firecrawl search (parallel)");
+    console.log("\n📋 Phase 1: Search for people (parallel)");
     
-    // Run searches in parallel for speed
+    // Run 4 searches in parallel
     const searchPromises = searchQueries.slice(0, 4).map(query => 
-      firecrawlSearch(query, FIRECRAWL_API_KEY)
+      searchPeople(query, FIRECRAWL_API_KEY)
     );
     
     const searchResults = await Promise.all(searchPromises);
@@ -330,38 +436,45 @@ serve(async (req) => {
       allResults.push(...results.map(r => ({ ...r, region: `${location}, ${state}` })));
     }
     
-    console.log(`\n📊 Total search results: ${allResults.length}`);
+    console.log(`\n📊 Total people found: ${allResults.length}`);
     
-    // Deduplicate by domain
-    const seenDomains = new Set<string>();
-    const uniqueResults = allResults.filter(r => {
-      if (!r.website) return true;
-      try {
-        const domain = new URL(r.website).hostname.replace('www.', '');
-        if (seenDomains.has(domain)) return false;
-        seenDomains.add(domain);
-        return true;
-      } catch {
-        return true;
+    // If few results, do more searches
+    if (allResults.length < 10) {
+      console.log("\n📋 Phase 1b: Additional searches");
+      const additionalQueries = searchQueries.slice(4);
+      const additionalPromises = additionalQueries.map(query => 
+        searchPeople(query, FIRECRAWL_API_KEY)
+      );
+      const additionalResults = await Promise.all(additionalPromises);
+      for (const results of additionalResults) {
+        allResults.push(...results.map(r => ({ ...r, region: `${location}, ${state}` })));
       }
+    }
+    
+    // Deduplicate by name
+    const seenNames = new Set<string>();
+    const uniqueResults = allResults.filter(r => {
+      const nameKey = r.name.toLowerCase().trim();
+      if (seenNames.has(nameKey)) return false;
+      seenNames.add(nameKey);
+      return true;
     });
     
-    console.log(`📊 Unique results: ${uniqueResults.length}`);
+    console.log(`📊 Unique people: ${uniqueResults.length}`);
     
-    // Phase 2: Scrape results without phone (parallel, batches of 5)
-    console.log("\n📋 Phase 2: Scraping results without phone (parallel)");
-    const toEnrich = uniqueResults.filter(r => !r.phone && r.website);
-    const alreadyHavePhone = uniqueResults.filter(r => r.phone || !r.website);
+    // Phase 2: Scrape for more details if needed
+    console.log("\n📋 Phase 2: Enriching contacts (parallel)");
+    const toEnrich = uniqueResults.filter(r => !r.phone && r.website).slice(0, 10);
+    const alreadyComplete = uniqueResults.filter(r => r.phone || !r.website);
     
-    const enrichedResults: ScrapedResult[] = [...alreadyHavePhone];
+    const enrichedResults: PersonResult[] = [...alreadyComplete];
     
-    // Process in batches of 5 for speed
-    for (let i = 0; i < toEnrich.length; i += 5) {
-      const batch = toEnrich.slice(i, i + 5);
-      const batchPromises = batch.map(async (result) => {
-        const details = await firecrawlScrape(result.website!, FIRECRAWL_API_KEY);
+    if (toEnrich.length > 0) {
+      const batchPromises = toEnrich.map(async (result) => {
+        const details = await scrapeForContact(result.website!, FIRECRAWL_API_KEY);
         return {
           ...result,
+          name: details.name || result.name,
           phone: details.phone || result.phone,
           email: details.email || result.email,
         };
@@ -370,10 +483,10 @@ serve(async (req) => {
       enrichedResults.push(...batchResults);
     }
     
-    console.log(`📊 Enriched: ${enrichedResults.length}`);
+    console.log(`📊 After enrichment: ${enrichedResults.length}`);
 
     // ============================================
-    // FORMAT RESULTS - Prioritize those WITH phone
+    // FORMAT RESULTS - Only real people with names
     // ============================================
     
     // Sort: results with phone first
@@ -385,15 +498,17 @@ serve(async (req) => {
     
     const representatives: Representative[] = [];
     const seenPhones = new Set<string>();
-    const seenNames = new Set<string>();
+    const finalNames = new Set<string>();
     
     for (const result of enrichedResults) {
-      if (!result.name || result.name.length < 3) continue;
+      // Validate it's a person name (not a company)
+      const personName = extractPersonName(result.name);
+      if (!personName) continue;
       
-      // Skip duplicates by name
-      const nameKey = result.name.toLowerCase().slice(0, 30);
-      if (seenNames.has(nameKey)) continue;
-      seenNames.add(nameKey);
+      // Skip duplicate names
+      const nameKey = personName.toLowerCase();
+      if (finalNames.has(nameKey)) continue;
+      finalNames.add(nameKey);
       
       let validPhone: string | undefined;
       let isWhatsApp = false;
@@ -410,14 +525,13 @@ serve(async (req) => {
       
       representatives.push({
         id: generateId(),
-        name: result.name,
+        name: personName,
         phone: validPhone,
         whatsapp: isWhatsApp ? validPhone : undefined,
         email: result.email,
         region: result.region || `${location}, ${state}`,
         segments: segments || [],
         description: result.description,
-        source: result.source,
         sourceUrl: result.sourceUrl,
         website: result.website,
         address: result.region
@@ -428,8 +542,9 @@ serve(async (req) => {
     
     // Log stats
     const withPhone = representatives.filter(r => r.phone).length;
+    const withWhatsapp = representatives.filter(r => r.whatsapp).length;
     const withEmail = representatives.filter(r => r.email).length;
-    console.log(`\n✅ Final: ${representatives.length} reps (${withPhone} with phone, ${withEmail} with email)`);
+    console.log(`\n✅ Final: ${representatives.length} people (${withPhone} with phone, ${withWhatsapp} with WhatsApp, ${withEmail} with email)`);
 
     return new Response(
       JSON.stringify({ 
@@ -439,8 +554,9 @@ serve(async (req) => {
           segments: segments,
           totalFound: representatives.length,
           withPhone,
+          withWhatsapp,
           withEmail,
-          method: 'firecrawl'
+          method: 'firecrawl-people'
         }
       }),
       { 
