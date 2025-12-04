@@ -200,17 +200,42 @@ export default function RepresentativesResults() {
               {representatives.map((rep) => (
                 <Card key={rep.id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
-                    <div className="space-y-4">
-                      {/* Name and Source */}
-                      <div className="flex items-start justify-between">
-                        <div>
+                    <div className="space-y-3">
+                      {/* Name with Contact */}
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
                           <h3 className="text-lg font-semibold text-foreground">
                             {rep.name}
                           </h3>
-                          {rep.source && (
-                            <p className="text-xs text-muted-foreground">
-                              Fonte: {rep.source}
+                          {rep.phone && (
+                            <p className="text-sm text-primary font-medium mt-1">
+                              {rep.phone}
                             </p>
+                          )}
+                        </div>
+                        
+                        {/* Contact Buttons */}
+                        <div className="flex gap-2 flex-shrink-0">
+                          {rep.whatsapp && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleWhatsAppClick(rep.whatsapp!, rep.name)}
+                              className="gap-2 bg-green-600 hover:bg-green-700"
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                              WhatsApp
+                            </Button>
+                          )}
+                          {rep.phone && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleCallClick(rep.phone!)}
+                              className="gap-2"
+                            >
+                              <Phone className="w-4 h-4" />
+                              Ligar
+                            </Button>
                           )}
                         </div>
                       </div>
@@ -221,49 +246,12 @@ export default function RepresentativesResults() {
                         <span>{rep.region}</span>
                       </div>
 
-                      {/* Segments */}
-                      {rep.segments && rep.segments.length > 0 && (
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Briefcase className="w-4 h-4 text-muted-foreground" />
-                          {rep.segments.map((segment, idx) => (
-                            <Badge key={idx} variant="outline">
-                              {segment}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-
                       {/* Description */}
                       {rep.description && (
                         <p className="text-sm text-muted-foreground border-l-2 border-primary/20 pl-3">
                           {rep.description}
                         </p>
                       )}
-
-                      {/* Contact Buttons */}
-                      <div className="flex gap-2 pt-2">
-                        {rep.phone && (
-                          <>
-                            <Button
-                              size="sm"
-                              onClick={() => handleWhatsAppClick(rep.phone!, rep.name)}
-                              className="gap-2 bg-green-600 hover:bg-green-700"
-                            >
-                              <MessageCircle className="w-4 h-4" />
-                              WhatsApp
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleCallClick(rep.phone!)}
-                              className="gap-2"
-                            >
-                              <Phone className="w-4 h-4" />
-                              Ligar
-                            </Button>
-                          </>
-                        )}
-                      </div>
                     </div>
                   </CardContent>
                 </Card>
