@@ -32,12 +32,24 @@ function validatePhone(phone: string): { valid: boolean; normalized: string; isW
   
   const digitsOnly = phone.replace(/\D/g, '');
   
+  // Format: 55 + DDD (2 digits) + number (8 or 9 digits)
   if (digitsOnly.startsWith('55') && (digitsOnly.length === 12 || digitsOnly.length === 13)) {
+    const ddd = digitsOnly.substring(2, 4);
+    const dddNum = parseInt(ddd, 10);
+    // Valid Brazilian DDDs are between 11 and 99
+    if (dddNum < 11 || dddNum > 99) return { valid: false, normalized: '', isWhatsApp: false };
+    
     const isMobile = digitsOnly.length === 13 && digitsOnly.charAt(4) === '9';
     return { valid: true, normalized: `+${digitsOnly}`, isWhatsApp: isMobile };
   }
   
+  // Format: DDD (2 digits) + number (8 or 9 digits)
   if (digitsOnly.length === 10 || digitsOnly.length === 11) {
+    const ddd = digitsOnly.substring(0, 2);
+    const dddNum = parseInt(ddd, 10);
+    // Valid Brazilian DDDs are between 11 and 99
+    if (dddNum < 11 || dddNum > 99) return { valid: false, normalized: '', isWhatsApp: false };
+    
     const isMobile = digitsOnly.length === 11 && digitsOnly.charAt(2) === '9';
     return { valid: true, normalized: `+55${digitsOnly}`, isWhatsApp: isMobile };
   }
@@ -179,6 +191,30 @@ async function quickSearch(query: string, apiKey: string): Promise<RawResult[]> 
         continue;
       }
       
+      // Find phone FIRST - only include if has valid phone
+      let phone: string | undefined;
+      const phonePatterns = [
+        /\(?\d{2}\)?\s*9\d{4}[-.\s]?\d{4}/,   // Mobile: (11) 9xxxx-xxxx
+        /\(?\d{2}\)?\s*[2-5]\d{3}[-.\s]?\d{4}/, // Landline: (11) 2xxx-xxxx
+        /\d{2}[-.\s]?9\d{4}[-.\s]?\d{4}/,       // Mobile without parentheses
+        /\d{2}[-.\s]?[2-5]\d{3}[-.\s]?\d{4}/,   // Landline without parentheses
+      ];
+      
+      for (const p of phonePatterns) {
+        const match = allContent.match(p);
+        if (match) { 
+          // Validate the phone before accepting
+          const validation = validatePhone(match[0]);
+          if (validation.valid) {
+            phone = match[0]; 
+            break; 
+          }
+        }
+      }
+      
+      // CRITICAL: Only include results with VALID phone numbers
+      if (!phone) continue;
+      
       // Try to find a name
       let personName = extractName(title);
       
@@ -199,32 +235,18 @@ async function quickSearch(query: string, apiKey: string): Promise<RawResult[]> 
         }
       }
       
-      // Find phone
-      let phone: string | undefined;
-      const phonePatterns = [
-        /\(?\d{2}\)?\s*9\d{4}[-.\s]?\d{4}/,
-        /\(?\d{2}\)?\s*[2-5]\d{3}[-.\s]?\d{4}/,
-        /\d{2}[-.\s]?\d{4,5}[-.\s]?\d{4}/,
-      ];
-      for (const p of phonePatterns) {
-        const match = allContent.match(p);
-        if (match) { phone = match[0]; break; }
-      }
-      
       // Find email
       const emailMatch = allContent.match(/[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
       const email = emailMatch && isValidEmail(emailMatch[0]) ? emailMatch[0] : undefined;
       
-      // Include if has name OR has phone (for fallback)
-      if (personName || phone) {
-        results.push({
-          name: personName || `Representante - ${new URL(url).hostname.replace('www.', '')}`,
-          phone,
-          email,
-          description: description.slice(0, 120),
-          url
-        });
-      }
+      // Use extracted name or generate from URL
+      results.push({
+        name: personName || `Representante - ${new URL(url).hostname.replace('www.', '')}`,
+        phone,
+        email,
+        description: description.slice(0, 120),
+        url
+      });
     }
     
   } catch (error) {
@@ -232,79 +254,6 @@ async function quickSearch(query: string, apiKey: string): Promise<RawResult[]> 
   }
   
   return results;
-}
-
-// ============================================
-// FALLBACK REPRESENTATIVES DATABASE
-// ============================================
-
-const fallbackNames = [
-  "Rafael Silva", "João Carlos Oliveira", "Pedro Henrique Santos", 
-  "Raissa Fernandes", "Lucas Almeida", "Marcos Roberto Costa",
-  "Ana Paula Souza", "Carlos Eduardo Lima", "Fernando Martins",
-  "Juliana Rodrigues", "Ricardo Gomes", "Patrícia Alves",
-  "Bruno Nascimento", "Camila Pereira", "Diego Carvalho",
-  "Vanessa Ribeiro", "Thiago Barbosa", "Larissa Moreira"
-];
-
-const fallbackDDDs: { [key: string]: string[] } = {
-  'AC': ['68'], 'AL': ['82'], 'AP': ['96'], 'AM': ['92', '97'],
-  'BA': ['71', '73', '74', '75', '77'], 'CE': ['85', '88'], 
-  'DF': ['61'], 'ES': ['27', '28'], 'GO': ['62', '64'],
-  'MA': ['98', '99'], 'MT': ['65', '66'], 'MS': ['67'],
-  'MG': ['31', '32', '33', '34', '35', '37', '38'], 
-  'PA': ['91', '93', '94'], 'PB': ['83'], 'PR': ['41', '42', '43', '44', '45', '46'],
-  'PE': ['81', '87'], 'PI': ['86', '89'], 'RJ': ['21', '22', '24'],
-  'RN': ['84'], 'RS': ['51', '53', '54', '55'], 'RO': ['69'],
-  'RR': ['95'], 'SC': ['47', '48', '49'], 'SP': ['11', '12', '13', '14', '15', '16', '17', '18', '19'],
-  'SE': ['79'], 'TO': ['63']
-};
-
-function generateFallbackPhone(state: string): string {
-  const ddds = fallbackDDDs[state] || ['11'];
-  const ddd = ddds[Math.floor(Math.random() * ddds.length)];
-  const prefix = Math.floor(Math.random() * 9000) + 1000;
-  const suffix = Math.floor(Math.random() * 9000) + 1000;
-  return `+55${ddd}9${prefix}${suffix}`;
-}
-
-function generateFallbackRepresentatives(
-  location: string, 
-  state: string, 
-  segments: string[], 
-  count: number
-): Representative[] {
-  const reps: Representative[] = [];
-  const usedNames = new Set<string>();
-  const usedPhones = new Set<string>();
-  
-  const shuffledNames = [...fallbackNames].sort(() => Math.random() - 0.5);
-  
-  for (let i = 0; i < count && i < shuffledNames.length; i++) {
-    const name = shuffledNames[i];
-    if (usedNames.has(name)) continue;
-    usedNames.add(name);
-    
-    let phone = generateFallbackPhone(state);
-    while (usedPhones.has(phone)) {
-      phone = generateFallbackPhone(state);
-    }
-    usedPhones.add(phone);
-    
-    reps.push({
-      id: generateId(),
-      name,
-      phone,
-      whatsapp: phone, // Mobile numbers are WhatsApp
-      email: undefined,
-      region: `${location}, ${state}`,
-      segments,
-      description: `Representante comercial atuando na região de ${location}`,
-      sourceUrl: undefined
-    });
-  }
-  
-  return reps;
 }
 
 // ============================================
@@ -338,7 +287,7 @@ serve(async (req) => {
     const stateName = stateNames[state] || state;
     const segmentTerms = segments?.slice(0, 2).join(' ') || '';
     
-    // More search queries to guarantee 8+ results
+    // Search queries focused on finding real contact information
     const queries = [
       `representante comercial ${location} telefone celular`,
       `vendedor externo ${segmentTerms} ${stateName} contato whatsapp`,
@@ -364,26 +313,28 @@ serve(async (req) => {
     
     const allResults = await Promise.all(searchPromises);
     
-    // Flatten and deduplicate by name
+    // Flatten and deduplicate by normalized phone
     const flatResults: RawResult[] = [];
-    const seenNames = new Set<string>();
+    const seenPhones = new Set<string>();
     
     for (const results of allResults) {
       for (const r of results) {
-        const nameKey = r.name.toLowerCase().slice(0, 25);
-        if (!seenNames.has(nameKey)) {
-          seenNames.add(nameKey);
+        if (!r.phone) continue;
+        
+        const validation = validatePhone(r.phone);
+        if (!validation.valid) continue;
+        
+        if (!seenPhones.has(validation.normalized)) {
+          seenPhones.add(validation.normalized);
           flatResults.push(r);
         }
       }
     }
     
-    console.log(`📊 Found ${flatResults.length} unique results from search`);
+    console.log(`📊 Found ${flatResults.length} unique results with valid phones`);
 
-    // Sort: phone first, then real names
+    // Sort: real names first
     flatResults.sort((a, b) => {
-      if (a.phone && !b.phone) return -1;
-      if (!a.phone && b.phone) return 1;
       const aHasRealName = !a.name.startsWith('Representante -');
       const bHasRealName = !b.name.startsWith('Representante -');
       if (aHasRealName && !bHasRealName) return -1;
@@ -391,29 +342,22 @@ serve(async (req) => {
       return 0;
     });
 
-    // Build final list from search results
+    // Build final list - ONLY with validated phones
     const representatives: Representative[] = [];
-    const seenPhones = new Set<string>();
+    const finalSeenPhones = new Set<string>();
     
     for (const r of flatResults) {
-      let validPhone: string | undefined;
-      let isWhatsApp = false;
+      const validation = validatePhone(r.phone!);
+      if (!validation.valid) continue;
       
-      if (r.phone) {
-        const validation = validatePhone(r.phone);
-        if (validation.valid) {
-          if (seenPhones.has(validation.normalized)) continue;
-          seenPhones.add(validation.normalized);
-          validPhone = validation.normalized;
-          isWhatsApp = validation.isWhatsApp;
-        }
-      }
+      if (finalSeenPhones.has(validation.normalized)) continue;
+      finalSeenPhones.add(validation.normalized);
       
       representatives.push({
         id: generateId(),
         name: r.name,
-        phone: validPhone,
-        whatsapp: isWhatsApp ? validPhone : undefined,
+        phone: validation.normalized,
+        whatsapp: validation.isWhatsApp ? validation.normalized : undefined,
         email: r.email,
         region: `${location}, ${state}`,
         segments: segments || [],
@@ -424,26 +368,9 @@ serve(async (req) => {
       if (representatives.length >= 50) break;
     }
     
-    // FALLBACK: If we have less than 8, add fallback representatives
-    const MINIMUM_RESULTS = 8;
-    if (representatives.length < MINIMUM_RESULTS) {
-      const needed = MINIMUM_RESULTS - representatives.length;
-      console.log(`⚠️ Only ${representatives.length} found, adding ${needed} fallback representatives`);
-      
-      const fallbacks = generateFallbackRepresentatives(location, state, segments || [], needed);
-      
-      // Add fallbacks, avoiding duplicate phones
-      for (const fb of fallbacks) {
-        if (fb.phone && !seenPhones.has(fb.phone)) {
-          seenPhones.add(fb.phone);
-          representatives.push(fb);
-        }
-      }
-    }
-    
     const withPhone = representatives.filter(r => r.phone).length;
     const withWhatsapp = representatives.filter(r => r.whatsapp).length;
-    console.log(`✅ Final: ${representatives.length} (${withPhone} phone, ${withWhatsapp} WhatsApp)`);
+    console.log(`✅ Final: ${representatives.length} representatives (all with real phones, ${withWhatsapp} WhatsApp)`);
 
     return new Response(
       JSON.stringify({ 
@@ -462,36 +389,12 @@ serve(async (req) => {
   } catch (error) {
     console.error("❌ Error:", error);
     
-    // Even on error, return fallback representatives
-    try {
-      const config = await req.clone().json();
-      const { segments, city, state } = config;
-      const location = city || stateCapitals[state] || state;
-      
-      const fallbacks = generateFallbackRepresentatives(location, state, segments || [], 8);
-      console.log(`🔄 Error recovery: returning ${fallbacks.length} fallback representatives`);
-      
-      return new Response(
-        JSON.stringify({ 
-          representatives: fallbacks,
-          searchInfo: {
-            location: `${location}, ${state}`,
-            segments,
-            totalFound: fallbacks.length,
-            withPhone: fallbacks.length,
-            withWhatsapp: fallbacks.length
-          }
-        }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    } catch {
-      return new Response(
-        JSON.stringify({ 
-          error: error instanceof Error ? error.message : "Erro ao buscar",
-          representatives: []
-        }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    return new Response(
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : "Erro ao buscar representantes",
+        representatives: []
+      }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 });
