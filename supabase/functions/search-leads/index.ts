@@ -326,11 +326,13 @@ serve(async (req) => {
   }
 
   try {
-    const { segment, products, location, state, filters } = await req.json();
-    console.log('🔍 Searching leads for:', { segment, products, location, state, filters });
+    const { segment, products, location, state, country, filters } = await req.json();
+    console.log('🔍 Searching leads for:', { segment, products, location, state, country, filters });
     
     const stateDisplay = state || 'SC';
-    console.log('Using state code:', stateDisplay);
+    const countryCode = country || 'BR';
+    const isInternational = countryCode !== 'BR';
+    console.log('Using state code:', stateDisplay, '| Country:', countryCode, '| International:', isInternational);
 
     // Use Apify Google Maps Scraper for real data - ONLY SOURCE OF TRUTH
     console.log('📡 Searching Google Maps via Apify API (ONLY real data)...');
@@ -403,10 +405,15 @@ serve(async (req) => {
     // Check if this is proteção veicular category (from filters)
     const isProtecaoVeicular = filters?.category === 'protecao-veicular';
     
+    // Build location string based on country
+    const locationString = isInternational 
+      ? `${location}, ${stateDisplay}, ${countryCode}` 
+      : `${location} ${stateDisplay}`;
+    
     // If proteção veicular, use comprehensive vehicle search terms
     if (isProtecaoVeicular) {
       searchQueries = categorySearchTerms['protecao-veicular'].map(term => 
-        `${term} ${location} ${stateDisplay}`
+        `${term} ${locationString}`
       );
       console.log(`🎯 Proteção Veicular detected - using comprehensive vehicle search`);
       console.log(`📋 Using ${searchQueries.length} search terms:`, searchQueries);
@@ -426,19 +433,19 @@ serve(async (req) => {
         // Remove duplicates and limit to avoid too many API calls
         const uniqueTerms = [...new Set(allMatchedTerms)].slice(0, 8);
         searchQueries = uniqueTerms.map(term => 
-          `${term} ${location} ${stateDisplay}`
+          `${term} ${locationString}`
         );
         console.log(`📋 Using ${searchQueries.length} unique search terms from ${allMatchedTerms.length} total`);
       } else {
         // Standard search - use segment directly but also add variations
         const firstCustomer = segment.split(',')[0].trim();
-        const baseQuery = `${firstCustomer} ${location} ${stateDisplay}`;
+        const baseQuery = `${firstCustomer} ${locationString}`;
         searchQueries = [baseQuery];
         
         // Add industry-specific searches if segment mentions indústria
         if (segmentLowerNorm.includes('industria') || segmentLowerNorm.includes('fábrica')) {
-          searchQueries.push(`fábrica ${firstCustomer} ${location} ${stateDisplay}`);
-          searchQueries.push(`fabricante ${location} ${stateDisplay}`);
+          searchQueries.push(`fábrica ${firstCustomer} ${locationString}`);
+          searchQueries.push(`fabricante ${locationString}`);
         }
         
         console.log(`🔍 Standard search queries: ${searchQueries.join(' | ')}`);
@@ -555,10 +562,38 @@ serve(async (req) => {
     
     console.log(`📊 ${numQueries} search queries, requesting ${placesPerSearch} places each (max ${MAX_TOTAL_LEADS} total leads)`);
     
+    // Map country codes to language for Apify
+    const countryLanguages: { [key: string]: string } = {
+      'BR': 'pt-BR',
+      'PT': 'pt-PT',
+      'ES': 'es',
+      'AR': 'es',
+      'CL': 'es',
+      'CO': 'es',
+      'MX': 'es',
+      'PE': 'es',
+      'UY': 'es',
+      'PY': 'es',
+      'BO': 'es',
+      'EC': 'es',
+      'VE': 'es',
+      'US': 'en',
+      'UK': 'en',
+      'CA': 'en',
+      'IT': 'it',
+      'FR': 'fr',
+      'DE': 'de',
+      'JP': 'ja',
+      'CN': 'zh',
+      'OTHER': 'en',
+    };
+    
+    const searchLanguage = countryLanguages[countryCode] || 'en';
+    
     const apifyRequestBody: any = {
       searchStringsArray: searchQueries, // Can be multiple search terms
       maxCrawledPlacesPerSearch: placesPerSearch,
-      language: 'pt-BR',
+      language: searchLanguage,
       deeperCityScrape: true,
       exactMatch: false,
       scrapeReviewsNumber: 0, // Skip reviews to get more places faster
@@ -570,14 +605,15 @@ serve(async (req) => {
       includeSearchResultsNearby: true, // Include nearby results
     };
     
-    // Add coordinates if available, otherwise let Apify search by city name
-    if (cityCoords) {
+    // Add coordinates only for Brazil (we have Brazilian city coords)
+    // For international, let Apify search by city/region name
+    if (!isInternational && cityCoords) {
       apifyRequestBody.lat = cityCoords.lat;
       apifyRequestBody.lng = cityCoords.lng;
       apifyRequestBody.radius = 150000; // 150 km radius MAXIMUM for better coverage
       console.log(`📍 Using coordinates: ${cityCoords.lat}, ${cityCoords.lng} with 150km radius`);
     } else {
-      console.log(`📍 No coordinates found for ${location}, using city name search only`);
+      console.log(`📍 ${isInternational ? 'International search' : 'No coordinates found'} for ${location}, using city name search only`);
     }
     
     const apifyResponse = await fetch(

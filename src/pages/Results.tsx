@@ -190,6 +190,7 @@ const Results = () => {
             products: searchConfig.products,
             location: searchConfig.location,
             state: searchConfig.state,
+            country: searchConfig.country || 'BR',
             filters: {
               category: searchConfig.category,
               companySize: searchConfig.companySize,
