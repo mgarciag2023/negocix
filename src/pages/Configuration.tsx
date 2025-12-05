@@ -16,11 +16,38 @@ const Configuration = () => {
   const { toast } = useToast();
   const [category, setCategory] = useState("");
   const [products, setProducts] = useState("");
+  const [country, setCountry] = useState("BR");
   const [location, setLocation] = useState("");
   const [state, setState] = useState("SP");
+  const [regionManual, setRegionManual] = useState("");
   const [companySize, setCompanySize] = useState("all");
   const [revenueRange, setRevenueRange] = useState("all");
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
+
+  const countries = [
+    { code: "BR", name: "Brasil" },
+    { code: "US", name: "Estados Unidos" },
+    { code: "PT", name: "Portugal" },
+    { code: "ES", name: "Espanha" },
+    { code: "AR", name: "Argentina" },
+    { code: "CL", name: "Chile" },
+    { code: "CO", name: "Colômbia" },
+    { code: "MX", name: "México" },
+    { code: "PE", name: "Peru" },
+    { code: "UY", name: "Uruguai" },
+    { code: "PY", name: "Paraguai" },
+    { code: "BO", name: "Bolívia" },
+    { code: "EC", name: "Equador" },
+    { code: "VE", name: "Venezuela" },
+    { code: "IT", name: "Itália" },
+    { code: "FR", name: "França" },
+    { code: "DE", name: "Alemanha" },
+    { code: "UK", name: "Reino Unido" },
+    { code: "CA", name: "Canadá" },
+    { code: "JP", name: "Japão" },
+    { code: "CN", name: "China" },
+    { code: "OTHER", name: "Outro país" },
+  ];
 
   const customerTypes = [
     "Restaurantes",
@@ -142,7 +169,9 @@ const Configuration = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!category || !products || selectedCustomers.length === 0 || !location || !state) {
+    const regionValue = country === "BR" ? state : regionManual;
+    
+    if (!category || !products || selectedCustomers.length === 0 || !location || (country === "BR" && !state) || (country !== "BR" && !regionManual)) {
       toast({
         title: "Campos obrigatórios",
         description: "Por favor, preencha todos os campos obrigatórios",
@@ -158,7 +187,8 @@ const Configuration = () => {
       products,
       selectedCustomers,
       location,
-      state,
+      state: regionValue,
+      country,
       companySize,
       revenueRange,
     };
@@ -276,6 +306,23 @@ const Configuration = () => {
                   </div>
                 </div>
 
+                {/* Country */}
+                <div>
+                  <Label htmlFor="country" className="text-base font-semibold" translate="no">
+                    País: *
+                  </Label>
+                  <Select value={country} onValueChange={(val) => { setCountry(val); if (val !== "BR") setRegionManual(""); }}>
+                    <SelectTrigger className="mt-2" id="country" translate="no">
+                      <SelectValue placeholder="Selecione o país" translate="no" />
+                    </SelectTrigger>
+                    <SelectContent sideOffset={5} translate="no">
+                      {countries.map((c) => (
+                        <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 {/* Location */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="md:col-span-2">
@@ -286,49 +333,67 @@ const Configuration = () => {
                       id="location"
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
-                      placeholder="Ex: São Paulo, Blumenau, Porto Alegre"
+                      placeholder={country === "BR" ? "Ex: São Paulo, Blumenau, Porto Alegre" : "Ex: Miami, Lisboa, Madrid"}
                       className="mt-2"
                       translate="no"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="state" className="text-base font-semibold" translate="no">
-                      Estado: *
-                    </Label>
-                    <Select value={state} onValueChange={setState}>
-                      <SelectTrigger className="mt-2" id="state" translate="no">
-                        <SelectValue placeholder="UF" translate="no" />
-                      </SelectTrigger>
-                      <SelectContent sideOffset={5} translate="no">
-                        <SelectItem value="AC">AC - Acre</SelectItem>
-                        <SelectItem value="AL">AL - Alagoas</SelectItem>
-                        <SelectItem value="AP">AP - Amapá</SelectItem>
-                        <SelectItem value="AM">AM - Amazonas</SelectItem>
-                        <SelectItem value="BA">BA - Bahia</SelectItem>
-                        <SelectItem value="CE">CE - Ceará</SelectItem>
-                        <SelectItem value="DF">DF - Distrito Federal</SelectItem>
-                        <SelectItem value="ES">ES - Espírito Santo</SelectItem>
-                        <SelectItem value="GO">GO - Goiás</SelectItem>
-                        <SelectItem value="MA">MA - Maranhão</SelectItem>
-                        <SelectItem value="MT">MT - Mato Grosso</SelectItem>
-                        <SelectItem value="MS">MS - Mato Grosso do Sul</SelectItem>
-                        <SelectItem value="MG">MG - Minas Gerais</SelectItem>
-                        <SelectItem value="PA">PA - Pará</SelectItem>
-                        <SelectItem value="PB">PB - Paraíba</SelectItem>
-                        <SelectItem value="PR">PR - Paraná</SelectItem>
-                        <SelectItem value="PE">PE - Pernambuco</SelectItem>
-                        <SelectItem value="PI">PI - Piauí</SelectItem>
-                        <SelectItem value="RJ">RJ - Rio de Janeiro</SelectItem>
-                        <SelectItem value="RN">RN - Rio Grande do Norte</SelectItem>
-                        <SelectItem value="RS">RS - Rio Grande do Sul</SelectItem>
-                        <SelectItem value="RO">RO - Rondônia</SelectItem>
-                        <SelectItem value="RR">RR - Roraima</SelectItem>
-                        <SelectItem value="SC">SC - Santa Catarina</SelectItem>
-                        <SelectItem value="SP">SP - São Paulo</SelectItem>
-                        <SelectItem value="SE">SE - Sergipe</SelectItem>
-                        <SelectItem value="TO">TO - Tocantins</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    {country === "BR" ? (
+                      <>
+                        <Label htmlFor="state" className="text-base font-semibold" translate="no">
+                          Estado: *
+                        </Label>
+                        <Select value={state} onValueChange={setState}>
+                          <SelectTrigger className="mt-2" id="state" translate="no">
+                            <SelectValue placeholder="UF" translate="no" />
+                          </SelectTrigger>
+                          <SelectContent sideOffset={5} translate="no">
+                            <SelectItem value="AC">AC - Acre</SelectItem>
+                            <SelectItem value="AL">AL - Alagoas</SelectItem>
+                            <SelectItem value="AP">AP - Amapá</SelectItem>
+                            <SelectItem value="AM">AM - Amazonas</SelectItem>
+                            <SelectItem value="BA">BA - Bahia</SelectItem>
+                            <SelectItem value="CE">CE - Ceará</SelectItem>
+                            <SelectItem value="DF">DF - Distrito Federal</SelectItem>
+                            <SelectItem value="ES">ES - Espírito Santo</SelectItem>
+                            <SelectItem value="GO">GO - Goiás</SelectItem>
+                            <SelectItem value="MA">MA - Maranhão</SelectItem>
+                            <SelectItem value="MT">MT - Mato Grosso</SelectItem>
+                            <SelectItem value="MS">MS - Mato Grosso do Sul</SelectItem>
+                            <SelectItem value="MG">MG - Minas Gerais</SelectItem>
+                            <SelectItem value="PA">PA - Pará</SelectItem>
+                            <SelectItem value="PB">PB - Paraíba</SelectItem>
+                            <SelectItem value="PR">PR - Paraná</SelectItem>
+                            <SelectItem value="PE">PE - Pernambuco</SelectItem>
+                            <SelectItem value="PI">PI - Piauí</SelectItem>
+                            <SelectItem value="RJ">RJ - Rio de Janeiro</SelectItem>
+                            <SelectItem value="RN">RN - Rio Grande do Norte</SelectItem>
+                            <SelectItem value="RS">RS - Rio Grande do Sul</SelectItem>
+                            <SelectItem value="RO">RO - Rondônia</SelectItem>
+                            <SelectItem value="RR">RR - Roraima</SelectItem>
+                            <SelectItem value="SC">SC - Santa Catarina</SelectItem>
+                            <SelectItem value="SP">SP - São Paulo</SelectItem>
+                            <SelectItem value="SE">SE - Sergipe</SelectItem>
+                            <SelectItem value="TO">TO - Tocantins</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </>
+                    ) : (
+                      <>
+                        <Label htmlFor="regionManual" className="text-base font-semibold" translate="no">
+                          Estado/Região: *
+                        </Label>
+                        <Input
+                          id="regionManual"
+                          value={regionManual}
+                          onChange={(e) => setRegionManual(e.target.value)}
+                          placeholder="Ex: Florida, Cataluña, Lisboa"
+                          className="mt-2"
+                          translate="no"
+                        />
+                      </>
+                    )}
                   </div>
                 </div>
 
