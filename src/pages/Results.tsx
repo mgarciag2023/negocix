@@ -23,6 +23,53 @@ interface Lead {
   reasons: string[];
 }
 
+// Function to alternate leads by category for variety
+const alternateLeadsByCategory = (leads: Lead[]): Lead[] => {
+  if (leads.length === 0) return [];
+  
+  // Group leads by category
+  const byCategory: { [key: string]: Lead[] } = {};
+  leads.forEach(lead => {
+    const cat = lead.category || 'Outros';
+    if (!byCategory[cat]) byCategory[cat] = [];
+    byCategory[cat].push(lead);
+  });
+  
+  const categories = Object.keys(byCategory);
+  if (categories.length <= 1) return leads; // No need to alternate if single category
+  
+  // Interleave leads from different categories
+  const result: Lead[] = [];
+  const categoryIndices: { [key: string]: number } = {};
+  categories.forEach(cat => categoryIndices[cat] = 0);
+  
+  let totalAdded = 0;
+  const maxLeads = leads.length;
+  let catIndex = 0;
+  
+  while (totalAdded < maxLeads) {
+    // Get 2-4 leads from current category (random for variety)
+    const currentCat = categories[catIndex % categories.length];
+    const batch = Math.floor(Math.random() * 3) + 2; // 2-4 leads
+    
+    for (let i = 0; i < batch && totalAdded < maxLeads; i++) {
+      if (categoryIndices[currentCat] < byCategory[currentCat].length) {
+        result.push(byCategory[currentCat][categoryIndices[currentCat]]);
+        categoryIndices[currentCat]++;
+        totalAdded++;
+      }
+    }
+    
+    catIndex++;
+    
+    // Check if all categories are exhausted
+    const allExhausted = categories.every(cat => categoryIndices[cat] >= byCategory[cat].length);
+    if (allExhausted) break;
+  }
+  
+  return result;
+};
+
 const Results = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
@@ -161,10 +208,12 @@ const Results = () => {
           return;
         }
 
-        console.log('✅ API returned leads:', data?.leads?.length || 0);
+      console.log('✅ API returned leads:', data?.leads?.length || 0);
         
         if (data?.leads && data.leads.length > 0) {
-          setLeads(data.leads);
+          // Alternate leads by category for variety
+          const alternatedLeads = alternateLeadsByCategory(data.leads);
+          setLeads(alternatedLeads);
           // Cache the leads with timestamp
           localStorage.setItem('cachedLeads', JSON.stringify(data.leads));
           localStorage.setItem('cacheTimestamp', Date.now().toString());
