@@ -19,6 +19,7 @@ const Configuration = () => {
   const [location, setLocation] = useState("");
   const [state, setState] = useState("SP");
   const [companySize, setCompanySize] = useState("all");
+  const [revenueRange, setRevenueRange] = useState("all");
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
 
   const customerTypes = [
@@ -159,6 +160,7 @@ const Configuration = () => {
       location,
       state,
       companySize,
+      revenueRange,
     };
     
     const newConfigStr = JSON.stringify(newSearchConfig);
@@ -358,6 +360,45 @@ const Configuration = () => {
                       <RadioGroupItem value="all" id="all" />
                       <Label htmlFor="all" className="font-normal cursor-pointer" translate="no">
                         Todos os tamanhos
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                {/* Revenue Range */}
+                <div>
+                  <Label className="text-base font-semibold mb-4 block" translate="no">
+                    Faixa de faturamento:
+                  </Label>
+                  <RadioGroup value={revenueRange} onValueChange={setRevenueRange}>
+                    <div className="flex items-center space-x-2" translate="no">
+                      <RadioGroupItem value="micro" id="micro" />
+                      <Label htmlFor="micro" className="font-normal cursor-pointer" translate="no">
+                        Microempresa (até R$ 360 mil/ano)
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2" translate="no">
+                      <RadioGroupItem value="small-business" id="small-business" />
+                      <Label htmlFor="small-business" className="font-normal cursor-pointer" translate="no">
+                        Pequena empresa (R$ 360 mil a R$ 4,8 milhões/ano)
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2" translate="no">
+                      <RadioGroupItem value="medium-business" id="medium-business" />
+                      <Label htmlFor="medium-business" className="font-normal cursor-pointer" translate="no">
+                        Média empresa (R$ 4,8 milhões a R$ 300 milhões/ano)
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2" translate="no">
+                      <RadioGroupItem value="large-business" id="large-business" />
+                      <Label htmlFor="large-business" className="font-normal cursor-pointer" translate="no">
+                        Grande empresa (+R$ 300 milhões/ano)
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2" translate="no">
+                      <RadioGroupItem value="all" id="revenue-all" />
+                      <Label htmlFor="revenue-all" className="font-normal cursor-pointer" translate="no">
+                        Todas as faixas
                       </Label>
                     </div>
                   </RadioGroup>
