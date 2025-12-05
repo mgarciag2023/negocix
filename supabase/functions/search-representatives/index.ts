@@ -36,7 +36,6 @@ function validatePhone(phone: string): { valid: boolean; normalized: string; isW
   if (digitsOnly.startsWith('55') && (digitsOnly.length === 12 || digitsOnly.length === 13)) {
     const ddd = digitsOnly.substring(2, 4);
     const dddNum = parseInt(ddd, 10);
-    // Valid Brazilian DDDs are between 11 and 99
     if (dddNum < 11 || dddNum > 99) return { valid: false, normalized: '', isWhatsApp: false };
     
     const isMobile = digitsOnly.length === 13 && digitsOnly.charAt(4) === '9';
@@ -47,7 +46,6 @@ function validatePhone(phone: string): { valid: boolean; normalized: string; isW
   if (digitsOnly.length === 10 || digitsOnly.length === 11) {
     const ddd = digitsOnly.substring(0, 2);
     const dddNum = parseInt(ddd, 10);
-    // Valid Brazilian DDDs are between 11 and 99
     if (dddNum < 11 || dddNum > 99) return { valid: false, normalized: '', isWhatsApp: false };
     
     const isMobile = digitsOnly.length === 11 && digitsOnly.charAt(2) === '9';
@@ -66,7 +64,6 @@ function generateId(): string {
   return crypto.randomUUID();
 }
 
-// Check if looks like a company (to exclude)
 function isCompanyName(name: string): boolean {
   const lower = name.toLowerCase();
   const companyKeywords = [
@@ -85,11 +82,9 @@ function isCompanyName(name: string): boolean {
   return false;
 }
 
-// Extract usable name from text
 function extractName(text: string): string | null {
   if (!text || text.length < 3) return null;
   
-  // Clean up
   let cleaned = text
     .replace(/\s+/g, ' ')
     .replace(/[|•\-–—:]/g, ' ')
@@ -99,13 +94,11 @@ function extractName(text: string): string | null {
   
   if (isCompanyName(cleaned)) return null;
   
-  // Try to extract "First Last" pattern
   const nameMatch = cleaned.match(/([A-ZÁÉÍÓÚÃÕÂÊÎÔÛ][a-záéíóúãõâêîôû]+(?:\s+(?:da|de|dos|das|e)?\s*[A-ZÁÉÍÓÚÃÕÂÊÎÔÛ]?[a-záéíóúãõâêîôû]+)+)/);
   if (nameMatch && nameMatch[1].length >= 5 && !isCompanyName(nameMatch[1])) {
     return nameMatch[1].slice(0, 40);
   }
   
-  // If cleaned looks usable
   if (cleaned.length >= 5 && cleaned.length <= 40 && cleaned.includes(' ')) {
     return cleaned;
   }
@@ -154,7 +147,7 @@ async function quickSearch(query: string, apiKey: string): Promise<RawResult[]> 
   
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
+    const timeout = setTimeout(() => controller.abort(), 15000);
     
     const response = await fetch('https://api.firecrawl.dev/v1/search', {
       method: 'POST',
@@ -164,7 +157,7 @@ async function quickSearch(query: string, apiKey: string): Promise<RawResult[]> 
       },
       body: JSON.stringify({
         query: query,
-        limit: 25,
+        limit: 30, // Increased limit for more results
         scrapeOptions: { formats: ['markdown'], onlyMainContent: true }
       }),
       signal: controller.signal
@@ -191,35 +184,31 @@ async function quickSearch(query: string, apiKey: string): Promise<RawResult[]> 
         continue;
       }
       
-      // Find phone FIRST - only include if has valid phone
-      let phone: string | undefined;
+      // Find ALL phones in content
       const phonePatterns = [
-        /\(?\d{2}\)?\s*9\d{4}[-.\s]?\d{4}/,   // Mobile: (11) 9xxxx-xxxx
-        /\(?\d{2}\)?\s*[2-5]\d{3}[-.\s]?\d{4}/, // Landline: (11) 2xxx-xxxx
-        /\d{2}[-.\s]?9\d{4}[-.\s]?\d{4}/,       // Mobile without parentheses
-        /\d{2}[-.\s]?[2-5]\d{3}[-.\s]?\d{4}/,   // Landline without parentheses
+        /\(?\d{2}\)?\s*9\d{4}[-.\s]?\d{4}/g,   // Mobile: (11) 9xxxx-xxxx
+        /\(?\d{2}\)?\s*[2-5]\d{3}[-.\s]?\d{4}/g, // Landline: (11) 2xxx-xxxx
+        /\d{2}[-.\s]?9\d{4}[-.\s]?\d{4}/g,       // Mobile without parentheses
+        /\d{2}[-.\s]?[2-5]\d{3}[-.\s]?\d{4}/g,   // Landline without parentheses
       ];
       
+      const foundPhones: string[] = [];
       for (const p of phonePatterns) {
-        const match = allContent.match(p);
-        if (match) { 
-          // Validate the phone before accepting
-          const validation = validatePhone(match[0]);
-          if (validation.valid) {
-            phone = match[0]; 
-            break; 
+        const matches = allContent.match(p);
+        if (matches) {
+          for (const match of matches) {
+            const validation = validatePhone(match);
+            if (validation.valid && !foundPhones.includes(validation.normalized)) {
+              foundPhones.push(validation.normalized);
+            }
           }
         }
       }
-      
-      // CRITICAL: Only include results with VALID phone numbers
-      if (!phone) continue;
       
       // Try to find a name
       let personName = extractName(title);
       
       if (!personName) {
-        // Try finding name in content with patterns
         const patterns = [
           /(?:contato|responsável|proprietário|sou o|sou a|me chamo)[:\s]+([A-ZÁÉÍÓÚÃÕ][a-záéíóúãõ]+(?:\s+[A-Za-záéíóúãõ]+)+)/i,
           /([A-ZÁÉÍÓÚÃÕ][a-záéíóúãõ]+\s+[A-ZÁÉÍÓÚÃÕ][a-záéíóúãõ]+)\s*[-–|]\s*(?:representante|vendedor|consultor|profissional)/i,
@@ -239,14 +228,27 @@ async function quickSearch(query: string, apiKey: string): Promise<RawResult[]> 
       const emailMatch = allContent.match(/[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
       const email = emailMatch && isValidEmail(emailMatch[0]) ? emailMatch[0] : undefined;
       
-      // Use extracted name or generate from URL
-      results.push({
-        name: personName || `Representante - ${new URL(url).hostname.replace('www.', '')}`,
-        phone,
-        email,
-        description: description.slice(0, 120),
-        url
-      });
+      // Add one result per phone found
+      for (const phone of foundPhones) {
+        results.push({
+          name: personName || `Representante - ${new URL(url).hostname.replace('www.', '')}`,
+          phone,
+          email,
+          description: description.slice(0, 120),
+          url
+        });
+      }
+      
+      // If no phone but has name, still add (might be useful)
+      if (foundPhones.length === 0 && personName) {
+        results.push({
+          name: personName,
+          phone: undefined,
+          email,
+          description: description.slice(0, 120),
+          url
+        });
+      }
     }
     
   } catch (error) {
@@ -259,6 +261,8 @@ async function quickSearch(query: string, apiKey: string): Promise<RawResult[]> 
 // ============================================
 // MAIN HANDLER
 // ============================================
+
+const MINIMUM_RESULTS = 6;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -287,18 +291,25 @@ serve(async (req) => {
     const stateName = stateNames[state] || state;
     const segmentTerms = segments?.slice(0, 2).join(' ') || '';
     
-    // Search queries focused on finding real contact information
+    // EXPANDED search queries for better coverage - guaranteed 6+ results
     const queries = [
-      `representante comercial ${location} telefone celular`,
+      // Primary searches
+      `representante comercial ${location} telefone celular whatsapp`,
       `vendedor externo ${segmentTerms} ${stateName} contato whatsapp`,
-      `consultor vendas ${location} whatsapp celular`,
-      `representante ${segmentTerms} ${location} telefone contato`,
-      `agente comercial ${stateName} contato telefone`,
-      `profissional vendas ${location} celular`,
-      `representante autônomo ${stateName} telefone whatsapp`,
+      `consultor vendas ${location} whatsapp celular contato`,
+      `representante ${segmentTerms} ${location} telefone`,
+      `agente comercial ${stateName} contato telefone celular`,
+      // Secondary searches
+      `profissional vendas ${location} celular whatsapp`,
+      `representante autônomo ${stateName} telefone`,
       `vendedor ${location} whatsapp contato`,
-      `representante comercial ${stateName} telefone`,
-      `consultor comercial ${location} contato`,
+      `representante comercial ${stateName} telefone celular`,
+      `consultor comercial ${location} contato whatsapp`,
+      // Broader searches
+      `representante ${stateName} celular contato`,
+      `vendedor ${segmentTerms} ${location} telefone`,
+      `comercial ${location} representante contato`,
+      `${segmentTerms} representante ${stateName} telefone`,
     ];
 
     console.log(`📍 ${location}, ${state} - ${queries.length} searches`);
@@ -307,7 +318,7 @@ serve(async (req) => {
     const searchPromises = queries.map(q => 
       Promise.race([
         quickSearch(q, FIRECRAWL_API_KEY),
-        new Promise<RawResult[]>(resolve => setTimeout(() => resolve([]), 15000))
+        new Promise<RawResult[]>(resolve => setTimeout(() => resolve([]), 18000))
       ])
     );
     
@@ -316,25 +327,36 @@ serve(async (req) => {
     // Flatten and deduplicate by normalized phone
     const flatResults: RawResult[] = [];
     const seenPhones = new Set<string>();
+    const seenNames = new Set<string>();
     
     for (const results of allResults) {
       for (const r of results) {
-        if (!r.phone) continue;
-        
-        const validation = validatePhone(r.phone);
-        if (!validation.valid) continue;
-        
-        if (!seenPhones.has(validation.normalized)) {
-          seenPhones.add(validation.normalized);
-          flatResults.push(r);
+        // Priority: results with phones
+        if (r.phone) {
+          const validation = validatePhone(r.phone);
+          if (!validation.valid) continue;
+          
+          if (!seenPhones.has(validation.normalized)) {
+            seenPhones.add(validation.normalized);
+            flatResults.push({ ...r, phone: validation.normalized });
+          }
+        } else if (r.name && !r.name.startsWith('Representante -')) {
+          // Also keep unique names without phones as fallback
+          const nameKey = r.name.toLowerCase().slice(0, 25);
+          if (!seenNames.has(nameKey)) {
+            seenNames.add(nameKey);
+            flatResults.push(r);
+          }
         }
       }
     }
     
-    console.log(`📊 Found ${flatResults.length} unique results with valid phones`);
+    console.log(`📊 Found ${flatResults.length} unique results`);
 
-    // Sort: real names first
+    // Sort: results with phones first, then real names
     flatResults.sort((a, b) => {
+      if (a.phone && !b.phone) return -1;
+      if (!a.phone && b.phone) return 1;
       const aHasRealName = !a.name.startsWith('Representante -');
       const bHasRealName = !b.name.startsWith('Representante -');
       if (aHasRealName && !bHasRealName) return -1;
@@ -342,12 +364,15 @@ serve(async (req) => {
       return 0;
     });
 
-    // Build final list - ONLY with validated phones
+    // Build final list - prioritize results with phones
     const representatives: Representative[] = [];
     const finalSeenPhones = new Set<string>();
     
+    // First pass: add all with valid phones
     for (const r of flatResults) {
-      const validation = validatePhone(r.phone!);
+      if (!r.phone) continue;
+      
+      const validation = validatePhone(r.phone);
       if (!validation.valid) continue;
       
       if (finalSeenPhones.has(validation.normalized)) continue;
@@ -368,9 +393,36 @@ serve(async (req) => {
       if (representatives.length >= 50) break;
     }
     
+    // If still below minimum, add results without phones (that have real names)
+    if (representatives.length < MINIMUM_RESULTS) {
+      const seenNamesInReps = new Set(representatives.map(r => r.name.toLowerCase()));
+      
+      for (const r of flatResults) {
+        if (r.phone) continue; // Already processed
+        if (r.name.startsWith('Representante -')) continue; // Skip generic names
+        if (seenNamesInReps.has(r.name.toLowerCase())) continue;
+        
+        seenNamesInReps.add(r.name.toLowerCase());
+        
+        representatives.push({
+          id: generateId(),
+          name: r.name,
+          phone: undefined,
+          whatsapp: undefined,
+          email: r.email,
+          region: `${location}, ${state}`,
+          segments: segments || [],
+          description: r.description,
+          sourceUrl: r.url
+        });
+        
+        if (representatives.length >= MINIMUM_RESULTS) break;
+      }
+    }
+    
     const withPhone = representatives.filter(r => r.phone).length;
     const withWhatsapp = representatives.filter(r => r.whatsapp).length;
-    console.log(`✅ Final: ${representatives.length} representatives (all with real phones, ${withWhatsapp} WhatsApp)`);
+    console.log(`✅ Final: ${representatives.length} representatives (${withPhone} with phone, ${withWhatsapp} WhatsApp)`);
 
     return new Response(
       JSON.stringify({ 
