@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Package, Search } from "lucide-react";
+import { Package, Search, MapPin, CheckCircle2, ArrowRight, Sparkles, Building2 } from "lucide-react";
 
 const SearchSuppliers = () => {
   const navigate = useNavigate();
@@ -156,93 +156,130 @@ const SearchSuppliers = () => {
       
       <main className="container mx-auto px-4 py-8">
         <div className="mx-auto max-w-3xl">
-          <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary-light">
-              <Package className="h-8 w-8 text-primary" />
+          {/* Header */}
+          <div className="mb-8 text-center opacity-0 animate-fade-in-up">
+            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-primary shadow-primary">
+              <Package className="h-10 w-10 text-primary-foreground" />
             </div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
               Buscar Fornecedores
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-lg max-w-md mx-auto">
               Encontre os melhores fornecedores para o seu negócio
             </p>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Configurar Busca</CardTitle>
+          {/* Main Card */}
+          <Card className="shadow-card-hover border-border/50 overflow-hidden opacity-0 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+            <CardHeader className="bg-gradient-subtle border-b border-border/50 pb-6">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Building2 className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">Configurar Busca</CardTitle>
+                  <CardDescription>Preencha os campos abaixo para encontrar fornecedores</CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
+            <CardContent className="p-6">
+              <form onSubmit={handleSubmit} className="space-y-8">
                 {/* Products Selection */}
-                <div className="space-y-3">
-                  <Label className="text-base font-semibold">
-                    Que tipo de produtos você procura? *
-                  </Label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-72 overflow-y-auto border rounded-lg p-3">
-                    {productCategories.map((product) => (
-                      <div 
-                        key={product} 
-                        className="flex items-center space-x-2 p-2 rounded-md hover:bg-accent/50 transition-colors"
-                        onClick={() => handleProductToggle(product)}
-                      >
-                        <Checkbox
-                          id={product}
-                          checked={selectedProducts.includes(product)}
-                          onCheckedChange={() => handleProductToggle(product)}
-                        />
-                        <label
-                          htmlFor={product}
-                          className="text-sm cursor-pointer leading-tight flex-1"
-                        >
-                          {product}
-                        </label>
-                      </div>
-                    ))}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-base font-semibold flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-primary" />
+                      Que tipo de produtos você procura?
+                    </Label>
+                    {selectedProducts.length > 0 && (
+                      <span className="text-sm text-primary font-medium bg-primary-light px-3 py-1 rounded-full">
+                        {selectedProducts.length} selecionado(s)
+                      </span>
+                    )}
                   </div>
-                  {selectedProducts.length > 0 && (
-                    <p className="text-sm text-muted-foreground">
-                      {selectedProducts.length} produto(s) selecionado(s)
-                    </p>
-                  )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-80 overflow-y-auto border border-border/50 rounded-xl p-4 bg-muted/30">
+                    {productCategories.map((product) => {
+                      const isSelected = selectedProducts.includes(product);
+                      return (
+                        <div 
+                          key={product} 
+                          onClick={() => handleProductToggle(product)}
+                          className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
+                            isSelected 
+                              ? 'bg-primary/10 border-2 border-primary shadow-sm' 
+                              : 'bg-card hover:bg-primary/5 border-2 border-transparent hover:border-primary/20'
+                          }`}
+                        >
+                          <div className={`flex-shrink-0 w-5 h-5 rounded-md flex items-center justify-center transition-all ${
+                            isSelected ? 'bg-primary' : 'border-2 border-muted-foreground/30'
+                          }`}>
+                            {isSelected && <CheckCircle2 className="h-3.5 w-3.5 text-primary-foreground" />}
+                          </div>
+                          <span className={`text-sm leading-tight ${isSelected ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
+                            {product}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {/* Location */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="location">Cidade *</Label>
-                    <Input
-                      id="location"
-                      placeholder="Ex: São Paulo"
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                    />
-                  </div>
+                <div className="space-y-4">
+                  <Label className="text-base font-semibold flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-success" />
+                    Localização
+                  </Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="location" className="text-sm text-muted-foreground">Cidade</Label>
+                      <Input
+                        id="location"
+                        placeholder="Ex: São Paulo"
+                        value={location}
+                        onChange={(e) => setLocation(e.target.value)}
+                        className="h-12 rounded-xl border-border/50 focus:border-primary transition-colors"
+                      />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="state">Estado *</Label>
-                    <Select value={state} onValueChange={setState}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o estado" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {brazilianStates.map((s) => (
-                          <SelectItem key={s} value={s}>
-                            {s}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="space-y-2">
+                      <Label htmlFor="state" className="text-sm text-muted-foreground">Estado</Label>
+                      <Select value={state} onValueChange={setState}>
+                        <SelectTrigger className="h-12 rounded-xl border-border/50">
+                          <SelectValue placeholder="Selecione o estado" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {brazilianStates.map((s) => (
+                            <SelectItem key={s} value={s}>
+                              {s}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
 
-                <Button type="submit" className="w-full" size="lg">
+                <Button 
+                  type="submit" 
+                  className="w-full h-14 text-lg rounded-xl bg-gradient-primary hover:opacity-90 shadow-primary hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 group"
+                  size="lg"
+                >
                   <Search className="mr-2 h-5 w-5" />
                   Buscar Fornecedores
+                  <ArrowRight className="ml-2 h-5 w-5 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
                 </Button>
               </form>
             </CardContent>
           </Card>
+
+          {/* Info Card */}
+          <div className="mt-6 p-4 bg-success-light/50 rounded-xl border border-success/20 flex items-start gap-3 opacity-0 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
+            <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">Dica:</span> Você pode selecionar múltiplos tipos de produtos para ampliar sua busca. Os resultados mostrarão fornecedores de todas as categorias selecionadas.
+            </div>
+          </div>
         </div>
       </main>
     </div>
