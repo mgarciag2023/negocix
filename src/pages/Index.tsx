@@ -32,9 +32,9 @@ const Index = () => {
               </div>
               
               <h1 className="mb-6 text-4xl md:text-6xl font-bold leading-tight text-primary-foreground opacity-0 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-                Encontre Clientes e{" "}
+                Encontre Clientes, Representantes e Crie{" "}
                 <span className="relative">
-                  <span className="relative z-10">Venda Mais</span>
+                  <span className="relative z-10">Abordagens Inteligentes</span>
                   <span className="absolute bottom-2 left-0 right-0 h-3 bg-success-glow/40 -rotate-1 rounded" />
                 </span>
               </h1>
@@ -48,8 +48,9 @@ const Index = () => {
                   size="lg" 
                   asChild 
                   className="bg-success hover:bg-success-hover text-success-foreground shadow-success hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group text-base h-14 px-8 rounded-xl"
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                 >
-                  <Link to="/configuracao">
+                  <Link to="/configuracao" onClick={() => window.scrollTo(0, 0)}>
                     <Target className="mr-2 h-5 w-5" />
                     Buscar Leads
                     <ArrowRight className="ml-2 h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
@@ -61,7 +62,7 @@ const Index = () => {
                   asChild 
                   className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/20 hover:-translate-y-1 transition-all duration-300 text-base h-14 px-8 rounded-xl backdrop-blur-sm"
                 >
-                  <Link to="/search-representatives">
+                  <Link to="/search-representatives" onClick={() => window.scrollTo(0, 0)}>
                     <Users className="mr-2 h-5 w-5" />
                     Buscar Representantes
                   </Link>
@@ -72,7 +73,7 @@ const Index = () => {
                   asChild 
                   className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/20 hover:-translate-y-1 transition-all duration-300 text-base h-14 px-8 rounded-xl backdrop-blur-sm"
                 >
-                  <Link to="/search-suppliers">
+                  <Link to="/search-suppliers" onClick={() => window.scrollTo(0, 0)}>
                     <Package className="mr-2 h-5 w-5" />
                     Buscar Fornecedores
                   </Link>
@@ -83,7 +84,7 @@ const Index = () => {
                   asChild 
                   className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/20 hover:-translate-y-1 transition-all duration-300 text-base h-14 px-8 rounded-xl backdrop-blur-sm"
                 >
-                  <Link to="/abordagem">
+                  <Link to="/abordagem" onClick={() => window.scrollTo(0, 0)}>
                     <Sparkles className="mr-2 h-5 w-5" />
                     Criar Abordagem IA
                   </Link>
@@ -257,7 +258,7 @@ const Index = () => {
                     asChild 
                     className="bg-gradient-primary hover:opacity-90 shadow-primary hover:shadow-xl transition-all duration-300 hover:-translate-y-1 text-base h-14 px-8 rounded-xl"
                   >
-                    <Link to="/configuracao">
+                    <Link to="/configuracao" onClick={() => window.scrollTo(0, 0)}>
                       <Building2 className="mr-2 h-5 w-5" />
                       Começar Agora
                     </Link>
@@ -268,7 +269,7 @@ const Index = () => {
                     asChild 
                     className="border-2 hover:-translate-y-1 transition-all duration-300 text-base h-14 px-8 rounded-xl"
                   >
-                    <Link to="/abordagem">
+                    <Link to="/abordagem" onClick={() => window.scrollTo(0, 0)}>
                       <Sparkles className="mr-2 h-5 w-5" />
                       Criar Abordagem IA
                     </Link>
