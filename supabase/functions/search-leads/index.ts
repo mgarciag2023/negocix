@@ -31,98 +31,24 @@ function validatePhone(phone: string): { valid: boolean; normalized: string; isW
   return { valid: false, normalized: '', isWhatsApp: false };
 }
 
-// Validate if Instagram profile exists
-async function validateInstagramProfile(handle: string): Promise<boolean> {
-  try {
-    const username = handle.replace('@', '');
-    console.log(`🔍 Validating Instagram profile: ${username}`);
-    
-    // Make a HEAD request to check if profile exists (faster than GET)
-    const response = await fetch(`https://www.instagram.com/${username}/`, {
-      method: 'HEAD',
-      headers: { 'User-Agent': 'Mozilla/5.0' },
-      signal: AbortSignal.timeout(5000),
-      redirect: 'follow'
-    });
-    
-    // Profile exists if we get 200 OK
-    const exists = response.ok;
-    console.log(`${exists ? '✅' : '❌'} Instagram @${username}: ${response.status}`);
-    return exists;
-  } catch (error) {
-    console.error(`Error validating Instagram ${handle}:`, error);
-    return false;
+// FAST Instagram extraction - NO validation (too slow)
+function extractInstagramFromHtml(html: string): string | null {
+  // Priority 1: <link rel="me"> tag
+  const relMeMatch = html.match(/<link[^>]*rel=["']me["'][^>]*href=["']([^"']*instagram\.com[^"']*)["']/i) ||
+                     html.match(/<link[^>]*href=["']([^"']*instagram\.com[^"']*)["'][^>]*rel=["']me["']/i);
+  if (relMeMatch) {
+    const instagram = extractInstagramHandle(relMeMatch[1]);
+    if (instagram) return instagram;
   }
-}
-
-// Scrape Instagram from website
-async function scrapeInstagramFromWebsite(url: string): Promise<string | null> {
-  try {
-    console.log(`🔍 Scraping Instagram from: ${url}`);
-    const response = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0' },
-      signal: AbortSignal.timeout(5000) // 5 second timeout
-    });
-    
-    if (!response.ok) return null;
-    
-    const html = await response.text();
-    
-    // Priority 1: <link rel="me"> tag
-    const relMeMatch = html.match(/<link[^>]*rel=["']me["'][^>]*href=["']([^"']*instagram\.com[^"']*)["']/i) ||
-                       html.match(/<link[^>]*href=["']([^"']*instagram\.com[^"']*)["'][^>]*rel=["']me["']/i);
-    if (relMeMatch) {
-      const instagram = extractInstagramHandle(relMeMatch[1]);
-      if (instagram) {
-        // VALIDATE before returning
-        const isValid = await validateInstagramProfile(instagram);
-        if (isValid) {
-          console.log(`✅ Found Instagram via rel="me": ${instagram}`);
-          return instagram;
-        } else {
-          console.log(`❌ Instagram ${instagram} does not exist (rel="me")`);
-        }
-      }
-    }
-    
-    // Priority 2: <meta property="og:url"> with Instagram
-    const ogUrlMatch = html.match(/<meta[^>]*property=["']og:url["'][^>]*content=["']([^"']*instagram\.com[^"']*)["']/i) ||
-                       html.match(/<meta[^>]*content=["']([^"']*instagram\.com[^"']*)["'][^>]*property=["']og:url["']/i);
-    if (ogUrlMatch) {
-      const instagram = extractInstagramHandle(ogUrlMatch[1]);
-      if (instagram) {
-        // VALIDATE before returning
-        const isValid = await validateInstagramProfile(instagram);
-        if (isValid) {
-          console.log(`✅ Found Instagram via og:url: ${instagram}`);
-          return instagram;
-        } else {
-          console.log(`❌ Instagram ${instagram} does not exist (og:url)`);
-        }
-      }
-    }
-    
-    // Priority 3: Direct instagram.com links in HTML
-    const instagramLinks = html.match(/https?:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9._]+/gi);
-    if (instagramLinks && instagramLinks.length > 0) {
-      const instagram = extractInstagramHandle(instagramLinks[0]);
-      if (instagram) {
-        // VALIDATE before returning
-        const isValid = await validateInstagramProfile(instagram);
-        if (isValid) {
-          console.log(`✅ Found Instagram via direct link: ${instagram}`);
-          return instagram;
-        } else {
-          console.log(`❌ Instagram ${instagram} does not exist (direct link)`);
-        }
-      }
-    }
-    
-    return null;
-  } catch (error) {
-    console.error(`Error scraping website ${url}:`, error);
-    return null;
+  
+  // Priority 2: Direct instagram.com links
+  const instagramLinks = html.match(/https?:\/\/(www\.)?instagram\.com\/[a-zA-Z0-9._]+/gi);
+  if (instagramLinks && instagramLinks.length > 0) {
+    const instagram = extractInstagramHandle(instagramLinks[0]);
+    if (instagram) return instagram;
   }
+  
+  return null;
 }
 
 function extractInstagramHandle(url: string): string | null {
@@ -133,118 +59,40 @@ function extractInstagramHandle(url: string): string | null {
   return null;
 }
 
-// Check if website or content has WhatsApp indicators
-async function detectWhatsApp(phone: string, website?: string): Promise<boolean> {
-  // First check if phone format indicates WhatsApp (mobile number)
-  const phoneValidation = validatePhone(phone);
-  if (!phoneValidation.valid) return false;
-  if (phoneValidation.isWhatsApp) return true;
-  
-  // If website exists, check for WhatsApp links
-  if (website) {
-    try {
-      const response = await fetch(website, {
-        headers: { 'User-Agent': 'Mozilla/5.0' },
-        signal: AbortSignal.timeout(5000)
-      });
-      
-      if (response.ok) {
-        const html = await response.text();
-        const digitsOnly = phone.replace(/\D/g, '');
-        
-        // Check for WhatsApp links with this phone number
-        const hasWhatsAppLink = html.includes('wa.me') || 
-                               html.includes('api.whatsapp.com/send') ||
-                               html.includes('whatsapp://send');
-        
-        if (hasWhatsAppLink && html.includes(digitsOnly.slice(-10))) {
-          return true;
-        }
-      }
-    } catch (error) {
-      console.error('Error checking WhatsApp:', error);
-    }
+// FAST email extraction from HTML
+function extractEmailFromHtml(html: string): string | null {
+  // Priority 1: mailto links
+  const mailtoMatch = html.match(/href=["']mailto:([^"'?]+)/i);
+  if (mailtoMatch && mailtoMatch[1]) {
+    const email = mailtoMatch[1].trim();
+    if (isValidEmail(email)) return email;
   }
   
-  return false;
-}
-
-// Extract emails from website
-async function scrapeEmailFromWebsite(url: string): Promise<string | null> {
-  try {
-    console.log(`📧 Scraping email from: ${url}`);
-    const response = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0' },
-      signal: AbortSignal.timeout(5000)
+  // Priority 2: Common email patterns
+  const emailPattern = /\b[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/g;
+  const emails = html.match(emailPattern);
+  
+  if (emails && emails.length > 0) {
+    const validEmails = emails.filter(email => {
+      const lowerEmail = email.toLowerCase();
+      return isValidEmail(email) &&
+             !lowerEmail.includes('example.com') &&
+             !lowerEmail.includes('wixpress.com') &&
+             !lowerEmail.includes('sentry.io');
     });
     
-    if (!response.ok) return null;
+    // Prioritize business emails
+    const businessEmails = validEmails.filter(email => {
+      const lowerEmail = email.toLowerCase();
+      return lowerEmail.includes('contato') || lowerEmail.includes('vendas') ||
+             lowerEmail.includes('comercial') || lowerEmail.includes('info');
+    });
     
-    const html = await response.text();
-    
-    // Priority 1: <a href="mailto:"> links
-    const mailtoMatch = html.match(/href=["']mailto:([^"']+)["']/i);
-    if (mailtoMatch && mailtoMatch[1]) {
-      const email = mailtoMatch[1].split('?')[0].trim(); // Remove query params
-      if (isValidEmail(email)) {
-        console.log(`✅ Found email via mailto: ${email}`);
-        return email;
-      }
-    }
-    
-    // Priority 2: Email in meta tags
-    const metaEmailMatch = html.match(/<meta[^>]*content=["']([^"']*@[^"']+)["']/i);
-    if (metaEmailMatch && metaEmailMatch[1]) {
-      const email = metaEmailMatch[1].trim();
-      if (isValidEmail(email)) {
-        console.log(`✅ Found email in meta: ${email}`);
-        return email;
-      }
-    }
-    
-    // Priority 3: Common email patterns in visible text
-    const emailPattern = /\b[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b/g;
-    const emails = html.match(emailPattern);
-    
-    if (emails && emails.length > 0) {
-      // Filter out common noise patterns
-      const validEmails = emails.filter(email => {
-        const lowerEmail = email.toLowerCase();
-        return isValidEmail(email) &&
-               !lowerEmail.includes('example.com') &&
-               !lowerEmail.includes('test.com') &&
-               !lowerEmail.includes('domain.com') &&
-               !lowerEmail.includes('wixpress.com') &&
-               !lowerEmail.includes('sentry.io');
-      });
-      
-      // Prioritize business emails (contato, vendas, comercial, etc)
-      const businessEmails = validEmails.filter(email => {
-        const lowerEmail = email.toLowerCase();
-        return lowerEmail.includes('contato') ||
-               lowerEmail.includes('vendas') ||
-               lowerEmail.includes('comercial') ||
-               lowerEmail.includes('atendimento') ||
-               lowerEmail.includes('info') ||
-               lowerEmail.includes('contact');
-      });
-      
-      if (businessEmails.length > 0) {
-        console.log(`✅ Found business email: ${businessEmails[0]}`);
-        return businessEmails[0];
-      }
-      
-      if (validEmails.length > 0) {
-        console.log(`✅ Found email: ${validEmails[0]}`);
-        return validEmails[0];
-      }
-    }
-    
-    return null;
-  } catch (error) {
-    console.error(`Error scraping email from ${url}:`, error);
-    return null;
+    if (businessEmails.length > 0) return businessEmails[0];
+    if (validEmails.length > 0) return validEmails[0];
   }
+  
+  return null;
 }
 
 // Validate email format
@@ -253,77 +101,56 @@ function isValidEmail(email: string): boolean {
   return emailRegex.test(email) && !email.includes('..') && email.length <= 254;
 }
 
-// Search for official social media profiles and email
-async function searchSocialMediaProfiles(businessName: string, city: string, website?: string): Promise<{
+// FAST website scrape with 2s timeout - get all data in single request
+async function fastScrapeWebsite(url: string): Promise<{
   instagram?: string;
   facebook?: string;
-  whatsappBusiness?: string;
+  whatsappNumber?: string;
   email?: string;
 }> {
-  const profiles: {
-    instagram?: string;
-    facebook?: string;
-    whatsappBusiness?: string;
-    email?: string;
-  } = {};
+  const result: { instagram?: string; facebook?: string; whatsappNumber?: string; email?: string } = {};
   
   try {
-    console.log(`🔍 Searching social media for: ${businessName}`);
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      signal: AbortSignal.timeout(2000) // 2 second timeout - FAST
+    });
     
-    // 1. If website exists, try to scrape from there (most reliable)
-    if (website && website !== 'Não disponível') {
-      const instagramFromWebsite = await scrapeInstagramFromWebsite(website);
-      if (instagramFromWebsite) {
-        profiles.instagram = instagramFromWebsite;
-        console.log(`✅ Instagram found from website: ${profiles.instagram}`);
-      }
-      
-      // Extract email from website
-      const emailFromWebsite = await scrapeEmailFromWebsite(website);
-      if (emailFromWebsite) {
-        profiles.email = emailFromWebsite;
-        console.log(`✅ Email found from website: ${profiles.email}`);
-      }
-      
-      try {
-        const response = await fetch(website, {
-          headers: { 'User-Agent': 'Mozilla/5.0' },
-          signal: AbortSignal.timeout(5000)
-        });
-        
-        if (response.ok) {
-          const html = await response.text();
-          
-          // Search for Facebook page
-          const fbMatch = html.match(/https?:\/\/(www\.)?facebook\.com\/([a-zA-Z0-9._-]+)/i);
-          if (fbMatch && !['sharer', 'dialog', 'share'].includes(fbMatch[2])) {
-            profiles.facebook = `https://facebook.com/${fbMatch[2]}`;
-            console.log(`✅ Facebook found: ${profiles.facebook}`);
-          }
-          
-          // Search for WhatsApp Business
-          const waMatch = html.match(/wa\.me\/(\d+)/i) || html.match(/api\.whatsapp\.com\/send\?phone=(\d+)/i);
-          if (waMatch) {
-            profiles.whatsappBusiness = waMatch[1];
-            console.log(`✅ WhatsApp Business found: ${profiles.whatsappBusiness}`);
-          }
-        }
-      } catch (error) {
-        console.error('Error scraping social media from website:', error);
-      }
+    if (!response.ok) return result;
+    
+    const html = await response.text();
+    
+    // Extract all in one pass
+    result.instagram = extractInstagramFromHtml(html) || undefined;
+    result.email = extractEmailFromHtml(html) || undefined;
+    
+    // Facebook
+    const fbMatch = html.match(/https?:\/\/(www\.)?facebook\.com\/([a-zA-Z0-9._-]+)/i);
+    if (fbMatch && !['sharer', 'dialog', 'share'].includes(fbMatch[2])) {
+      result.facebook = `https://facebook.com/${fbMatch[2]}`;
+    }
+    
+    // WhatsApp
+    const waMatch = html.match(/wa\.me\/(\d+)/i) || html.match(/api\.whatsapp\.com\/send\?phone=(\d+)/i);
+    if (waMatch) {
+      result.whatsappNumber = waMatch[1];
     }
     
   } catch (error) {
-    console.error('Error searching social media:', error);
+    // Timeout or error - just return empty, don't slow down
   }
   
-  return profiles;
+  return result;
 }
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
+
+  // GLOBAL TIMEOUT - 85 seconds to ensure response within 90s
+  const GLOBAL_TIMEOUT = 85000;
+  const startTime = Date.now();
 
   try {
     const { segment, products, region, country, filters } = await req.json();
@@ -670,14 +497,25 @@ serve(async (req) => {
       console.log(`📍 ${isInternational ? 'International search' : 'No coordinates found'} for ${region}, using region name search only`);
     }
     
-    const apifyResponse = await fetch(
-      `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(apifyRequestBody),
-      }
-    );
+    // APIFY CALL with 70 second timeout to leave margin for processing
+    const APIFY_TIMEOUT = 70000;
+    const apifyController = new AbortController();
+    const apifyTimeoutId = setTimeout(() => apifyController.abort(), APIFY_TIMEOUT);
+    
+    let apifyResponse: Response;
+    try {
+      apifyResponse = await fetch(
+        `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(apifyRequestBody),
+          signal: apifyController.signal,
+        }
+      );
+    } finally {
+      clearTimeout(apifyTimeoutId);
+    }
 
     if (!apifyResponse.ok) {
       const errorText = await apifyResponse.text();
@@ -982,10 +820,23 @@ serve(async (req) => {
       });
     }
     
-    console.log(`✅ Processing ${apifyResults.length} REAL leads from Google Maps (no AI)...`);
+    console.log(`✅ Processing ${apifyResults.length} REAL leads from Google Maps...`);
+    console.log(`⏱️ Elapsed time so far: ${((Date.now() - startTime) / 1000).toFixed(1)}s`);
     
-    // Process ALL results (not just 25) and enrich
-    const enrichedLeads = await Promise.all(apifyResults.map(async (place: any, index: number) => {
+    // Process leads in batches of 10 for faster parallel execution
+    const BATCH_SIZE = 10;
+    const enrichedLeads: any[] = [];
+    
+    for (let i = 0; i < apifyResults.length; i += BATCH_SIZE) {
+      // Check if we're running out of time
+      const elapsedTime = Date.now() - startTime;
+      if (elapsedTime > 80000) {
+        console.log(`⚠️ Time limit approaching (${(elapsedTime/1000).toFixed(1)}s), processing remaining leads without scraping`);
+      }
+      
+      const batch = apifyResults.slice(i, i + BATCH_SIZE);
+      const batchResults = await Promise.all(batch.map(async (place: any, batchIndex: number) => {
+        const index = i + batchIndex;
       // Validate phone (all leads have phone due to filter)
       let validatedPhone = place.phone;
       const phoneValidation = validatePhone(validatedPhone);
@@ -1000,35 +851,36 @@ serve(async (req) => {
       // Get website
       const website = place.website || 'Não disponível';
       
-      // Search social media only if website exists
+      // FAST social media extraction - only if website exists and we have time
       let instagram = 'Não disponível';
       let instagramSource = 'none';
       let facebook = 'Não disponível';
-      let whatsappBusiness = undefined;
-      let emailFromWebsite = undefined;
+      let whatsappBusiness: string | undefined = undefined;
+      let emailFromWebsite: string | undefined = undefined;
       
-      if (website !== 'Não disponível') {
+      // Check elapsed time - skip slow operations if running out of time
+      const elapsedTime = Date.now() - startTime;
+      const hasTimeForScraping = elapsedTime < 60000; // Only scrape if under 60s elapsed
+      
+      if (website !== 'Não disponível' && hasTimeForScraping) {
         try {
-          const socialMedia = await searchSocialMediaProfiles(place.title, region, website);
-          instagram = socialMedia.instagram || instagram;
-          instagramSource = socialMedia.instagram ? 'website' : 'none';
-          facebook = socialMedia.facebook || facebook;
-          whatsappBusiness = socialMedia.whatsappBusiness;
-          emailFromWebsite = socialMedia.email;
+          const scraped = await fastScrapeWebsite(website);
+          instagram = scraped.instagram || instagram;
+          instagramSource = scraped.instagram ? 'website' : 'none';
+          facebook = scraped.facebook || facebook;
+          if (scraped.whatsappNumber) {
+            whatsappBusiness = scraped.whatsappNumber;
+          }
+          emailFromWebsite = scraped.email;
         } catch (error) {
-          console.error(`Error getting social media for ${place.title}:`, error);
+          // Silently continue - don't slow down for scraping errors
         }
       }
       
-      // WhatsApp detection
-      let hasWhatsApp = false;
-      try {
-        hasWhatsApp = await detectWhatsApp(validatedPhone, website);
-        if (hasWhatsApp && !whatsappBusiness) {
-          whatsappBusiness = validatedPhone;
-        }
-      } catch (error) {
-        console.error(`Error detecting WhatsApp for ${place.title}:`, error);
+      // WhatsApp detection - FAST: just check phone format, skip website check
+      let hasWhatsApp = phoneValidation.isWhatsApp;
+      if (hasWhatsApp && !whatsappBusiness) {
+        whatsappBusiness = validatedPhone;
       }
       
       // Determine final email (prioritize Google Maps, fallback to website)
@@ -1105,7 +957,10 @@ serve(async (req) => {
         },
         needsReview: false
       };
-    }));
+      }));
+      
+      enrichedLeads.push(...batchResults);
+    }
     
     // Sort by confidence score
     enrichedLeads.sort((a, b) => b.confidenceScore - a.confidenceScore);
