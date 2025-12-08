@@ -336,65 +336,108 @@ serve(async (req) => {
     // Use Apify Google Maps Scraper for real data - ONLY SOURCE OF TRUTH
     console.log('📡 Searching Google Maps via Apify API (ONLY real data)...');
     
-    // Enhanced search terms for specific categories - MAXIMIZE RESULTS
+    // Enhanced search terms for specific categories - MAXIMIZE RESULTS WITH BETTER COVERAGE
     const categorySearchTerms: { [key: string]: string[] } = {
-      // Materiais e Construção
-      'materiais elétricos': ['materiais elétricos', 'loja elétrica', 'material eletrico', 'distribuidora elétrica', 'casa de elétrica', 'componentes elétricos'],
-      'materiais de construção': ['materiais de construção', 'materiais construcao', 'loja construção', 'casa construção', 'depósito construção', 'construmateriais', 'home center'],
-      'ferramentas': ['ferramentas', 'loja de ferramentas', 'ferragens e ferramentas', 'equipamentos', 'casa das ferramentas', 'ferramentaria'],
-      'chaveiro': ['chaveiro', 'chaveiro 24h', 'cópia de chaves', 'serviço de chaveiro', 'chaveiro automotivo'],
+      // Materiais e Construção - EXPANDED
+      'materiais elétricos': ['materiais elétricos', 'loja elétrica', 'material eletrico', 'distribuidora elétrica', 'casa de elétrica', 'componentes elétricos', 'elétrica', 'instalações elétricas', 'fios e cabos', 'iluminação elétrica'],
+      'materiais de construção': ['materiais de construção', 'materiais construcao', 'loja construção', 'casa construção', 'depósito construção', 'construmateriais', 'home center', 'depósito', 'loja de construção', 'casa de materiais'],
+      'ferramentas': ['ferramentas', 'loja de ferramentas', 'ferragens e ferramentas', 'equipamentos', 'casa das ferramentas', 'ferramentaria', 'ferragens', 'ferramentas elétricas', 'ferramentas manuais'],
+      'chaveiro': ['chaveiro', 'chaveiro 24h', 'cópia de chaves', 'serviço de chaveiro', 'chaveiro automotivo', 'fechaduras', 'cadeados', 'chaveiro residencial'],
+      'ferragens': ['ferragens', 'loja de ferragens', 'casa de ferragens', 'parafusos', 'ferragens em geral', 'ferragem', 'dobradiças', 'puxadores'],
       
-      // Agropecuária
-      'agropecuária': ['agropecuária', 'loja agropecuaria', 'produtos agropecuários', 'insumos agrícolas', 'casa agropecuaria', 'loja rural', 'veterinária agro'],
+      // Agropecuária - EXPANDED  
+      'agropecuária': ['agropecuária', 'loja agropecuaria', 'produtos agropecuários', 'insumos agrícolas', 'casa agropecuaria', 'loja rural', 'veterinária agro', 'agro', 'pet shop agro', 'produtos rurais', 'sementes', 'adubos'],
       
-      // E-commerce
-      'e-commerce': ['loja online', 'loja virtual', 'comércio eletrônico', 'e-commerce', 'vendas online', 'marketplace'],
+      // E-commerce - EXPANDED
+      'e-commerce': ['loja online', 'loja virtual', 'comércio eletrônico', 'e-commerce', 'vendas online', 'marketplace', 'loja internet', 'vendas pela internet'],
       
-      // Transporte e Veículos
-      'transportadoras': ['transportadora', 'transporte de cargas', 'empresa de transporte', 'frete', 'logística', 'transportes', 'cargas', 'mudanças'],
-      'frotistas': ['frota', 'gestão de frota', 'empresa de veículos', 'locadora', 'transportadora'],
-      'empresas com frota própria': ['distribuidora', 'atacadista', 'indústria', 'fábrica', 'empresa grande'],
-      'vans escolares': ['transporte escolar', 'van escolar', 'escolar', 'transporte de alunos'],
-      'táxis': ['táxi', 'taxi', 'cooperativa de táxi', 'ponto de táxi', 'radiotáxi'],
-      'cooperativas de táxi': ['cooperativa táxi', 'táxi', 'taxi', 'radiotáxi'],
-      'motoristas de aplicativo': ['uber', '99', 'motorista particular', 'transporte particular'],
-      'empresas de logística': ['logística', 'distribuição', 'armazém', 'centro de distribuição', 'operador logístico'],
-      'empresas de entrega': ['entregas', 'delivery', 'motoboy', 'courier', 'serviço de entrega', 'entregas rápidas'],
-      'locadoras de veículos': ['locadora', 'aluguel de carros', 'rent a car', 'locadora de veículos', 'rental'],
-      'empresas de turismo': ['turismo', 'agência de turismo', 'excursões', 'fretamento', 'viagens', 'receptivo'],
-      'protecao-veicular': ['transportadora', 'logística', 'transporte escolar', 'táxi', 'locadora de veículos', 'turismo', 'entregas'],
+      // Transporte e Veículos - EXPANDED
+      'transportadoras': ['transportadora', 'transporte de cargas', 'empresa de transporte', 'frete', 'logística', 'transportes', 'cargas', 'mudanças', 'transporte rodoviário', 'transportes e logística'],
+      'frotistas': ['frota', 'gestão de frota', 'empresa de veículos', 'locadora', 'transportadora', 'frota própria', 'administração de frotas'],
+      'empresas com frota própria': ['distribuidora', 'atacadista', 'indústria', 'fábrica', 'empresa grande', 'distribuidor', 'atacado'],
+      'vans escolares': ['transporte escolar', 'van escolar', 'escolar', 'transporte de alunos', 'transporte estudantil'],
+      'táxis': ['táxi', 'taxi', 'cooperativa de táxi', 'ponto de táxi', 'radiotáxi', 'central de táxi'],
+      'cooperativas de táxi': ['cooperativa táxi', 'táxi', 'taxi', 'radiotáxi', 'táxi cooperativa'],
+      'motoristas de aplicativo': ['uber', '99', 'motorista particular', 'transporte particular', 'motorista app'],
+      'empresas de logística': ['logística', 'distribuição', 'armazém', 'centro de distribuição', 'operador logístico', 'logística integrada', 'supply chain'],
+      'empresas de entrega': ['entregas', 'delivery', 'motoboy', 'courier', 'serviço de entrega', 'entregas rápidas', 'entrega expressa', 'transportadora entregas'],
+      'locadoras de veículos': ['locadora', 'aluguel de carros', 'rent a car', 'locadora de veículos', 'rental', 'locação veículos'],
+      'empresas de turismo': ['turismo', 'agência de turismo', 'excursões', 'fretamento', 'viagens', 'receptivo', 'agência de viagens', 'tur'],
+      'protecao-veicular': ['transportadora', 'logística', 'transporte escolar', 'táxi', 'locadora de veículos', 'turismo', 'entregas', 'frota', 'veículos'],
       
-      // INDÚSTRIAS (NOVAS CATEGORIAS)
-      'indústrias que utilizam eletrônica': ['indústria eletrônica', 'fábrica eletrônicos', 'montagem eletrônica', 'componentes eletrônicos', 'placas eletrônicas', 'manufatura eletrônica'],
-      'indústrias automotivas': ['indústria automotiva', 'autopeças', 'fábrica automotiva', 'peças automotivas', 'montadora', 'indústria de autopeças', 'fabricante automotivo'],
-      'indústrias de equipamentos hospitalares': ['equipamentos hospitalares', 'equipamentos médicos', 'indústria hospitalar', 'dispositivos médicos', 'fabricante hospitalar'],
-      'indústrias de equipamentos de segurança': ['equipamentos de segurança', 'EPI', 'fabricante segurança', 'indústria segurança', 'equipamentos proteção'],
-      'indústrias de automação': ['automação industrial', 'indústria automação', 'sistemas automação', 'robótica industrial', 'fábrica automação'],
-      'indústrias de tecnologia': ['indústria tecnologia', 'fábrica software', 'empresa tecnologia', 'TI industrial', 'fabricante tecnologia'],
-      'indústrias de iluminação': ['indústria iluminação', 'fábrica iluminação', 'fabricante LED', 'lâmpadas LED', 'iluminação industrial', 'luminárias LED'],
+      // INDÚSTRIAS - EXPANDED
+      'indústrias que utilizam eletrônica': ['indústria eletrônica', 'fábrica eletrônicos', 'montagem eletrônica', 'componentes eletrônicos', 'placas eletrônicas', 'manufatura eletrônica', 'eletrônicos industriais'],
+      'indústrias automotivas': ['indústria automotiva', 'autopeças', 'fábrica automotiva', 'peças automotivas', 'montadora', 'indústria de autopeças', 'fabricante automotivo', 'peças de carro'],
+      'indústrias de equipamentos hospitalares': ['equipamentos hospitalares', 'equipamentos médicos', 'indústria hospitalar', 'dispositivos médicos', 'fabricante hospitalar', 'material hospitalar'],
+      'indústrias de equipamentos de segurança': ['equipamentos de segurança', 'EPI', 'fabricante segurança', 'indústria segurança', 'equipamentos proteção', 'segurança do trabalho'],
+      'indústrias de automação': ['automação industrial', 'indústria automação', 'sistemas automação', 'robótica industrial', 'fábrica automação', 'automação'],
+      'indústrias de tecnologia': ['indústria tecnologia', 'fábrica software', 'empresa tecnologia', 'TI industrial', 'fabricante tecnologia', 'tech', 'software'],
+      'indústrias de iluminação': ['indústria iluminação', 'fábrica iluminação', 'fabricante LED', 'lâmpadas LED', 'iluminação industrial', 'luminárias LED', 'LED'],
       
-      // Têxtil
-      'tecidos': ['loja de tecidos', 'tecidos', 'armarinho', 'aviamentos'],
-      'confecções': ['confecção', 'fábrica de roupas', 'indústria têxtil', 'malharia'],
-      'ateliês de costura': ['ateliê', 'costura', 'alfaiataria', 'modista'],
+      // Têxtil - EXPANDED
+      'tecidos': ['loja de tecidos', 'tecidos', 'armarinho', 'aviamentos', 'tecidos em geral', 'malhas', 'loja de malhas'],
+      'confecções': ['confecção', 'fábrica de roupas', 'indústria têxtil', 'malharia', 'vestuário', 'fabricação de roupas', 'indústria de confecção'],
+      'ateliês de costura': ['ateliê', 'costura', 'alfaiataria', 'modista', 'ateliê de costura', 'costureira'],
+      'malharias': ['malharia', 'malhas', 'tricô', 'fabricação de malhas'],
+      'bordados': ['bordado', 'bordados', 'bordadeira', 'estamparia'],
+      'lojas de aviamentos': ['aviamentos', 'armarinho', 'botões', 'zíperes', 'linha', 'agulhas'],
       
-      // Supermercados
-      'supermercados': ['supermercado', 'mercado', 'hipermercado', 'atacadão', 'atacarejo'],
+      // Supermercados - EXPANDED
+      'supermercados': ['supermercado', 'mercado', 'hipermercado', 'atacadão', 'atacarejo', 'minimercado', 'mercearia', 'empório', 'armazém'],
+      'hipermercados': ['hipermercado', 'supermercado grande', 'atacadão', 'big', 'extra'],
+      'cestas básicas': ['cesta básica', 'cestas básicas', 'distribuidora cestas'],
+      'cestas natalinas': ['cesta natalina', 'cestas de natal', 'kits natalinos'],
       
-      // Gráficas
-      'gráfica': ['gráfica', 'gráfica rápida', 'impressão digital', 'comunicação visual', 'serigrafia'],
+      // Gráficas - EXPANDED
+      'gráfica': ['gráfica', 'gráfica rápida', 'impressão digital', 'comunicação visual', 'serigrafia', 'gráfica offset', 'impressora', 'copiadora', 'banner', 'adesivos'],
+      'gráficas rápidas': ['gráfica rápida', 'copy', 'impressão rápida', 'copiadora'],
+      'comunicação visual': ['comunicação visual', 'letreiros', 'placas', 'banner', 'fachada', 'outdoor'],
       
-      // Saúde
-      'telemedicina': ['telemedicina', 'clínica', 'consultório médico', 'laboratório', 'clínica popular'],
+      // Saúde - EXPANDED
+      'telemedicina': ['telemedicina', 'clínica', 'consultório médico', 'laboratório', 'clínica popular', 'médico online', 'consulta online'],
+      'clínicas': ['clínica', 'clínica médica', 'consultório', 'centro médico', 'policlínica'],
+      'laboratórios': ['laboratório', 'análises clínicas', 'exames', 'diagnóstico'],
+      'farmácias': ['farmácia', 'drogaria', 'farmácia de manipulação', 'farmácia popular'],
       
-      // Arenas Esportivas
-      'arenas de beach tennis': ['beach tennis', 'quadra beach tennis', 'arena beach tennis', 'esporte areia'],
-      'quadras de tênis': ['tênis', 'quadra de tênis', 'clube de tênis', 'escola de tênis'],
-      'clubes esportivos': ['clube esportivo', 'academia', 'centro esportivo', 'clube recreativo'],
+      // Arenas Esportivas - EXPANDED
+      'arenas de beach tennis': ['beach tennis', 'quadra beach tennis', 'arena beach tennis', 'esporte areia', 'arena esportiva'],
+      'quadras de tênis': ['tênis', 'quadra de tênis', 'clube de tênis', 'escola de tênis', 'quadra esportiva'],
+      'clubes esportivos': ['clube esportivo', 'academia', 'centro esportivo', 'clube recreativo', 'clube', 'esportes'],
+      'academias': ['academia', 'fitness', 'musculação', 'crossfit', 'pilates'],
       
-      // Atacadistas
-      'atacadistas de alimentos': ['atacadista', 'atacado alimentos', 'distribuidora alimentos', 'atacarejo'],
-      'distribuidores de alimentos': ['distribuidor alimentos', 'distribuidora', 'atacado', 'food service'],
+      // Atacadistas - EXPANDED
+      'atacadistas de alimentos': ['atacadista', 'atacado alimentos', 'distribuidora alimentos', 'atacarejo', 'atacado', 'distribuidor atacado'],
+      'distribuidores de alimentos': ['distribuidor alimentos', 'distribuidora', 'atacado', 'food service', 'distribuição alimentos'],
+      
+      // Oficinas e Autopeças - NEW
+      'oficinas mecânicas': ['oficina mecânica', 'oficina', 'mecânico', 'auto center', 'centro automotivo', 'reparos automotivos'],
+      'autopeças': ['autopeças', 'peças automotivas', 'loja de autopeças', 'auto peças', 'peças de carro'],
+      
+      // Restaurantes e Alimentação - NEW
+      'restaurantes': ['restaurante', 'restaurantes', 'lanchonete', 'buffet', 'self service'],
+      'padarias': ['padaria', 'panificadora', 'confeitaria', 'pães', 'bolos'],
+      'bares': ['bar', 'bares', 'pub', 'boteco'],
+      
+      // Pet - NEW
+      'pet shop': ['pet shop', 'petshop', 'loja de animais', 'veterinária', 'banho e tosa', 'ração'],
+      
+      // Papelaria e Escritório - NEW
+      'papelaria': ['papelaria', 'material escolar', 'escritório', 'bazar', 'livraria'],
+      'material de escritório': ['material de escritório', 'suprimentos', 'informática', 'escritório'],
+      
+      // Óticas - NEW
+      'óticas': ['ótica', 'óculos', 'lentes', 'oftalmologia'],
+      
+      // Joalherias - NEW
+      'joalherias': ['joalheria', 'jóias', 'relojoaria', 'semi-jóias', 'bijuteria'],
+      
+      // Móveis e Decoração - NEW
+      'móveis': ['móveis', 'loja de móveis', 'móveis planejados', 'marcenaria', 'mobília'],
+      'decoração': ['decoração', 'home decor', 'design de interiores', 'artigos decoração'],
+      
+      // Eletrônicos - NEW
+      'eletrônicos': ['eletrônicos', 'loja de eletrônicos', 'celulares', 'informática', 'assistência técnica'],
+      'celulares': ['celulares', 'loja de celular', 'smartphone', 'assistência celular', 'conserto celular'],
     };
     
     // Build search queries - use multiple terms for better coverage
@@ -427,23 +470,33 @@ serve(async (req) => {
       });
       
       if (allMatchedTerms.length > 0) {
-        // Remove duplicates and limit to avoid too many API calls
-        const uniqueTerms = [...new Set(allMatchedTerms)].slice(0, 8);
+        // Remove duplicates and use up to 10 terms for better coverage (was 8)
+        const uniqueTerms = [...new Set(allMatchedTerms)].slice(0, 10);
         searchQueries = uniqueTerms.map(term => 
           `${term} ${locationString}`
         );
         console.log(`📋 Using ${searchQueries.length} unique search terms from ${allMatchedTerms.length} total`);
       } else {
-        // Standard search - use segment directly but also add variations
+        // Standard search - use segment directly with multiple variations
         const firstCustomer = segment.split(',')[0].trim();
         const baseQuery = `${firstCustomer} ${locationString}`;
-        searchQueries = [baseQuery];
+        
+        // Create multiple search variations for better coverage
+        searchQueries = [
+          baseQuery,
+          `loja de ${firstCustomer} ${locationString}`,
+          `${firstCustomer.split(' ')[0]} ${locationString}` // First word only
+        ];
         
         // Add industry-specific searches if segment mentions indústria
         if (segmentLowerNorm.includes('industria') || segmentLowerNorm.includes('fábrica')) {
           searchQueries.push(`fábrica ${firstCustomer} ${locationString}`);
-          searchQueries.push(`fabricante ${locationString}`);
+          searchQueries.push(`fabricante ${firstCustomer} ${locationString}`);
+          searchQueries.push(`indústria ${locationString}`);
         }
+        
+        // Remove duplicates
+        searchQueries = [...new Set(searchQueries)];
         
         console.log(`🔍 Standard search queries: ${searchQueries.join(' | ')}`);
       }
@@ -555,7 +608,8 @@ serve(async (req) => {
     const MAX_TOTAL_LEADS = 150;
     // CRITICAL FIX: Divide max by number of search queries to ensure total never exceeds 150
     const numQueries = searchQueries.length;
-    const placesPerSearch = Math.max(10, Math.floor(MAX_TOTAL_LEADS / numQueries));
+    // Increase places per search for better coverage, minimum 15
+    const placesPerSearch = Math.max(15, Math.ceil(MAX_TOTAL_LEADS / numQueries));
     
     console.log(`📊 ${numQueries} search queries, requesting ${placesPerSearch} places each (max ${MAX_TOTAL_LEADS} total leads)`);
     
@@ -598,8 +652,11 @@ serve(async (req) => {
       ...(segment.toLowerCase().includes('indústria') && {
         categoryFilters: ['manufacturer', 'factory', 'industrial_company']
       }),
-      maxAutomaticZoomOut: 5, // MAXIMUM zoom out for broader coverage
+      maxAutomaticZoomOut: 6, // MAXIMUM zoom out for even broader coverage (was 5)
       includeSearchResultsNearby: true, // Include nearby results
+      allPlacesNoSearch: false, // Search-based mode
+      scrapeContacts: true, // Get contact info
+      scrapeImages: false, // Skip images for speed
     };
     
     // Add coordinates only for Brazil (we have Brazilian city coords)
@@ -607,8 +664,8 @@ serve(async (req) => {
     if (!isInternational && cityCoords) {
       apifyRequestBody.lat = cityCoords.lat;
       apifyRequestBody.lng = cityCoords.lng;
-      apifyRequestBody.radius = 150000; // 150 km radius MAXIMUM for better coverage
-      console.log(`📍 Using coordinates: ${cityCoords.lat}, ${cityCoords.lng} with 150km radius`);
+      apifyRequestBody.radius = 180000; // 180 km radius for even better coverage (was 150)
+      console.log(`📍 Using coordinates: ${cityCoords.lat}, ${cityCoords.lng} with 180km radius`);
     } else {
       console.log(`📍 ${isInternational ? 'International search' : 'No coordinates found'} for ${region}, using region name search only`);
     }
