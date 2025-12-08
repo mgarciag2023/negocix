@@ -731,6 +731,48 @@ serve(async (req) => {
         'bar e restaurante', 'pub', 'night club', 'bar'
       ];
       
+      // IRRELEVANT BUSINESS TYPES TO EXCLUDE - prevent results like Magazine Luiza, papelaria when searching for specific categories
+      const irrelevantBusinessTypes: { [key: string]: string[] } = {
+        // When searching for construction materials or tools, exclude these
+        'materiais de construção': ['magazine luiza', 'magazineluiza', 'magazine', 'papelaria', 'livraria', 'supermercado', 'hipermercado', 'atacadao', 'carrefour', 'extra', 'big', 'lojas americanas', 'casas bahia', 'ponto frio', 'fast shop', 'ri happy', 'pernambucanas', 'renner', 'riachuelo', 'c&a', 'marisa', 'havan', 'amazon', 'mercado livre', 'shopee'],
+        'ferramentas': ['magazine luiza', 'magazineluiza', 'magazine', 'papelaria', 'livraria', 'supermercado', 'hipermercado', 'atacadao', 'carrefour', 'extra', 'big', 'lojas americanas', 'casas bahia', 'ponto frio', 'fast shop', 'ri happy', 'pernambucanas', 'renner', 'riachuelo', 'c&a', 'marisa', 'havan', 'amazon', 'mercado livre', 'shopee', 'drogaria', 'farmacia', 'drogasil', 'droga raia', 'panvel'],
+        'ferragens': ['magazine luiza', 'magazineluiza', 'magazine', 'papelaria', 'livraria', 'supermercado', 'hipermercado', 'lojas americanas', 'casas bahia', 'ponto frio', 'fast shop', 'ri happy', 'pernambucanas', 'renner', 'riachuelo', 'c&a', 'marisa', 'havan'],
+        'materiais elétricos': ['magazine luiza', 'magazineluiza', 'magazine', 'papelaria', 'livraria', 'supermercado', 'hipermercado', 'lojas americanas', 'casas bahia', 'ponto frio', 'fast shop', 'ri happy', 'pernambucanas', 'renner', 'riachuelo', 'c&a', 'marisa', 'havan', 'drogaria', 'farmacia'],
+        'agropecuária': ['magazine luiza', 'magazineluiza', 'magazine', 'papelaria', 'livraria', 'supermercado', 'lojas americanas', 'casas bahia', 'ponto frio', 'fast shop', 'ri happy', 'pernambucanas', 'renner', 'riachuelo', 'c&a', 'marisa', 'havan'],
+      };
+      
+      // Large retail chains and e-commerce platforms to ALWAYS EXCLUDE (these are not real leads for salespeople)
+      const alwaysExcludedChains = [
+        'magazine luiza', 'magazineluiza', 'magalu',
+        'lojas americanas', 'americanas',
+        'casas bahia',
+        'ponto frio', 'pontofrio',
+        'carrefour',
+        'walmart',
+        'extra hipermercado', 'extra',
+        'big', 'big bompreco',
+        'atacadao', 'atacadão',
+        'amazon', 'amazon.com',
+        'mercado livre', 'mercadolivre',
+        'shopee',
+        'aliexpress',
+        'magazine luíza',
+        'havan',
+        'ri happy',
+        'fast shop',
+        'pernambucanas',
+        'renner',
+        'riachuelo',
+        'c&a',
+        'marisa',
+        'centauro',
+        'netshoes',
+        'dafiti',
+        'kabum',
+        'submarino',
+        'shoptime',
+      ];
+      
       console.log(`📊 Raw results from Apify BEFORE filtering: ${apifyResults.length}`);
       
       apifyResults = apifyResults.filter((place: any) => {
@@ -783,6 +825,24 @@ serve(async (req) => {
         if (closureIndicators.some(indicator => description.includes(indicator))) {
           console.log(`🚫 Description indicates closure: ${place.title}`);
           return false;
+        }
+        
+        // NEW: ALWAYS EXCLUDE large retail chains and e-commerce platforms
+        if (alwaysExcludedChains.some(chain => title.includes(chain))) {
+          console.log(`🚫 Large retail chain excluded: ${place.title}`);
+          return false;
+        }
+        
+        // NEW: Exclude irrelevant business types based on what was searched
+        for (const [searchCategory, excludedTypes] of Object.entries(irrelevantBusinessTypes)) {
+          const searchCategoryNorm = normalizeString(searchCategory.toLowerCase());
+          if (segmentLower.includes(searchCategoryNorm)) {
+            // Check if this result matches any excluded type for this search
+            if (excludedTypes.some(excluded => title.includes(excluded) || categoryName.includes(excluded))) {
+              console.log(`🚫 Irrelevant for "${searchCategory}": ${place.title} (${categoryName})`);
+              return false;
+            }
+          }
         }
         
         // 1. MUST have valid phone (QUALITY REQUIREMENT)
