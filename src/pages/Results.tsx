@@ -21,6 +21,8 @@ interface Lead {
   revenue: string;
   openedDate: string;
   reasons: string[];
+  employeeCount?: string;
+  companySize?: string;
 }
 
 // Function to alternate leads by category for variety
@@ -188,8 +190,7 @@ const Results = () => {
           body: {
             segment: searchConfig.selectedCustomers.join(', '),
             products: searchConfig.products,
-            location: searchConfig.location,
-            state: searchConfig.state,
+            region: searchConfig.region,
             country: searchConfig.country || 'BR',
             filters: {
               category: searchConfig.category,

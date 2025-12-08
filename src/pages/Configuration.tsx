@@ -17,9 +17,8 @@ const Configuration = () => {
   const [category, setCategory] = useState("");
   const [products, setProducts] = useState("");
   const [country, setCountry] = useState("BR");
-  const [location, setLocation] = useState("");
-  const [state, setState] = useState("SP");
-  const [regionManual, setRegionManual] = useState("");
+  const [customCountry, setCustomCountry] = useState("");
+  const [region, setRegion] = useState("");
   const [companySize, setCompanySize] = useState("all");
   const [revenueRange, setRevenueRange] = useState("all");
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
@@ -169,9 +168,10 @@ const Configuration = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const regionValue = country === "BR" ? state : regionManual;
+    // Determine final country
+    const finalCountry = country === "OTHER" ? customCountry : country;
     
-    if (!category || !products || selectedCustomers.length === 0 || !location || (country === "BR" && !state) || (country !== "BR" && !regionManual)) {
+    if (!category || !products || selectedCustomers.length === 0 || !region || (country === "OTHER" && !customCountry)) {
       toast({
         title: "Campos obrigatórios",
         description: "Por favor, preencha todos os campos obrigatórios",
@@ -186,9 +186,8 @@ const Configuration = () => {
       category,
       products,
       selectedCustomers,
-      location,
-      state: regionValue,
-      country,
+      region,
+      country: finalCountry,
       companySize,
       revenueRange,
     };
@@ -307,94 +306,56 @@ const Configuration = () => {
                 </div>
 
                 {/* Country */}
-                <div>
-                  <Label htmlFor="country" className="text-base font-semibold" translate="no">
-                    País: *
-                  </Label>
-                  <Select value={country} onValueChange={(val) => { setCountry(val); if (val !== "BR") setRegionManual(""); }}>
-                    <SelectTrigger className="mt-2" id="country" translate="no">
-                      <SelectValue placeholder="Selecione o país" translate="no" />
-                    </SelectTrigger>
-                    <SelectContent sideOffset={5} translate="no">
-                      {countries.map((c) => (
-                        <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="country" className="text-base font-semibold" translate="no">
+                      País: *
+                    </Label>
+                    <Select value={country} onValueChange={(val) => { setCountry(val); if (val !== "OTHER") setCustomCountry(""); }}>
+                      <SelectTrigger className="mt-2" id="country" translate="no">
+                        <SelectValue placeholder="Selecione o país" translate="no" />
+                      </SelectTrigger>
+                      <SelectContent sideOffset={5} translate="no">
+                        {countries.map((c) => (
+                          <SelectItem key={c.code} value={c.code}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  {country === "OTHER" && (
+                    <div>
+                      <Label htmlFor="customCountry" className="text-base font-semibold" translate="no">
+                        Nome do País: *
+                      </Label>
+                      <Input
+                        id="customCountry"
+                        value={customCountry}
+                        onChange={(e) => setCustomCountry(e.target.value)}
+                        placeholder="Ex: Austrália, Nova Zelândia, Índia"
+                        className="mt-2"
+                        translate="no"
+                      />
+                    </div>
+                  )}
                 </div>
 
-                {/* Location */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="md:col-span-2">
-                    <Label htmlFor="location" className="text-base font-semibold" translate="no">
-                      Cidade: *
-                    </Label>
-                    <Input
-                      id="location"
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                      placeholder={country === "BR" ? "Ex: São Paulo, Blumenau, Porto Alegre" : "Ex: Miami, Lisboa, Madrid"}
-                      className="mt-2"
-                      translate="no"
-                    />
-                  </div>
-                  <div>
-                    {country === "BR" ? (
-                      <>
-                        <Label htmlFor="state" className="text-base font-semibold" translate="no">
-                          Estado: *
-                        </Label>
-                        <Select value={state} onValueChange={setState}>
-                          <SelectTrigger className="mt-2" id="state" translate="no">
-                            <SelectValue placeholder="UF" translate="no" />
-                          </SelectTrigger>
-                          <SelectContent sideOffset={5} translate="no">
-                            <SelectItem value="AC">AC - Acre</SelectItem>
-                            <SelectItem value="AL">AL - Alagoas</SelectItem>
-                            <SelectItem value="AP">AP - Amapá</SelectItem>
-                            <SelectItem value="AM">AM - Amazonas</SelectItem>
-                            <SelectItem value="BA">BA - Bahia</SelectItem>
-                            <SelectItem value="CE">CE - Ceará</SelectItem>
-                            <SelectItem value="DF">DF - Distrito Federal</SelectItem>
-                            <SelectItem value="ES">ES - Espírito Santo</SelectItem>
-                            <SelectItem value="GO">GO - Goiás</SelectItem>
-                            <SelectItem value="MA">MA - Maranhão</SelectItem>
-                            <SelectItem value="MT">MT - Mato Grosso</SelectItem>
-                            <SelectItem value="MS">MS - Mato Grosso do Sul</SelectItem>
-                            <SelectItem value="MG">MG - Minas Gerais</SelectItem>
-                            <SelectItem value="PA">PA - Pará</SelectItem>
-                            <SelectItem value="PB">PB - Paraíba</SelectItem>
-                            <SelectItem value="PR">PR - Paraná</SelectItem>
-                            <SelectItem value="PE">PE - Pernambuco</SelectItem>
-                            <SelectItem value="PI">PI - Piauí</SelectItem>
-                            <SelectItem value="RJ">RJ - Rio de Janeiro</SelectItem>
-                            <SelectItem value="RN">RN - Rio Grande do Norte</SelectItem>
-                            <SelectItem value="RS">RS - Rio Grande do Sul</SelectItem>
-                            <SelectItem value="RO">RO - Rondônia</SelectItem>
-                            <SelectItem value="RR">RR - Roraima</SelectItem>
-                            <SelectItem value="SC">SC - Santa Catarina</SelectItem>
-                            <SelectItem value="SP">SP - São Paulo</SelectItem>
-                            <SelectItem value="SE">SE - Sergipe</SelectItem>
-                            <SelectItem value="TO">TO - Tocantins</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </>
-                    ) : (
-                      <>
-                        <Label htmlFor="regionManual" className="text-base font-semibold" translate="no">
-                          Estado/Região: *
-                        </Label>
-                        <Input
-                          id="regionManual"
-                          value={regionManual}
-                          onChange={(e) => setRegionManual(e.target.value)}
-                          placeholder="Ex: Florida, Cataluña, Lisboa"
-                          className="mt-2"
-                          translate="no"
-                        />
-                      </>
-                    )}
-                  </div>
+                {/* Region */}
+                <div>
+                  <Label htmlFor="region" className="text-base font-semibold" translate="no">
+                    Região: *
+                  </Label>
+                  <Input
+                    id="region"
+                    value={region}
+                    onChange={(e) => setRegion(e.target.value)}
+                    placeholder="Ex: Vale do Itajaí, Grande São Paulo, Região Serrana, Miami FL"
+                    className="mt-2"
+                    translate="no"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Digite cidade, região ou área geográfica (ex: Vale do Itajaí, Litoral Norte, Grande Florianópolis)
+                  </p>
                 </div>
 
                 {/* Company Size */}

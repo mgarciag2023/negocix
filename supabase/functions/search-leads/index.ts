@@ -326,13 +326,12 @@ serve(async (req) => {
   }
 
   try {
-    const { segment, products, location, state, country, filters } = await req.json();
-    console.log('🔍 Searching leads for:', { segment, products, location, state, country, filters });
+    const { segment, products, region, country, filters } = await req.json();
+    console.log('🔍 Searching leads for:', { segment, products, region, country, filters });
     
-    const stateDisplay = state || 'SC';
     const countryCode = country || 'BR';
     const isInternational = countryCode !== 'BR';
-    console.log('Using state code:', stateDisplay, '| Country:', countryCode, '| International:', isInternational);
+    console.log('Using region:', region, '| Country:', countryCode, '| International:', isInternational);
 
     // Use Apify Google Maps Scraper for real data - ONLY SOURCE OF TRUTH
     console.log('📡 Searching Google Maps via Apify API (ONLY real data)...');
@@ -405,10 +404,8 @@ serve(async (req) => {
     // Check if this is proteção veicular category (from filters)
     const isProtecaoVeicular = filters?.category === 'protecao-veicular';
     
-    // Build location string based on country
-    const locationString = isInternational 
-      ? `${location}, ${stateDisplay}, ${countryCode}` 
-      : `${location} ${stateDisplay}`;
+    // Build location string based on region
+    const locationString = `${region}, ${countryCode}`;
     
     // If proteção veicular, use comprehensive vehicle search terms
     if (isProtecaoVeicular) {
@@ -547,7 +544,7 @@ serve(async (req) => {
       'Belém': { lat: -1.4558, lng: -48.4902 },
     };
     
-    const cityCoords = coordinates[location.trim()];
+    const cityCoords = coordinates[region.trim()];
     
     const APIFY_API_KEY = Deno.env.get("APIFY_API_KEY");
     if (!APIFY_API_KEY) {
@@ -613,7 +610,7 @@ serve(async (req) => {
       apifyRequestBody.radius = 150000; // 150 km radius MAXIMUM for better coverage
       console.log(`📍 Using coordinates: ${cityCoords.lat}, ${cityCoords.lng} with 150km radius`);
     } else {
-      console.log(`📍 ${isInternational ? 'International search' : 'No coordinates found'} for ${location}, using city name search only`);
+      console.log(`📍 ${isInternational ? 'International search' : 'No coordinates found'} for ${region}, using region name search only`);
     }
     
     const apifyResponse = await fetch(
@@ -655,11 +652,10 @@ serve(async (req) => {
     console.log(`📊 Apify returned ${apifyResults.length} places (single API call)`);
     console.log(`📞 Total API calls: 1`);
     
-    // CRITICAL FILTERING: Only exact city, valid phone, relevant business
+    // CRITICAL FILTERING: Only exact region, valid phone, relevant business
     if (apifyResults.length > 0) {
       const normalizeString = (str: string) => str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      const locationLower = normalizeString(location.toLowerCase());
-      const stateDisplayLower = normalizeString(stateDisplay.toLowerCase());
+      const regionLower = normalizeString(region.toLowerCase());
       const segmentLower = normalizeString(segment.toLowerCase());
       
       // Extract product keywords
@@ -738,12 +734,14 @@ serve(async (req) => {
           return false;
         }
         
-        // 2. Location validation - MUST match city AND state (QUALITY REQUIREMENT)
-        const hasCity = address.includes(locationLower);
-        const hasState = address.includes(stateDisplayLower);
+        // 2. Location validation - Check if address contains region (more flexible for regions like "Vale do Itajaí")
+        // Extract potential city names from region (can contain multiple cities)
+        const regionParts = regionLower.split(/[,\s]+/).filter(part => part.length > 2);
+        const hasMatchingLocation = regionParts.some(part => address.includes(part));
         
-        if (!hasCity || !hasState) {
-          console.log(`🚫 Wrong location: ${place.title} at ${place.address} (need: ${location}, ${stateDisplay})`);
+        // Be more flexible - only filter if address is completely unrelated to region
+        if (!hasMatchingLocation && !address.includes(regionLower)) {
+          console.log(`🚫 Location mismatch: ${place.title} at ${place.address} (region: ${region})`);
           return false;
         }
         
@@ -785,7 +783,7 @@ serve(async (req) => {
     if (apifyResults.length === 0) {
       console.error('❌ No results from Google Maps after filtering');
       return new Response(JSON.stringify({ 
-        error: `Nenhum estabelecimento encontrado em ${location}, ${stateDisplay}. Tente ajustar os filtros ou buscar em outra cidade.` 
+        error: `Nenhum estabelecimento encontrado em ${region}. Tente ajustar os filtros ou buscar em outra região.` 
       }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -819,7 +817,7 @@ serve(async (req) => {
       
       if (website !== 'Não disponível') {
         try {
-          const socialMedia = await searchSocialMediaProfiles(place.title, location, website);
+          const socialMedia = await searchSocialMediaProfiles(place.title, region, website);
           instagram = socialMedia.instagram || instagram;
           instagramSource = socialMedia.instagram ? 'website' : 'none';
           facebook = socialMedia.facebook || facebook;
@@ -851,6 +849,32 @@ serve(async (req) => {
       if (instagram !== 'Não disponível') confidenceScore += 5;
       if (finalEmail !== 'Não disponível') confidenceScore += 5;
       
+      // Estimate company size based on reviews and rating (speculation)
+      const reviewCount = place.reviewsCount || 0;
+      const rating = place.totalScore || 0;
+      
+      let employeeCount: string;
+      let companySize: string;
+      let revenue: string;
+      
+      if (reviewCount > 500 || (reviewCount > 200 && rating >= 4.5)) {
+        employeeCount = '50-200';
+        companySize = 'Grande';
+        revenue = 'R$ 2M - R$ 10M/ano';
+      } else if (reviewCount > 100 || (reviewCount > 50 && rating >= 4.0)) {
+        employeeCount = '20-50';
+        companySize = 'Médio';
+        revenue = 'R$ 500K - R$ 2M/ano';
+      } else if (reviewCount > 20) {
+        employeeCount = '5-20';
+        companySize = 'Pequeno';
+        revenue = 'R$ 100K - R$ 500K/ano';
+      } else {
+        employeeCount = '1-5';
+        companySize = 'Micro';
+        revenue = 'R$ 50K - R$ 100K/ano';
+      }
+      
       return {
         id: `gm-${place.placeId || Date.now()}-${index}`,
         name: place.title,
@@ -872,12 +896,14 @@ serve(async (req) => {
         confidenceScore,
         source: 'google_maps',
         responsible: 'Gerente de Compras',
-        revenue: 'A estimar',
-        openedDate: 'A verificar',
+        employeeCount,
+        companySize,
+        revenue,
+        openedDate: 'Estabelecido',
         reasons: [
-          `Estabelecimento verificado no Google Maps em ${location}`,
+          `Estabelecimento verificado no Google Maps em ${region}`,
           `Telefone validado: ${validatedPhone}`,
-          `Localização confirmada: ${location} - ${stateDisplay}`
+          `Região: ${region}`
         ],
         dataQuality: {
           hasValidPhone: phoneValid,

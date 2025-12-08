@@ -1,4 +1,4 @@
-import { MapPin, Phone, Instagram, User, TrendingUp, Calendar, Heart, Mail } from "lucide-react";
+import { MapPin, Phone, Instagram, User, Users, TrendingUp, Calendar, Heart, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,8 @@ interface LeadCardProps {
   revenue?: string;
   openedDate?: string;
   category: string;
+  employeeCount?: string;
+  companySize?: string;
 }
 
 const LeadCard = ({
@@ -33,6 +35,8 @@ const LeadCard = ({
   revenue,
   openedDate,
   category,
+  employeeCount,
+  companySize,
 }: LeadCardProps) => {
   const [isFavorite, setIsFavorite] = useState(false);
   
@@ -84,6 +88,18 @@ const LeadCard = ({
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mb-4">
+        {companySize && (
+          <div className="flex items-center gap-2 text-xs md:text-sm">
+            <Users className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+            <span className="text-muted-foreground">Porte: <span className="text-foreground font-medium">{companySize}</span></span>
+          </div>
+        )}
+        {employeeCount && (
+          <div className="flex items-center gap-2 text-xs md:text-sm">
+            <User className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+            <span className="text-muted-foreground">Funcionários: <span className="text-foreground font-medium">{employeeCount}</span></span>
+          </div>
+        )}
         {revenue && (
           <div className="flex items-center gap-2 text-xs md:text-sm">
             <TrendingUp className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
@@ -130,7 +146,8 @@ const LeadCard = ({
             state={{ 
               lead: { 
                 id, name, address, phone, email, instagram, responsible, 
-                matchScore, reasons, revenue, openedDate, category 
+                matchScore, reasons, revenue, openedDate, category,
+                employeeCount, companySize
               } 
             }}
           >
