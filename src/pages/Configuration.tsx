@@ -340,21 +340,21 @@ const Configuration = () => {
                   )}
                 </div>
 
-                {/* Region */}
+                {/* Location */}
                 <div>
                   <Label htmlFor="region" className="text-base font-semibold" translate="no">
-                    Região: *
+                    Localização: *
                   </Label>
                   <Input
                     id="region"
                     value={region}
                     onChange={(e) => setRegion(e.target.value)}
-                    placeholder="Ex: Vale do Itajaí, Grande São Paulo, Região Serrana, Miami FL"
+                    placeholder="Ex: São Paulo, Santa Catarina, Vale do Itajaí, Cidade do México"
                     className="mt-2"
                     translate="no"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Digite cidade, região ou área geográfica (ex: Vale do Itajaí, Litoral Norte, Grande Florianópolis)
+                    Digite cidade, estado ou região (ex: Blumenau, Rio Grande do Sul, Grande São Paulo)
                   </p>
                 </div>
 
