@@ -31,7 +31,7 @@ function validatePhone(phone: string): { valid: boolean; normalized: string; isW
   return { valid: false, normalized: '', isWhatsApp: false };
 }
 
-// FAST Instagram extraction - NO validation (too slow)
+// Instagram extraction with VALIDATION for quality
 function extractInstagramFromHtml(html: string): string | null {
   // Priority 1: <link rel="me"> tag
   const relMeMatch = html.match(/<link[^>]*rel=["']me["'][^>]*href=["']([^"']*instagram\.com[^"']*)["']/i) ||
@@ -57,6 +57,22 @@ function extractInstagramHandle(url: string): string | null {
     return `@${match[1]}`;
   }
   return null;
+}
+
+// Validate Instagram profile exists (quality check)
+async function validateInstagramProfile(handle: string): Promise<boolean> {
+  if (!handle) return false;
+  const username = handle.replace('@', '');
+  try {
+    const response = await fetch(`https://www.instagram.com/${username}/`, {
+      method: 'HEAD',
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      signal: AbortSignal.timeout(3000) // 3 second timeout
+    });
+    return response.ok;
+  } catch {
+    return false; // On timeout or error, assume invalid
+  }
 }
 
 // FAST email extraction from HTML
@@ -101,27 +117,46 @@ function isValidEmail(email: string): boolean {
   return emailRegex.test(email) && !email.includes('..') && email.length <= 254;
 }
 
-// FAST website scrape with 2s timeout - get all data in single request
-async function fastScrapeWebsite(url: string): Promise<{
+// Website scrape with quality validation for Instagram and WhatsApp
+async function scrapeWebsiteWithValidation(url: string): Promise<{
   instagram?: string;
+  instagramVerified: boolean;
   facebook?: string;
   whatsappNumber?: string;
+  whatsappVerified: boolean;
   email?: string;
 }> {
-  const result: { instagram?: string; facebook?: string; whatsappNumber?: string; email?: string } = {};
+  const result: { 
+    instagram?: string; 
+    instagramVerified: boolean;
+    facebook?: string; 
+    whatsappNumber?: string; 
+    whatsappVerified: boolean;
+    email?: string 
+  } = { instagramVerified: false, whatsappVerified: false };
   
   try {
     const response = await fetch(url, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
-      signal: AbortSignal.timeout(2000) // 2 second timeout - FAST
+      signal: AbortSignal.timeout(4000) // 4 second timeout for quality
     });
     
     if (!response.ok) return result;
     
     const html = await response.text();
     
-    // Extract all in one pass
-    result.instagram = extractInstagramFromHtml(html) || undefined;
+    // Extract Instagram
+    const rawInstagram = extractInstagramFromHtml(html);
+    if (rawInstagram) {
+      // Validate Instagram exists
+      const isValid = await validateInstagramProfile(rawInstagram);
+      if (isValid) {
+        result.instagram = rawInstagram;
+        result.instagramVerified = true;
+      }
+    }
+    
+    // Extract email
     result.email = extractEmailFromHtml(html) || undefined;
     
     // Facebook
@@ -130,14 +165,15 @@ async function fastScrapeWebsite(url: string): Promise<{
       result.facebook = `https://facebook.com/${fbMatch[2]}`;
     }
     
-    // WhatsApp
+    // WhatsApp - ONLY from verified website links (wa.me or api.whatsapp.com)
     const waMatch = html.match(/wa\.me\/(\d+)/i) || html.match(/api\.whatsapp\.com\/send\?phone=(\d+)/i);
     if (waMatch) {
       result.whatsappNumber = waMatch[1];
+      result.whatsappVerified = true; // Only true if found on official website
     }
     
   } catch (error) {
-    // Timeout or error - just return empty, don't slow down
+    // Timeout or error - just return empty
   }
   
   return result;
@@ -851,25 +887,33 @@ serve(async (req) => {
       // Get website
       const website = place.website || 'Não disponível';
       
-      // FAST social media extraction - only if website exists and we have time
+      // QUALITY social media extraction - validate Instagram and WhatsApp
       let instagram = 'Não disponível';
+      let instagramVerified = false;
       let instagramSource = 'none';
       let facebook = 'Não disponível';
       let whatsappBusiness: string | undefined = undefined;
+      let whatsappVerified = false;
       let emailFromWebsite: string | undefined = undefined;
       
       // Check elapsed time - skip slow operations if running out of time
-      const elapsedTime = Date.now() - startTime;
-      const hasTimeForScraping = elapsedTime < 60000; // Only scrape if under 60s elapsed
+      const elapsedTimeForBatch = Date.now() - startTime;
+      const hasTimeForScraping = elapsedTimeForBatch < 70000; // Scrape if under 70s elapsed
       
       if (website !== 'Não disponível' && hasTimeForScraping) {
         try {
-          const scraped = await fastScrapeWebsite(website);
-          instagram = scraped.instagram || instagram;
-          instagramSource = scraped.instagram ? 'website' : 'none';
+          const scraped = await scrapeWebsiteWithValidation(website);
+          // Only use validated Instagram
+          if (scraped.instagramVerified && scraped.instagram) {
+            instagram = scraped.instagram;
+            instagramVerified = true;
+            instagramSource = 'website_verified';
+          }
           facebook = scraped.facebook || facebook;
-          if (scraped.whatsappNumber) {
+          // Only use verified WhatsApp from website
+          if (scraped.whatsappVerified && scraped.whatsappNumber) {
             whatsappBusiness = scraped.whatsappNumber;
+            whatsappVerified = true;
           }
           emailFromWebsite = scraped.email;
         } catch (error) {
@@ -877,11 +921,9 @@ serve(async (req) => {
         }
       }
       
-      // WhatsApp detection - FAST: just check phone format, skip website check
-      let hasWhatsApp = phoneValidation.isWhatsApp;
-      if (hasWhatsApp && !whatsappBusiness) {
-        whatsappBusiness = validatedPhone;
-      }
+      // WhatsApp detection - ONLY verified from website (no phone format guessing)
+      // DO NOT assume mobile numbers are WhatsApp
+      let hasWhatsApp = whatsappVerified;
       
       // Determine final email (prioritize Google Maps, fallback to website)
       const finalEmail = place.email || emailFromWebsite || 'Não disponível';
@@ -890,8 +932,9 @@ serve(async (req) => {
       let confidenceScore = 70; // Base score for verified Google Maps with phone
       if (phoneValid) confidenceScore += 15;
       if (website !== 'Não disponível') confidenceScore += 10;
-      if (instagram !== 'Não disponível') confidenceScore += 5;
+      if (instagramVerified) confidenceScore += 10; // Higher score for verified Instagram
       if (finalEmail !== 'Não disponível') confidenceScore += 5;
+      if (whatsappVerified) confidenceScore += 5; // Bonus for verified WhatsApp
       
       // Estimate company size based on reviews and rating (speculation)
       const reviewCount = place.reviewsCount || 0;
