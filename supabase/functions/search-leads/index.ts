@@ -276,6 +276,12 @@ serve(async (req) => {
       'oficinas mecânicas': ['oficina mecânica', 'oficina', 'mecânico', 'auto center', 'centro automotivo', 'reparos automotivos'],
       'autopeças': ['autopeças', 'peças automotivas', 'loja de autopeças', 'auto peças', 'peças de carro'],
       
+      // Construção Civil - ADDED
+      'construtoras': ['construtora', 'construção civil', 'empreiteira', 'incorporadora', 'engenharia civil', 'obras', 'empresa de construção', 'construções'],
+      'construtora': ['construtora', 'construção civil', 'empreiteira', 'incorporadora', 'engenharia civil', 'obras'],
+      'empreiteiras': ['empreiteira', 'construtora', 'obras', 'construção'],
+      'incorporadoras': ['incorporadora', 'construtora', 'imobiliária', 'empreendimentos'],
+      
       // Restaurantes e Alimentação - NEW
       'restaurantes': ['restaurante', 'restaurantes', 'lanchonete', 'buffet', 'self service'],
       'padarias': ['padaria', 'panificadora', 'confeitaria', 'pães', 'bolos'],
