@@ -614,11 +614,22 @@ serve(async (req) => {
     // Build Apify request body - SINGLE CALL MODE (max 150 leads TOTAL)
     const MAX_TOTAL_LEADS = 150;
     
-    // Use more search queries for better coverage
-    const limitedQueries = searchQueries.slice(0, 46);
+    // Limit queries to avoid excessive API usage
+    const numQueries = searchQueries.length;
+    const placesPerSearch = Math.max(10, Math.ceil(MAX_TOTAL_LEADS / numQueries));
+    const limitedQueries = searchQueries.slice(0, 5); // Use only 5 queries max
     
-    console.log(`📊 Using ${limitedQueries.length} search queries (from ${searchQueries.length} total)`);
-    console.log(`📋 Search queries:`, limitedQueries);
+    // Create search strings with location included in each query
+    const searchStringsWithLocation = limitedQueries.map(q => 
+      `${q} ${region}, ${countryCode}`
+    );
+    
+    // Remove duplicates
+    const uniqueSearchStrings = [...new Set(searchStringsWithLocation)];
+    
+    console.log(`📊 Using ${uniqueSearchStrings.length} search queries (from ${searchQueries.length} total)`);
+    console.log(`📋 Using ${uniqueSearchStrings.length} unique search terms from ${limitedQueries.length} total`);
+    console.log(`📋 Final search queries:`, JSON.stringify(uniqueSearchStrings, null, 2));
     
     // Map country codes to language for Apify
     const countryLanguages: { [key: string]: string } = {
@@ -648,28 +659,28 @@ serve(async (req) => {
     
     const searchLanguage = countryLanguages[countryCode] || 'en';
     
-    // Build location query string (e.g., "Blumenau, SC, Brazil")
-    const locationQuery = isInternational 
-      ? `${region}, ${countryCode}` 
-      : `${region}, Brazil`;
-    
-    // Build request with CORRECT parameters for compass~crawler-google-places
+    // Build request with parameters that WORK - matching the morning configuration
     const apifyRequestBody: any = {
-      searchStringsArray: limitedQueries,
-      locationQuery: locationQuery, // THIS IS THE KEY PARAMETER!
-      maxCrawledPlacesPerSearch: 46, // 46 places per search as user requested
+      searchStringsArray: uniqueSearchStrings,
+      maxCrawledPlacesPerSearch: 46,
       language: searchLanguage,
       skipClosedPlaces: true,
-      maxImages: 0, // Don't waste resources on images
-      maximumLeadsEnrichmentRecords: 0, // Don't enrich - saves time
     };
     
-    console.log(`📍 Location query: "${locationQuery}"`);
-    console.log(`🚀 Calling Apify compass~crawler-google-places with:`, JSON.stringify(apifyRequestBody, null, 2));
+    // Add coordinates for Brazil if available
+    if (!isInternational && cityCoords) {
+      apifyRequestBody.lat = cityCoords.lat;
+      apifyRequestBody.lng = cityCoords.lng;
+      console.log(`📍 Using coordinates: ${cityCoords.lat}, ${cityCoords.lng}`);
+    } else {
+      console.log(`📍 No coordinates found for ${region}, using region name search only`);
+    }
     
-    // Use compass~crawler-google-places - the working actor with correct params
+    console.log(`🚀 Calling Apify official actor nwua9Gu5YrADL7ZDj with:`, JSON.stringify(apifyRequestBody, null, 2));
+    
+    // Use the OFFICIAL Apify Google Maps Scraper actor
     const apifyResponse = await fetch(
-      `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
+      `https://api.apify.com/v2/acts/nwua9Gu5YrADL7ZDj/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
