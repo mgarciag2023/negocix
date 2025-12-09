@@ -527,25 +527,17 @@ serve(async (req) => {
       console.log(`📍 ${isInternational ? 'International search' : 'No coordinates found'} for ${region}, using region name search only`);
     }
     
-    // APIFY CALL with 80 second timeout (edge functions have 90s limit)
-    const APIFY_TIMEOUT = 80000;
-    const apifyController = new AbortController();
-    const apifyTimeoutId = setTimeout(() => apifyController.abort(), APIFY_TIMEOUT);
+    // APIFY CALL - NO TIMEOUT (let Apify complete naturally)
+    console.log('🚀 Starting Apify search (no timeout limit)...');
     
-    let apifyResponse: Response;
-    try {
-      apifyResponse = await fetch(
-        `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(apifyRequestBody),
-          signal: apifyController.signal,
-        }
-      );
-    } finally {
-      clearTimeout(apifyTimeoutId);
-    }
+    const apifyResponse = await fetch(
+      `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(apifyRequestBody),
+      }
+    );
 
     if (!apifyResponse.ok) {
       const errorText = await apifyResponse.text();
