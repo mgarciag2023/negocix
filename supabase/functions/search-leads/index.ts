@@ -651,11 +651,11 @@ serve(async (req) => {
     // Build request with parameters that work with compass~crawler-google-places
     const apifyRequestBody: any = {
       searchStringsArray: limitedQueries,
-      maxCrawledPlacesPerSearch: 50, // 50 per query = up to 150 total
+      maxCrawledPlacesPerSearch: 46, // 46 pages per search
       language: searchLanguage,
       skipClosedPlaces: true,
-      deeperCityScrape: false, // Disable to speed up
-      maxAutomaticZoomOut: 3, // Lower = faster
+      deeperCityScrape: false,
+      maxAutomaticZoomOut: 3,
     };
     
     // Add coordinates only for Brazil (we have Brazilian city coords)
