@@ -203,15 +203,39 @@ serve(async (req) => {
     console.log('🚀 Calling Apify compass/crawler-google-places...');
     console.log('📦 Request:', JSON.stringify(apifyBody, null, 2));
     
-    // Call compass/crawler-google-places (nwua9Gu5YrADL7ZDj)
-    const apifyResponse = await fetch(
-      `https://api.apify.com/v2/acts/nwua9Gu5YrADL7ZDj/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(apifyBody),
+    // Timeout of 80 seconds (1:20) - return whatever results we have
+    const TIMEOUT_MS = 80000;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    
+    let apifyResponse: Response;
+    try {
+      // Call compass/crawler-google-places (nwua9Gu5YrADL7ZDj)
+      apifyResponse = await fetch(
+        `https://api.apify.com/v2/acts/nwua9Gu5YrADL7ZDj/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(apifyBody),
+          signal: controller.signal
+        }
+      );
+      clearTimeout(timeoutId);
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId);
+      if (fetchError.name === 'AbortError') {
+        console.log('⏱️ Timeout reached (80s) - returning partial results if available');
+        // Return empty leads on timeout - the Apify sync call doesn't give partial results
+        return new Response(JSON.stringify({ 
+          leads: [],
+          error: `Timeout: A pesquisa demorou mais de 1:20. Tente uma região menor ou categoria mais específica.`
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
-    );
+      throw fetchError;
+    }
 
     console.log('📡 Apify response status:', apifyResponse.status);
 
