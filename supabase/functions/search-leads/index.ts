@@ -614,22 +614,11 @@ serve(async (req) => {
     // Build Apify request body - SINGLE CALL MODE (max 150 leads TOTAL)
     const MAX_TOTAL_LEADS = 150;
     
-    // Limit queries to avoid excessive API usage
-    const numQueries = searchQueries.length;
-    const placesPerSearch = Math.max(10, Math.ceil(MAX_TOTAL_LEADS / numQueries));
-    const limitedQueries = searchQueries.slice(0, 5); // Use only 5 queries max
+    // Limit queries - searchQueries already include location, DON'T add it again!
+    const limitedQueries = searchQueries.slice(0, 5);
     
-    // Create search strings with location included in each query
-    const searchStringsWithLocation = limitedQueries.map(q => 
-      `${q} ${region}, ${countryCode}`
-    );
-    
-    // Remove duplicates
-    const uniqueSearchStrings = [...new Set(searchStringsWithLocation)];
-    
-    console.log(`📊 Using ${uniqueSearchStrings.length} search queries (from ${searchQueries.length} total)`);
-    console.log(`📋 Using ${uniqueSearchStrings.length} unique search terms from ${limitedQueries.length} total`);
-    console.log(`📋 Final search queries:`, JSON.stringify(uniqueSearchStrings, null, 2));
+    console.log(`📊 Using ${limitedQueries.length} search queries (from ${searchQueries.length} total)`);
+    console.log(`📋 Final search queries:`, JSON.stringify(limitedQueries, null, 2));
     
     // Map country codes to language for Apify
     const countryLanguages: { [key: string]: string } = {
@@ -659,9 +648,9 @@ serve(async (req) => {
     
     const searchLanguage = countryLanguages[countryCode] || 'en';
     
-    // Build request with parameters that WORK - matching the morning configuration
+    // Build request - searchQueries already have location included
     const apifyRequestBody: any = {
-      searchStringsArray: uniqueSearchStrings,
+      searchStringsArray: limitedQueries,
       maxCrawledPlacesPerSearch: 46,
       language: searchLanguage,
       skipClosedPlaces: true,
