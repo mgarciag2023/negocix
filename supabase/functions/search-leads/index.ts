@@ -649,38 +649,26 @@ serve(async (req) => {
     const searchLanguage = countryLanguages[countryCode] || 'en';
     
     const apifyRequestBody: any = {
-      searchStringsArray: searchQueries, // Can be multiple search terms
+      searchStringsArray: searchQueries,
       maxCrawledPlacesPerSearch: placesPerSearch,
       language: searchLanguage,
-      deeperCityScrape: true,
-      exactMatch: false,
-      scrapeReviewsNumber: 0, // Skip reviews to get more places faster
-      skipClosedPlaces: true, // Skip closed places automatically
-      ...(segment.toLowerCase().includes('indústria') && {
-        categoryFilters: ['manufacturer', 'factory', 'industrial_company']
-      }),
-      maxAutomaticZoomOut: 6, // MAXIMUM zoom out for even broader coverage (was 5)
-      includeSearchResultsNearby: true, // Include nearby results
-      allPlacesNoSearch: false, // Search-based mode
-      scrapeContacts: true, // Get contact info
-      scrapeImages: false, // Skip images for speed
+      skipClosedPlaces: true,
     };
     
     // Add coordinates only for Brazil (we have Brazilian city coords)
-    // For international, let Apify search by city/region name
     if (!isInternational && cityCoords) {
       apifyRequestBody.lat = cityCoords.lat;
       apifyRequestBody.lng = cityCoords.lng;
-      apifyRequestBody.radius = 180000; // 180 km radius for even better coverage (was 150)
-      console.log(`📍 Using coordinates: ${cityCoords.lat}, ${cityCoords.lng} with 180km radius`);
+      console.log(`📍 Using coordinates: ${cityCoords.lat}, ${cityCoords.lng}`);
     } else {
       console.log(`📍 ${isInternational ? 'International search' : 'No coordinates found'} for ${region}, using region name search only`);
     }
     
     console.log(`🚀 Calling Apify with request body:`, JSON.stringify(apifyRequestBody, null, 2));
     
+    // Use the official Google Maps Scraper actor (nwua9Gu5YrADL7ZDj) - more stable
     const apifyResponse = await fetch(
-      `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
+      `https://api.apify.com/v2/acts/nwua9Gu5YrADL7ZDj/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
