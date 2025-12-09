@@ -167,11 +167,18 @@ serve(async (req) => {
       throw new Error("APIFY_API_KEY is not configured");
     }
     
+    // LIMIT CONTROL: Distribute 150 leads across all queries
+    const MAX_TOTAL_LEADS = 150;
+    const numQueries = searchTerms.length;
+    const placesPerSearch = Math.max(10, Math.ceil(MAX_TOTAL_LEADS / numQueries));
+    
+    console.log(`📊 Limit: ${placesPerSearch} places per query (${numQueries} queries, max ${MAX_TOTAL_LEADS} total)`);
+    
     // CORRECT format: searchStringsArray WITHOUT location, locationQuery SEPARATE
     const apifyBody = {
-      searchStringsArray: searchTerms,  // Just terms like "restaurante", NOT "restaurante em BLUMENAU"
-      locationQuery: locationQuery,      // Separate parameter for location!
-      maxCrawledPlacesPerSearch: 46,
+      searchStringsArray: searchTerms,
+      locationQuery: locationQuery,
+      maxCrawledPlacesPerSearch: placesPerSearch,  // Distributed limit!
       language: countryCode === 'BR' ? 'pt-BR' : 'en',
       skipClosedPlaces: true
     };
