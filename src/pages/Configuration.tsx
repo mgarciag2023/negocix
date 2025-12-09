@@ -155,6 +155,21 @@ const Configuration = () => {
     "Indústrias de equipamentos hospitalares e de segurança",
     "Indústrias de automação e tecnologia",
     "Indústrias de iluminação e LED",
+    // Setor Produtos Naturais / Orgânicos
+    "Lojas de Produtos Naturais",
+    "Empórios Naturais",
+    "Lojas de Suplementos",
+    "Lojas de Produtos Orgânicos",
+    "Feiras Orgânicas",
+    "Hortifrútis",
+    "Lojas de Grãos e Cereais",
+    "Casas de Chá",
+    "Lojas Veganas",
+    "Lojas de Produtos Fitness",
+    "Academias",
+    "Clínicas de Estética",
+    "Spas",
+    "Centros de Bem-Estar",
   ];
 
   const handleCustomerToggle = (customer: string) => {
@@ -259,6 +274,7 @@ const Configuration = () => {
                       <SelectItem value="protecao-veicular">Proteção Veicular</SelectItem>
                       <SelectItem value="telemedicina">Telemedicina / Saúde</SelectItem>
                       <SelectItem value="grafica">Gráfica / Comunicação Visual</SelectItem>
+                      <SelectItem value="produtos-naturais">Produtos Naturais / Orgânicos</SelectItem>
                       <SelectItem value="outros">Outros</SelectItem>
                     </SelectContent>
                   </Select>
