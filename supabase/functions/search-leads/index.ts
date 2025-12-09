@@ -614,8 +614,8 @@ serve(async (req) => {
     // Build Apify request body - SINGLE CALL MODE (max 150 leads TOTAL)
     const MAX_TOTAL_LEADS = 150;
     
-    // Use only the first 3 search queries to maximize results per query
-    const limitedQueries = searchQueries.slice(0, 3);
+    // Use more search queries for better coverage
+    const limitedQueries = searchQueries.slice(0, 46);
     
     console.log(`📊 Using ${limitedQueries.length} search queries (from ${searchQueries.length} total)`);
     console.log(`📋 Search queries:`, limitedQueries);
