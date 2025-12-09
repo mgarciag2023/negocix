@@ -648,28 +648,28 @@ serve(async (req) => {
     
     const searchLanguage = countryLanguages[countryCode] || 'en';
     
-    // Build request with parameters for the official Apify Google Maps actor
+    // Build location query string (e.g., "Blumenau, SC, Brazil")
+    const locationQuery = isInternational 
+      ? `${region}, ${countryCode}` 
+      : `${region}, Brazil`;
+    
+    // Build request with CORRECT parameters for compass~crawler-google-places
     const apifyRequestBody: any = {
       searchStringsArray: limitedQueries,
-      maxCrawledPlacesPerSearch: 46, // 46 pages per search as user requested
+      locationQuery: locationQuery, // THIS IS THE KEY PARAMETER!
+      maxCrawledPlacesPerSearch: 46, // 46 places per search as user requested
       language: searchLanguage,
       skipClosedPlaces: true,
+      maxImages: 0, // Don't waste resources on images
+      maximumLeadsEnrichmentRecords: 0, // Don't enrich - saves time
     };
     
-    // Add coordinates only for Brazil (we have Brazilian city coords)
-    if (!isInternational && cityCoords) {
-      apifyRequestBody.lat = cityCoords.lat;
-      apifyRequestBody.lng = cityCoords.lng;
-      console.log(`📍 Using coordinates: ${cityCoords.lat}, ${cityCoords.lng}`);
-    } else {
-      console.log(`📍 ${isInternational ? 'International search' : 'No coordinates found'} for ${region}, using region name search only`);
-    }
+    console.log(`📍 Location query: "${locationQuery}"`);
+    console.log(`🚀 Calling Apify compass~crawler-google-places with:`, JSON.stringify(apifyRequestBody, null, 2));
     
-    console.log(`🚀 Calling Apify official actor nwua9Gu5YrADL7ZDj with:`, JSON.stringify(apifyRequestBody, null, 2));
-    
-    // Use the official Apify Google Maps actor - NO TIMEOUT LIMIT (unlimited time)
+    // Use compass~crawler-google-places - the working actor with correct params
     const apifyResponse = await fetch(
-      `https://api.apify.com/v2/acts/nwua9Gu5YrADL7ZDj/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
+      `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
