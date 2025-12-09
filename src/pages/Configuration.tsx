@@ -22,6 +22,7 @@ const Configuration = () => {
   const [companySize, setCompanySize] = useState("all");
   const [revenueRange, setRevenueRange] = useState("all");
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
+  const [ecommerceType, setEcommerceType] = useState("");
 
   const countries = [
     { code: "BR", name: "Brasil" },
@@ -205,6 +206,7 @@ const Configuration = () => {
       country: finalCountry,
       companySize,
       revenueRange,
+      ecommerceType: selectedCustomers.includes("E-commerce") ? ecommerceType : "",
     };
     
     const newConfigStr = JSON.stringify(newSearchConfig);
@@ -302,20 +304,31 @@ const Configuration = () => {
                   </Label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4" translate="no">
                     {customerTypes.map((customer) => (
-                      <div key={customer} className="flex items-center space-x-2" translate="no">
-                        <Checkbox
-                          id={customer}
-                          checked={selectedCustomers.includes(customer)}
-                          onCheckedChange={() => handleCustomerToggle(customer)}
-                          translate="no"
-                        />
-                        <label
-                          htmlFor={customer}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                          translate="no"
-                        >
-                          {customer}
-                        </label>
+                      <div key={customer} className="flex flex-col" translate="no">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id={customer}
+                            checked={selectedCustomers.includes(customer)}
+                            onCheckedChange={() => handleCustomerToggle(customer)}
+                            translate="no"
+                          />
+                          <label
+                            htmlFor={customer}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                            translate="no"
+                          >
+                            {customer}
+                          </label>
+                        </div>
+                        {customer === "E-commerce" && selectedCustomers.includes("E-commerce") && (
+                          <Input
+                            value={ecommerceType}
+                            onChange={(e) => setEcommerceType(e.target.value)}
+                            placeholder="Especifique o tipo (ex: Moda, Eletrônicos...)"
+                            className="mt-2 ml-6 max-w-[200px]"
+                            translate="no"
+                          />
+                        )}
                       </div>
                     ))}
                   </div>
