@@ -139,6 +139,9 @@ function generateSearchTerms(segment: string): string[] {
   return searchTerms.slice(0, 4);
 }
 
+// Helper to wait
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -146,7 +149,7 @@ serve(async (req) => {
 
   try {
     const { segment, products, region, country, filters, ecommerceType } = await req.json();
-    console.log('🔍 SEARCH v3 - Input:', { segment, products, region, country, ecommerceType });
+    console.log('🔍 SEARCH v4 - Input:', { segment, products, region, country, ecommerceType });
     
     const countryCode = country || 'BR';
     
@@ -157,7 +160,6 @@ serve(async (req) => {
     let searchTerms: string[];
     
     if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
-      // For e-commerce with specific type, search for stores selling that type of product
       const ecomType = ecommerceType.trim().toLowerCase();
       searchTerms = [
         `loja ${ecomType}`,
@@ -170,10 +172,11 @@ serve(async (req) => {
       searchTerms = generateSearchTerms(segment);
     }
     
-    // Build location query
+    // Build location query - trim whitespace
+    const cleanRegion = region.trim();
     const locationQuery = countryCode === 'BR' 
-      ? `${region}, Brazil`
-      : `${region}, ${countryCode}`;
+      ? `${cleanRegion}, Brazil`
+      : `${cleanRegion}, ${countryCode}`;
     
     console.log('📋 Search terms:', searchTerms);
     console.log('📍 Location:', locationQuery);
@@ -191,75 +194,104 @@ serve(async (req) => {
     
     console.log(`📊 Limit: ${placesPerSearch} places per query (${numQueries} queries, max ${MAX_TOTAL_LEADS} total)`);
     
-    // CORRECT format: searchStringsArray WITHOUT location, locationQuery SEPARATE
+    // Request body for Apify
     const apifyBody = {
       searchStringsArray: searchTerms,
       locationQuery: locationQuery,
-      maxCrawledPlacesPerSearch: placesPerSearch,  // Distributed limit!
+      maxCrawledPlacesPerSearch: placesPerSearch,
       language: countryCode === 'BR' ? 'pt-BR' : 'en',
       skipClosedPlaces: true
     };
     
-    console.log('🚀 Calling Apify compass/crawler-google-places...');
+    console.log('🚀 Starting Apify run (async mode)...');
     console.log('📦 Request:', JSON.stringify(apifyBody, null, 2));
     
-    // Timeout of 80 seconds (1:20) - return whatever results we have
-    const TIMEOUT_MS = 80000;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
-    
-    let apifyResponse: Response;
-    try {
-      // Call compass/crawler-google-places (nwua9Gu5YrADL7ZDj)
-      apifyResponse = await fetch(
-        `https://api.apify.com/v2/acts/nwua9Gu5YrADL7ZDj/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(apifyBody),
-          signal: controller.signal
-        }
-      );
-      clearTimeout(timeoutId);
-    } catch (fetchError: any) {
-      clearTimeout(timeoutId);
-      if (fetchError.name === 'AbortError') {
-        console.log('⏱️ Timeout reached (80s) - returning partial results if available');
-        // Return empty leads on timeout - the Apify sync call doesn't give partial results
-        return new Response(JSON.stringify({ 
-          leads: [],
-          error: `Timeout: A pesquisa demorou mais de 1:20. Tente uma região menor ou categoria mais específica.`
-        }), {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+    // STEP 1: Start the run asynchronously
+    const startResponse = await fetch(
+      `https://api.apify.com/v2/acts/nwua9Gu5YrADL7ZDj/runs?token=${APIFY_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(apifyBody),
       }
-      throw fetchError;
+    );
+    
+    if (!startResponse.ok) {
+      const errorText = await startResponse.text();
+      console.error('❌ Failed to start run:', errorText);
+      throw new Error(`Erro ao iniciar busca: ${startResponse.status}`);
     }
-
-    console.log('📡 Apify response status:', apifyResponse.status);
-
-    if (!apifyResponse.ok) {
-      const errorText = await apifyResponse.text();
-      console.error('❌ Apify error:', errorText);
+    
+    const runData = await startResponse.json();
+    const runId = runData.data.id;
+    const datasetId = runData.data.defaultDatasetId;
+    
+    console.log(`✅ Run started: ${runId}, Dataset: ${datasetId}`);
+    
+    // STEP 2: Poll for results with 80s timeout
+    const TIMEOUT_MS = 80000; // 1:20
+    const POLL_INTERVAL = 5000; // Check every 5 seconds
+    const startTime = Date.now();
+    
+    let results: any[] = [];
+    let isComplete = false;
+    
+    while (Date.now() - startTime < TIMEOUT_MS) {
+      // Check run status
+      const statusResponse = await fetch(
+        `https://api.apify.com/v2/actor-runs/${runId}?token=${APIFY_API_KEY}`
+      );
+      const statusData = await statusResponse.json();
+      const status = statusData.data.status;
       
-      // Try to parse error for specific messages
-      let errorMessage = `Erro na API Apify: ${apifyResponse.status}`;
-      try {
-        const errorData = JSON.parse(errorText);
-        if (errorData.error?.message) {
-          errorMessage = errorData.error.message;
+      console.log(`⏳ Status: ${status} (${Math.round((Date.now() - startTime) / 1000)}s elapsed)`);
+      
+      // Get current dataset items
+      const itemsResponse = await fetch(
+        `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_API_KEY}&clean=true`
+      );
+      
+      if (itemsResponse.ok) {
+        results = await itemsResponse.json();
+        console.log(`📊 Current items: ${results.length}`);
+        
+        // If we have enough leads (60+), we can stop early
+        const validResults = results.filter((p: any) => p.phone && p.phone.trim() !== '');
+        if (validResults.length >= 60 && Date.now() - startTime >= 30000) {
+          console.log(`✅ Got ${validResults.length} valid leads after 30s, stopping early`);
+          break;
         }
-      } catch (e) {}
+      }
       
-      return new Response(JSON.stringify({ error: errorMessage }), {
-        status: apifyResponse.status,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      // Check if run completed
+      if (status === 'SUCCEEDED' || status === 'FAILED' || status === 'ABORTED') {
+        isComplete = true;
+        console.log(`🏁 Run finished with status: ${status}`);
+        break;
+      }
+      
+      // Wait before next poll
+      await sleep(POLL_INTERVAL);
     }
-
-    let results = await apifyResponse.json();
-    console.log(`📊 Apify returned ${results.length} raw places`);
+    
+    // If timeout reached and run still going, abort it
+    if (!isComplete) {
+      console.log('⏱️ Timeout reached, aborting run...');
+      await fetch(
+        `https://api.apify.com/v2/actor-runs/${runId}/abort?token=${APIFY_API_KEY}`,
+        { method: 'POST' }
+      );
+      
+      // Get final items after abort
+      const finalItemsResponse = await fetch(
+        `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_API_KEY}&clean=true`
+      );
+      if (finalItemsResponse.ok) {
+        results = await finalItemsResponse.json();
+      }
+    }
+    
+    console.log(`📊 Total raw results: ${results.length}`);
     
     // Log sample to see structure
     if (results.length > 0) {
@@ -305,7 +337,7 @@ serve(async (req) => {
     if (results.length === 0) {
       console.log('❌ No results found');
       return new Response(JSON.stringify({ 
-        error: `Nenhum estabelecimento encontrado em ${region}. Tente outra região ou categoria.` 
+        error: `Nenhum estabelecimento encontrado em ${cleanRegion}. Tente outra região ou categoria.` 
       }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -358,7 +390,7 @@ serve(async (req) => {
         companySize,
         revenue,
         openedDate: 'Estabelecido',
-        reasons: [`Encontrado no Google Maps em ${region}`],
+        reasons: [`Encontrado no Google Maps em ${cleanRegion}`],
         dataQuality: {
           hasValidPhone: phoneValidation.valid,
           hasSocialMedia: false,
