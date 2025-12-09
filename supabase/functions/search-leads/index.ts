@@ -670,6 +670,8 @@ serve(async (req) => {
       console.log(`📍 ${isInternational ? 'International search' : 'No coordinates found'} for ${region}, using region name search only`);
     }
     
+    console.log(`🚀 Calling Apify with request body:`, JSON.stringify(apifyRequestBody, null, 2));
+    
     const apifyResponse = await fetch(
       `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
       {
@@ -678,6 +680,8 @@ serve(async (req) => {
         body: JSON.stringify(apifyRequestBody),
       }
     );
+
+    console.log(`📡 Apify response status: ${apifyResponse.status}`);
 
     if (!apifyResponse.ok) {
       const errorText = await apifyResponse.text();
@@ -772,6 +776,8 @@ serve(async (req) => {
       // If a lead doesn't match ANY keyword for the searched niche, it's irrelevant
       const nicheKeywords: { [key: string]: string[] } = {
         // Construção e Ferramentas
+        'construtoras': ['construtora', 'construcao', 'construção', 'empreiteira', 'incorporadora', 'engenharia', 'obras', 'edificacao', 'edificação', 'contractor', 'builder', 'civil', 'construções'],
+        'construtora': ['construtora', 'construcao', 'construção', 'empreiteira', 'incorporadora', 'engenharia', 'obras', 'edificacao', 'edificação', 'contractor', 'builder', 'civil', 'construções'],
         'materiais de construção': ['construcao', 'construção', 'material', 'cimento', 'tijolo', 'areia', 'ferro', 'madeira', 'piso', 'azulejo', 'tintas', 'hidraulica', 'deposito', 'home center', 'telha', 'argamassa', 'gesso', 'drywall', 'impermeabilizante'],
         'ferramentas': ['ferramenta', 'ferragem', 'parafuso', 'porca', 'chave', 'martelo', 'furadeira', 'serra', 'alicate', 'equipamento', 'maquina', 'máquina', 'tool', 'hardware'],
         'ferragens': ['ferragem', 'parafuso', 'porca', 'dobradica', 'dobradiça', 'puxador', 'fechadura', 'cadeado', 'gancho', 'suporte', 'hardware'],
@@ -829,28 +835,38 @@ serve(async (req) => {
         
         // Transporte
         'transportadoras': ['transportadora', 'transporte', 'frete', 'carga', 'logistica', 'logística', 'entrega', 'mudanca', 'mudança'],
+        
+        // Indústrias
+        'indústrias': ['industria', 'indústria', 'fabrica', 'fábrica', 'manufacturer', 'manufacturing', 'producao', 'produção', 'industrial'],
       };
       
       // Function to check if a lead is relevant to the searched niche
       function isRelevantToNiche(title: string, categoryName: string, categories: string[], searchedSegment: string): boolean {
-        const allText = `${title} ${categoryName} ${categories.join(' ')}`.toLowerCase();
+        const allText = normalizeString(`${title} ${categoryName} ${categories.join(' ')}`.toLowerCase());
+        const segmentNorm = normalizeString(searchedSegment.toLowerCase());
         
         // Find which niche keywords apply to this search
         let relevantKeywords: string[] = [];
         for (const [niche, keywords] of Object.entries(nicheKeywords)) {
           const nicheNorm = normalizeString(niche.toLowerCase());
-          if (searchedSegment.includes(nicheNorm) || nicheNorm.includes(searchedSegment.split(',')[0].trim())) {
+          if (segmentNorm.includes(nicheNorm) || nicheNorm.includes(segmentNorm.split(',')[0].trim())) {
             relevantKeywords = [...relevantKeywords, ...keywords];
           }
         }
         
+        console.log(`🔍 Niche check for "${title}": segment="${searchedSegment}", keywords found: ${relevantKeywords.length}`);
+        
         // If we have specific keywords for this niche, the lead must match at least one
         if (relevantKeywords.length > 0) {
           const matches = relevantKeywords.some(keyword => allText.includes(keyword));
+          if (!matches) {
+            console.log(`   ❌ No keyword match in: ${allText.slice(0, 100)}...`);
+          }
           return matches;
         }
         
         // If no specific keywords found, allow the lead (generic search)
+        console.log(`   ✅ No niche filter - allowing lead`);
         return true;
       }
       
