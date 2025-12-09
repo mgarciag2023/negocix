@@ -613,12 +613,13 @@ serve(async (req) => {
     
     // Build Apify request body - SINGLE CALL MODE (max 150 leads TOTAL)
     const MAX_TOTAL_LEADS = 150;
-    // CRITICAL FIX: Divide max by number of search queries to ensure total never exceeds 150
-    const numQueries = searchQueries.length;
-    // Increase places per search for better coverage, minimum 15
-    const placesPerSearch = Math.max(15, Math.ceil(MAX_TOTAL_LEADS / numQueries));
+    // Use fewer search queries for better performance - limit to 3 best terms
+    const limitedQueries = searchQueries.slice(0, 3);
+    const numQueries = limitedQueries.length;
+    // Higher places per search = better results (min 50)
+    const placesPerSearch = Math.max(50, Math.ceil(MAX_TOTAL_LEADS / numQueries));
     
-    console.log(`📊 ${numQueries} search queries, requesting ${placesPerSearch} places each (max ${MAX_TOTAL_LEADS} total leads)`);
+    console.log(`📊 Using ${numQueries} search queries (from ${searchQueries.length} total), requesting ${placesPerSearch} places each`);
     
     // Map country codes to language for Apify
     const countryLanguages: { [key: string]: string } = {
@@ -649,21 +650,16 @@ serve(async (req) => {
     const searchLanguage = countryLanguages[countryCode] || 'en';
     
     const apifyRequestBody: any = {
-      searchStringsArray: searchQueries,
+      searchStringsArray: limitedQueries,
       maxCrawledPlacesPerSearch: placesPerSearch,
       language: searchLanguage,
-      deeperCityScrape: true,
-      scrapeReviewsNumber: 0,
       skipClosedPlaces: true,
-      maxAutomaticZoomOut: 5,
-      includeSearchResultsNearby: true,
     };
     
     // Add coordinates only for Brazil (we have Brazilian city coords)
     if (!isInternational && cityCoords) {
       apifyRequestBody.lat = cityCoords.lat;
       apifyRequestBody.lng = cityCoords.lng;
-      apifyRequestBody.radius = 150000; // 150km radius
       console.log(`📍 Using coordinates: ${cityCoords.lat}, ${cityCoords.lng}`);
     } else {
       console.log(`📍 ${isInternational ? 'International search' : 'No coordinates found'} for ${region}, using region name search only`);
@@ -671,9 +667,9 @@ serve(async (req) => {
     
     console.log(`🚀 Calling Apify with request body:`, JSON.stringify(apifyRequestBody, null, 2));
     
-    // Use compass~crawler-google-places actor (original that was working)
+    // Use apify/google-maps-scraper actor - the official and most stable
     const apifyResponse = await fetch(
-      `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
+      `https://api.apify.com/v2/acts/apify~google-maps-scraper/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
