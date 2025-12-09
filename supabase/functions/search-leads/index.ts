@@ -613,13 +613,12 @@ serve(async (req) => {
     
     // Build Apify request body - SINGLE CALL MODE (max 150 leads TOTAL)
     const MAX_TOTAL_LEADS = 150;
-    // Use fewer search queries for better performance - limit to 3 best terms
-    const limitedQueries = searchQueries.slice(0, 3);
-    const numQueries = limitedQueries.length;
-    // Higher places per search = better results (min 50)
-    const placesPerSearch = Math.max(50, Math.ceil(MAX_TOTAL_LEADS / numQueries));
     
-    console.log(`📊 Using ${numQueries} search queries (from ${searchQueries.length} total), requesting ${placesPerSearch} places each`);
+    // Use only the first 3 search queries to maximize results per query
+    const limitedQueries = searchQueries.slice(0, 3);
+    
+    console.log(`📊 Using ${limitedQueries.length} search queries (from ${searchQueries.length} total)`);
+    console.log(`📋 Search queries:`, limitedQueries);
     
     // Map country codes to language for Apify
     const countryLanguages: { [key: string]: string } = {
@@ -649,11 +648,14 @@ serve(async (req) => {
     
     const searchLanguage = countryLanguages[countryCode] || 'en';
     
+    // Build request with parameters that work with compass~crawler-google-places
     const apifyRequestBody: any = {
       searchStringsArray: limitedQueries,
-      maxCrawledPlacesPerSearch: placesPerSearch,
+      maxCrawledPlacesPerSearch: 50, // 50 per query = up to 150 total
       language: searchLanguage,
       skipClosedPlaces: true,
+      deeperCityScrape: false, // Disable to speed up
+      maxAutomaticZoomOut: 3, // Lower = faster
     };
     
     // Add coordinates only for Brazil (we have Brazilian city coords)
@@ -665,11 +667,11 @@ serve(async (req) => {
       console.log(`📍 ${isInternational ? 'International search' : 'No coordinates found'} for ${region}, using region name search only`);
     }
     
-    console.log(`🚀 Calling Apify with request body:`, JSON.stringify(apifyRequestBody, null, 2));
+    console.log(`🚀 Calling Apify compass~crawler-google-places with:`, JSON.stringify(apifyRequestBody, null, 2));
     
-    // Use apify/google-maps-scraper actor - the official and most stable
+    // Use compass~crawler-google-places actor - the one that was working before
     const apifyResponse = await fetch(
-      `https://api.apify.com/v2/acts/apify~google-maps-scraper/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
+      `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
