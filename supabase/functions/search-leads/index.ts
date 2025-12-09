@@ -145,13 +145,30 @@ serve(async (req) => {
   }
 
   try {
-    const { segment, products, region, country, filters } = await req.json();
-    console.log('🔍 SEARCH v3 - Input:', { segment, products, region, country });
+    const { segment, products, region, country, filters, ecommerceType } = await req.json();
+    console.log('🔍 SEARCH v3 - Input:', { segment, products, region, country, ecommerceType });
     
     const countryCode = country || 'BR';
     
-    // Generate search terms (WITHOUT location)
-    const searchTerms = generateSearchTerms(segment);
+    // Check if this is an e-commerce search with specific type
+    const isEcommerceSearch = segment.toLowerCase().includes('e-commerce') || segment.toLowerCase().includes('ecommerce');
+    
+    // Generate search terms based on context
+    let searchTerms: string[];
+    
+    if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
+      // For e-commerce with specific type, search for stores selling that type of product
+      const ecomType = ecommerceType.trim().toLowerCase();
+      searchTerms = [
+        `loja ${ecomType}`,
+        `${ecomType}`,
+        `loja de ${ecomType}`,
+        `${ecomType} online`
+      ];
+      console.log(`🛒 E-commerce específico: ${ecomType}`);
+    } else {
+      searchTerms = generateSearchTerms(segment);
+    }
     
     // Build location query
     const locationQuery = countryCode === 'BR' 

@@ -192,6 +192,7 @@ const Results = () => {
             products: searchConfig.products,
             region: searchConfig.region,
             country: searchConfig.country || 'BR',
+            ecommerceType: searchConfig.ecommerceType || '',
             filters: {
               category: searchConfig.category,
               companySize: searchConfig.companySize,
