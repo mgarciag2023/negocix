@@ -345,6 +345,12 @@ serve(async (req) => {
       'chaveiro': ['chaveiro', 'chaveiro 24h', 'cópia de chaves', 'serviço de chaveiro', 'chaveiro automotivo', 'fechaduras', 'cadeados', 'chaveiro residencial'],
       'ferragens': ['ferragens', 'loja de ferragens', 'casa de ferragens', 'parafusos', 'ferragens em geral', 'ferragem', 'dobradiças', 'puxadores'],
       
+      // Construtoras - NEW
+      'construtoras': ['construtora', 'construtoras', 'empreiteira', 'incorporadora', 'engenharia civil', 'construção civil', 'empresa de construção', 'obras', 'construções'],
+      'construtora': ['construtora', 'construtoras', 'empreiteira', 'incorporadora', 'engenharia civil', 'construção civil', 'empresa de construção', 'obras', 'construções'],
+      'empreiteiras': ['empreiteira', 'empreiteiro', 'construção', 'reformas', 'obras'],
+      'incorporadoras': ['incorporadora', 'incorporação', 'imobiliária', 'empreendimento'],
+      
       // Agropecuária - EXPANDED  
       'agropecuária': ['agropecuária', 'loja agropecuaria', 'produtos agropecuários', 'insumos agrícolas', 'casa agropecuaria', 'loja rural', 'veterinária agro', 'agro', 'pet shop agro', 'produtos rurais', 'sementes', 'adubos'],
       
@@ -447,8 +453,9 @@ serve(async (req) => {
     // Check if this is proteção veicular category (from filters)
     const isProtecaoVeicular = filters?.category === 'protecao-veicular';
     
-    // Build location string based on region
-    const locationString = `${region}, ${countryCode}`;
+    // Build location string based on region - TRIM to avoid extra spaces
+    const trimmedRegion = region.trim();
+    const locationString = `${trimmedRegion}, ${countryCode}`;
     
     // If proteção veicular, use comprehensive vehicle search terms
     if (isProtecaoVeicular) {
