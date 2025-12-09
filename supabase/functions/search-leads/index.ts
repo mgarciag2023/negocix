@@ -731,20 +731,32 @@ serve(async (req) => {
         'bar e restaurante', 'pub', 'night club', 'bar'
       ];
       
+      // IRRELEVANT BUSINESS TYPES TO EXCLUDE - prevent results like Magazine Luiza, papelaria when searching for specific categories
+      const irrelevantBusinessTypes: { [key: string]: string[] } = {
+        // When searching for construction materials or tools, exclude these
+        'materiais de construção': ['magazine luiza', 'magazineluiza', 'magazine', 'papelaria', 'livraria', 'supermercado', 'hipermercado', 'atacadao', 'carrefour', 'extra', 'big', 'lojas americanas', 'casas bahia', 'ponto frio', 'fast shop', 'ri happy', 'pernambucanas', 'renner', 'riachuelo', 'c&a', 'marisa', 'havan', 'amazon', 'mercado livre', 'shopee'],
+        'ferramentas': ['magazine luiza', 'magazineluiza', 'magazine', 'papelaria', 'livraria', 'supermercado', 'hipermercado', 'atacadao', 'carrefour', 'extra', 'big', 'lojas americanas', 'casas bahia', 'ponto frio', 'fast shop', 'ri happy', 'pernambucanas', 'renner', 'riachuelo', 'c&a', 'marisa', 'havan', 'amazon', 'mercado livre', 'shopee', 'drogaria', 'farmacia', 'drogasil', 'droga raia', 'panvel'],
+        'ferragens': ['magazine luiza', 'magazineluiza', 'magazine', 'papelaria', 'livraria', 'supermercado', 'hipermercado', 'lojas americanas', 'casas bahia', 'ponto frio', 'fast shop', 'ri happy', 'pernambucanas', 'renner', 'riachuelo', 'c&a', 'marisa', 'havan'],
+        'materiais elétricos': ['magazine luiza', 'magazineluiza', 'magazine', 'papelaria', 'livraria', 'supermercado', 'hipermercado', 'lojas americanas', 'casas bahia', 'ponto frio', 'fast shop', 'ri happy', 'pernambucanas', 'renner', 'riachuelo', 'c&a', 'marisa', 'havan', 'drogaria', 'farmacia'],
+        'agropecuária': ['magazine luiza', 'magazineluiza', 'magazine', 'papelaria', 'livraria', 'supermercado', 'lojas americanas', 'casas bahia', 'ponto frio', 'fast shop', 'ri happy', 'pernambucanas', 'renner', 'riachuelo', 'c&a', 'marisa', 'havan'],
+      };
+      
       // Large retail chains and e-commerce platforms to ALWAYS EXCLUDE (these are not real leads for salespeople)
       const alwaysExcludedChains = [
-        'magazine luiza', 'magazineluiza', 'magalu', 'magazine luíza',
+        'magazine luiza', 'magazineluiza', 'magalu',
         'lojas americanas', 'americanas',
         'casas bahia',
         'ponto frio', 'pontofrio',
         'carrefour',
         'walmart',
-        'extra hipermercado',
-        'big bompreco',
+        'extra hipermercado', 'extra',
+        'big', 'big bompreco',
+        'atacadao', 'atacadão',
         'amazon', 'amazon.com',
         'mercado livre', 'mercadolivre',
         'shopee',
         'aliexpress',
+        'magazine luíza',
         'havan',
         'ri happy',
         'fast shop',
@@ -759,100 +771,7 @@ serve(async (req) => {
         'kabum',
         'submarino',
         'shoptime',
-        'leroy merlin',
-        'telhanorte',
-        'sodimac',
-        'tok stok', 'tok&stok',
-        'etna',
-        'mobly',
-        'madeiramadeira',
       ];
-      
-      // NICHE CATEGORY KEYWORDS - Map each niche to its relevant keywords
-      // If a lead doesn't match ANY keyword for the searched niche, it's irrelevant
-      const nicheKeywords: { [key: string]: string[] } = {
-        // Construção e Ferramentas
-        'materiais de construção': ['construcao', 'construção', 'material', 'cimento', 'tijolo', 'areia', 'ferro', 'madeira', 'piso', 'azulejo', 'tintas', 'hidraulica', 'deposito', 'home center', 'telha', 'argamassa', 'gesso', 'drywall', 'impermeabilizante'],
-        'ferramentas': ['ferramenta', 'ferragem', 'parafuso', 'porca', 'chave', 'martelo', 'furadeira', 'serra', 'alicate', 'equipamento', 'maquina', 'máquina', 'tool', 'hardware'],
-        'ferragens': ['ferragem', 'parafuso', 'porca', 'dobradica', 'dobradiça', 'puxador', 'fechadura', 'cadeado', 'gancho', 'suporte', 'hardware'],
-        'materiais elétricos': ['eletric', 'elétric', 'fio', 'cabo', 'disjuntor', 'tomada', 'interruptor', 'luminaria', 'luminária', 'lampada', 'lâmpada', 'quadro eletrico', 'led', 'iluminacao', 'iluminação', 'eletrica', 'elétrica'],
-        'chaveiro': ['chaveiro', 'chave', 'fechadura', 'cadeado', 'cofre', 'seguranca', 'segurança', 'copia', 'cópia', 'key'],
-        
-        // Agro
-        'agropecuária': ['agro', 'rural', 'fazenda', 'semente', 'adubo', 'fertilizante', 'racao', 'ração', 'veterinar', 'animal', 'pecuaria', 'pecuária', 'agricola', 'agrícola', 'trator', 'implemento'],
-        
-        // Alimentação
-        'supermercados': ['supermercado', 'mercado', 'mercearia', 'emporio', 'empório', 'minimercado', 'armazem', 'armazém', 'grocery', 'market'],
-        'atacadistas de alimentos': ['atacado', 'atacadista', 'distribuidor', 'distribuidora', 'food service', 'alimento', 'bebida'],
-        'padarias': ['padaria', 'panificadora', 'pao', 'pães', 'confeitaria', 'bolo', 'doce', 'bakery'],
-        'restaurantes': ['restaurante', 'lanchonete', 'buffet', 'self service', 'comida', 'refeicao', 'refeição', 'almoco', 'almoço', 'jantar'],
-        
-        // Saúde
-        'farmácias': ['farmacia', 'farmácia', 'drogaria', 'medicamento', 'remedio', 'remédio', 'manipulacao', 'manipulação', 'pharmacy', 'drug'],
-        'clínicas': ['clinica', 'clínica', 'consultorio', 'consultório', 'medic', 'médic', 'saude', 'saúde', 'health', 'doutor', 'dr.'],
-        'laboratórios': ['laboratorio', 'laboratório', 'analise', 'análise', 'exame', 'diagnostico', 'diagnóstico', 'lab'],
-        
-        // Automotivo
-        'autopeças': ['autopeca', 'autopeça', 'peca', 'peça', 'carro', 'veiculo', 'veículo', 'automotiv', 'motor', 'freio', 'suspensao', 'suspensão', 'oleo', 'óleo', 'filtro'],
-        'oficinas mecânicas': ['oficina', 'mecanica', 'mecânica', 'reparo', 'conserto', 'manutencao', 'manutenção', 'auto center', 'autocenter', 'garage'],
-        
-        // Têxtil
-        'tecidos': ['tecido', 'malha', 'pano', 'fabric', 'algodao', 'algodão', 'poliester', 'poliéster', 'seda', 'linho'],
-        'confecções': ['confeccao', 'confecção', 'roupa', 'vestuario', 'vestuário', 'moda', 'fashion', 'textil', 'têxtil'],
-        'aviamentos': ['aviamento', 'armarinho', 'botao', 'botão', 'ziper', 'zíper', 'linha', 'agulha', 'fita', 'elastico', 'elástico'],
-        
-        // Pet
-        'pet shop': ['pet', 'animal', 'cao', 'cão', 'cachorro', 'gato', 'racao', 'ração', 'banho', 'tosa', 'veterinar'],
-        
-        // Gráfica
-        'gráfica': ['grafica', 'gráfica', 'impressao', 'impressão', 'print', 'banner', 'adesivo', 'placa', 'letreiro', 'comunicacao visual', 'comunicação visual', 'serigrafia', 'offset'],
-        
-        // Eletrônicos
-        'eletrônicos': ['eletronico', 'eletrônico', 'celular', 'smartphone', 'computador', 'notebook', 'tablet', 'informatica', 'informática', 'tech', 'assistencia tecnica', 'assistência técnica'],
-        
-        // Móveis
-        'móveis': ['movel', 'móvel', 'moveis', 'móveis', 'marcenaria', 'planejado', 'sofa', 'sofá', 'cama', 'armario', 'armário', 'mesa', 'cadeira', 'estante', 'furniture'],
-        
-        // Ótica
-        'óticas': ['otica', 'ótica', 'oculos', 'óculos', 'lente', 'armacao', 'armação', 'oftalmolog', 'visao', 'visão', 'optical'],
-        
-        // Papelaria
-        'papelaria': ['papelaria', 'papel', 'caderno', 'caneta', 'escolar', 'escritorio', 'escritório', 'office', 'material escolar'],
-        
-        // Joalheria
-        'joalherias': ['joalheria', 'joia', 'jóia', 'ouro', 'prata', 'relogio', 'relógio', 'bijuteria', 'semi-joia', 'semijoia', 'jewelry', 'watch'],
-        
-        // Esporte
-        'academias': ['academia', 'fitness', 'musculacao', 'musculação', 'crossfit', 'pilates', 'gym', 'treino', 'esporte', 'sport'],
-        'clubes esportivos': ['clube', 'esporte', 'sport', 'quadra', 'piscina', 'tenis', 'tênis', 'futebol', 'natacao', 'natação'],
-        'arenas de beach tennis': ['beach tennis', 'areia', 'quadra', 'arena', 'esporte'],
-        
-        // Transporte
-        'transportadoras': ['transportadora', 'transporte', 'frete', 'carga', 'logistica', 'logística', 'entrega', 'mudanca', 'mudança'],
-      };
-      
-      // Function to check if a lead is relevant to the searched niche
-      function isRelevantToNiche(title: string, categoryName: string, categories: string[], searchedSegment: string): boolean {
-        const allText = `${title} ${categoryName} ${categories.join(' ')}`.toLowerCase();
-        
-        // Find which niche keywords apply to this search
-        let relevantKeywords: string[] = [];
-        for (const [niche, keywords] of Object.entries(nicheKeywords)) {
-          const nicheNorm = normalizeString(niche.toLowerCase());
-          if (searchedSegment.includes(nicheNorm) || nicheNorm.includes(searchedSegment.split(',')[0].trim())) {
-            relevantKeywords = [...relevantKeywords, ...keywords];
-          }
-        }
-        
-        // If we have specific keywords for this niche, the lead must match at least one
-        if (relevantKeywords.length > 0) {
-          const matches = relevantKeywords.some(keyword => allText.includes(keyword));
-          return matches;
-        }
-        
-        // If no specific keywords found, allow the lead (generic search)
-        return true;
-      }
       
       console.log(`📊 Raw results from Apify BEFORE filtering: ${apifyResults.length}`);
       
@@ -908,16 +827,22 @@ serve(async (req) => {
           return false;
         }
         
-        // ALWAYS EXCLUDE large retail chains and e-commerce platforms
+        // NEW: ALWAYS EXCLUDE large retail chains and e-commerce platforms
         if (alwaysExcludedChains.some(chain => title.includes(chain))) {
           console.log(`🚫 Large retail chain excluded: ${place.title}`);
           return false;
         }
         
-        // NEW: SMART NICHE FILTERING - Check if lead is relevant to the searched niche
-        if (!isRelevantToNiche(title, categoryName, categories, segmentLower)) {
-          console.log(`🚫 Not relevant to niche "${segment}": ${place.title} (${categoryName})`);
-          return false;
+        // NEW: Exclude irrelevant business types based on what was searched
+        for (const [searchCategory, excludedTypes] of Object.entries(irrelevantBusinessTypes)) {
+          const searchCategoryNorm = normalizeString(searchCategory.toLowerCase());
+          if (segmentLower.includes(searchCategoryNorm)) {
+            // Check if this result matches any excluded type for this search
+            if (excludedTypes.some(excluded => title.includes(excluded) || categoryName.includes(excluded))) {
+              console.log(`🚫 Irrelevant for "${searchCategory}": ${place.title} (${categoryName})`);
+              return false;
+            }
+          }
         }
         
         // 1. MUST have valid phone (QUALITY REQUIREMENT)
