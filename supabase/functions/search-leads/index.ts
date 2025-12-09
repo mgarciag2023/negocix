@@ -135,8 +135,8 @@ function generateSearchTerms(segment: string): string[] {
     ];
   }
   
-  // Limit to 20 terms max
-  return searchTerms.slice(0, 20);
+  // Limit to 4 terms max to control API costs
+  return searchTerms.slice(0, 4);
 }
 
 serve(async (req) => {
@@ -167,10 +167,10 @@ serve(async (req) => {
       throw new Error("APIFY_API_KEY is not configured");
     }
     
-    // LIMIT CONTROL: Distribute 150 leads across all queries
+    // LIMIT CONTROL: Max 150 leads total, distributed across queries
     const MAX_TOTAL_LEADS = 150;
     const numQueries = searchTerms.length;
-    const placesPerSearch = Math.max(10, Math.ceil(MAX_TOTAL_LEADS / numQueries));
+    const placesPerSearch = Math.max(10, Math.floor(MAX_TOTAL_LEADS / numQueries));
     
     console.log(`📊 Limit: ${placesPerSearch} places per query (${numQueries} queries, max ${MAX_TOTAL_LEADS} total)`);
     
@@ -254,9 +254,10 @@ serve(async (req) => {
     
     console.log(`✅ After dedup: ${results.length} unique places`);
     
-    // Limit to 150
-    if (results.length > 150) {
-      results = results.slice(0, 150);
+    // HARD LIMIT: Exactly 150 max, never more
+    if (results.length > MAX_TOTAL_LEADS) {
+      results = results.slice(0, MAX_TOTAL_LEADS);
+      console.log(`⚠️ Truncated to ${MAX_TOTAL_LEADS} leads (hard limit)`);
     }
     
     // If no results, return error
