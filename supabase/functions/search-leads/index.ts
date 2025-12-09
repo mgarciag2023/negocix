@@ -35,166 +35,108 @@ function validatePhone(phone: string): { valid: boolean; normalized: string; isW
   return { valid: false, normalized: '', isWhatsApp: false };
 }
 
-// Generate 50 search query variations
-function generateSearchQueries(segment: string, region: string, country: string): string[] {
+// Generate search terms (WITHOUT location - location is separate parameter)
+function generateSearchTerms(segment: string): string[] {
   const term = segment.split(',')[0].trim().toLowerCase();
-  const location = country === 'BR' ? `${region}, SC, Brazil` : `${region}, ${country}`;
-  const locationShort = region;
   
   // Category-specific terms mapping
   const categoryTerms: { [key: string]: string[] } = {
     'restaurantes': [
-      'restaurante', 'restaurantes', 'lanchonete', 'lanchonetes', 'buffet', 
-      'self service', 'comida', 'almoço', 'jantar', 'refeição', 'cantina',
-      'bistrô', 'churrascaria', 'pizzaria', 'hamburgueria', 'bar e restaurante',
-      'comida caseira', 'comida por quilo', 'rodízio', 'food'
+      'restaurante', 'restaurantes', 'lanchonete', 'buffet', 'self service',
+      'comida', 'almoço', 'cantina', 'bistrô', 'churrascaria', 'pizzaria',
+      'hamburgueria', 'comida caseira', 'comida por quilo', 'rodízio'
     ],
     'supermercados': [
-      'supermercado', 'supermercados', 'mercado', 'mercados', 'mercearia',
-      'minimercado', 'hipermercado', 'atacado', 'atacarejo', 'armazém',
-      'empório', 'hortifruti', 'sacolão', 'feira', 'grocery'
+      'supermercado', 'mercado', 'mercearia', 'minimercado', 'hipermercado',
+      'atacado', 'atacarejo', 'armazém', 'empório', 'hortifruti', 'sacolão'
     ],
     'padarias': [
-      'padaria', 'padarias', 'panificadora', 'confeitaria', 'pão', 'bakery',
-      'bolo', 'doces', 'salgados', 'café', 'cafeteria', 'lanchonete'
+      'padaria', 'panificadora', 'confeitaria', 'bakery', 'pão', 'bolo', 'doces'
     ],
     'materiais de construção': [
-      'material de construção', 'materiais de construção', 'construção',
-      'home center', 'depósito', 'loja de construção', 'ferragem',
-      'cimento', 'tijolo', 'telha', 'piso', 'azulejo', 'madeira'
+      'material de construção', 'materiais de construção', 'home center',
+      'depósito', 'loja de construção', 'ferragem', 'construção'
     ],
     'ferramentas': [
       'ferramentas', 'loja de ferramentas', 'ferragem', 'ferragens',
-      'casa das ferramentas', 'ferramentaria', 'máquinas', 'equipamentos'
+      'ferramentaria', 'máquinas', 'equipamentos'
     ],
     'agropecuária': [
       'agropecuária', 'agro', 'loja agropecuária', 'produtos rurais',
-      'sementes', 'adubos', 'ração', 'veterinária', 'pet shop'
+      'sementes', 'adubos', 'ração', 'veterinária'
     ],
     'farmácias': [
-      'farmácia', 'farmácias', 'drogaria', 'drogarias', 'medicamentos',
-      'remédios', 'pharmacy'
+      'farmácia', 'drogaria', 'medicamentos', 'pharmacy'
     ],
     'pet shop': [
-      'pet shop', 'pet', 'loja de animais', 'ração', 'veterinária',
-      'banho e tosa', 'cachorro', 'gato', 'animal'
+      'pet shop', 'pet', 'loja de animais', 'ração', 'veterinária', 'banho e tosa'
     ],
     'lojas de roupas': [
-      'loja de roupas', 'roupas', 'vestuário', 'moda', 'confecção',
-      'boutique', 'fashion', 'clothing'
+      'loja de roupas', 'roupas', 'vestuário', 'moda', 'confecção', 'boutique'
     ],
     'autopeças': [
-      'autopeças', 'auto peças', 'peças automotivas', 'loja de peças',
-      'peças de carro', 'mecânica', 'oficina'
+      'autopeças', 'auto peças', 'peças automotivas', 'loja de peças', 'mecânica'
     ],
     'eletrônicos': [
-      'eletrônicos', 'loja de eletrônicos', 'informática', 'celular',
-      'computador', 'notebook', 'games', 'tech'
+      'eletrônicos', 'loja de eletrônicos', 'informática', 'celular', 'computador'
     ],
     'móveis': [
-      'móveis', 'loja de móveis', 'móveis planejados', 'marcenaria',
-      'decoração', 'colchões', 'estofados'
+      'móveis', 'loja de móveis', 'móveis planejados', 'marcenaria', 'decoração'
     ],
     'óticas': [
-      'ótica', 'óticas', 'óculos', 'lentes', 'armação', 'optical'
+      'ótica', 'óculos', 'lentes', 'armação'
     ],
     'joalherias': [
-      'joalheria', 'joias', 'jóias', 'ouro', 'prata', 'relógios', 'bijuteria'
+      'joalheria', 'joias', 'ouro', 'prata', 'relógios', 'bijuteria'
     ],
     'academias': [
-      'academia', 'fitness', 'musculação', 'crossfit', 'pilates', 'yoga', 'gym'
+      'academia', 'fitness', 'musculação', 'crossfit', 'pilates', 'gym'
     ],
     'salões de beleza': [
-      'salão de beleza', 'cabeleireiro', 'barbearia', 'estética',
-      'manicure', 'spa', 'beauty'
+      'salão de beleza', 'cabeleireiro', 'barbearia', 'estética', 'manicure'
     ],
     'hotéis': [
-      'hotel', 'hotéis', 'pousada', 'hospedagem', 'motel', 'hostel', 'inn'
-    ],
-    'escolas': [
-      'escola', 'colégio', 'ensino', 'educação', 'curso', 'faculdade'
+      'hotel', 'pousada', 'hospedagem', 'hostel'
     ],
     'clínicas': [
-      'clínica', 'consultório', 'médico', 'saúde', 'hospital', 'dentista'
-    ],
-    'escritórios de advocacia': [
-      'advogado', 'advocacia', 'escritório de advocacia', 'lawyer', 'law office'
-    ],
-    'contabilidade': [
-      'contabilidade', 'contador', 'escritório contábil', 'accounting'
-    ],
-    'imobiliárias': [
-      'imobiliária', 'imóveis', 'corretor', 'real estate'
+      'clínica', 'consultório', 'médico', 'saúde', 'dentista'
     ],
     'transportadoras': [
-      'transportadora', 'transporte', 'frete', 'logística', 'mudança', 'cargas'
+      'transportadora', 'transporte', 'frete', 'logística', 'mudança'
     ],
     'gráficas': [
-      'gráfica', 'impressão', 'comunicação visual', 'banner', 'adesivo'
+      'gráfica', 'impressão', 'comunicação visual', 'banner'
     ],
     'construtoras': [
-      'construtora', 'construção civil', 'empreiteira', 'incorporadora', 'obras'
+      'construtora', 'construção civil', 'empreiteira', 'incorporadora'
     ]
   };
   
   // Get terms for this category or use generic
-  const termLower = term.toLowerCase();
-  let searchTerms = categoryTerms[termLower] || [term];
+  let searchTerms = categoryTerms[term] || null;
   
-  // Also check if any category contains the term
-  for (const [cat, terms] of Object.entries(categoryTerms)) {
-    if (termLower.includes(cat) || cat.includes(termLower)) {
-      searchTerms = [...new Set([...searchTerms, ...terms])];
-      break;
+  // Check if any category contains the term
+  if (!searchTerms) {
+    for (const [cat, terms] of Object.entries(categoryTerms)) {
+      if (term.includes(cat) || cat.includes(term)) {
+        searchTerms = terms;
+        break;
+      }
     }
   }
   
-  // If still just the original term, create variations
-  if (searchTerms.length === 1) {
+  // If still nothing, create variations from original term
+  if (!searchTerms) {
     searchTerms = [
       term,
       `${term}s`,
       `loja de ${term}`,
-      `lojas de ${term}`,
-      `${term} shop`,
-      `${term} store`
+      `lojas de ${term}`
     ];
   }
   
-  // Generate queries with different location formats
-  const queries: string[] = [];
-  
-  // Format 1: term + full location
-  searchTerms.slice(0, 15).forEach(t => {
-    queries.push(`${t} ${location}`);
-  });
-  
-  // Format 2: term + short location
-  searchTerms.slice(0, 15).forEach(t => {
-    queries.push(`${t} ${locationShort}`);
-  });
-  
-  // Format 3: term + em + location
-  searchTerms.slice(0, 10).forEach(t => {
-    queries.push(`${t} em ${locationShort}`);
-  });
-  
-  // Format 4: loja de + term + location
-  searchTerms.slice(0, 5).forEach(t => {
-    queries.push(`loja de ${t} ${locationShort}`);
-  });
-  
-  // Format 5: term + near me style
-  searchTerms.slice(0, 5).forEach(t => {
-    queries.push(`${t} perto ${locationShort}`);
-  });
-  
-  // Remove duplicates and limit to 50
-  const uniqueQueries = [...new Set(queries)].slice(0, 50);
-  
-  console.log(`📋 Generated ${uniqueQueries.length} search queries for "${term}"`);
-  
-  return uniqueQueries;
+  // Limit to 20 terms max
+  return searchTerms.slice(0, 20);
 }
 
 serve(async (req) => {
@@ -204,14 +146,20 @@ serve(async (req) => {
 
   try {
     const { segment, products, region, country, filters } = await req.json();
-    console.log('🔍 SEARCH v2 - Input:', { segment, products, region, country });
+    console.log('🔍 SEARCH v3 - Input:', { segment, products, region, country });
     
     const countryCode = country || 'BR';
     
-    // Generate many search queries
-    const searchQueries = generateSearchQueries(segment, region, countryCode);
+    // Generate search terms (WITHOUT location)
+    const searchTerms = generateSearchTerms(segment);
     
-    console.log('📋 First 10 queries:', searchQueries.slice(0, 10));
+    // Build location query
+    const locationQuery = countryCode === 'BR' 
+      ? `${region}, Brazil`
+      : `${region}, ${countryCode}`;
+    
+    console.log('📋 Search terms:', searchTerms);
+    console.log('📍 Location:', locationQuery);
     
     // Get Apify API key
     const APIFY_API_KEY = Deno.env.get("APIFY_API_KEY");
@@ -219,27 +167,21 @@ serve(async (req) => {
       throw new Error("APIFY_API_KEY is not configured");
     }
     
-    // Try with compass~crawler-google-places actor (different actor)
+    // CORRECT Apify request body with locationQuery separate
     const apifyBody = {
-      searchStringsArray: searchQueries,
-      maxCrawledPlacesPerSearch: 10,
+      searchStringsArray: searchTerms,
+      locationQuery: locationQuery,  // THIS IS THE KEY!
+      maxCrawledPlacesPerSearch: 20,
       language: countryCode === 'BR' ? 'pt-BR' : 'en',
-      countryCode: countryCode,
       maxImages: 0,
-      scrapeReviewerName: false,
-      scrapeReviewId: false,
-      scrapeReviewUrl: false,
-      scrapeResponseFromOwnerText: false
+      maximumLeadsEnrichmentRecords: 0
     };
     
     console.log('🚀 Calling Apify compass~crawler-google-places...');
-    console.log('📦 Request body:', JSON.stringify({
-      ...apifyBody,
-      searchStringsArray: `[${searchQueries.length} queries]`
-    }));
+    console.log('📦 Request:', JSON.stringify(apifyBody, null, 2));
     
-    // Try compass~crawler-google-places first
-    let apifyResponse = await fetch(
+    // Call compass~crawler-google-places with correct parameters
+    const apifyResponse = await fetch(
       `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
       {
         method: 'POST',
@@ -248,37 +190,22 @@ serve(async (req) => {
       }
     );
 
-    console.log('📡 compass~crawler-google-places status:', apifyResponse.status);
-
-    // If compass fails, try the other actor
-    if (!apifyResponse.ok) {
-      console.log('⚠️ compass failed, trying nwua9Gu5YrADL7ZDj...');
-      
-      const altBody = {
-        searchStringsArray: searchQueries,
-        maxCrawledPlacesPerSearch: 10,
-        language: countryCode === 'BR' ? 'pt-BR' : 'en',
-        skipClosedPlaces: true
-      };
-      
-      apifyResponse = await fetch(
-        `https://api.apify.com/v2/acts/nwua9Gu5YrADL7ZDj/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(altBody),
-        }
-      );
-      
-      console.log('📡 nwua9Gu5YrADL7ZDj status:', apifyResponse.status);
-    }
+    console.log('📡 Apify response status:', apifyResponse.status);
 
     if (!apifyResponse.ok) {
       const errorText = await apifyResponse.text();
-      console.error('❌ Both actors failed:', errorText);
-      return new Response(JSON.stringify({ 
-        error: `Erro na API: ${apifyResponse.status}. Verifique sua chave Apify.` 
-      }), {
+      console.error('❌ Apify error:', errorText);
+      
+      // Try to parse error for specific messages
+      let errorMessage = `Erro na API Apify: ${apifyResponse.status}`;
+      try {
+        const errorData = JSON.parse(errorText);
+        if (errorData.error?.message) {
+          errorMessage = errorData.error.message;
+        }
+      } catch (e) {}
+      
+      return new Response(JSON.stringify({ error: errorMessage }), {
         status: apifyResponse.status,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -287,9 +214,14 @@ serve(async (req) => {
     let results = await apifyResponse.json();
     console.log(`📊 Apify returned ${results.length} raw places`);
     
-    // Log some sample data to understand structure
+    // Log sample to see structure
     if (results.length > 0) {
-      console.log('📋 Sample result:', JSON.stringify(results[0], null, 2).slice(0, 500));
+      console.log('📋 Sample:', JSON.stringify({
+        title: results[0].title,
+        phone: results[0].phone,
+        address: results[0].address,
+        categoryName: results[0].categoryName
+      }));
     }
     
     // Simple filter: just needs phone and not closed
@@ -305,7 +237,7 @@ serve(async (req) => {
     
     console.log(`✅ After filter: ${results.length} places with phone`);
     
-    // Remove duplicates by placeId or name+address
+    // Remove duplicates by placeId
     const seen = new Set();
     results = results.filter((place: any) => {
       const key = place.placeId || `${place.title}-${place.address}`;
@@ -323,7 +255,7 @@ serve(async (req) => {
     
     // If no results, return error
     if (results.length === 0) {
-      console.log('❌ No results found after all attempts');
+      console.log('❌ No results found');
       return new Response(JSON.stringify({ 
         error: `Nenhum estabelecimento encontrado em ${region}. Tente outra região ou categoria.` 
       }), {
