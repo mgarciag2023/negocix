@@ -167,22 +167,20 @@ serve(async (req) => {
       throw new Error("APIFY_API_KEY is not configured");
     }
     
-    // CORRECT Apify request body with locationQuery separate
+    // Use the STABLE actor that works
     const apifyBody = {
-      searchStringsArray: searchTerms,
-      locationQuery: locationQuery,  // THIS IS THE KEY!
-      maxCrawledPlacesPerSearch: 20,
+      searchStringsArray: searchTerms.map(term => `${term} em ${region}`),
+      maxCrawledPlacesPerSearch: 46,
       language: countryCode === 'BR' ? 'pt-BR' : 'en',
-      maxImages: 0,
-      maximumLeadsEnrichmentRecords: 0
+      skipClosedPlaces: true
     };
     
-    console.log('🚀 Calling Apify compass~crawler-google-places...');
+    console.log('🚀 Calling Apify nwua9Gu5YrADL7ZDj (stable actor)...');
     console.log('📦 Request:', JSON.stringify(apifyBody, null, 2));
     
-    // Call compass~crawler-google-places with correct parameters
+    // Call the STABLE actor nwua9Gu5YrADL7ZDj
     const apifyResponse = await fetch(
-      `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
+      `https://api.apify.com/v2/acts/nwua9Gu5YrADL7ZDj/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
