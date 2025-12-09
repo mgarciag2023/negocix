@@ -20,7 +20,6 @@ interface LeadCardProps {
   category: string;
   employeeCount?: string;
   companySize?: string;
-  hasWhatsApp?: boolean;
 }
 
 const LeadCard = ({
@@ -38,7 +37,6 @@ const LeadCard = ({
   category,
   employeeCount,
   companySize,
-  hasWhatsApp = false,
 }: LeadCardProps) => {
   const [isFavorite, setIsFavorite] = useState(false);
   
@@ -149,7 +147,7 @@ const LeadCard = ({
               lead: { 
                 id, name, address, phone, email, instagram, responsible, 
                 matchScore, reasons, revenue, openedDate, category,
-                employeeCount, companySize, hasWhatsApp
+                employeeCount, companySize
               } 
             }}
           >
@@ -161,13 +159,11 @@ const LeadCard = ({
             Ligar
           </a>
         </Button>
-        {hasWhatsApp && (
-          <Button variant="outline" asChild className="flex-1 text-sm md:text-base h-9 md:h-10">
-            <a href={`https://wa.me/${phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
-              WhatsApp
-            </a>
-          </Button>
-        )}
+        <Button variant="outline" asChild className="flex-1 text-sm md:text-base h-9 md:h-10">
+          <a href={`https://wa.me/${phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
+            WhatsApp
+          </a>
+        </Button>
       </div>
     </Card>
   );

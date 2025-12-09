@@ -23,7 +23,6 @@ interface Lead {
   reasons: string[];
   employeeCount?: string;
   companySize?: string;
-  hasWhatsApp?: boolean;
 }
 
 // Function to alternate leads by category for variety
