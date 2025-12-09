@@ -59,20 +59,15 @@ function extractInstagramHandle(url: string): string | null {
   return null;
 }
 
-// Validate Instagram profile exists (quality check)
-async function validateInstagramProfile(handle: string): Promise<boolean> {
+// FAST Instagram validation - just check format (no HTTP call to avoid timeouts)
+function validateInstagramFormat(handle: string): boolean {
   if (!handle) return false;
   const username = handle.replace('@', '');
-  try {
-    const response = await fetch(`https://www.instagram.com/${username}/`, {
-      method: 'HEAD',
-      headers: { 'User-Agent': 'Mozilla/5.0' },
-      signal: AbortSignal.timeout(3000) // 3 second timeout
-    });
-    return response.ok;
-  } catch {
-    return false; // On timeout or error, assume invalid
-  }
+  // Valid Instagram usernames: 1-30 chars, letters, numbers, dots, underscores
+  const validFormat = /^[a-zA-Z0-9._]{1,30}$/.test(username);
+  // Must not be reserved/invalid
+  const invalidUsernames = ['explore', 'p', 'reel', 'tv', 'stories', 'about', 'help', 'accounts'];
+  return validFormat && !invalidUsernames.includes(username.toLowerCase());
 }
 
 // FAST email extraction from HTML
@@ -117,10 +112,9 @@ function isValidEmail(email: string): boolean {
   return emailRegex.test(email) && !email.includes('..') && email.length <= 254;
 }
 
-// Website scrape with quality validation for Instagram and WhatsApp
-async function scrapeWebsiteWithValidation(url: string): Promise<{
+// FAST Website scrape - no HTTP validation of Instagram (avoid timeouts)
+async function fastScrapeWebsite(url: string): Promise<{
   instagram?: string;
-  instagramVerified: boolean;
   facebook?: string;
   whatsappNumber?: string;
   whatsappVerified: boolean;
@@ -128,32 +122,26 @@ async function scrapeWebsiteWithValidation(url: string): Promise<{
 }> {
   const result: { 
     instagram?: string; 
-    instagramVerified: boolean;
     facebook?: string; 
     whatsappNumber?: string; 
     whatsappVerified: boolean;
     email?: string 
-  } = { instagramVerified: false, whatsappVerified: false };
+  } = { whatsappVerified: false };
   
   try {
     const response = await fetch(url, {
       headers: { 'User-Agent': 'Mozilla/5.0' },
-      signal: AbortSignal.timeout(4000) // 4 second timeout for quality
+      signal: AbortSignal.timeout(2500) // 2.5 second timeout for speed
     });
     
     if (!response.ok) return result;
     
     const html = await response.text();
     
-    // Extract Instagram
+    // Extract Instagram - validate format only (no HTTP call)
     const rawInstagram = extractInstagramFromHtml(html);
-    if (rawInstagram) {
-      // Validate Instagram exists
-      const isValid = await validateInstagramProfile(rawInstagram);
-      if (isValid) {
-        result.instagram = rawInstagram;
-        result.instagramVerified = true;
-      }
+    if (rawInstagram && validateInstagramFormat(rawInstagram)) {
+      result.instagram = rawInstagram;
     }
     
     // Extract email
@@ -169,7 +157,7 @@ async function scrapeWebsiteWithValidation(url: string): Promise<{
     const waMatch = html.match(/wa\.me\/(\d+)/i) || html.match(/api\.whatsapp\.com\/send\?phone=(\d+)/i);
     if (waMatch) {
       result.whatsappNumber = waMatch[1];
-      result.whatsappVerified = true; // Only true if found on official website
+      result.whatsappVerified = true;
     }
     
   } catch (error) {
@@ -539,8 +527,8 @@ serve(async (req) => {
       console.log(`📍 ${isInternational ? 'International search' : 'No coordinates found'} for ${region}, using region name search only`);
     }
     
-    // APIFY CALL with 70 second timeout to leave margin for processing
-    const APIFY_TIMEOUT = 70000;
+    // APIFY CALL with 80 second timeout (edge functions have 90s limit)
+    const APIFY_TIMEOUT = 80000;
     const apifyController = new AbortController();
     const apifyTimeoutId = setTimeout(() => apifyController.abort(), APIFY_TIMEOUT);
     
@@ -904,16 +892,16 @@ serve(async (req) => {
       
       // Check elapsed time - skip slow operations if running out of time
       const elapsedTimeForBatch = Date.now() - startTime;
-      const hasTimeForScraping = elapsedTimeForBatch < 70000; // Scrape if under 70s elapsed
+      const hasTimeForScraping = elapsedTimeForBatch < 75000; // Scrape if under 75s elapsed
       
       if (website !== 'Não disponível' && hasTimeForScraping) {
         try {
-          const scraped = await scrapeWebsiteWithValidation(website);
-          // Only use validated Instagram
-          if (scraped.instagramVerified && scraped.instagram) {
+          const scraped = await fastScrapeWebsite(website);
+          // Use Instagram if found (format validated)
+          if (scraped.instagram) {
             instagram = scraped.instagram;
             instagramVerified = true;
-            instagramSource = 'website_verified';
+            instagramSource = 'website';
           }
           facebook = scraped.facebook || facebook;
           // Only use verified WhatsApp from website
