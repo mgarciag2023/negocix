@@ -41,7 +41,7 @@ export default function CityAutocomplete({
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchCities = useCallback(async (searchTerm: string) => {
-    if (searchTerm.length < 2) {
+    if (searchTerm.length < 1) {
       setSuggestions([]);
       setIsOpen(false);
       return;
@@ -111,10 +111,10 @@ export default function CityAutocomplete({
       clearTimeout(debounceRef.current);
     }
     
-    if (value.length >= 2) {
+    if (value.length >= 1) {
       debounceRef.current = setTimeout(() => {
         fetchCities(value);
-      }, 300); // 300ms debounce
+      }, 100); // 100ms debounce for faster response
     } else {
       setSuggestions([]);
       setIsOpen(false);
@@ -171,7 +171,7 @@ export default function CityAutocomplete({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          onFocus={() => value.length >= 2 && suggestions.length > 0 && setIsOpen(true)}
+          onFocus={() => value.length >= 1 && suggestions.length > 0 && setIsOpen(true)}
           onBlur={() => setTimeout(() => setIsOpen(false), 200)}
           placeholder={placeholder}
           className={className}
@@ -183,7 +183,7 @@ export default function CityAutocomplete({
         )}
       </div>
       
-      {isOpen && value.length >= 2 && (
+      {isOpen && value.length >= 1 && (
         <ul
           ref={listRef}
           className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-auto"
