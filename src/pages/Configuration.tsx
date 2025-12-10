@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Search, Building, Building2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import CityAutocomplete from "@/components/CityAutocomplete";
 import { useToast } from "@/hooks/use-toast";
 
 const Configuration = () => {
@@ -18,11 +19,13 @@ const Configuration = () => {
   const [products, setProducts] = useState("");
   const [country, setCountry] = useState("BR");
   const [customCountry, setCustomCountry] = useState("");
-  const [region, setRegion] = useState("");
+  const [state, setState] = useState("");
+  const [city, setCity] = useState("");
   const [companySize, setCompanySize] = useState("all");
   const [revenueRange, setRevenueRange] = useState("all");
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [ecommerceType, setEcommerceType] = useState("");
+  const [businessType, setBusinessType] = useState("all"); // all, matriz, filial
 
   const countries = [
     { code: "BR", name: "Brasil" },
@@ -49,6 +52,12 @@ const Configuration = () => {
     { code: "OTHER", name: "Outro país" },
   ];
 
+  const brazilianStates = [
+    "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
+    "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
+    "RS", "RO", "RR", "SC", "SP", "SE", "TO"
+  ];
+
   const customerTypes = [
     "Restaurantes",
     "Pizzarias",
@@ -63,6 +72,10 @@ const Configuration = () => {
     "Distribuidores de Alimentos",
     "Cestas Básicas",
     "Cestas Natalinas",
+    // Novos segmentos solicitados
+    "Cozinhas Industriais",
+    "Indústrias de Salgados",
+    "Distribuidores de Frios",
     "Farmácias",
     "Lojas de Roupas",
     "Salões de Beleza",
@@ -171,7 +184,7 @@ const Configuration = () => {
     "Clínicas de Estética",
     "Spas",
     "Centros de Bem-Estar",
-  ];
+  ].sort(); // Ordenação alfabética
 
   const handleCustomerToggle = (customer: string) => {
     setSelectedCustomers(prev =>
@@ -187,10 +200,24 @@ const Configuration = () => {
     // Determine final country
     const finalCountry = country === "OTHER" ? customCountry : country;
     
-    if (!category || !products || selectedCustomers.length === 0 || !region || (country === "OTHER" && !customCountry)) {
+    // Build region string based on filled fields
+    let region = "";
+    if (country === "BR") {
+      if (city && state) {
+        region = `${city}, ${state}`;
+      } else if (state) {
+        region = state;
+      } else if (city) {
+        region = city;
+      }
+    } else {
+      region = city || state || "";
+    }
+    
+    if (!category || !products || selectedCustomers.length === 0 || (!state && !city) || (country === "OTHER" && !customCountry)) {
       toast({
         title: "Campos obrigatórios",
-        description: "Por favor, preencha todos os campos obrigatórios",
+        description: "Por favor, preencha pelo menos país e estado ou cidade",
         variant: "destructive",
       });
       return;
@@ -203,9 +230,12 @@ const Configuration = () => {
       products,
       selectedCustomers,
       region,
+      state,
+      city,
       country: finalCountry,
       companySize,
       revenueRange,
+      businessType,
       ecommerceType: selectedCustomers.includes("E-commerce") ? ecommerceType : "",
     };
     
@@ -297,7 +327,7 @@ const Configuration = () => {
                     />
                 </div>
 
-                {/* Customer Types */}
+                {/* Customer Types - Ordenado alfabeticamente */}
                 <div>
                   <Label className="text-base font-semibold mb-4 block" translate="no">
                     Clientes que quero encontrar: *
@@ -334,13 +364,52 @@ const Configuration = () => {
                   </div>
                 </div>
 
+                {/* Tipo de Empresa (Matriz/Filial) */}
+                <div>
+                  <Label className="text-base font-semibold mb-4 block" translate="no">
+                    Tipo de estabelecimento:
+                  </Label>
+                  <div className="flex flex-wrap gap-3">
+                    <Button
+                      type="button"
+                      variant={businessType === "all" ? "default" : "outline"}
+                      onClick={() => setBusinessType("all")}
+                      className="gap-2"
+                    >
+                      <Building className="h-4 w-4" />
+                      Todos
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={businessType === "matriz" ? "default" : "outline"}
+                      onClick={() => setBusinessType("matriz")}
+                      className="gap-2"
+                    >
+                      <Building2 className="h-4 w-4" />
+                      Apenas Matriz
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={businessType === "filial" ? "default" : "outline"}
+                      onClick={() => setBusinessType("filial")}
+                      className="gap-2"
+                    >
+                      <Building className="h-4 w-4" />
+                      Apenas Filiais
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Selecione se deseja ver matriz, filiais ou ambos
+                  </p>
+                </div>
+
                 {/* Country */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="country" className="text-base font-semibold" translate="no">
                       País: *
                     </Label>
-                    <Select value={country} onValueChange={(val) => { setCountry(val); if (val !== "OTHER") setCustomCountry(""); }}>
+                    <Select value={country} onValueChange={(val) => { setCountry(val); if (val !== "OTHER") setCustomCountry(""); setState(""); setCity(""); }}>
                       <SelectTrigger className="mt-2" id="country" translate="no">
                         <SelectValue placeholder="Selecione o país" translate="no" />
                       </SelectTrigger>
@@ -361,30 +430,67 @@ const Configuration = () => {
                         id="customCountry"
                         value={customCountry}
                         onChange={(e) => setCustomCountry(e.target.value)}
-                        placeholder="Ex: Austrália, Nova Zelândia, Índia"
+                        placeholder="Ex: Austrália"
                         className="mt-2"
                         translate="no"
                       />
                     </div>
                   )}
-                </div>
 
-                {/* Location */}
-                <div>
-                  <Label htmlFor="region" className="text-base font-semibold" translate="no">
-                    Localização: *
-                  </Label>
-                  <Input
-                    id="region"
-                    value={region}
-                    onChange={(e) => setRegion(e.target.value)}
-                    placeholder="Ex: São Paulo, Santa Catarina, Vale do Itajaí, Cidade do México"
-                    className="mt-2"
-                    translate="no"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Digite cidade, estado ou região (ex: Blumenau, Rio Grande do Sul, Grande São Paulo)
-                  </p>
+                  {/* Estado */}
+                  <div>
+                    <Label htmlFor="state" className="text-base font-semibold" translate="no">
+                      Estado: {country === "BR" ? "*" : "(opcional)"}
+                    </Label>
+                    {country === "BR" ? (
+                      <Select value={state} onValueChange={setState}>
+                        <SelectTrigger className="mt-2" id="state" translate="no">
+                          <SelectValue placeholder="Selecione o estado" translate="no" />
+                        </SelectTrigger>
+                        <SelectContent sideOffset={5} translate="no">
+                          {brazilianStates.map((st) => (
+                            <SelectItem key={st} value={st}>{st}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        id="state"
+                        value={state}
+                        onChange={(e) => setState(e.target.value)}
+                        placeholder="Ex: California, Ontario..."
+                        className="mt-2"
+                        translate="no"
+                      />
+                    )}
+                  </div>
+
+                  {/* Cidade com Autocomplete */}
+                  <div>
+                    <Label htmlFor="city" className="text-base font-semibold" translate="no">
+                      Cidade: (opcional)
+                    </Label>
+                    {country === "BR" ? (
+                      <CityAutocomplete
+                        value={city}
+                        onChange={setCity}
+                        placeholder="Digite para buscar cidade..."
+                        className="mt-2"
+                      />
+                    ) : (
+                      <Input
+                        id="city"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        placeholder="Ex: Los Angeles, Toronto..."
+                        className="mt-2"
+                        translate="no"
+                      />
+                    )}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Deixe em branco para buscar em todo o estado
+                    </p>
+                  </div>
                 </div>
 
                 {/* Company Size */}
@@ -435,34 +541,33 @@ const Configuration = () => {
                     <div className="flex items-center space-x-2" translate="no">
                       <RadioGroupItem value="small-business" id="small-business" />
                       <Label htmlFor="small-business" className="font-normal cursor-pointer" translate="no">
-                        Pequena empresa (R$ 360 mil a R$ 4,8 milhões/ano)
+                        Pequena empresa (R$ 360 mil - R$ 4,8 milhões/ano)
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2" translate="no">
                       <RadioGroupItem value="medium-business" id="medium-business" />
                       <Label htmlFor="medium-business" className="font-normal cursor-pointer" translate="no">
-                        Média empresa (R$ 4,8 milhões a R$ 300 milhões/ano)
+                        Média empresa (R$ 4,8M - R$ 300M/ano)
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2" translate="no">
                       <RadioGroupItem value="large-business" id="large-business" />
                       <Label htmlFor="large-business" className="font-normal cursor-pointer" translate="no">
-                        Grande empresa (+R$ 300 milhões/ano)
+                        Grande empresa (+R$ 300M/ano)
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2" translate="no">
-                      <RadioGroupItem value="all" id="revenue-all" />
-                      <Label htmlFor="revenue-all" className="font-normal cursor-pointer" translate="no">
+                      <RadioGroupItem value="all" id="all-revenue" />
+                      <Label htmlFor="all-revenue" className="font-normal cursor-pointer" translate="no">
                         Todas as faixas
                       </Label>
                     </div>
                   </RadioGroup>
                 </div>
-              </div>
 
-              <div className="mt-6 md:mt-8 flex justify-end">
-                <Button type="submit" size="lg" className="bg-success hover:bg-success-hover shadow-success w-full sm:w-auto">
-                  <Search className="mr-2 h-5 w-5" />
+                {/* Submit */}
+                <Button type="submit" className="w-full gap-2 text-base py-6" size="lg">
+                  <Search className="h-5 w-5" />
                   Buscar Leads
                 </Button>
               </div>

@@ -72,9 +72,19 @@ const alternateLeadsByCategory = (leads: Lead[]): Lead[] => {
   return result;
 };
 
+// Função para ordenar leads alfabeticamente
+const sortLeadsAlphabetically = (leads: Lead[]): Lead[] => {
+  return [...leads].sort((a, b) => {
+    const nameA = a.name?.toLowerCase() || '';
+    const nameB = b.name?.toLowerCase() || '';
+    return nameA.localeCompare(nameB, 'pt-BR');
+  });
+};
+
 const Results = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortOrder, setSortOrder] = useState<'alphabetical' | 'category'>('alphabetical');
   const { toast } = useToast();
 
   const exportToExcel = () => {
@@ -154,7 +164,8 @@ const Results = () => {
             const cachedLeads = JSON.parse(cachedLeadsStr);
             if (Array.isArray(cachedLeads) && cachedLeads.length > 0) {
               console.log('📦 Cache HIT - Using cached leads:', cachedLeads.length);
-              setLeads(cachedLeads);
+              // Ordenar alfabeticamente por padrão
+              setLeads(sortLeadsAlphabetically(cachedLeads));
               setLoading(false);
               return; // STOP HERE - Don't make API call
             }
@@ -193,9 +204,11 @@ const Results = () => {
             region: searchConfig.region,
             country: searchConfig.country || 'BR',
             ecommerceType: searchConfig.ecommerceType || '',
+            businessType: searchConfig.businessType || 'all',
             filters: {
               category: searchConfig.category,
               companySize: searchConfig.companySize,
+              revenueRange: searchConfig.revenueRange,
             }
           }
         });
@@ -214,9 +227,9 @@ const Results = () => {
       console.log('✅ API returned leads:', data?.leads?.length || 0);
         
         if (data?.leads && data.leads.length > 0) {
-          // Alternate leads by category for variety
-          const alternatedLeads = alternateLeadsByCategory(data.leads);
-          setLeads(alternatedLeads);
+          // Ordenar alfabeticamente por padrão
+          const sortedLeads = sortLeadsAlphabetically(data.leads);
+          setLeads(sortedLeads);
           // Cache the leads with timestamp
           localStorage.setItem('cachedLeads', JSON.stringify(data.leads));
           localStorage.setItem('cacheTimestamp', Date.now().toString());
@@ -249,6 +262,17 @@ const Results = () => {
     fetchLeads();
   }, []); // Empty deps - only run once on mount
 
+  // Toggle sort order
+  const handleToggleSort = () => {
+    if (sortOrder === 'alphabetical') {
+      setSortOrder('category');
+      setLeads(prev => alternateLeadsByCategory(prev));
+    } else {
+      setSortOrder('alphabetical');
+      setLeads(prev => sortLeadsAlphabetically(prev));
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -277,15 +301,27 @@ const Results = () => {
               Encontramos {leads.length} leads compatíveis com seu perfil
             </p>
           </div>
-          <Button 
-            onClick={exportToExcel}
-            className="gap-2 w-full sm:w-auto"
-            size="lg"
-          >
-            <Download className="h-5 w-5" />
-            <span className="hidden sm:inline">Exportar para Excel</span>
-            <span className="sm:hidden">Exportar</span>
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <Button 
+              onClick={handleToggleSort}
+              variant="outline"
+              className="gap-2"
+            >
+              {sortOrder === 'alphabetical' ? 'A-Z' : 'Categoria'}
+              <span className="text-xs text-muted-foreground">
+                ({sortOrder === 'alphabetical' ? 'Alfabético' : 'Por categoria'})
+              </span>
+            </Button>
+            <Button 
+              onClick={exportToExcel}
+              className="gap-2"
+              size="lg"
+            >
+              <Download className="h-5 w-5" />
+              <span className="hidden sm:inline">Exportar para Excel</span>
+              <span className="sm:hidden">Exportar</span>
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}
