@@ -109,6 +109,23 @@ function generateSearchTerms(segment: string): string[] {
     ],
     'construtoras': [
       'construtora', 'construção civil', 'empreiteira', 'incorporadora'
+    ],
+    // Novos segmentos
+    'cozinhas industriais': [
+      'cozinha industrial', 'cozinhas industriais', 'refeição coletiva',
+      'catering', 'alimentação industrial', 'restaurante industrial'
+    ],
+    'indústrias de salgados': [
+      'fábrica de salgados', 'indústria de salgados', 'salgados congelados',
+      'salgaderia', 'salgados por atacado', 'produção de salgados'
+    ],
+    'distribuidores de frios': [
+      'distribuidor de frios', 'distribuidora de frios', 'frios e embutidos',
+      'distribuidora de laticínios', 'frios atacado', 'embutidos'
+    ],
+    'cestas básicas': [
+      'cestas básicas', 'cesta básica', 'distribuidor cestas',
+      'cestas de alimentos', 'cesta basica atacado'
     ]
   };
   
@@ -139,6 +156,85 @@ function generateSearchTerms(segment: string): string[] {
   return searchTerms.slice(0, 4);
 }
 
+// Estimativa de faturamento mais precisa baseada em múltiplos fatores
+function estimateRevenue(place: any, category: string): { 
+  employeeCount: string; 
+  companySize: string; 
+  revenue: string;
+} {
+  const reviewCount = place.reviewsCount || place.reviews || 0;
+  const rating = place.totalScore || place.rating || 0;
+  const categoryLower = category?.toLowerCase() || '';
+  
+  // Fatores de multiplicação por tipo de negócio
+  const categoryMultipliers: { [key: string]: number } = {
+    'supermercado': 2.5,
+    'hipermercado': 4.0,
+    'atacado': 3.0,
+    'distribuidor': 2.5,
+    'indústria': 3.5,
+    'fábrica': 3.0,
+    'construtora': 4.0,
+    'hotel': 2.5,
+    'restaurante': 1.2,
+    'lanchonete': 0.8,
+    'farmácia': 1.5,
+    'posto': 3.0,
+    'concessionária': 5.0,
+  };
+  
+  let multiplier = 1.0;
+  for (const [key, mult] of Object.entries(categoryMultipliers)) {
+    if (categoryLower.includes(key)) {
+      multiplier = mult;
+      break;
+    }
+  }
+  
+  // Score base: combinação de reviews e rating
+  const baseScore = (reviewCount * 0.7) + (rating * 10);
+  const adjustedScore = baseScore * multiplier;
+  
+  // Faixas de faturamento mais realistas
+  if (adjustedScore > 500) {
+    return {
+      employeeCount: '100+',
+      companySize: 'Grande',
+      revenue: 'R$ 10M - R$ 50M/ano'
+    };
+  } else if (adjustedScore > 200) {
+    return {
+      employeeCount: '50-100',
+      companySize: 'Médio-Grande',
+      revenue: 'R$ 4M - R$ 10M/ano'
+    };
+  } else if (adjustedScore > 100) {
+    return {
+      employeeCount: '20-50',
+      companySize: 'Médio',
+      revenue: 'R$ 1M - R$ 4M/ano'
+    };
+  } else if (adjustedScore > 50) {
+    return {
+      employeeCount: '10-20',
+      companySize: 'Pequeno',
+      revenue: 'R$ 360K - R$ 1M/ano'
+    };
+  } else if (adjustedScore > 20) {
+    return {
+      employeeCount: '5-10',
+      companySize: 'Pequeno',
+      revenue: 'R$ 150K - R$ 360K/ano'
+    };
+  } else {
+    return {
+      employeeCount: '1-5',
+      companySize: 'Micro',
+      revenue: 'R$ 50K - R$ 150K/ano'
+    };
+  }
+}
+
 // Helper to wait
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -148,8 +244,8 @@ serve(async (req) => {
   }
 
   try {
-    const { segment, products, region, country, filters, ecommerceType } = await req.json();
-    console.log('🔍 SEARCH v4 - Input:', { segment, products, region, country, ecommerceType });
+    const { segment, products, region, country, filters, ecommerceType, businessType } = await req.json();
+    console.log('🔍 SEARCH v4 - Input:', { segment, products, region, country, ecommerceType, businessType });
     
     const countryCode = country || 'BR';
     
@@ -347,25 +443,10 @@ serve(async (req) => {
     // Transform results to leads format
     const leads = results.map((place: any, index: number) => {
       const phoneValidation = validatePhone(place.phone);
-      const reviewCount = place.reviewsCount || place.reviews || 0;
+      const category = place.categoryName || place.category || segment;
       
-      let employeeCount = '1-5';
-      let companySize = 'Micro';
-      let revenue = 'R$ 50K - R$ 100K/ano';
-      
-      if (reviewCount > 200) {
-        employeeCount = '50-200';
-        companySize = 'Grande';
-        revenue = 'R$ 2M - R$ 10M/ano';
-      } else if (reviewCount > 50) {
-        employeeCount = '20-50';
-        companySize = 'Médio';
-        revenue = 'R$ 500K - R$ 2M/ano';
-      } else if (reviewCount > 10) {
-        employeeCount = '5-20';
-        companySize = 'Pequeno';
-        revenue = 'R$ 100K - R$ 500K/ano';
-      }
+      // Usar estimativa melhorada de faturamento
+      const { employeeCount, companySize, revenue } = estimateRevenue(place, category);
       
       return {
         id: `gm-${place.placeId || Date.now()}-${index}`,
@@ -379,9 +460,9 @@ serve(async (req) => {
         facebook: 'Não disponível',
         hasWhatsApp: phoneValidation.isWhatsApp,
         placeId: place.placeId,
-        category: place.categoryName || place.category || segment,
+        category,
         rating: place.totalScore || place.rating || 0,
-        reviews: reviewCount,
+        reviews: place.reviewsCount || place.reviews || 0,
         matchScore: 85,
         confidenceScore: 80,
         source: 'google_maps',
