@@ -60,24 +60,28 @@ export default function CityAutocomplete({
   const listRef = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
-    if (value.length >= 1) {
+    if (value.length >= 2) {
+      const searchTerm = value.toLowerCase().trim();
       const filtered = brazilianCities
-        .filter(city => 
-          city.toLowerCase().includes(value.toLowerCase()) ||
-          city.toLowerCase().startsWith(value.toLowerCase())
-        )
+        .filter(city => {
+          const cityLower = city.toLowerCase();
+          // Prioritize cities that start with the term, then include those that contain it
+          return cityLower.startsWith(searchTerm) || cityLower.includes(searchTerm);
+        })
         .sort((a, b) => {
+          const aLower = a.toLowerCase();
+          const bLower = b.toLowerCase();
           // Prioritize cities that START with the search term
-          const aStarts = a.toLowerCase().startsWith(value.toLowerCase());
-          const bStarts = b.toLowerCase().startsWith(value.toLowerCase());
+          const aStarts = aLower.startsWith(searchTerm);
+          const bStarts = bLower.startsWith(searchTerm);
           if (aStarts && !bStarts) return -1;
           if (!aStarts && bStarts) return 1;
-          return a.localeCompare(b);
+          return a.localeCompare(b, 'pt-BR');
         })
-        .slice(0, 10); // Limit to 10 suggestions
+        .slice(0, 15); // Limit to 15 suggestions
       
       setSuggestions(filtered);
-      setIsOpen(filtered.length > 0);
+      setIsOpen(true); // Always open when typing 2+ chars to show "no results" message
     } else {
       setSuggestions([]);
       setIsOpen(false);
@@ -126,7 +130,7 @@ export default function CityAutocomplete({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
-        onFocus={() => value.length >= 1 && suggestions.length > 0 && setIsOpen(true)}
+        onFocus={() => value.length >= 2 && setIsOpen(true)}
         onBlur={() => setTimeout(() => setIsOpen(false), 200)}
         placeholder={placeholder}
         className={className}
@@ -134,25 +138,31 @@ export default function CityAutocomplete({
         translate="no"
       />
       
-      {isOpen && suggestions.length > 0 && (
+      {isOpen && value.length >= 2 && (
         <ul
           ref={listRef}
           className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-auto"
         >
-          {suggestions.map((city, index) => (
-            <li
-              key={city}
-              onClick={() => handleSelect(city)}
-              className={cn(
-                "px-3 py-2 cursor-pointer text-sm transition-colors",
-                index === highlightedIndex
-                  ? "bg-accent text-accent-foreground"
-                  : "hover:bg-muted"
-              )}
-            >
-              {city}
+          {suggestions.length > 0 ? (
+            suggestions.map((city, index) => (
+              <li
+                key={city}
+                onClick={() => handleSelect(city)}
+                className={cn(
+                  "px-3 py-2 cursor-pointer text-sm transition-colors",
+                  index === highlightedIndex
+                    ? "bg-accent text-accent-foreground"
+                    : "hover:bg-muted"
+                )}
+              >
+                {city}
+              </li>
+            ))
+          ) : (
+            <li className="px-3 py-3 text-sm text-muted-foreground text-center">
+              Nenhuma cidade encontrada para "{value}"
             </li>
-          ))}
+          )}
         </ul>
       )}
     </div>
