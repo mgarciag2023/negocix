@@ -1,42 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-
-// Lista de cidades brasileiras mais comuns (expandível)
-const brazilianCities = [
-  // Capitais e grandes cidades
-  "São Paulo, SP", "Rio de Janeiro, RJ", "Brasília, DF", "Salvador, BA",
-  "Fortaleza, CE", "Belo Horizonte, MG", "Manaus, AM", "Curitiba, PR",
-  "Recife, PE", "Porto Alegre, RS", "Belém, PA", "Goiânia, GO",
-  "Guarulhos, SP", "Campinas, SP", "São Luís, MA", "São Gonçalo, RJ",
-  "Maceió, AL", "Duque de Caxias, RJ", "Natal, RN", "Teresina, PI",
-  "Campo Grande, MS", "São Bernardo do Campo, SP", "João Pessoa, PB",
-  "Santo André, SP", "Osasco, SP", "Ribeirão Preto, SP", "Jaboatão dos Guararapes, PE",
-  "Sorocaba, SP", "Uberlândia, MG", "Contagem, MG", "Aracaju, SE",
-  "Feira de Santana, BA", "Cuiabá, MT", "Joinville, SC", "Juiz de Fora, MG",
-  "Londrina, PR", "Aparecida de Goiânia, GO", "Ananindeua, PA", "Niterói, RJ",
-  "Porto Velho, RO", "Campos dos Goytacazes, RJ", "Serra, ES", "Caxias do Sul, RS",
-  "São José dos Pinhais, PR", "Moji das Cruzes, SP", "Betim, MG", "Belford Roxo, RJ",
-  "Santos, SP", "Diadema, SP", "Florianópolis, SC", "Macapá, AP",
-  "Boa Vista, RR", "Rio Branco, AC", "Palmas, TO", "Vitória, ES",
-  // Cidades médias importantes
-  "Blumenau, SC", "Jaraguá do Sul, SC", "Itajaí, SC", "Balneário Camboriú, SC",
-  "Chapecó, SC", "Lages, SC", "Criciúma, SC", "Brusque, SC",
-  "São José, SC", "Penha, SC", "Barra Velha, SC", "Navegantes, SC",
-  "Piçarras, SC", "Gaspar, SC", "Indaial, SC", "Pomerode, SC",
-  "Maringá, PR", "Cascavel, PR", "Ponta Grossa, PR", "Foz do Iguaçu, PR",
-  "Umuarama, PR", "Paranaguá, PR", "Toledo, PR", "Guarapuava, PR",
-  "Pelotas, RS", "Canoas, RS", "Santa Maria, RS", "Gravataí, RS",
-  "Viamão, RS", "Novo Hamburgo, RS", "São Leopoldo, RS", "Passo Fundo, RS",
-  "Piracicaba, SP", "São José do Rio Preto, SP", "Jundiaí, SP", "Bauru, SP",
-  "Franca, SP", "Taubaté, SP", "Limeira, SP", "Presidente Prudente, SP",
-  "Marília, SP", "Araraquara, SP", "São Carlos, SP", "Americana, SP",
-  // Regiões e áreas metropolitanas
-  "Vale do Itajaí, SC", "Grande São Paulo, SP", "Grande Rio, RJ",
-  "Grande BH, MG", "Grande Curitiba, PR", "Grande Porto Alegre, RS",
-  "Região Metropolitana de Campinas, SP", "ABC Paulista, SP",
-  "Litoral Norte de SC", "Litoral de São Paulo, SP", "Serra Gaúcha, RS"
-];
+import { Loader2 } from "lucide-react";
 
 interface CityAutocompleteProps {
   value: string;
@@ -44,6 +9,19 @@ interface CityAutocompleteProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  country?: string; // ISO country code (e.g., "BR", "US", "PT")
+}
+
+interface NominatimResult {
+  display_name: string;
+  address: {
+    city?: string;
+    town?: string;
+    village?: string;
+    municipality?: string;
+    state?: string;
+    country?: string;
+  };
 }
 
 export default function CityAutocomplete({
@@ -51,43 +29,105 @@ export default function CityAutocomplete({
   onChange,
   placeholder = "Digite o nome da cidade...",
   className,
-  disabled
+  disabled,
+  country
 }: CityAutocompleteProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [isLoading, setIsLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  const fetchCities = useCallback(async (searchTerm: string) => {
+    if (searchTerm.length < 2) {
+      setSuggestions([]);
+      setIsOpen(false);
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      // Build the API URL with country filter if provided
+      const countryCode = country && country !== "BR" ? country : "";
+      const countryParam = countryCode ? `&countrycodes=${countryCode.toLowerCase()}` : "";
+      
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchTerm)}&format=json&addressdetails=1&limit=15&featuretype=city${countryParam}`;
+      
+      const response = await fetch(url, {
+        headers: {
+          'Accept-Language': 'pt-BR,pt,en',
+          'User-Agent': 'LeadFinderApp/1.0'
+        }
+      });
+      
+      if (!response.ok) throw new Error('API error');
+      
+      const data: NominatimResult[] = await response.json();
+      
+      // Extract city names with state/country info
+      const cities = data
+        .map(item => {
+          const cityName = item.address.city || item.address.town || item.address.village || item.address.municipality;
+          const state = item.address.state;
+          const countryName = item.address.country;
+          
+          if (cityName) {
+            if (state && countryName) {
+              return `${cityName}, ${state}, ${countryName}`;
+            } else if (state) {
+              return `${cityName}, ${state}`;
+            } else if (countryName) {
+              return `${cityName}, ${countryName}`;
+            }
+            return cityName;
+          }
+          
+          // Fallback: extract from display_name
+          const parts = item.display_name.split(',').map(p => p.trim());
+          if (parts.length >= 2) {
+            return `${parts[0]}, ${parts[1]}`;
+          }
+          return parts[0];
+        })
+        .filter((city, index, self) => city && self.indexOf(city) === index) // Remove duplicates
+        .slice(0, 15);
+      
+      setSuggestions(cities);
+      setIsOpen(true);
+    } catch (error) {
+      console.error('Error fetching cities:', error);
+      setSuggestions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [country]);
 
   useEffect(() => {
+    // Debounce the API call
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    
     if (value.length >= 2) {
-      const searchTerm = value.toLowerCase().trim();
-      const filtered = brazilianCities
-        .filter(city => {
-          const cityLower = city.toLowerCase();
-          // Prioritize cities that start with the term, then include those that contain it
-          return cityLower.startsWith(searchTerm) || cityLower.includes(searchTerm);
-        })
-        .sort((a, b) => {
-          const aLower = a.toLowerCase();
-          const bLower = b.toLowerCase();
-          // Prioritize cities that START with the search term
-          const aStarts = aLower.startsWith(searchTerm);
-          const bStarts = bLower.startsWith(searchTerm);
-          if (aStarts && !bStarts) return -1;
-          if (!aStarts && bStarts) return 1;
-          return a.localeCompare(b, 'pt-BR');
-        })
-        .slice(0, 15); // Limit to 15 suggestions
-      
-      setSuggestions(filtered);
-      setIsOpen(true); // Always open when typing 2+ chars to show "no results" message
+      debounceRef.current = setTimeout(() => {
+        fetchCities(value);
+      }, 300); // 300ms debounce
     } else {
       setSuggestions([]);
       setIsOpen(false);
     }
+    
     setHighlightedIndex(-1);
-  }, [value]);
+    
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, [value, fetchCities]);
 
   const handleSelect = (city: string) => {
     onChange(city);
@@ -96,7 +136,7 @@ export default function CityAutocomplete({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!isOpen) return;
+    if (!isOpen || suggestions.length === 0) return;
 
     switch (e.key) {
       case 'ArrowDown':
@@ -125,28 +165,38 @@ export default function CityAutocomplete({
 
   return (
     <div className="relative">
-      <Input
-        ref={inputRef}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onFocus={() => value.length >= 2 && setIsOpen(true)}
-        onBlur={() => setTimeout(() => setIsOpen(false), 200)}
-        placeholder={placeholder}
-        className={className}
-        disabled={disabled}
-        translate="no"
-      />
+      <div className="relative">
+        <Input
+          ref={inputRef}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onFocus={() => value.length >= 2 && suggestions.length > 0 && setIsOpen(true)}
+          onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+          placeholder={placeholder}
+          className={className}
+          disabled={disabled}
+          translate="no"
+        />
+        {isLoading && (
+          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+        )}
+      </div>
       
       {isOpen && value.length >= 2 && (
         <ul
           ref={listRef}
           className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-auto"
         >
-          {suggestions.length > 0 ? (
+          {isLoading ? (
+            <li className="px-3 py-3 text-sm text-muted-foreground text-center flex items-center justify-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Buscando cidades...
+            </li>
+          ) : suggestions.length > 0 ? (
             suggestions.map((city, index) => (
               <li
-                key={city}
+                key={`${city}-${index}`}
                 onClick={() => handleSelect(city)}
                 className={cn(
                   "px-3 py-2 cursor-pointer text-sm transition-colors",
