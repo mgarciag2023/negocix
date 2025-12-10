@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Building, Building2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import CityAutocomplete from "@/components/CityAutocomplete";
+
 import { useToast } from "@/hooks/use-toast";
 
 const Configuration = () => {
@@ -470,23 +470,14 @@ const Configuration = () => {
                     <Label htmlFor="city" className="text-base font-semibold" translate="no">
                       Cidade: (opcional)
                     </Label>
-                    {country === "BR" ? (
-                      <CityAutocomplete
-                        value={city}
-                        onChange={setCity}
-                        placeholder="Digite para buscar cidade..."
-                        className="mt-2"
-                      />
-                    ) : (
-                      <Input
-                        id="city"
-                        value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                        placeholder="Ex: Los Angeles, Toronto..."
-                        className="mt-2"
-                        translate="no"
-                      />
-                    )}
+                    <Input
+                      id="city"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      placeholder="Ex: São Paulo, Blumenau..."
+                      className="mt-2"
+                      translate="no"
+                    />
                     <p className="text-xs text-muted-foreground mt-1">
                       Deixe em branco para buscar em todo o estado
                     </p>
