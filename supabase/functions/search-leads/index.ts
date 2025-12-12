@@ -49,6 +49,7 @@ function generateSearchTerms(segment: string): string[] {
   const categoryTerms: { [key: string]: string[] } = {
     'restaurantes': ['restaurante', 'lanchonete', 'buffet', 'pizzaria', 'hamburgueria'],
     'supermercados': ['supermercado', 'mercado', 'mercearia', 'minimercado', 'hortifruti'],
+    'hipermercados': ['hipermercado', 'atacadão', 'atacado', 'carrefour', 'big'],
     'padarias': ['padaria', 'panificadora', 'confeitaria', 'bakery'],
     'materiais de construção': ['material de construção', 'home center', 'depósito', 'ferragem'],
     'ferramentas': ['ferramentas', 'loja de ferramentas', 'ferragem', 'ferramentaria'],
@@ -98,8 +99,8 @@ function estimateRevenue(place: any, category: string): {
   companySize: string; 
   revenue: string;
 } {
-  const reviewCount = place.ratingCount || 0;
-  const rating = place.rating || 0;
+  const reviewCount = place.reviewsCount || place.totalScore || 0;
+  const rating = place.stars || 0;
   const categoryLower = category?.toLowerCase() || '';
   
   const categoryMultipliers: { [key: string]: number } = {
@@ -151,7 +152,7 @@ serve(async (req) => {
 
   try {
     const { segment, products, region, country, filters, ecommerceType, businessType } = await req.json();
-    console.log('🔍 SEARCH v5 - SerpAPI - Input:', { segment, products, region, country, ecommerceType, businessType });
+    console.log('🔍 SEARCH v6 - Apify - Input:', { segment, products, region, country, ecommerceType, businessType });
     
     const countryCode = country || 'BR';
     
@@ -178,77 +179,57 @@ serve(async (req) => {
     console.log('📋 Search terms:', searchTerms);
     console.log('📍 Location:', locationQuery);
     
-    // Get RapidAPI key
-    const RAPIDAPI_KEY = Deno.env.get("RAPIDAPI_KEY");
-    if (!RAPIDAPI_KEY) {
-      throw new Error("RAPIDAPI_KEY is not configured");
+    // Get Apify API key
+    const APIFY_API_KEY = Deno.env.get("APIFY_API_KEY");
+    if (!APIFY_API_KEY) {
+      throw new Error("APIFY_API_KEY is not configured");
     }
     
     const MAX_TOTAL_LEADS = 150;
-    const language = countryCode === 'BR' ? 'pt-BR' : 'en';
+    const language = countryCode === 'BR' ? 'pt' : 'en';
     
-    let allResults: any[] = [];
+    // Build search strings array for Apify
+    const searchStringsArray = searchTerms.map(term => term);
     
-    // Search for each term across multiple pages
-    for (const searchTerm of searchTerms) {
-      const fullQuery = `${searchTerm} em ${cleanRegion}`;
-      console.log(`🔎 Searching: "${fullQuery}"`);
-      
-      // Fetch multiple pages to get more results
-      for (let page = 1; page <= 3; page++) {
-        try {
-          const url = new URL('https://google-search-master-mega.p.rapidapi.com/maps');
-          url.searchParams.set('q', fullQuery);
-          url.searchParams.set('hl', language);
-          url.searchParams.set('page', page.toString());
-          
-          console.log(`📄 Page ${page}: ${url.toString()}`);
-          
-          const response = await fetch(url.toString(), {
-            method: 'GET',
-            headers: {
-              'X-RapidAPI-Key': RAPIDAPI_KEY,
-              'X-RapidAPI-Host': 'google-search-master-mega.p.rapidapi.com'
-            }
-          });
-          
-          if (!response.ok) {
-            console.error(`❌ API error page ${page}:`, response.status, await response.text());
-            continue;
-          }
-          
-          const data = await response.json();
-          const places = data.places || [];
-          
-          console.log(`✅ Page ${page}: ${places.length} places found`);
-          
-          if (places.length === 0) {
-            break; // No more results for this term
-          }
-          
-          allResults.push(...places);
-          
-          // Stop if we have enough results
-          if (allResults.length >= MAX_TOTAL_LEADS * 2) {
-            break;
-          }
-          
-        } catch (pageError) {
-          console.error(`❌ Error fetching page ${page}:`, pageError);
-        }
-      }
-      
-      // Stop if we have enough results
-      if (allResults.length >= MAX_TOTAL_LEADS * 2) {
-        break;
-      }
+    // Number of places to fetch per search
+    const placesPerSearch = Math.max(10, Math.ceil(MAX_TOTAL_LEADS / searchTerms.length));
+    
+    console.log(`🔎 Apify search: ${placesPerSearch} places per term`);
+    
+    // Start Apify actor run
+    const apifyUrl = `https://api.apify.com/v2/acts/nwua9Gu5YrADL7ZDj/run-sync-get-dataset-items?token=${APIFY_API_KEY}`;
+    
+    const apifyPayload = {
+      searchStringsArray,
+      locationQuery,
+      maxCrawledPlacesPerSearch: placesPerSearch,
+      language,
+      skipClosedPlaces: true
+    };
+    
+    console.log('📤 Apify payload:', JSON.stringify(apifyPayload));
+    
+    const response = await fetch(apifyUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(apifyPayload)
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Apify error:', response.status, errorText);
+      throw new Error(`Apify API error: ${response.status}`);
     }
     
-    console.log(`📊 Total raw results: ${allResults.length}`);
+    const apifyResults = await response.json();
+    console.log(`📊 Apify returned: ${apifyResults.length} results`);
     
     // Filter: must have phone and valid data
-    let results = allResults.filter((place: any) => {
-      if (!place.phoneNumber || place.phoneNumber.trim() === '') {
+    let results = apifyResults.filter((place: any) => {
+      const phone = place.phone || place.phoneUnformatted;
+      if (!phone || phone.trim() === '') {
         return false;
       }
       if (!place.title || place.title.trim() === '') {
@@ -262,7 +243,7 @@ serve(async (req) => {
     // Remove duplicates by placeId or title+address
     const seen = new Set();
     results = results.filter((place: any) => {
-      const key = place.placeId || place.cid || `${place.title}-${place.address}`;
+      const key = place.placeId || `${place.title}-${place.address}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
@@ -289,28 +270,29 @@ serve(async (req) => {
     
     // Transform results to leads format
     const leads = results.map((place: any, index: number) => {
-      const phoneValidation = validatePhone(place.phoneNumber);
-      const category = place.type || place.types?.[0] || segment;
+      const phone = place.phone || place.phoneUnformatted || '';
+      const phoneValidation = validatePhone(phone);
+      const category = place.categoryName || place.categories?.[0] || segment;
       const { employeeCount, companySize, revenue } = estimateRevenue(place, category);
       
       return {
-        id: `serp-${place.placeId || place.cid || Date.now()}-${index}`,
+        id: `apify-${place.placeId || Date.now()}-${index}`,
         name: place.title,
         address: place.address || 'Endereço não disponível',
-        phone: phoneValidation.valid ? phoneValidation.normalized : place.phoneNumber,
+        phone: phoneValidation.valid ? phoneValidation.normalized : phone,
         phoneValid: phoneValidation.valid,
-        email: 'Não disponível',
-        website: place.website || 'Não disponível',
+        email: place.email || 'Não disponível',
+        website: place.website || place.url || 'Não disponível',
         instagram: 'Não disponível',
         facebook: 'Não disponível',
         hasWhatsApp: phoneValidation.isWhatsApp,
-        placeId: place.placeId || place.cid,
+        placeId: place.placeId,
         category,
-        rating: place.rating || 0,
-        reviews: place.ratingCount || 0,
+        rating: place.stars || place.totalScore || 0,
+        reviews: place.reviewsCount || 0,
         matchScore: 85,
         confidenceScore: 80,
-        source: 'google_maps_serp',
+        source: 'google_maps_apify',
         responsible: 'Gerente',
         employeeCount,
         companySize,
