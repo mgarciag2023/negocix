@@ -145,6 +145,75 @@ function estimateRevenue(place: any, category: string): {
   }
 }
 
+// Process and filter results
+function processResults(apifyResults: any[], segment: string, cleanRegion: string, maxLeads: number): any[] {
+  // Filter: must have phone and valid data
+  let results = apifyResults.filter((place: any) => {
+    const phone = place.phone || place.phoneUnformatted;
+    if (!phone || phone.trim() === '') return false;
+    if (!place.title || place.title.trim() === '') return false;
+    return true;
+  });
+  
+  // Remove duplicates by placeId or title+address
+  const seen = new Set();
+  results = results.filter((place: any) => {
+    const key = place.placeId || `${place.title}-${place.address}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  
+  // Hard limit
+  if (results.length > maxLeads) {
+    results = results.slice(0, maxLeads);
+  }
+  
+  // Transform results to leads format
+  return results.map((place: any, index: number) => {
+    const phone = place.phone || place.phoneUnformatted || '';
+    const phoneValidation = validatePhone(phone);
+    const category = place.categoryName || place.categories?.[0] || segment;
+    const { employeeCount, companySize, revenue } = estimateRevenue(place, category);
+    
+    return {
+      id: `apify-${place.placeId || Date.now()}-${index}`,
+      name: place.title,
+      address: place.address || 'Endereço não disponível',
+      phone: phoneValidation.valid ? phoneValidation.normalized : phone,
+      phoneValid: phoneValidation.valid,
+      email: place.email || 'Não disponível',
+      website: place.website || place.url || 'Não disponível',
+      instagram: 'Não disponível',
+      facebook: 'Não disponível',
+      hasWhatsApp: phoneValidation.isWhatsApp,
+      placeId: place.placeId,
+      category,
+      rating: place.stars || place.totalScore || 0,
+      reviews: place.reviewsCount || 0,
+      matchScore: 85,
+      confidenceScore: 80,
+      source: 'google_maps_apify',
+      responsible: 'Gerente',
+      employeeCount,
+      companySize,
+      revenue,
+      openedDate: 'Estabelecido',
+      reasons: [`Encontrado no Google Maps em ${cleanRegion}`],
+      dataQuality: {
+        hasValidPhone: phoneValidation.valid,
+        hasSocialMedia: false,
+        hasWhatsApp: phoneValidation.isWhatsApp,
+        fromGoogleMaps: true
+      },
+      needsReview: false
+    };
+  });
+}
+
+// Sleep helper
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -152,7 +221,7 @@ serve(async (req) => {
 
   try {
     const { segment, products, region, country, filters, ecommerceType, businessType } = await req.json();
-    console.log('🔍 SEARCH v6 - Apify - Input:', { segment, products, region, country, ecommerceType, businessType });
+    console.log('🔍 SEARCH v7 - Async Polling - Input:', { segment, products, region, country, ecommerceType, businessType });
     
     const countryCode = country || 'BR';
     
@@ -186,18 +255,19 @@ serve(async (req) => {
     }
     
     const MAX_TOTAL_LEADS = 150;
+    const MIN_LEADS_EARLY_EXIT = 60;
+    const MAX_WAIT_TIME = 80000; // 80 seconds
+    const EARLY_EXIT_WAIT = 30000; // 30 seconds before checking early exit
+    const POLL_INTERVAL = 5000; // 5 seconds
+    
     const language = countryCode === 'BR' ? 'pt-BR' : 'en';
-    
-    // Build search strings array for Apify
     const searchStringsArray = searchTerms.map(term => term);
-    
-    // Number of places to fetch per search
     const placesPerSearch = Math.max(10, Math.ceil(MAX_TOTAL_LEADS / searchTerms.length));
     
-    console.log(`🔎 Apify search: ${placesPerSearch} places per term`);
+    console.log(`🔎 Apify async search: ${placesPerSearch} places per term`);
     
-    // Start Apify actor run
-    const apifyUrl = `https://api.apify.com/v2/acts/nwua9Gu5YrADL7ZDj/run-sync-get-dataset-items?token=${APIFY_API_KEY}`;
+    // START ASYNC RUN (not sync)
+    const startRunUrl = `https://api.apify.com/v2/acts/nwua9Gu5YrADL7ZDj/runs?token=${APIFY_API_KEY}`;
     
     const apifyPayload = {
       searchStringsArray,
@@ -207,59 +277,133 @@ serve(async (req) => {
       skipClosedPlaces: true
     };
     
-    console.log('📤 Apify payload:', JSON.stringify(apifyPayload));
+    console.log('📤 Starting async Apify run...');
     
-    const response = await fetch(apifyUrl, {
+    const startResponse = await fetch(startRunUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(apifyPayload)
     });
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Apify error:', response.status, errorText);
-      throw new Error(`Apify API error: ${response.status}`);
+    if (!startResponse.ok) {
+      const errorText = await startResponse.text();
+      console.error('❌ Apify start error:', startResponse.status, errorText);
+      throw new Error(`Apify start error: ${startResponse.status}`);
     }
     
-    const apifyResults = await response.json();
-    console.log(`📊 Apify returned: ${apifyResults.length} results`);
+    const runData = await startResponse.json();
+    const runId = runData.data?.id;
+    const datasetId = runData.data?.defaultDatasetId;
     
-    // Filter: must have phone and valid data
-    let results = apifyResults.filter((place: any) => {
-      const phone = place.phone || place.phoneUnformatted;
-      if (!phone || phone.trim() === '') {
-        return false;
-      }
-      if (!place.title || place.title.trim() === '') {
-        return false;
-      }
-      return true;
-    });
-    
-    console.log(`✅ After phone filter: ${results.length} places`);
-    
-    // Remove duplicates by placeId or title+address
-    const seen = new Set();
-    results = results.filter((place: any) => {
-      const key = place.placeId || `${place.title}-${place.address}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-    
-    console.log(`✅ After dedup: ${results.length} unique places`);
-    
-    // Hard limit
-    if (results.length > MAX_TOTAL_LEADS) {
-      results = results.slice(0, MAX_TOTAL_LEADS);
-      console.log(`⚠️ Truncated to ${MAX_TOTAL_LEADS} leads`);
+    if (!runId || !datasetId) {
+      console.error('❌ Missing runId or datasetId:', runData);
+      throw new Error('Failed to start Apify run');
     }
     
-    // If no results, return error
-    if (results.length === 0) {
-      console.log('❌ No results found');
+    console.log(`✅ Run started: ${runId}, Dataset: ${datasetId}`);
+    
+    // POLLING LOOP
+    const startTime = Date.now();
+    let allResults: any[] = [];
+    let lastResultCount = 0;
+    
+    while (Date.now() - startTime < MAX_WAIT_TIME) {
+      await sleep(POLL_INTERVAL);
+      
+      const elapsedTime = Date.now() - startTime;
+      console.log(`⏱️ Polling... ${Math.round(elapsedTime / 1000)}s elapsed`);
+      
+      // Fetch current dataset items
+      const datasetUrl = `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_API_KEY}`;
+      
+      try {
+        const dataResponse = await fetch(datasetUrl);
+        if (dataResponse.ok) {
+          const items = await dataResponse.json();
+          allResults = items;
+          
+          const leads = processResults(allResults, segment, cleanRegion, MAX_TOTAL_LEADS);
+          console.log(`📊 Current: ${allResults.length} raw, ${leads.length} valid leads`);
+          
+          // Early exit: if we have 60+ leads after 30 seconds, return
+          if (elapsedTime >= EARLY_EXIT_WAIT && leads.length >= MIN_LEADS_EARLY_EXIT) {
+            console.log(`🚀 Early exit: ${leads.length} leads found after ${Math.round(elapsedTime / 1000)}s`);
+            
+            // Abort the run to save credits
+            try {
+              await fetch(`https://api.apify.com/v2/actor-runs/${runId}/abort?token=${APIFY_API_KEY}`, {
+                method: 'POST'
+              });
+              console.log('🛑 Run aborted to save credits');
+            } catch (e) {
+              console.log('⚠️ Could not abort run:', e);
+            }
+            
+            return new Response(JSON.stringify({ leads }), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          
+          // If we hit 150 leads, return immediately
+          if (leads.length >= MAX_TOTAL_LEADS) {
+            console.log(`✅ Max leads reached: ${leads.length}`);
+            
+            // Abort the run
+            try {
+              await fetch(`https://api.apify.com/v2/actor-runs/${runId}/abort?token=${APIFY_API_KEY}`, {
+                method: 'POST'
+              });
+              console.log('🛑 Run aborted - max leads reached');
+            } catch (e) {
+              console.log('⚠️ Could not abort run:', e);
+            }
+            
+            return new Response(JSON.stringify({ leads: leads.slice(0, MAX_TOTAL_LEADS) }), {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+          
+          lastResultCount = leads.length;
+        }
+      } catch (e) {
+        console.log('⚠️ Polling error:', e);
+      }
+      
+      // Check run status
+      const statusUrl = `https://api.apify.com/v2/actor-runs/${runId}?token=${APIFY_API_KEY}`;
+      try {
+        const statusResponse = await fetch(statusUrl);
+        if (statusResponse.ok) {
+          const statusData = await statusResponse.json();
+          const status = statusData.data?.status;
+          
+          if (status === 'SUCCEEDED' || status === 'FAILED' || status === 'ABORTED') {
+            console.log(`🏁 Run finished with status: ${status}`);
+            break;
+          }
+        }
+      } catch (e) {
+        console.log('⚠️ Status check error:', e);
+      }
+    }
+    
+    // Timeout reached or run finished - return what we have
+    console.log(`⏰ Polling complete. Total raw results: ${allResults.length}`);
+    
+    // Abort if still running
+    try {
+      await fetch(`https://api.apify.com/v2/actor-runs/${runId}/abort?token=${APIFY_API_KEY}`, {
+        method: 'POST'
+      });
+      console.log('🛑 Run aborted after timeout');
+    } catch (e) {
+      // Ignore - might already be finished
+    }
+    
+    const leads = processResults(allResults, segment, cleanRegion, MAX_TOTAL_LEADS);
+    console.log(`✅ FINAL: ${leads.length} leads ready`);
+    
+    if (leads.length === 0) {
       return new Response(JSON.stringify({ 
         error: `Nenhum estabelecimento encontrado em ${cleanRegion}. Tente outra região ou categoria.` 
       }), {
@@ -267,49 +411,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    
-    // Transform results to leads format
-    const leads = results.map((place: any, index: number) => {
-      const phone = place.phone || place.phoneUnformatted || '';
-      const phoneValidation = validatePhone(phone);
-      const category = place.categoryName || place.categories?.[0] || segment;
-      const { employeeCount, companySize, revenue } = estimateRevenue(place, category);
-      
-      return {
-        id: `apify-${place.placeId || Date.now()}-${index}`,
-        name: place.title,
-        address: place.address || 'Endereço não disponível',
-        phone: phoneValidation.valid ? phoneValidation.normalized : phone,
-        phoneValid: phoneValidation.valid,
-        email: place.email || 'Não disponível',
-        website: place.website || place.url || 'Não disponível',
-        instagram: 'Não disponível',
-        facebook: 'Não disponível',
-        hasWhatsApp: phoneValidation.isWhatsApp,
-        placeId: place.placeId,
-        category,
-        rating: place.stars || place.totalScore || 0,
-        reviews: place.reviewsCount || 0,
-        matchScore: 85,
-        confidenceScore: 80,
-        source: 'google_maps_apify',
-        responsible: 'Gerente',
-        employeeCount,
-        companySize,
-        revenue,
-        openedDate: 'Estabelecido',
-        reasons: [`Encontrado no Google Maps em ${cleanRegion}`],
-        dataQuality: {
-          hasValidPhone: phoneValidation.valid,
-          hasSocialMedia: false,
-          hasWhatsApp: phoneValidation.isWhatsApp,
-          fromGoogleMaps: true
-        },
-        needsReview: false
-      };
-    });
-    
-    console.log(`✅ FINAL: ${leads.length} leads ready`);
     
     return new Response(JSON.stringify({ leads }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
