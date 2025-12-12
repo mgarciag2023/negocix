@@ -186,7 +186,7 @@ serve(async (req) => {
     }
     
     const MAX_TOTAL_LEADS = 150;
-    const language = countryCode === 'BR' ? 'pt' : 'en';
+    const language = countryCode === 'BR' ? 'pt-BR' : 'en';
     
     // Build search strings array for Apify
     const searchStringsArray = searchTerms.map(term => term);
