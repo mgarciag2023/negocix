@@ -145,6 +145,86 @@ function estimateRevenue(place: any, category: string): {
   }
 }
 
+// Estimate years in operation based on reviews and data
+function estimateYearsInOperation(place: any): string {
+  const reviewCount = place.reviewsCount || 0;
+  const rating = place.stars || 0;
+  
+  // If we have opening date from Google, use it
+  if (place.openingDate) {
+    const openYear = parseInt(place.openingDate.split('-')[0]);
+    if (!isNaN(openYear)) {
+      const yearsOld = new Date().getFullYear() - openYear;
+      return yearsOld <= 1 ? '1 ano' : `${yearsOld} anos`;
+    }
+  }
+  
+  // Estimate based on reviews - more reviews = older business typically
+  if (reviewCount > 500) return '10+ anos';
+  if (reviewCount > 200) return '5-10 anos';
+  if (reviewCount > 100) return '3-5 anos';
+  if (reviewCount > 50) return '2-3 anos';
+  if (reviewCount > 20) return '1-2 anos';
+  return '< 1 ano';
+}
+
+// Generate real reasons why this is a good lead
+function generateReasons(place: any, category: string, companySize: string): string[] {
+  const reasons: string[] = [];
+  const reviewCount = place.reviewsCount || 0;
+  const rating = place.stars || 0;
+  
+  // Rating-based reasons
+  if (rating >= 4.5 && reviewCount > 20) {
+    reasons.push(`Alta avaliação (${rating.toFixed(1)}★) com ${reviewCount}+ avaliações - negócio confiável`);
+  } else if (rating >= 4.0 && reviewCount > 10) {
+    reasons.push(`Boa reputação online (${rating.toFixed(1)}★) - cliente estabelecido`);
+  }
+  
+  // Size-based reasons
+  if (companySize === 'Grande' || companySize === 'Médio-Grande') {
+    reasons.push('Porte empresarial indica alto potencial de compra');
+  } else if (companySize === 'Médio') {
+    reasons.push('Empresa em crescimento com capacidade de investimento');
+  }
+  
+  // Review count reasons
+  if (reviewCount > 100) {
+    reasons.push('Alto volume de clientes indica negócio ativo e movimentado');
+  } else if (reviewCount > 30) {
+    reasons.push('Presença digital consolidada com clientela fiel');
+  }
+  
+  // Category-specific reasons
+  const catLower = category.toLowerCase();
+  if (catLower.includes('supermercado') || catLower.includes('mercado')) {
+    reasons.push('Setor varejista com demanda constante de fornecedores');
+  } else if (catLower.includes('restaurante') || catLower.includes('lanchonete')) {
+    reasons.push('Estabelecimento alimentício com necessidade recorrente de insumos');
+  } else if (catLower.includes('construção') || catLower.includes('construtora')) {
+    reasons.push('Setor de construção com alto volume de compras');
+  } else if (catLower.includes('farmácia') || catLower.includes('drogaria')) {
+    reasons.push('Setor farmacêutico com reposição frequente de estoque');
+  } else if (catLower.includes('pet') || catLower.includes('veterinária')) {
+    reasons.push('Mercado pet em expansão com demanda crescente');
+  }
+  
+  // Website reason
+  if (place.website) {
+    reasons.push('Possui website - empresa profissionalizada');
+  }
+  
+  // If no specific reasons, add generic but useful ones
+  if (reasons.length === 0) {
+    reasons.push('Negócio ativo com presença no Google Maps');
+    if (reviewCount > 0) {
+      reasons.push(`${reviewCount} avaliações indicam base de clientes ativa`);
+    }
+  }
+  
+  return reasons.slice(0, 3); // Max 3 reasons
+}
+
 // Process and filter results
 function processResults(apifyResults: any[], segment: string, cleanRegion: string, maxLeads: number): any[] {
   // Filter: must have phone and valid data
@@ -175,6 +255,8 @@ function processResults(apifyResults: any[], segment: string, cleanRegion: strin
     const phoneValidation = validatePhone(phone);
     const category = place.categoryName || place.categories?.[0] || segment;
     const { employeeCount, companySize, revenue } = estimateRevenue(place, category);
+    const openedDate = estimateYearsInOperation(place);
+    const reasons = generateReasons(place, category, companySize);
     
     return {
       id: `apify-${place.placeId || Date.now()}-${index}`,
@@ -198,8 +280,8 @@ function processResults(apifyResults: any[], segment: string, cleanRegion: strin
       employeeCount,
       companySize,
       revenue,
-      openedDate: 'Estabelecido',
-      reasons: [`Encontrado no Google Maps em ${cleanRegion}`],
+      openedDate,
+      reasons,
       dataQuality: {
         hasValidPhone: phoneValidation.valid,
         hasSocialMedia: false,
@@ -325,19 +407,46 @@ serve(async (req) => {
           const leads = processResults(allResults, segment, cleanRegion, MAX_TOTAL_LEADS);
           console.log(`📊 Current: ${allResults.length} raw, ${leads.length} valid leads`);
           
-          // Early exit: if we have 60+ leads after 30 seconds, return
+          // Early exit: if we have 60+ leads after 30 seconds, wait 5 more seconds then return
           if (elapsedTime >= EARLY_EXIT_WAIT && leads.length >= MIN_LEADS_EARLY_EXIT) {
-            console.log(`🚀 Early exit: ${leads.length} leads found after ${Math.round(elapsedTime / 1000)}s`);
+            console.log(`🎯 Found ${leads.length} leads at ${Math.round(elapsedTime / 1000)}s - waiting 5 more seconds...`);
             
-            // Abort the run to save credits
+            // Wait 5 more seconds to collect additional leads
+            await sleep(5000);
+            
+            // Fetch final results after the extra wait
+            try {
+              const finalDataResponse = await fetch(datasetUrl);
+              if (finalDataResponse.ok) {
+                const finalItems = await finalDataResponse.json();
+                allResults = finalItems;
+                const finalLeads = processResults(allResults, segment, cleanRegion, MAX_TOTAL_LEADS);
+                console.log(`🚀 Early exit after extra 5s: ${finalLeads.length} leads`);
+                
+                // Abort the run to save credits
+                try {
+                  await fetch(`https://api.apify.com/v2/actor-runs/${runId}/abort?token=${APIFY_API_KEY}`, {
+                    method: 'POST'
+                  });
+                  console.log('🛑 Run aborted to save credits');
+                } catch (e) {
+                  console.log('⚠️ Could not abort run:', e);
+                }
+                
+                return new Response(JSON.stringify({ leads: finalLeads }), {
+                  headers: { ...corsHeaders, "Content-Type": "application/json" },
+                });
+              }
+            } catch (e) {
+              console.log('⚠️ Final fetch error:', e);
+            }
+            
+            // Fallback to current leads if final fetch fails
             try {
               await fetch(`https://api.apify.com/v2/actor-runs/${runId}/abort?token=${APIFY_API_KEY}`, {
                 method: 'POST'
               });
-              console.log('🛑 Run aborted to save credits');
-            } catch (e) {
-              console.log('⚠️ Could not abort run:', e);
-            }
+            } catch (e) {}
             
             return new Response(JSON.stringify({ leads }), {
               headers: { ...corsHeaders, "Content-Type": "application/json" },
