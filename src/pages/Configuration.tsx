@@ -184,6 +184,17 @@ const Configuration = () => {
     "Clínicas de Estética",
     "Spas",
     "Centros de Bem-Estar",
+    // Novos segmentos de alta demanda
+    "Pet Shops",
+    "Clínicas Veterinárias",
+    "Oficinas Mecânicas",
+    "Autopeças",
+    "Postos de Combustível",
+    "Hotéis e Pousadas",
+    "Escolas e Cursos",
+    "Papelarias",
+    "Óticas",
+    "Joalherias e Relojoarias",
   ].sort(); // Ordenação alfabética
 
   const handleCustomerToggle = (customer: string) => {
