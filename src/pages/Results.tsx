@@ -15,6 +15,7 @@ interface Lead {
   phone: string;
   email?: string;
   instagram?: string;
+  website?: string | null;
   responsible: string;
   matchScore: number;
   category: string;
@@ -23,6 +24,8 @@ interface Lead {
   reasons: string[];
   employeeCount?: string;
   companySize?: string;
+  hasWhatsApp?: boolean;
+  isMatriz?: boolean;
 }
 
 // Function to alternate leads by category for variety
@@ -104,8 +107,11 @@ const Results = () => {
       'Telefone': lead.phone,
       'Email': lead.email || 'N/A',
       'Instagram': lead.instagram || 'N/A',
+      'Website': lead.website || 'Não possui site',
       'Responsável': lead.responsible,
       'Categoria': lead.category,
+      'Porte': lead.companySize || 'N/A',
+      'Funcionários': lead.employeeCount || 'N/A',
       'Faturamento Estimado': lead.revenue,
       'Tempo no Mercado': lead.openedDate,
       'Score de Match (%)': lead.matchScore,
@@ -356,7 +362,12 @@ const Results = () => {
         {leads.length > 0 ? (
           <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {leads.map((lead) => (
-              <LeadCard key={lead.id} {...lead} />
+              <LeadCard 
+                key={lead.id} 
+                {...lead} 
+                website={lead.website}
+                hasWhatsApp={lead.hasWhatsApp}
+              />
             ))}
           </div>
         ) : (

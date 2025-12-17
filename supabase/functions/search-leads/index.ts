@@ -42,6 +42,71 @@ function validatePhone(phone: string): { valid: boolean; normalized: string; isW
   return { valid: false, normalized: '', isWhatsApp: false };
 }
 
+// Validate if name is valid (not just dots, symbols, or too short)
+function isValidName(name: string): boolean {
+  if (!name || name.trim().length < 3) return false;
+  
+  // Remove dots, dashes, spaces
+  const cleaned = name.replace(/[\.\-\s\*\#\@\!\?\,\;\/\\]/g, '').trim();
+  if (cleaned.length < 3) return false;
+  
+  // Check if it's mostly special characters
+  const alphaNumeric = name.replace(/[^a-zA-Z0-9áàâãéèêíìîóòôõúùûçÁÀÂÃÉÈÊÍÌÎÓÒÔÕÚÙÛÇ]/g, '');
+  if (alphaNumeric.length < 3) return false;
+  
+  // Reject if name is just dots like "...", "....", etc.
+  if (/^[\.\s\-\_\*]+$/.test(name)) return false;
+  
+  // Reject generic placeholder names
+  const invalidNames = [
+    'local', 'place', 'estabelecimento', 'loja', 'empresa', 'negócio',
+    'teste', 'test', 'undefined', 'null', 'n/a', 'na', '-', '--'
+  ];
+  if (invalidNames.includes(name.toLowerCase().trim())) return false;
+  
+  return true;
+}
+
+// Extract Instagram from website field
+function extractInstagram(place: any): string {
+  const website = place.website || place.url || '';
+  
+  // Check if website IS an Instagram link
+  if (website.includes('instagram.com/')) {
+    const match = website.match(/instagram\.com\/([a-zA-Z0-9_\.]+)/);
+    if (match) return `@${match[1]}`;
+  }
+  
+  // Check other social media fields from Google
+  if (place.instagram) return place.instagram.startsWith('@') ? place.instagram : `@${place.instagram}`;
+  if (place.socialMedia?.instagram) {
+    const ig = place.socialMedia.instagram;
+    return ig.startsWith('@') ? ig : `@${ig}`;
+  }
+  
+  return '';
+}
+
+// Get clean website (not Instagram)
+function getCleanWebsite(place: any): string | null {
+  const website = place.website || place.url || '';
+  
+  // If website is Instagram, return null (no real website)
+  if (website.includes('instagram.com/') || website.includes('facebook.com/')) {
+    return null;
+  }
+  
+  if (website && website.trim().length > 5) {
+    // Ensure it starts with http
+    if (!website.startsWith('http')) {
+      return `https://${website}`;
+    }
+    return website;
+  }
+  
+  return null;
+}
+
 // Generate search terms
 function generateSearchTerms(segment: string): string[] {
   const term = segment.split(',')[0].trim().toLowerCase();
@@ -49,7 +114,7 @@ function generateSearchTerms(segment: string): string[] {
   const categoryTerms: { [key: string]: string[] } = {
     'restaurantes': ['restaurante', 'lanchonete', 'buffet', 'pizzaria', 'hamburgueria'],
     'supermercados': ['supermercado', 'mercado', 'mercearia', 'minimercado', 'hortifruti'],
-    'hipermercados': ['hipermercado', 'atacadão', 'atacado', 'carrefour', 'big'],
+    'hipermercados': ['hipermercado', 'carrefour', 'big', 'walmart', 'assaí', 'makro'],
     'padarias': ['padaria', 'panificadora', 'confeitaria', 'bakery'],
     'materiais de construção': ['material de construção', 'home center', 'depósito', 'ferragem'],
     'ferramentas': ['ferramentas', 'loja de ferramentas', 'ferragem', 'ferramentaria'],
@@ -93,7 +158,7 @@ function generateSearchTerms(segment: string): string[] {
   return searchTerms.slice(0, 3);
 }
 
-// Estimate revenue based on reviews and rating
+// Estimate revenue based on reviews, rating, and category - MORE PRECISE
 function estimateRevenue(place: any, category: string): { 
   employeeCount: string; 
   companySize: string; 
@@ -102,46 +167,66 @@ function estimateRevenue(place: any, category: string): {
   const reviewCount = place.reviewsCount || place.totalScore || 0;
   const rating = place.stars || 0;
   const categoryLower = category?.toLowerCase() || '';
+  const titleLower = (place.title || '').toLowerCase();
   
+  // Category-based multipliers for size estimation
   const categoryMultipliers: { [key: string]: number } = {
+    'hipermercado': 5.0,
+    'carrefour': 5.0,
+    'walmart': 5.0,
+    'big': 4.5,
+    'assaí': 4.5,
+    'makro': 4.5,
+    'atacadão': 4.0,
+    'atacado': 3.5,
     'supermercado': 2.5,
-    'hipermercado': 4.0,
-    'atacado': 3.0,
-    'distribuidor': 2.5,
-    'indústria': 3.5,
-    'fábrica': 3.0,
-    'construtora': 4.0,
-    'hotel': 2.5,
-    'restaurante': 1.2,
-    'lanchonete': 0.8,
-    'farmácia': 1.5,
-    'posto': 3.0,
+    'distribuidor': 3.0,
+    'indústria': 4.0,
+    'fábrica': 3.5,
+    'construtora': 4.5,
+    'hotel': 3.0,
+    'restaurante': 1.5,
+    'lanchonete': 1.0,
+    'farmácia': 2.0,
+    'posto': 3.5,
     'concessionária': 5.0,
+    'home center': 3.5,
+    'mercado': 1.8,
+    'mercearia': 0.8,
+    'minimercado': 0.7,
+    'padaria': 1.0,
   };
   
   let multiplier = 1.0;
+  const combinedText = `${categoryLower} ${titleLower}`;
+  
   for (const [key, mult] of Object.entries(categoryMultipliers)) {
-    if (categoryLower.includes(key)) {
-      multiplier = mult;
-      break;
+    if (combinedText.includes(key)) {
+      multiplier = Math.max(multiplier, mult);
     }
   }
   
-  const baseScore = (reviewCount * 0.7) + (rating * 10);
+  // Calculate base score
+  const baseScore = (reviewCount * 0.8) + (rating * 15);
   const adjustedScore = baseScore * multiplier;
   
-  if (adjustedScore > 500) {
-    return { employeeCount: '100+', companySize: 'Grande', revenue: 'R$ 10M - R$ 50M/ano' };
-  } else if (adjustedScore > 200) {
-    return { employeeCount: '50-100', companySize: 'Médio-Grande', revenue: 'R$ 4M - R$ 10M/ano' };
-  } else if (adjustedScore > 100) {
-    return { employeeCount: '20-50', companySize: 'Médio', revenue: 'R$ 1M - R$ 4M/ano' };
-  } else if (adjustedScore > 50) {
-    return { employeeCount: '10-20', companySize: 'Pequeno', revenue: 'R$ 360K - R$ 1M/ano' };
-  } else if (adjustedScore > 20) {
-    return { employeeCount: '5-10', companySize: 'Pequeno', revenue: 'R$ 150K - R$ 360K/ano' };
+  // More precise ranges
+  if (adjustedScore > 800) {
+    return { employeeCount: '200+', companySize: 'Grande', revenue: 'R$ 50M - R$ 200M/ano' };
+  } else if (adjustedScore > 500) {
+    return { employeeCount: '100-200', companySize: 'Grande', revenue: 'R$ 20M - R$ 50M/ano' };
+  } else if (adjustedScore > 300) {
+    return { employeeCount: '50-100', companySize: 'Médio-Grande', revenue: 'R$ 8M - R$ 20M/ano' };
+  } else if (adjustedScore > 150) {
+    return { employeeCount: '30-50', companySize: 'Médio', revenue: 'R$ 3M - R$ 8M/ano' };
+  } else if (adjustedScore > 80) {
+    return { employeeCount: '15-30', companySize: 'Pequeno-Médio', revenue: 'R$ 1M - R$ 3M/ano' };
+  } else if (adjustedScore > 40) {
+    return { employeeCount: '8-15', companySize: 'Pequeno', revenue: 'R$ 400K - R$ 1M/ano' };
+  } else if (adjustedScore > 15) {
+    return { employeeCount: '3-8', companySize: 'Micro', revenue: 'R$ 150K - R$ 400K/ano' };
   } else {
-    return { employeeCount: '1-5', companySize: 'Micro', revenue: 'R$ 50K - R$ 150K/ano' };
+    return { employeeCount: '1-3', companySize: 'Micro', revenue: 'R$ 50K - R$ 150K/ano' };
   }
 }
 
@@ -159,113 +244,172 @@ function estimateYearsInOperation(place: any): string {
     }
   }
   
-  // Estimate based on reviews - more reviews = older business typically
-  if (reviewCount > 500) return '10+ anos';
-  if (reviewCount > 200) return '5-10 anos';
-  if (reviewCount > 100) return '3-5 anos';
-  if (reviewCount > 50) return '2-3 anos';
+  // More precise estimation based on reviews
+  if (reviewCount > 1000) return '15+ anos';
+  if (reviewCount > 500) return '10-15 anos';
+  if (reviewCount > 200) return '6-10 anos';
+  if (reviewCount > 100) return '4-6 anos';
+  if (reviewCount > 50) return '2-4 anos';
   if (reviewCount > 20) return '1-2 anos';
   return '< 1 ano';
 }
 
-// Generate real reasons why this is a good lead
-function generateReasons(place: any, category: string, companySize: string): string[] {
+// Calculate dynamic match score based on multiple factors
+function calculateMatchScore(place: any, category: string, companySize: string): number {
+  let score = 50; // Base score
+  
+  const reviewCount = place.reviewsCount || 0;
+  const rating = place.stars || 0;
+  const hasWebsite = !!getCleanWebsite(place);
+  const hasPhone = !!(place.phone || place.phoneUnformatted);
+  
+  // Rating contribution (max +15)
+  if (rating >= 4.5) score += 15;
+  else if (rating >= 4.0) score += 12;
+  else if (rating >= 3.5) score += 8;
+  else if (rating >= 3.0) score += 5;
+  
+  // Review count contribution (max +15)
+  if (reviewCount > 500) score += 15;
+  else if (reviewCount > 200) score += 12;
+  else if (reviewCount > 100) score += 10;
+  else if (reviewCount > 50) score += 7;
+  else if (reviewCount > 20) score += 4;
+  
+  // Company size contribution (max +10)
+  if (companySize === 'Grande') score += 10;
+  else if (companySize === 'Médio-Grande') score += 8;
+  else if (companySize === 'Médio') score += 6;
+  else if (companySize === 'Pequeno-Médio') score += 4;
+  else if (companySize === 'Pequeno') score += 2;
+  
+  // Website presence (+5)
+  if (hasWebsite) score += 5;
+  
+  // Phone presence (+5)
+  if (hasPhone) score += 5;
+  
+  // Cap at 98 (never 100)
+  return Math.min(98, Math.max(45, score));
+}
+
+// Generate real reasons why this is a good lead - SPECIFIC TO EACH LEAD
+function generateReasons(place: any, category: string, companySize: string, matchScore: number): string[] {
   const reasons: string[] = [];
   const reviewCount = place.reviewsCount || 0;
   const rating = place.stars || 0;
+  const hasWebsite = !!getCleanWebsite(place);
   
-  // Rating-based reasons
-  if (rating >= 4.5 && reviewCount > 20) {
-    reasons.push(`Alta avaliação (${rating.toFixed(1)}★) com ${reviewCount}+ avaliações - negócio confiável`);
-  } else if (rating >= 4.0 && reviewCount > 10) {
-    reasons.push(`Boa reputação online (${rating.toFixed(1)}★) - cliente estabelecido`);
+  // Rating-based reasons (specific numbers)
+  if (rating >= 4.5 && reviewCount > 50) {
+    reasons.push(`Excelente reputação: ${rating.toFixed(1)}★ com ${reviewCount} avaliações verificadas`);
+  } else if (rating >= 4.0 && reviewCount > 20) {
+    reasons.push(`Boa avaliação de ${rating.toFixed(1)}★ baseada em ${reviewCount} clientes`);
+  } else if (rating >= 3.5) {
+    reasons.push(`Avaliação ${rating.toFixed(1)}★ indica operação estável`);
   }
   
   // Size-based reasons
   if (companySize === 'Grande' || companySize === 'Médio-Grande') {
-    reasons.push('Porte empresarial indica alto potencial de compra');
-  } else if (companySize === 'Médio') {
-    reasons.push('Empresa em crescimento com capacidade de investimento');
+    reasons.push('Empresa de grande porte com alta capacidade de compra');
+  } else if (companySize === 'Médio' || companySize === 'Pequeno-Médio') {
+    reasons.push('Negócio em crescimento com potencial de expansão');
   }
   
-  // Review count reasons
-  if (reviewCount > 100) {
-    reasons.push('Alto volume de clientes indica negócio ativo e movimentado');
-  } else if (reviewCount > 30) {
-    reasons.push('Presença digital consolidada com clientela fiel');
+  // Volume-based reasons
+  if (reviewCount > 200) {
+    reasons.push(`Alto fluxo de clientes: ${reviewCount}+ avaliações indica volume consistente`);
+  } else if (reviewCount > 50) {
+    reasons.push('Base de clientes ativa e engajada');
   }
   
   // Category-specific reasons
   const catLower = category.toLowerCase();
-  if (catLower.includes('supermercado') || catLower.includes('mercado')) {
-    reasons.push('Setor varejista com demanda constante de fornecedores');
-  } else if (catLower.includes('restaurante') || catLower.includes('lanchonete')) {
-    reasons.push('Estabelecimento alimentício com necessidade recorrente de insumos');
+  const titleLower = (place.title || '').toLowerCase();
+  
+  if (catLower.includes('hipermercado') || titleLower.includes('hipermercado')) {
+    reasons.push('Hipermercado com alta demanda de fornecedores diversos');
+  } else if (catLower.includes('supermercado') || titleLower.includes('supermercado')) {
+    reasons.push('Supermercado com reposição frequente de estoque');
+  } else if (catLower.includes('atacado') || titleLower.includes('atacado')) {
+    reasons.push('Atacado com compras em grande volume');
   } else if (catLower.includes('construção') || catLower.includes('construtora')) {
     reasons.push('Setor de construção com alto volume de compras');
   } else if (catLower.includes('farmácia') || catLower.includes('drogaria')) {
-    reasons.push('Setor farmacêutico com reposição frequente de estoque');
-  } else if (catLower.includes('pet') || catLower.includes('veterinária')) {
-    reasons.push('Mercado pet em expansão com demanda crescente');
+    reasons.push('Setor farmacêutico com reposição constante');
+  } else if (catLower.includes('restaurante') || catLower.includes('lanchonete')) {
+    reasons.push('Estabelecimento alimentício com demanda recorrente');
   }
   
   // Website reason
-  if (place.website) {
-    reasons.push('Possui website - empresa profissionalizada');
+  if (hasWebsite) {
+    reasons.push('Possui website próprio - empresa profissionalizada');
   }
   
-  // If no specific reasons, add generic but useful ones
+  // If no specific reasons, add based on match score
   if (reasons.length === 0) {
-    reasons.push('Negócio ativo com presença no Google Maps');
-    if (reviewCount > 0) {
-      reasons.push(`${reviewCount} avaliações indicam base de clientes ativa`);
+    if (matchScore >= 80) {
+      reasons.push('Lead com alto potencial de conversão');
+    } else if (matchScore >= 65) {
+      reasons.push('Negócio ativo com bom potencial');
+    } else {
+      reasons.push('Lead identificado na região buscada');
     }
   }
   
-  return reasons.slice(0, 3); // Max 3 reasons
+  return reasons.slice(0, 3);
 }
 
-// Niche relevance keywords for strict filtering
-const nicheKeywords: { [key: string]: { include: string[], exclude: string[] } } = {
+// STRICT niche relevance keywords - VERY STRICT FOR HIPERMERCADOS
+const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mustMatch: string[] } } = {
   'hipermercados': {
-    include: ['hipermercado', 'supermercado', 'mercado', 'atacarejo', 'atacadão', 'carrefour', 'big', 'walmart', 'assaí', 'makro', 'sam\'s club', 'super', 'hiper', 'mart', 'market', 'alimentos', 'hortifruti', 'mercearia', 'minimercado'],
-    exclude: ['cueca', 'roupa', 'móvel', 'móveis', 'colchão', 'vestuário', 'tecido', 'lingerie', 'moda', 'calçado', 'sapato', 'eletro', 'eletrônico', 'celular', 'informática', 'auto peça', 'autopeça', 'construção', 'material de construção', 'ferragem', 'ferramenta', 'brinquedo', 'papelaria', 'livro', 'pet', 'animal', 'veterinár', 'ótica', 'óculos', 'joalheria', 'relógio', 'perfume', 'cosmético', 'salão', 'beleza', 'cabeleireiro', 'barbearia', 'estética', 'academia', 'fitness', 'hotel', 'pousada', 'restaurante', 'lanchonete', 'pizzaria', 'hamburgueria', 'bar', 'boteco', 'cerveja', 'bebida alcoólica']
+    include: ['hipermercado', 'hiper', 'carrefour', 'big', 'walmart', 'assaí', 'makro', 'sam\'s club', 'atacarejo', 'extra hiper'],
+    mustMatch: ['hipermercado', 'hiper', 'carrefour', 'big', 'walmart', 'assaí', 'makro', 'atacarejo'],
+    exclude: ['cueca', 'roupa', 'móvel', 'móveis', 'colchão', 'vestuário', 'tecido', 'lingerie', 'moda', 'calçado', 'sapato', 'eletro', 'eletrônico', 'celular', 'informática', 'auto peça', 'autopeça', 'ferragem', 'ferramenta', 'brinquedo', 'papelaria', 'livro', 'pet', 'animal', 'veterinár', 'ótica', 'óculos', 'joalheria', 'relógio', 'perfume', 'cosmético', 'salão', 'beleza', 'cabeleireiro', 'barbearia', 'estética', 'academia', 'fitness', 'hotel', 'pousada', 'restaurante', 'lanchonete', 'pizzaria', 'hamburgueria', 'bar', 'boteco', 'açougue', 'padaria', 'confeitaria', 'farmácia', 'drogaria', 'atacadista', 'distribuid', 'magazine', 'americanas', 'casas bahia', 'ponto frio']
   },
   'supermercados': {
-    include: ['supermercado', 'mercado', 'mercearia', 'minimercado', 'hortifruti', 'sacolão', 'feira', 'empório', 'armazém', 'alimentos', 'comida'],
-    exclude: ['cueca', 'roupa', 'móvel', 'móveis', 'colchão', 'vestuário', 'tecido', 'lingerie', 'moda', 'calçado', 'eletro', 'eletrônico', 'celular', 'auto peça', 'autopeça', 'construção', 'ferragem', 'ferramenta', 'brinquedo', 'papelaria', 'pet', 'veterinár', 'ótica', 'joalheria', 'salão', 'beleza', 'academia', 'hotel', 'pousada']
+    include: ['supermercado', 'mercado', 'mercearia', 'minimercado', 'hortifruti', 'sacolão', 'feira', 'empório', 'armazém'],
+    mustMatch: ['supermercado', 'mercado', 'mercearia', 'minimercado', 'hortifruti'],
+    exclude: ['cueca', 'roupa', 'móvel', 'móveis', 'vestuário', 'tecido', 'moda', 'calçado', 'eletro', 'eletrônico', 'auto peça', 'construção', 'ferragem', 'brinquedo', 'papelaria', 'pet', 'veterinár', 'ótica', 'joalheria', 'salão', 'beleza', 'academia', 'hotel', 'magazine', 'americanas', 'casas bahia']
   },
   'restaurantes': {
-    include: ['restaurante', 'lanchonete', 'pizzaria', 'hamburgueria', 'churrascaria', 'buffet', 'self-service', 'comida', 'cozinha', 'gastronomia', 'bar', 'boteco', 'bistrô', 'cantina', 'refeitório'],
-    exclude: ['cueca', 'roupa', 'móvel', 'móveis', 'vestuário', 'moda', 'eletro', 'eletrônico', 'auto peça', 'construção', 'ferragem', 'pet', 'veterinár', 'ótica', 'joalheria', 'salão', 'academia', 'hotel']
+    include: ['restaurante', 'lanchonete', 'pizzaria', 'hamburgueria', 'churrascaria', 'buffet', 'self-service', 'gastronomia', 'bistrô', 'cantina', 'refeitório'],
+    mustMatch: ['restaurante', 'lanchonete', 'pizzaria', 'hamburgueria', 'churrascaria', 'buffet'],
+    exclude: ['cueca', 'roupa', 'móvel', 'vestuário', 'moda', 'eletro', 'auto peça', 'construção', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'supermercado', 'mercado']
   },
   'materiais de construção': {
-    include: ['material de construção', 'construção', 'home center', 'depósito', 'ferragem', 'cimento', 'tijolo', 'areia', 'telha', 'madeira', 'madeireira', 'hidráulico', 'elétrico', 'acabamento', 'piso', 'azulejo', 'porcelanato', 'tintas'],
-    exclude: ['cueca', 'roupa', 'móvel', 'alimento', 'comida', 'supermercado', 'mercado', 'restaurante', 'pet', 'veterinár', 'ótica', 'joalheria', 'salão', 'academia', 'hotel']
+    include: ['material de construção', 'construção', 'home center', 'depósito', 'ferragem', 'cimento', 'tijolo', 'telha', 'madeira', 'madeireira', 'hidráulico', 'acabamento', 'piso', 'azulejo', 'tintas', 'leroy', 'tumelero'],
+    mustMatch: ['material de construção', 'construção', 'home center', 'depósito', 'ferragem', 'madeireira', 'tintas'],
+    exclude: ['cueca', 'roupa', 'móvel', 'alimento', 'supermercado', 'mercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel']
   },
   'ferramentas': {
-    include: ['ferramenta', 'ferramentaria', 'ferragem', 'parafuso', 'chave', 'furadeira', 'serra', 'martelo', 'alicate', 'máquina', 'equipamento', 'industrial'],
-    exclude: ['cueca', 'roupa', 'móvel', 'alimento', 'supermercado', 'restaurante', 'pet', 'veterinár', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'brinquedo']
+    include: ['ferramenta', 'ferramentaria', 'ferragem', 'parafuso', 'chave', 'furadeira', 'serra', 'martelo', 'alicate', 'máquina', 'equipamento'],
+    mustMatch: ['ferramenta', 'ferramentaria', 'ferragem'],
+    exclude: ['cueca', 'roupa', 'móvel', 'alimento', 'supermercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'brinquedo']
   },
   'pet shop': {
     include: ['pet', 'animal', 'veterinár', 'cão', 'cachorro', 'gato', 'ração', 'banho e tosa', 'petshop'],
-    exclude: ['cueca', 'roupa', 'móvel', 'alimento humano', 'supermercado', 'restaurante', 'construção', 'ferragem', 'ótica', 'joalheria', 'salão humano', 'academia', 'hotel']
+    mustMatch: ['pet', 'veterinár', 'ração', 'banho e tosa'],
+    exclude: ['cueca', 'roupa', 'móvel', 'supermercado', 'restaurante', 'construção', 'ótica', 'joalheria', 'salão humano', 'academia', 'hotel']
   },
   'farmácias': {
-    include: ['farmácia', 'drogaria', 'medicamento', 'remédio', 'saúde', 'manipulação'],
-    exclude: ['cueca', 'roupa', 'móvel', 'supermercado', 'restaurante', 'construção', 'pet', 'veterinár', 'ótica', 'joalheria', 'academia', 'hotel']
+    include: ['farmácia', 'drogaria', 'medicamento', 'remédio', 'manipulação'],
+    mustMatch: ['farmácia', 'drogaria', 'manipulação'],
+    exclude: ['cueca', 'roupa', 'móvel', 'supermercado', 'restaurante', 'construção', 'pet', 'ótica', 'joalheria', 'academia', 'hotel']
   },
   'agropecuária': {
-    include: ['agropecuária', 'agrícola', 'rural', 'fazenda', 'semente', 'adubo', 'fertilizante', 'ração animal', 'veterinária rural', 'trator', 'implemento'],
+    include: ['agropecuária', 'agrícola', 'rural', 'fazenda', 'semente', 'adubo', 'fertilizante', 'ração animal', 'trator', 'implemento'],
+    mustMatch: ['agropecuária', 'agrícola', 'rural', 'semente'],
     exclude: ['cueca', 'roupa', 'móvel', 'supermercado', 'restaurante', 'ótica', 'joalheria', 'salão', 'academia', 'hotel']
   },
   'autopeças': {
     include: ['autopeça', 'auto peça', 'peça automotiva', 'carro', 'moto', 'veículo', 'motor', 'pneu', 'oficina', 'mecânica'],
-    exclude: ['cueca', 'roupa', 'móvel', 'alimento', 'supermercado', 'restaurante', 'pet', 'veterinár', 'ótica', 'joalheria', 'salão', 'academia', 'hotel']
+    mustMatch: ['autopeça', 'auto peça', 'peça', 'pneu', 'mecânica'],
+    exclude: ['cueca', 'roupa', 'móvel', 'alimento', 'supermercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel']
   }
 };
 
-// Check if result is relevant to searched niche
+// Check if result is relevant to searched niche - STRICT VERSION
 function isRelevantToNiche(place: any, segment: string): boolean {
   const segmentLower = segment.toLowerCase();
   const title = (place.title || '').toLowerCase();
@@ -288,8 +432,7 @@ function isRelevantToNiche(place: any, segment: string): boolean {
   
   // If no specific niche config, be more permissive but still filter obvious mismatches
   if (!nicheConfig) {
-    // Generic exclusions for any search
-    const genericExclusions = ['cueca', 'lingerie', 'moda íntima', 'roupa íntima'];
+    const genericExclusions = ['cueca', 'lingerie', 'moda íntima', 'roupa íntima', 'magazine luiza', 'americanas', 'casas bahia'];
     for (const exclude of genericExclusions) {
       if (combinedText.includes(exclude)) {
         return false;
@@ -301,40 +444,90 @@ function isRelevantToNiche(place: any, segment: string): boolean {
   // Check exclusions first (strict)
   for (const exclude of nicheConfig.exclude) {
     if (combinedText.includes(exclude)) {
+      console.log(`❌ Excluded "${place.title}" - matches exclusion: ${exclude}`);
       return false;
     }
   }
   
-  // Check if at least one inclusion keyword matches
-  for (const include of nicheConfig.include) {
-    if (combinedText.includes(include)) {
+  // For strict categories like hipermercados, MUST match one of the mustMatch keywords
+  if (nicheConfig.mustMatch && nicheConfig.mustMatch.length > 0) {
+    let hasRequiredMatch = false;
+    for (const must of nicheConfig.mustMatch) {
+      if (combinedText.includes(must)) {
+        hasRequiredMatch = true;
+        break;
+      }
+    }
+    if (!hasRequiredMatch) {
+      console.log(`❌ Excluded "${place.title}" - no required keyword match for ${segmentLower}`);
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+// Check if business is a Matriz (headquarters) vs Filial (branch)
+function isMatriz(place: any): boolean {
+  const title = (place.title || '').toLowerCase();
+  const address = (place.address || '').toLowerCase();
+  
+  // Keywords that indicate FILIAL (branch)
+  const filialIndicators = [
+    'filial', 'loja', 'unidade', 'sucursal', 'franquia',
+    'ii', 'iii', 'iv', 'v', ' 2', ' 3', ' 4', ' 5', ' 6', ' 7', ' 8', ' 9', ' 10',
+    'centro', 'shopping', 'mall', 'outlet'
+  ];
+  
+  // Keywords that indicate MATRIZ (headquarters)
+  const matrizIndicators = [
+    'matriz', 'sede', 'principal', 'central', 'headquarter', 'escritório central'
+  ];
+  
+  // If explicitly marked as matriz, it's matriz
+  for (const indicator of matrizIndicators) {
+    if (title.includes(indicator) || address.includes(indicator)) {
       return true;
     }
   }
   
-  // If no inclusion matched but also no exclusion, check if category from Google is relevant
-  // Google Maps categories are usually accurate
-  if (category && category.length > 0) {
-    // Allow if Google category seems related
-    const genericRetailTerms = ['loja', 'store', 'shop', 'comércio', 'varejo', 'atacado'];
-    for (const term of genericRetailTerms) {
-      if (category.includes(term)) {
-        return true;
-      }
+  // If has filial indicators, it's likely NOT matriz
+  for (const indicator of filialIndicators) {
+    if (title.includes(indicator)) {
+      return false;
     }
   }
   
-  // Default: exclude if we couldn't confirm relevance
-  return false;
+  // Check for numbered stores (e.g., "Carrefour 01", "Big 12")
+  if (/\s\d{1,2}$/.test(place.title || '')) {
+    return false;
+  }
+  
+  // Default: treat as potential matriz if no clear indicators
+  return true;
 }
 
-// Process and filter results
-function processResults(apifyResults: any[], segment: string, cleanRegion: string, maxLeads: number): any[] {
-  // Filter: must have phone, valid data, AND be relevant to niche
+// Normalize company name for deduplication
+function normalizeCompanyName(name: string): string {
+  return (name || '')
+    .toLowerCase()
+    .replace(/\s+(ltda|me|eireli|s\.a\.|sa|epp|mei|s\/a)\.?$/gi, '')
+    .replace(/[^a-záàâãéèêíìîóòôõúùûç0-9]/gi, '')
+    .trim();
+}
+
+// Process and filter results with Matriz filter and deduplication
+function processResults(apifyResults: any[], segment: string, cleanRegion: string, maxLeads: number, businessType: string = 'all'): any[] {
+  console.log(`📊 Processing ${apifyResults.length} raw results for segment: ${segment}, businessType: ${businessType}`);
+  
+  // Step 1: Filter by basic requirements AND niche relevance
   let results = apifyResults.filter((place: any) => {
     const phone = place.phone || place.phoneUnformatted;
     if (!phone || phone.trim() === '') return false;
-    if (!place.title || place.title.trim() === '') return false;
+    if (!isValidName(place.title)) {
+      console.log(`❌ Invalid name: "${place.title}"`);
+      return false;
+    }
     
     // STRICT NICHE FILTERING
     if (!isRelevantToNiche(place, segment)) {
@@ -344,19 +537,68 @@ function processResults(apifyResults: any[], segment: string, cleanRegion: strin
     return true;
   });
   
-  // Remove duplicates by placeId or title+address
-  const seen = new Set();
+  console.log(`📊 After basic filter: ${results.length} results`);
+  
+  // Step 2: Apply Matriz filter if requested (BEFORE deduplication)
+  if (businessType === 'matriz') {
+    const beforeMatriz = results.length;
+    results = results.filter(place => isMatriz(place));
+    console.log(`📊 After Matriz filter: ${results.length} results (removed ${beforeMatriz - results.length})`);
+  } else if (businessType === 'filial') {
+    const beforeFilial = results.length;
+    results = results.filter(place => !isMatriz(place));
+    console.log(`📊 After Filial filter: ${results.length} results (removed ${beforeFilial - results.length})`);
+  }
+  
+  // Step 3: Deduplicate by placeId first
+  const seenPlaceIds = new Set<string>();
   results = results.filter((place: any) => {
-    const key = place.placeId || `${place.title}-${place.address}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
+    if (place.placeId && seenPlaceIds.has(place.placeId)) return false;
+    if (place.placeId) seenPlaceIds.add(place.placeId);
     return true;
   });
+  
+  // Step 4: Deduplicate by normalized company name (for Matriz, only one per brand)
+  if (businessType === 'matriz') {
+    const seenCompanies = new Map<string, any>();
+    
+    for (const place of results) {
+      const normalizedName = normalizeCompanyName(place.title);
+      
+      // Extract brand name (first word or two)
+      const words = normalizedName.split(/\s+/).filter(w => w.length > 2);
+      const brandKey = words.slice(0, 2).join('');
+      
+      if (!seenCompanies.has(brandKey)) {
+        seenCompanies.set(brandKey, place);
+      } else {
+        // Keep the one with more reviews (likely the main location)
+        const existing = seenCompanies.get(brandKey);
+        if ((place.reviewsCount || 0) > (existing.reviewsCount || 0)) {
+          seenCompanies.set(brandKey, place);
+        }
+      }
+    }
+    
+    results = Array.from(seenCompanies.values());
+    console.log(`📊 After brand deduplication: ${results.length} unique companies`);
+  } else {
+    // Regular deduplication by title+address
+    const seen = new Set<string>();
+    results = results.filter((place: any) => {
+      const key = `${normalizeCompanyName(place.title)}-${(place.address || '').slice(0, 30)}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
   
   // Hard limit
   if (results.length > maxLeads) {
     results = results.slice(0, maxLeads);
   }
+  
+  console.log(`📊 Final: ${results.length} leads`);
   
   // Transform results to leads format
   return results.map((place: any, index: number) => {
@@ -365,7 +607,10 @@ function processResults(apifyResults: any[], segment: string, cleanRegion: strin
     const category = place.categoryName || place.categories?.[0] || segment;
     const { employeeCount, companySize, revenue } = estimateRevenue(place, category);
     const openedDate = estimateYearsInOperation(place);
-    const reasons = generateReasons(place, category, companySize);
+    const matchScore = calculateMatchScore(place, category, companySize);
+    const reasons = generateReasons(place, category, companySize, matchScore);
+    const instagram = extractInstagram(place);
+    const website = getCleanWebsite(place);
     
     return {
       id: `apify-${place.placeId || Date.now()}-${index}`,
@@ -373,17 +618,17 @@ function processResults(apifyResults: any[], segment: string, cleanRegion: strin
       address: place.address || 'Endereço não disponível',
       phone: phoneValidation.valid ? phoneValidation.normalized : phone,
       phoneValid: phoneValidation.valid,
-      email: place.email || 'Não disponível',
-      website: place.website || place.url || 'Não disponível',
-      instagram: 'Não disponível',
-      facebook: 'Não disponível',
+      email: place.email || '',
+      website: website, // null if no website
+      instagram: instagram, // empty string if no instagram
+      facebook: '',
       hasWhatsApp: phoneValidation.isWhatsApp,
       placeId: place.placeId,
       category,
       rating: place.stars || place.totalScore || 0,
       reviews: place.reviewsCount || 0,
-      matchScore: 85,
-      confidenceScore: 80,
+      matchScore, // Dynamic score
+      confidenceScore: matchScore,
       source: 'google_maps_apify',
       responsible: 'Gerente',
       employeeCount,
@@ -391,10 +636,12 @@ function processResults(apifyResults: any[], segment: string, cleanRegion: strin
       revenue,
       openedDate,
       reasons,
+      isMatriz: isMatriz(place),
       dataQuality: {
         hasValidPhone: phoneValidation.valid,
-        hasSocialMedia: false,
+        hasSocialMedia: !!instagram,
         hasWhatsApp: phoneValidation.isWhatsApp,
+        hasWebsite: !!website,
         fromGoogleMaps: true
       },
       needsReview: false
@@ -412,9 +659,10 @@ serve(async (req) => {
 
   try {
     const { segment, products, region, country, filters, ecommerceType, businessType } = await req.json();
-    console.log('🔍 SEARCH v7 - Async Polling - Input:', { segment, products, region, country, ecommerceType, businessType });
+    console.log('🔍 SEARCH v8 - Strict Filtering - Input:', { segment, products, region, country, ecommerceType, businessType });
     
     const countryCode = country || 'BR';
+    const bizType = businessType || 'all';
     
     // Check if this is an e-commerce search with specific type
     const isEcommerceSearch = segment.toLowerCase().includes('e-commerce') || segment.toLowerCase().includes('ecommerce');
@@ -438,6 +686,7 @@ serve(async (req) => {
     
     console.log('📋 Search terms:', searchTerms);
     console.log('📍 Location:', locationQuery);
+    console.log('🏢 Business type:', bizType);
     
     // Get Apify API key
     const APIFY_API_KEY = Deno.env.get("APIFY_API_KEY");
@@ -513,7 +762,7 @@ serve(async (req) => {
           const items = await dataResponse.json();
           allResults = items;
           
-          const leads = processResults(allResults, segment, cleanRegion, MAX_TOTAL_LEADS);
+          const leads = processResults(allResults, segment, cleanRegion, MAX_TOTAL_LEADS, bizType);
           console.log(`📊 Current: ${allResults.length} raw, ${leads.length} valid leads`);
           
           // Early exit: if we have 60+ leads after 30 seconds, wait 5 more seconds then return
@@ -529,7 +778,7 @@ serve(async (req) => {
               if (finalDataResponse.ok) {
                 const finalItems = await finalDataResponse.json();
                 allResults = finalItems;
-                const finalLeads = processResults(allResults, segment, cleanRegion, MAX_TOTAL_LEADS);
+                const finalLeads = processResults(allResults, segment, cleanRegion, MAX_TOTAL_LEADS, bizType);
                 console.log(`🚀 Early exit after extra 5s: ${finalLeads.length} leads`);
                 
                 // Abort the run to save credits
@@ -618,7 +867,7 @@ serve(async (req) => {
       // Ignore - might already be finished
     }
     
-    const leads = processResults(allResults, segment, cleanRegion, MAX_TOTAL_LEADS);
+    const leads = processResults(allResults, segment, cleanRegion, MAX_TOTAL_LEADS, bizType);
     console.log(`✅ FINAL: ${leads.length} leads ready`);
     
     if (leads.length === 0) {
