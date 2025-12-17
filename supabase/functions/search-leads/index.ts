@@ -225,13 +225,122 @@ function generateReasons(place: any, category: string, companySize: string): str
   return reasons.slice(0, 3); // Max 3 reasons
 }
 
+// Niche relevance keywords for strict filtering
+const nicheKeywords: { [key: string]: { include: string[], exclude: string[] } } = {
+  'hipermercados': {
+    include: ['hipermercado', 'supermercado', 'mercado', 'atacarejo', 'atacadão', 'carrefour', 'big', 'walmart', 'assaí', 'makro', 'sam\'s club', 'super', 'hiper', 'mart', 'market', 'alimentos', 'hortifruti', 'mercearia', 'minimercado'],
+    exclude: ['cueca', 'roupa', 'móvel', 'móveis', 'colchão', 'vestuário', 'tecido', 'lingerie', 'moda', 'calçado', 'sapato', 'eletro', 'eletrônico', 'celular', 'informática', 'auto peça', 'autopeça', 'construção', 'material de construção', 'ferragem', 'ferramenta', 'brinquedo', 'papelaria', 'livro', 'pet', 'animal', 'veterinár', 'ótica', 'óculos', 'joalheria', 'relógio', 'perfume', 'cosmético', 'salão', 'beleza', 'cabeleireiro', 'barbearia', 'estética', 'academia', 'fitness', 'hotel', 'pousada', 'restaurante', 'lanchonete', 'pizzaria', 'hamburgueria', 'bar', 'boteco', 'cerveja', 'bebida alcoólica']
+  },
+  'supermercados': {
+    include: ['supermercado', 'mercado', 'mercearia', 'minimercado', 'hortifruti', 'sacolão', 'feira', 'empório', 'armazém', 'alimentos', 'comida'],
+    exclude: ['cueca', 'roupa', 'móvel', 'móveis', 'colchão', 'vestuário', 'tecido', 'lingerie', 'moda', 'calçado', 'eletro', 'eletrônico', 'celular', 'auto peça', 'autopeça', 'construção', 'ferragem', 'ferramenta', 'brinquedo', 'papelaria', 'pet', 'veterinár', 'ótica', 'joalheria', 'salão', 'beleza', 'academia', 'hotel', 'pousada']
+  },
+  'restaurantes': {
+    include: ['restaurante', 'lanchonete', 'pizzaria', 'hamburgueria', 'churrascaria', 'buffet', 'self-service', 'comida', 'cozinha', 'gastronomia', 'bar', 'boteco', 'bistrô', 'cantina', 'refeitório'],
+    exclude: ['cueca', 'roupa', 'móvel', 'móveis', 'vestuário', 'moda', 'eletro', 'eletrônico', 'auto peça', 'construção', 'ferragem', 'pet', 'veterinár', 'ótica', 'joalheria', 'salão', 'academia', 'hotel']
+  },
+  'materiais de construção': {
+    include: ['material de construção', 'construção', 'home center', 'depósito', 'ferragem', 'cimento', 'tijolo', 'areia', 'telha', 'madeira', 'madeireira', 'hidráulico', 'elétrico', 'acabamento', 'piso', 'azulejo', 'porcelanato', 'tintas'],
+    exclude: ['cueca', 'roupa', 'móvel', 'alimento', 'comida', 'supermercado', 'mercado', 'restaurante', 'pet', 'veterinár', 'ótica', 'joalheria', 'salão', 'academia', 'hotel']
+  },
+  'ferramentas': {
+    include: ['ferramenta', 'ferramentaria', 'ferragem', 'parafuso', 'chave', 'furadeira', 'serra', 'martelo', 'alicate', 'máquina', 'equipamento', 'industrial'],
+    exclude: ['cueca', 'roupa', 'móvel', 'alimento', 'supermercado', 'restaurante', 'pet', 'veterinár', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'brinquedo']
+  },
+  'pet shop': {
+    include: ['pet', 'animal', 'veterinár', 'cão', 'cachorro', 'gato', 'ração', 'banho e tosa', 'petshop'],
+    exclude: ['cueca', 'roupa', 'móvel', 'alimento humano', 'supermercado', 'restaurante', 'construção', 'ferragem', 'ótica', 'joalheria', 'salão humano', 'academia', 'hotel']
+  },
+  'farmácias': {
+    include: ['farmácia', 'drogaria', 'medicamento', 'remédio', 'saúde', 'manipulação'],
+    exclude: ['cueca', 'roupa', 'móvel', 'supermercado', 'restaurante', 'construção', 'pet', 'veterinár', 'ótica', 'joalheria', 'academia', 'hotel']
+  },
+  'agropecuária': {
+    include: ['agropecuária', 'agrícola', 'rural', 'fazenda', 'semente', 'adubo', 'fertilizante', 'ração animal', 'veterinária rural', 'trator', 'implemento'],
+    exclude: ['cueca', 'roupa', 'móvel', 'supermercado', 'restaurante', 'ótica', 'joalheria', 'salão', 'academia', 'hotel']
+  },
+  'autopeças': {
+    include: ['autopeça', 'auto peça', 'peça automotiva', 'carro', 'moto', 'veículo', 'motor', 'pneu', 'oficina', 'mecânica'],
+    exclude: ['cueca', 'roupa', 'móvel', 'alimento', 'supermercado', 'restaurante', 'pet', 'veterinár', 'ótica', 'joalheria', 'salão', 'academia', 'hotel']
+  }
+};
+
+// Check if result is relevant to searched niche
+function isRelevantToNiche(place: any, segment: string): boolean {
+  const segmentLower = segment.toLowerCase();
+  const title = (place.title || '').toLowerCase();
+  const category = (place.categoryName || place.categories?.[0] || '').toLowerCase();
+  const allCategories = (place.categories || []).join(' ').toLowerCase();
+  const combinedText = `${title} ${category} ${allCategories}`;
+  
+  // Find matching niche keywords
+  let nicheConfig = nicheKeywords[segmentLower];
+  
+  // Try partial matching if exact match not found
+  if (!nicheConfig) {
+    for (const [key, config] of Object.entries(nicheKeywords)) {
+      if (segmentLower.includes(key) || key.includes(segmentLower)) {
+        nicheConfig = config;
+        break;
+      }
+    }
+  }
+  
+  // If no specific niche config, be more permissive but still filter obvious mismatches
+  if (!nicheConfig) {
+    // Generic exclusions for any search
+    const genericExclusions = ['cueca', 'lingerie', 'moda íntima', 'roupa íntima'];
+    for (const exclude of genericExclusions) {
+      if (combinedText.includes(exclude)) {
+        return false;
+      }
+    }
+    return true;
+  }
+  
+  // Check exclusions first (strict)
+  for (const exclude of nicheConfig.exclude) {
+    if (combinedText.includes(exclude)) {
+      return false;
+    }
+  }
+  
+  // Check if at least one inclusion keyword matches
+  for (const include of nicheConfig.include) {
+    if (combinedText.includes(include)) {
+      return true;
+    }
+  }
+  
+  // If no inclusion matched but also no exclusion, check if category from Google is relevant
+  // Google Maps categories are usually accurate
+  if (category && category.length > 0) {
+    // Allow if Google category seems related
+    const genericRetailTerms = ['loja', 'store', 'shop', 'comércio', 'varejo', 'atacado'];
+    for (const term of genericRetailTerms) {
+      if (category.includes(term)) {
+        return true;
+      }
+    }
+  }
+  
+  // Default: exclude if we couldn't confirm relevance
+  return false;
+}
+
 // Process and filter results
 function processResults(apifyResults: any[], segment: string, cleanRegion: string, maxLeads: number): any[] {
-  // Filter: must have phone and valid data
+  // Filter: must have phone, valid data, AND be relevant to niche
   let results = apifyResults.filter((place: any) => {
     const phone = place.phone || place.phoneUnformatted;
     if (!phone || phone.trim() === '') return false;
     if (!place.title || place.title.trim() === '') return false;
+    
+    // STRICT NICHE FILTERING
+    if (!isRelevantToNiche(place, segment)) {
+      return false;
+    }
+    
     return true;
   });
   
