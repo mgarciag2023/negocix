@@ -190,7 +190,7 @@ const LeadCard = ({
               <ExternalLink className="h-3 w-3" />
             </a>
           ) : (
-            <span className="text-muted-foreground italic">Este lead não possui site</span>
+            <span className="text-muted-foreground italic">Não possui site</span>
           )}
         </div>
         
