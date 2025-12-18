@@ -360,7 +360,7 @@ function generateReasons(place: any, category: string, companySize: string, matc
   return reasons.slice(0, 3);
 }
 
-// STRICT niche relevance keywords - VERY STRICT FOR HIPERMERCADOS
+// STRICT niche relevance keywords - VERY STRICT FOR SPECIFIC CATEGORIES
 const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mustMatch: string[] } } = {
   'hipermercados': {
     include: ['hipermercado', 'hiper', 'carrefour', 'big', 'walmart', 'assaí', 'makro', 'sam\'s club', 'atacarejo', 'extra hiper'],
@@ -373,9 +373,19 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     exclude: ['cueca', 'roupa', 'móvel', 'móveis', 'vestuário', 'tecido', 'moda', 'calçado', 'eletro', 'eletrônico', 'auto peça', 'construção', 'ferragem', 'brinquedo', 'papelaria', 'pet', 'veterinár', 'ótica', 'joalheria', 'salão', 'beleza', 'academia', 'hotel', 'magazine', 'americanas', 'casas bahia']
   },
   'restaurantes': {
-    include: ['restaurante', 'lanchonete', 'pizzaria', 'hamburgueria', 'churrascaria', 'buffet', 'self-service', 'gastronomia', 'bistrô', 'cantina', 'refeitório'],
-    mustMatch: ['restaurante', 'lanchonete', 'pizzaria', 'hamburgueria', 'churrascaria', 'buffet'],
+    include: ['restaurante', 'churrascaria', 'buffet', 'self-service', 'gastronomia', 'bistrô', 'cantina', 'refeitório'],
+    mustMatch: ['restaurante', 'churrascaria', 'buffet', 'self-service'],
     exclude: ['cueca', 'roupa', 'móvel', 'vestuário', 'moda', 'eletro', 'auto peça', 'construção', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'supermercado', 'mercado']
+  },
+  'lanchonetes': {
+    include: ['lanchonete', 'lanche', 'snack', 'fast food', 'hamburgueria', 'hot dog', 'sanduíche', 'salgado', 'pastel'],
+    mustMatch: ['lanchonete', 'lanche', 'hamburgueria', 'hot dog', 'sanduíche', 'fast food', 'salgado', 'pastel'],
+    exclude: ['pizzaria', 'pizza', 'restaurante', 'churrascaria', 'buffet', 'cueca', 'roupa', 'móvel', 'vestuário', 'moda', 'eletro', 'auto peça', 'construção', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'supermercado', 'mercado']
+  },
+  'pizzarias': {
+    include: ['pizzaria', 'pizza', 'rodízio de pizza', 'pizzas'],
+    mustMatch: ['pizzaria', 'pizza'],
+    exclude: ['lanchonete', 'hamburgueria', 'cueca', 'roupa', 'móvel', 'vestuário', 'moda', 'eletro', 'auto peça', 'construção', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'supermercado', 'mercado']
   },
   'materiais de construção': {
     include: ['material de construção', 'construção', 'home center', 'depósito', 'ferragem', 'cimento', 'tijolo', 'telha', 'madeira', 'madeireira', 'hidráulico', 'acabamento', 'piso', 'azulejo', 'tintas', 'leroy', 'tumelero'],
@@ -406,6 +416,11 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     include: ['autopeça', 'auto peça', 'peça automotiva', 'carro', 'moto', 'veículo', 'motor', 'pneu', 'oficina', 'mecânica'],
     mustMatch: ['autopeça', 'auto peça', 'peça', 'pneu', 'mecânica'],
     exclude: ['cueca', 'roupa', 'móvel', 'alimento', 'supermercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel']
+  },
+  'academias': {
+    include: ['academia', 'fitness', 'musculação', 'crossfit', 'pilates', 'ginástica', 'treino', 'gym'],
+    mustMatch: ['academia', 'fitness', 'musculação', 'crossfit', 'gym'],
+    exclude: ['cueca', 'roupa', 'móvel', 'supermercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'hotel', 'construção']
   }
 };
 
@@ -600,11 +615,62 @@ function processResults(apifyResults: any[], segment: string, cleanRegion: strin
   
   console.log(`📊 Final: ${results.length} leads`);
   
+  // Translate Google category types to Portuguese
+  const categoryTranslation: { [key: string]: string } = {
+    'restaurant': 'Restaurante',
+    'cafe': 'Cafeteria',
+    'bakery': 'Padaria',
+    'bar': 'Bar',
+    'meal_delivery': 'Delivery',
+    'meal_takeaway': 'Comida para Viagem',
+    'food': 'Alimentação',
+    'store': 'Loja',
+    'supermarket': 'Supermercado',
+    'grocery_or_supermarket': 'Supermercado',
+    'convenience_store': 'Conveniência',
+    'shopping_mall': 'Shopping',
+    'pharmacy': 'Farmácia',
+    'drugstore': 'Drogaria',
+    'hardware_store': 'Ferragem',
+    'home_goods_store': 'Casa e Decoração',
+    'furniture_store': 'Móveis',
+    'electronics_store': 'Eletrônicos',
+    'clothing_store': 'Vestuário',
+    'shoe_store': 'Calçados',
+    'jewelry_store': 'Joalheria',
+    'beauty_salon': 'Salão de Beleza',
+    'hair_care': 'Cabeleireiro',
+    'gym': 'Academia',
+    'health': 'Saúde',
+    'hospital': 'Hospital',
+    'dentist': 'Dentista',
+    'doctor': 'Médico',
+    'veterinary_care': 'Veterinária',
+    'pet_store': 'Pet Shop',
+    'car_dealer': 'Concessionária',
+    'car_repair': 'Oficina Mecânica',
+    'car_wash': 'Lava Jato',
+    'gas_station': 'Posto de Combustível',
+    'lodging': 'Hospedagem',
+    'hotel': 'Hotel',
+    'bank': 'Banco',
+    'atm': 'Caixa Eletrônico',
+    'school': 'Escola',
+    'university': 'Universidade',
+    'point_of_interest': segment,
+    'establishment': segment
+  };
+  
   // Transform results to leads format
   return results.map((place: any, index: number) => {
     const phone = place.phone || place.phoneUnformatted || '';
     const phoneValidation = validatePhone(phone);
-    const category = place.categoryName || place.categories?.[0] || segment;
+    
+    // Use segment as primary category, translate Google type as fallback
+    const googleCategory = (place.categoryName || place.categories?.[0] || '').toLowerCase().replace(/_/g, ' ');
+    const translatedCategory = categoryTranslation[place.categories?.[0]] || categoryTranslation[googleCategory] || null;
+    const category = segment || translatedCategory || 'Estabelecimento';
+    
     const { employeeCount, companySize, revenue } = estimateRevenue(place, category);
     const openedDate = estimateYearsInOperation(place);
     const matchScore = calculateMatchScore(place, category, companySize);
@@ -808,7 +874,7 @@ serve(async (req) => {
     
     console.log('📞 Fetching contact details...');
     
-    for (let i = 0; i < Math.min(activePlaces.length, 120); i += BATCH_SIZE) {
+    for (let i = 0; i < Math.min(activePlaces.length, 150); i += BATCH_SIZE) {
       const batch = activePlaces.slice(i, i + BATCH_SIZE);
       
       const detailsPromises = batch.map(async (place, idx) => {
