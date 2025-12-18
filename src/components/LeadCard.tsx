@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { useState } from "react";
-
+import { useFavorites } from "@/hooks/useFavorites";
+import { toast } from "sonner";
 interface LeadCardProps {
   id: string;
   name: string;
@@ -42,7 +42,21 @@ const LeadCard = ({
   companySize,
   hasWhatsApp,
 }: LeadCardProps) => {
-  const [isFavorite, setIsFavorite] = useState(false);
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const isLeadFavorite = isFavorite(id);
+  
+  const handleFavoriteClick = () => {
+    const lead = {
+      id, name, address, phone, email, instagram, website, responsible,
+      matchScore, reasons, revenue, openedDate, category, employeeCount, companySize, hasWhatsApp
+    };
+    const added = toggleFavorite(lead);
+    if (added) {
+      toast.success("Lead adicionado aos favoritos!");
+    } else {
+      toast.info("Lead removido dos favoritos");
+    }
+  };
   
   const getScoreColor = (score: number) => {
     if (score >= 85) return "bg-success text-success-foreground";
@@ -70,9 +84,9 @@ const LeadCard = ({
         variant="ghost"
         size="icon"
         className="absolute top-2 right-2 md:top-4 md:right-4 h-8 w-8 md:h-10 md:w-10"
-        onClick={() => setIsFavorite(!isFavorite)}
+        onClick={handleFavoriteClick}
       >
-        <Heart className={`h-4 w-4 md:h-5 md:w-5 ${isFavorite ? "fill-destructive text-destructive" : ""}`} />
+        <Heart className={`h-4 w-4 md:h-5 md:w-5 ${isLeadFavorite ? "fill-destructive text-destructive" : ""}`} />
       </Button>
       
       <div className="flex items-start justify-between mb-4 gap-2">

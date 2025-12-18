@@ -8,14 +8,28 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useEffect } from "react";
+import { useFavorites } from "@/hooks/useFavorites";
+import { toast } from "sonner";
 
 const LeadDetail = () => {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const { isFavorite, toggleFavorite } = useFavorites();
   
   // Get lead data from navigation state
   const leadData = location.state?.lead;
+  const isLeadFavorite = leadData ? isFavorite(leadData.id) : false;
+  
+  const handleFavoriteClick = () => {
+    if (!leadData) return;
+    const added = toggleFavorite(leadData);
+    if (added) {
+      toast.success("Lead adicionado aos favoritos!");
+    } else {
+      toast.info("Lead removido dos favoritos");
+    }
+  };
   
   // Scroll to top on mount
   useEffect(() => {
@@ -254,9 +268,13 @@ const LeadDetail = () => {
                   </a>
                 </Button>
                 
-                <Button variant="outline" className="w-full h-10 md:h-11 text-sm md:text-base">
-                  <Heart className="mr-2 h-4 w-4" />
-                  Adicionar aos Favoritos
+                <Button 
+                  variant="outline" 
+                  className={`w-full h-10 md:h-11 text-sm md:text-base ${isLeadFavorite ? 'border-destructive text-destructive' : ''}`}
+                  onClick={handleFavoriteClick}
+                >
+                  <Heart className={`mr-2 h-4 w-4 ${isLeadFavorite ? 'fill-destructive' : ''}`} />
+                  {isLeadFavorite ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos'}
                 </Button>
               </div>
             </Card>
