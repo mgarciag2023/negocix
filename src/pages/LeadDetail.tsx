@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   MapPin, Phone, Instagram, User, TrendingUp, Calendar, 
-  ArrowLeft, Heart, MessageCircle, Mail 
+  ArrowLeft, Heart, MessageCircle, Mail, Globe, ExternalLink, Users
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useEffect } from "react";
@@ -16,6 +16,11 @@ const LeadDetail = () => {
   
   // Get lead data from navigation state
   const leadData = location.state?.lead;
+  
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   
   // Redirect back if no lead data
   useEffect(() => {
@@ -31,19 +36,26 @@ const LeadDetail = () => {
   const lead = {
     ...leadData,
     description: `${leadData.category} localizado em ${leadData.address.split('-')[1] || 'região central'}. Estabelecimento com potencial para parceria comercial.`,
-    hours: "Horário comercial",
-    employees: "Equipe comercial",
-    socialMedia: {
-      followers: leadData.instagram ? "Presença ativa" : "N/A",
-      engagement: "Verificar redes",
-      lastPost: "Recente",
-    },
   };
 
+  // Check if has real website
+  const hasWebsite = lead.website && lead.website !== 'Não disponível' && lead.website.trim().length > 5;
+  
+  // Check if has Instagram
+  const hasInstagram = lead.instagram && lead.instagram !== 'Não disponível' && lead.instagram.trim().length > 0;
+
   const getScoreColor = (score: number) => {
-    if (score >= 80) return "bg-success text-success-foreground";
-    if (score >= 60) return "bg-primary text-primary-foreground";
+    if (score >= 85) return "bg-success text-success-foreground";
+    if (score >= 70) return "bg-primary text-primary-foreground";
+    if (score >= 55) return "bg-warning text-warning-foreground";
     return "bg-muted text-muted-foreground";
+  };
+
+  const getScoreLabel = (score: number) => {
+    if (score >= 85) return "Excelente";
+    if (score >= 70) return "Bom";
+    if (score >= 55) return "Médio";
+    return "Baixo";
   };
 
   return (
@@ -73,73 +85,67 @@ const LeadDetail = () => {
                   <p className="text-sm md:text-base text-muted-foreground">{lead.description}</p>
                 </div>
                 
-                <div className={`flex h-16 w-16 md:h-20 md:w-20 items-center justify-center rounded-full flex-shrink-0 ${getScoreColor(lead.matchScore)}`}>
+                <div className={`flex flex-col h-20 w-20 md:h-24 md:w-24 items-center justify-center rounded-full flex-shrink-0 ${getScoreColor(lead.matchScore)}`}>
                   <div className="text-center">
                     <div className="text-2xl md:text-3xl font-bold">{lead.matchScore}</div>
-                    <div className="text-[10px] md:text-xs">match</div>
+                    <div className="text-[10px] md:text-xs">{getScoreLabel(lead.matchScore)}</div>
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mb-6">
-                <div className="p-3 md:p-4 bg-muted rounded-lg">
-                  <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground mb-1">
-                    <TrendingUp className="h-3 w-3 md:h-4 md:w-4" />
-                    Faturamento Estimado
+              {/* Company Info Grid - Updated to match LeadCard */}
+              <div className="grid grid-cols-2 gap-3 md:gap-4 mb-6">
+                {lead.companySize && (
+                  <div className="p-3 md:p-4 bg-muted rounded-lg">
+                    <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground mb-1">
+                      <Users className="h-3 w-3 md:h-4 md:w-4" />
+                      Porte
+                    </div>
+                    <p className="text-base md:text-lg font-semibold text-foreground">{lead.companySize}</p>
                   </div>
-                  <p className="text-base md:text-lg font-semibold text-foreground">{lead.revenue}</p>
-                </div>
+                )}
                 
-                <div className="p-3 md:p-4 bg-muted rounded-lg">
-                  <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground mb-1">
-                    <Calendar className="h-3 w-3 md:h-4 md:w-4" />
-                    Tempo no Mercado
+                {lead.employeeCount && (
+                  <div className="p-3 md:p-4 bg-muted rounded-lg">
+                    <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground mb-1">
+                      <User className="h-3 w-3 md:h-4 md:w-4" />
+                      Funcionários
+                    </div>
+                    <p className="text-base md:text-lg font-semibold text-foreground">{lead.employeeCount}</p>
                   </div>
-                  <p className="text-base md:text-lg font-semibold text-foreground">{lead.openedDate}</p>
-                </div>
+                )}
                 
-                <div className="p-3 md:p-4 bg-muted rounded-lg">
-                  <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground mb-1">
-                    <User className="h-3 w-3 md:h-4 md:w-4" />
-                    Funcionários
+                {lead.revenue && (
+                  <div className="p-3 md:p-4 bg-muted rounded-lg">
+                    <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground mb-1">
+                      <TrendingUp className="h-3 w-3 md:h-4 md:w-4" />
+                      Faturamento
+                    </div>
+                    <p className="text-base md:text-lg font-semibold text-foreground">{lead.revenue}</p>
                   </div>
-                  <p className="text-base md:text-lg font-semibold text-foreground">{lead.employees}</p>
-                </div>
+                )}
                 
-                <div className="p-3 md:p-4 bg-muted rounded-lg">
-                  <div className="text-xs md:text-sm text-muted-foreground mb-1">Horário</div>
-                  <p className="text-base md:text-lg font-semibold text-foreground">{lead.hours}</p>
-                </div>
+                {lead.openedDate && (
+                  <div className="p-3 md:p-4 bg-muted rounded-lg">
+                    <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground mb-1">
+                      <Calendar className="h-3 w-3 md:h-4 md:w-4" />
+                      No mercado
+                    </div>
+                    <p className="text-base md:text-lg font-semibold text-foreground">{lead.openedDate}</p>
+                  </div>
+                )}
               </div>
 
               <div className="bg-success-light border-l-4 border-success rounded-md p-4 md:p-6">
                 <h3 className="font-semibold text-foreground text-base md:text-lg mb-3">Por que é um excelente lead:</h3>
                 <ul className="space-y-2">
-                  {lead.reasons.map((reason, index) => (
+                  {lead.reasons.map((reason: string, index: number) => (
                     <li key={index} className="text-sm md:text-base text-foreground flex items-start">
                       <span className="text-success mr-2 text-lg md:text-xl flex-shrink-0">✓</span>
                       <span>{reason}</span>
                     </li>
                   ))}
                 </ul>
-              </div>
-            </Card>
-
-            <Card className="p-4 md:p-6">
-              <h3 className="font-semibold text-foreground text-lg md:text-xl mb-4">Presença nas Redes Sociais</h3>
-              <div className="grid grid-cols-3 gap-2 md:gap-4">
-                <div className="text-center p-3 md:p-4 bg-muted rounded-lg">
-                  <p className="text-xl md:text-2xl font-bold text-foreground">{lead.socialMedia.followers}</p>
-                  <p className="text-xs md:text-sm text-muted-foreground">Seguidores</p>
-                </div>
-                <div className="text-center p-3 md:p-4 bg-muted rounded-lg">
-                  <p className="text-xl md:text-2xl font-bold text-foreground">{lead.socialMedia.engagement}</p>
-                  <p className="text-xs md:text-sm text-muted-foreground">Engajamento</p>
-                </div>
-                <div className="text-center p-3 md:p-4 bg-muted rounded-lg">
-                  <p className="text-base md:text-lg font-bold text-foreground">{lead.socialMedia.lastPost}</p>
-                  <p className="text-xs md:text-sm text-muted-foreground">Último Post</p>
-                </div>
               </div>
             </Card>
           </div>
@@ -176,41 +182,70 @@ const LeadDetail = () => {
                   </div>
                 )}
                 
+                {hasInstagram && (
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-lg bg-pink-100 flex-shrink-0">
+                      <Instagram className="h-4 w-4 md:h-5 md:w-5 text-pink-500" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs md:text-sm text-muted-foreground">Instagram</p>
+                      <a 
+                        href={`https://instagram.com/${lead.instagram.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-sm md:text-base text-primary hover:underline truncate block"
+                      >
+                        {lead.instagram}
+                      </a>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Website section */}
                 <div className="flex items-center gap-3">
                   <div className="flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-lg bg-primary-light flex-shrink-0">
-                    <Instagram className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                    <Globe className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs md:text-sm text-muted-foreground">Instagram</p>
-                    <a 
-                      href={`https://instagram.com/${lead.instagram.replace('@', '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-medium text-sm md:text-base text-primary hover:underline truncate block"
-                    >
-                      {lead.instagram}
-                    </a>
+                    <p className="text-xs md:text-sm text-muted-foreground">Website</p>
+                    {hasWebsite ? (
+                      <a 
+                        href={lead.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-medium text-sm md:text-base text-primary hover:underline truncate flex items-center gap-1"
+                      >
+                        {lead.website.replace(/^https?:\/\//, '').split('/')[0]}
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground italic text-sm">Não possui site</span>
+                    )}
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-lg bg-primary-light flex-shrink-0">
-                    <User className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                {lead.responsible && (
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-lg bg-primary-light flex-shrink-0">
+                      <User className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs md:text-sm text-muted-foreground">Responsável</p>
+                      <p className="font-medium text-sm md:text-base text-foreground truncate">{lead.responsible}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-xs md:text-sm text-muted-foreground">Responsável</p>
-                    <p className="font-medium text-sm md:text-base text-foreground truncate">{lead.responsible}</p>
-                  </div>
-                </div>
+                )}
               </div>
 
               <div className="space-y-2 md:space-y-3">
-                <Button className="w-full bg-success hover:bg-success-hover h-10 md:h-11 text-sm md:text-base" asChild>
-                  <a href={`https://wa.me/${lead.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
-                    <MessageCircle className="mr-2 h-4 w-4" />
-                    WhatsApp
-                  </a>
-                </Button>
+                {lead.hasWhatsApp && (
+                  <Button className="w-full bg-success hover:bg-success-hover h-10 md:h-11 text-sm md:text-base" asChild>
+                    <a href={`https://wa.me/${lead.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
+                      <MessageCircle className="mr-2 h-4 w-4" />
+                      WhatsApp
+                    </a>
+                  </Button>
+                )}
                 
                 <Button variant="outline" className="w-full h-10 md:h-11 text-sm md:text-base" asChild>
                   <a href={`tel:${lead.phone}`}>
@@ -230,8 +265,11 @@ const LeadDetail = () => {
               <h3 className="font-semibold text-foreground text-lg md:text-xl mb-4">Sugestão de Abordagem</h3>
               <div className="bg-primary-light rounded-lg p-3 md:p-4">
                 <p className="text-xs md:text-sm text-foreground leading-relaxed">
-                  "Olá {lead.responsible}! Vi que a {lead.name} está crescendo bem na região. 
-                  Como vocês acabaram de abrir, imagino que ainda estejam estruturando fornecedores. 
+                  "Olá{lead.responsible ? ` ${lead.responsible}` : ''}! Vi que a {lead.name} está crescendo bem na região. 
+                  {lead.openedDate && lead.openedDate.includes('meses') ? 
+                    ' Como vocês abriram recentemente, imagino que ainda estejam estruturando fornecedores.' :
+                    ' Gostaria de apresentar uma proposta que pode agregar valor ao seu negócio.'
+                  } 
                   Trabalho com [seus produtos] e gostaria de apresentar nossas soluções. 
                   Tem um momento para conversarmos?"
                 </p>
