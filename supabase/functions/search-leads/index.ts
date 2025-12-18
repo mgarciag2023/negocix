@@ -704,7 +704,7 @@ serve(async (req) => {
       const results: any[] = [];
       let nextPageToken: string | null = null;
       let pageCount = 0;
-      const maxPages = 3; // Google allows max 3 pages (60 results per query)
+      const maxPages = 2; // Limit to 2 pages (40 results per query) to control costs
       
       while (pageCount < maxPages) {
         const searchUrl: string = nextPageToken 
@@ -808,7 +808,7 @@ serve(async (req) => {
     
     console.log('📞 Fetching contact details...');
     
-    for (let i = 0; i < Math.min(activePlaces.length, 200); i += BATCH_SIZE) {
+    for (let i = 0; i < Math.min(activePlaces.length, 80); i += BATCH_SIZE) {
       const batch = activePlaces.slice(i, i + BATCH_SIZE);
       
       const detailsPromises = batch.map(async (place, idx) => {
