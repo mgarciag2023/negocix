@@ -732,7 +732,7 @@ serve(async (req) => {
 
   try {
     const { segment, products, region, country, filters, ecommerceType, businessType } = await req.json();
-    console.log('🔍 SEARCH v8 - Strict Filtering - Input:', { segment, products, region, country, ecommerceType, businessType });
+    console.log('🔍 SEARCH v9 - Per-Segment Categories - Input:', { segment, products, region, country, ecommerceType, businessType });
     
     const countryCode = country || 'BR';
     const bizType = businessType || 'all';
@@ -740,24 +740,12 @@ serve(async (req) => {
     // Check if this is an e-commerce search with specific type
     const isEcommerceSearch = segment.toLowerCase().includes('e-commerce') || segment.toLowerCase().includes('ecommerce');
     
-    // Generate search terms
-    let searchTerms: string[];
-    
-    if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
-      const ecomType = ecommerceType.trim().toLowerCase();
-      searchTerms = [`loja ${ecomType}`, ecomType, `loja de ${ecomType}`];
-      console.log(`🛒 E-commerce específico: ${ecomType}`);
-    } else {
-      searchTerms = generateSearchTerms(segment);
-    }
-    
     // Build location query
     const cleanRegion = region.trim();
     const locationQuery = countryCode === 'BR' 
       ? `${cleanRegion}, Brazil`
       : `${cleanRegion}, ${countryCode}`;
     
-    console.log('📋 Search terms:', searchTerms);
     console.log('📍 Location:', locationQuery);
     console.log('🏢 Business type:', bizType);
     
@@ -777,7 +765,7 @@ serve(async (req) => {
       const results: any[] = [];
       let nextPageToken: string | null = null;
       let pageCount = 0;
-      const maxPages = 3; // Increased to 3 pages (60 results per query) for more leads
+      const maxPages = 3;
       
       while (pageCount < maxPages) {
         const searchUrl: string = nextPageToken 
@@ -807,7 +795,6 @@ serve(async (req) => {
         nextPageToken = searchData.next_page_token || null;
         pageCount++;
         
-        // Wait before next page (Google requires delay for pagination)
         if (nextPageToken && pageCount < maxPages) {
           await sleep(2000);
         } else {
@@ -837,27 +824,74 @@ serve(async (req) => {
       return null;
     }
     
-    // Search all terms in parallel
-    console.log('📤 Starting Google Places search...');
+    // Parse segments - split by comma and clean each one
+    const segments = segment.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0);
+    console.log(`📋 Segments to search: ${segments.join(', ')}`);
     
-    const searchPromises = searchTerms.map(term => searchPlaces(term, locationQuery));
-    const searchResults = await Promise.all(searchPromises);
+    // Create segment display names map (singular form for display)
+    const segmentDisplayNames: { [key: string]: string } = {};
+    segments.forEach((seg: string) => {
+      const lower = seg.toLowerCase();
+      // Convert plural to singular for display
+      if (lower.endsWith('rias')) {
+        segmentDisplayNames[lower] = seg.slice(0, -1); // pizzarias -> pizzaria
+      } else if (lower.endsWith('as')) {
+        segmentDisplayNames[lower] = seg.slice(0, -1); // lanchonetes doesn't match, but padarias -> padaria
+      } else if (lower.endsWith('tes')) {
+        segmentDisplayNames[lower] = seg.slice(0, -2); // lanchonetes -> lanchonete
+      } else {
+        segmentDisplayNames[lower] = seg;
+      }
+      // Capitalize first letter
+      const displayName = segmentDisplayNames[lower];
+      segmentDisplayNames[lower] = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+    });
+    console.log('📋 Segment display names:', segmentDisplayNames);
     
-    // Combine all results
-    let allPlaces = searchResults.flat();
-    console.log(`📊 Total raw places from Google: ${allPlaces.length}`);
+    // Search each segment separately and tag results with their segment
+    let allPlacesWithSegment: any[] = [];
     
-    // Deduplicate by place_id
+    for (const seg of segments) {
+      let searchTerms: string[];
+      
+      if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
+        const ecomType = ecommerceType.trim().toLowerCase();
+        searchTerms = [`loja ${ecomType}`, ecomType, `loja de ${ecomType}`];
+        console.log(`🛒 E-commerce específico: ${ecomType}`);
+      } else {
+        searchTerms = generateSearchTerms(seg);
+      }
+      
+      console.log(`📤 Searching segment "${seg}" with terms:`, searchTerms);
+      
+      // Search all terms for this segment in parallel
+      const searchPromises = searchTerms.map(term => searchPlaces(term, locationQuery));
+      const searchResults = await Promise.all(searchPromises);
+      
+      // Tag each place with its segment
+      const placesFromSegment = searchResults.flat().map(place => ({
+        ...place,
+        _searchSegment: seg.toLowerCase(),
+        _displayCategory: segmentDisplayNames[seg.toLowerCase()] || seg
+      }));
+      
+      allPlacesWithSegment.push(...placesFromSegment);
+      console.log(`📊 Segment "${seg}": ${placesFromSegment.length} raw places`);
+    }
+    
+    console.log(`📊 Total raw places from all segments: ${allPlacesWithSegment.length}`);
+    
+    // Deduplicate by place_id (keep the first occurrence, which preserves the segment)
     const seenIds = new Set<string>();
-    allPlaces = allPlaces.filter(place => {
+    allPlacesWithSegment = allPlacesWithSegment.filter(place => {
       if (seenIds.has(place.place_id)) return false;
       seenIds.add(place.place_id);
       return true;
     });
-    console.log(`📊 After deduplication: ${allPlaces.length} unique places`);
+    console.log(`📊 After deduplication: ${allPlacesWithSegment.length} unique places`);
     
     // Transform Google Places format to our expected format
-    const transformedPlaces = allPlaces.map(place => ({
+    const transformedPlaces = allPlacesWithSegment.map(place => ({
       placeId: place.place_id,
       title: place.name,
       address: place.formatted_address || place.vicinity,
@@ -865,10 +899,12 @@ serve(async (req) => {
       categories: place.types || [],
       stars: place.rating || 0,
       reviewsCount: place.user_ratings_total || 0,
-      phone: '', // Will be filled from details
-      website: '', // Will be filled from details
+      phone: '',
+      website: '',
       permanentlyClosed: place.permanently_closed || place.business_status === 'CLOSED_PERMANENTLY',
-      location: place.geometry?.location
+      location: place.geometry?.location,
+      _searchSegment: place._searchSegment,
+      _displayCategory: place._displayCategory
     }));
     
     // Filter out closed businesses
@@ -877,7 +913,7 @@ serve(async (req) => {
     
     // Get details for places (in batches to avoid rate limits)
     const BATCH_SIZE = 10;
-    const DETAILS_DELAY = 100; // 100ms between requests
+    const DETAILS_DELAY = 100;
     
     console.log('📞 Fetching contact details...');
     
@@ -885,7 +921,7 @@ serve(async (req) => {
       const batch = activePlaces.slice(i, i + BATCH_SIZE);
       
       const detailsPromises = batch.map(async (place, idx) => {
-        await sleep(idx * DETAILS_DELAY); // Stagger requests
+        await sleep(idx * DETAILS_DELAY);
         const details = await getPlaceDetails(place.placeId);
         if (details) {
           place.phone = details.international_phone_number || details.formatted_phone_number || '';
@@ -896,15 +932,14 @@ serve(async (req) => {
       await Promise.all(detailsPromises);
       console.log(`📞 Batch ${Math.floor(i / BATCH_SIZE) + 1} complete`);
       
-      // Check if we have enough leads with phone numbers
       const placesWithPhone = activePlaces.filter(p => p.phone && p.phone.trim() !== '');
       if (placesWithPhone.length >= MIN_LEADS_EARLY_EXIT) {
         console.log(`🎯 Found ${placesWithPhone.length} places with phones - continuing to get more...`);
       }
     }
     
-    // Process results with our existing filtering logic
-    const leads = processResults(activePlaces, segment, cleanRegion, MAX_TOTAL_LEADS, bizType);
+    // Process results with our existing filtering logic - pass full segment for filtering, but category comes from _displayCategory
+    const leads = processResultsWithCategories(activePlaces, segment, cleanRegion, MAX_TOTAL_LEADS, bizType);
     console.log(`✅ FINAL: ${leads.length} leads ready`);
     
     if (leads.length === 0) {
@@ -933,3 +968,136 @@ serve(async (req) => {
     );
   }
 });
+
+// New version of processResults that uses the tagged category from search
+function processResultsWithCategories(apifyResults: any[], segment: string, cleanRegion: string, maxLeads: number, businessType: string = 'all'): any[] {
+  console.log(`📊 Processing ${apifyResults.length} raw results for segment: ${segment}, businessType: ${businessType}`);
+  
+  // Step 1: Filter by basic requirements AND niche relevance
+  let results = apifyResults.filter((place: any) => {
+    const phone = place.phone || place.phoneUnformatted;
+    if (!phone || phone.trim() === '') return false;
+    if (!isValidName(place.title)) {
+      console.log(`❌ Invalid name: "${place.title}"`);
+      return false;
+    }
+    
+    // Use the place's search segment for relevance check
+    const placeSegment = place._searchSegment || segment;
+    if (!isRelevantToNiche(place, placeSegment)) {
+      return false;
+    }
+    
+    return true;
+  });
+  
+  console.log(`📊 After basic filter: ${results.length} results`);
+  
+  // Step 2: Apply Matriz filter if requested
+  if (businessType === 'matriz') {
+    const beforeMatriz = results.length;
+    results = results.filter(place => isMatriz(place));
+    console.log(`📊 After Matriz filter: ${results.length} results (removed ${beforeMatriz - results.length})`);
+  } else if (businessType === 'filial') {
+    const beforeFilial = results.length;
+    results = results.filter(place => !isMatriz(place));
+    console.log(`📊 After Filial filter: ${results.length} results (removed ${beforeFilial - results.length})`);
+  }
+  
+  // Step 3: Deduplicate by placeId
+  const seenPlaceIds = new Set<string>();
+  results = results.filter((place: any) => {
+    if (place.placeId && seenPlaceIds.has(place.placeId)) return false;
+    if (place.placeId) seenPlaceIds.add(place.placeId);
+    return true;
+  });
+  
+  // Step 4: Deduplicate by normalized company name
+  if (businessType === 'matriz') {
+    const seenCompanies = new Map<string, any>();
+    
+    for (const place of results) {
+      const normalizedName = normalizeCompanyName(place.title);
+      const words = normalizedName.split(/\s+/).filter(w => w.length > 2);
+      const brandKey = words.slice(0, 2).join('');
+      
+      if (!seenCompanies.has(brandKey)) {
+        seenCompanies.set(brandKey, place);
+      } else {
+        const existing = seenCompanies.get(brandKey);
+        if ((place.reviewsCount || 0) > (existing.reviewsCount || 0)) {
+          seenCompanies.set(brandKey, place);
+        }
+      }
+    }
+    
+    results = Array.from(seenCompanies.values());
+    console.log(`📊 After brand deduplication: ${results.length} unique companies`);
+  } else {
+    const seen = new Set<string>();
+    results = results.filter((place: any) => {
+      const key = `${normalizeCompanyName(place.title)}-${(place.address || '').slice(0, 30)}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+  
+  // Hard limit
+  if (results.length > maxLeads) {
+    results = results.slice(0, maxLeads);
+  }
+  
+  console.log(`📊 Final: ${results.length} leads`);
+  
+  // Transform results to leads format
+  return results.map((place: any, index: number) => {
+    const phone = place.phone || place.phoneUnformatted || '';
+    const phoneValidation = validatePhone(phone);
+    
+    // USE THE DISPLAY CATEGORY FROM THE SEARCH - this is the key fix!
+    const category = place._displayCategory || segment;
+    
+    const { employeeCount, companySize, revenue } = estimateRevenue(place, category);
+    const openedDate = estimateYearsInOperation(place);
+    const matchScore = calculateMatchScore(place, category, companySize);
+    const reasons = generateReasons(place, category, companySize, matchScore);
+    const instagram = extractInstagram(place);
+    const website = getCleanWebsite(place);
+    
+    return {
+      id: `apify-${place.placeId || Date.now()}-${index}`,
+      name: place.title,
+      address: place.address || 'Endereço não disponível',
+      phone: phoneValidation.valid ? phoneValidation.normalized : phone,
+      phoneValid: phoneValidation.valid,
+      email: place.email || '',
+      website: website,
+      instagram: instagram,
+      facebook: '',
+      hasWhatsApp: phoneValidation.isWhatsApp,
+      placeId: place.placeId,
+      category,
+      rating: place.stars || place.totalScore || 0,
+      reviews: place.reviewsCount || 0,
+      matchScore,
+      confidenceScore: matchScore,
+      source: 'google_maps_apify',
+      responsible: 'Gerente',
+      employeeCount,
+      companySize,
+      revenue,
+      openedDate,
+      reasons,
+      isMatriz: isMatriz(place),
+      dataQuality: {
+        hasValidPhone: phoneValidation.valid,
+        hasSocialMedia: !!instagram,
+        hasWhatsApp: phoneValidation.isWhatsApp,
+        hasWebsite: !!website,
+        fromGoogleMaps: true
+      },
+      needsReview: false
+    };
+  });
+}
