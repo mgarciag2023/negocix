@@ -808,7 +808,7 @@ serve(async (req) => {
     
     console.log('📞 Fetching contact details...');
     
-    for (let i = 0; i < Math.min(activePlaces.length, 80); i += BATCH_SIZE) {
+    for (let i = 0; i < Math.min(activePlaces.length, 120); i += BATCH_SIZE) {
       const batch = activePlaces.slice(i, i + BATCH_SIZE);
       
       const detailsPromises = batch.map(async (place, idx) => {
