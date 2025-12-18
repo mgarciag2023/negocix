@@ -688,186 +688,150 @@ serve(async (req) => {
     console.log('📍 Location:', locationQuery);
     console.log('🏢 Business type:', bizType);
     
-    // Get Apify API key
-    const APIFY_API_KEY = Deno.env.get("APIFY_API_KEY");
-    if (!APIFY_API_KEY) {
-      throw new Error("APIFY_API_KEY is not configured");
+    // Get Google API key
+    const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY");
+    if (!GOOGLE_API_KEY) {
+      throw new Error("GOOGLE_API_KEY is not configured");
     }
     
     const MAX_TOTAL_LEADS = 150;
     const MIN_LEADS_EARLY_EXIT = 60;
-    const MAX_WAIT_TIME = 80000; // 80 seconds
-    const EARLY_EXIT_WAIT = 30000; // 30 seconds before checking early exit
-    const POLL_INTERVAL = 5000; // 5 seconds
     
-    const language = countryCode === 'BR' ? 'pt-BR' : 'en';
-    const searchStringsArray = searchTerms.map(term => term);
-    const placesPerSearch = Math.max(10, Math.ceil(MAX_TOTAL_LEADS / searchTerms.length));
+    console.log(`🔎 Google Places API search: targeting ${MAX_TOTAL_LEADS} leads`);
     
-    console.log(`🔎 Apify async search: ${placesPerSearch} places per term`);
+    // Function to search places using Google Places API
+    async function searchPlaces(query: string, location: string): Promise<any[]> {
+      const results: any[] = [];
+      let nextPageToken: string | null = null;
+      let pageCount = 0;
+      const maxPages = 3; // Google allows max 3 pages (60 results per query)
+      
+      while (pageCount < maxPages) {
+        const searchUrl: string = nextPageToken 
+          ? `https://maps.googleapis.com/maps/api/place/textsearch/json?pagetoken=${nextPageToken}&key=${GOOGLE_API_KEY}`
+          : `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query + ' em ' + location)}&language=pt-BR&key=${GOOGLE_API_KEY}`;
+        
+        console.log(`📍 Google Places search page ${pageCount + 1}: ${query}`);
+        
+        const searchResponse: Response = await fetch(searchUrl);
+        if (!searchResponse.ok) {
+          console.error(`❌ Google Places error: ${searchResponse.status}`);
+          break;
+        }
+        
+        const searchData: any = await searchResponse.json();
+        
+        if (searchData.status !== 'OK' && searchData.status !== 'ZERO_RESULTS') {
+          console.error(`❌ Google API status: ${searchData.status}`, searchData.error_message);
+          break;
+        }
+        
+        if (searchData.results) {
+          results.push(...searchData.results);
+          console.log(`📊 Page ${pageCount + 1}: ${searchData.results.length} results (total: ${results.length})`);
+        }
+        
+        nextPageToken = searchData.next_page_token || null;
+        pageCount++;
+        
+        // Wait before next page (Google requires delay for pagination)
+        if (nextPageToken && pageCount < maxPages) {
+          await sleep(2000);
+        } else {
+          break;
+        }
+      }
+      
+      return results;
+    }
     
-    // START ASYNC RUN (not sync)
-    const startRunUrl = `https://api.apify.com/v2/acts/nwua9Gu5YrADL7ZDj/runs?token=${APIFY_API_KEY}`;
+    // Function to get place details (phone, website, etc.)
+    async function getPlaceDetails(placeId: string): Promise<any> {
+      const fields = 'formatted_phone_number,international_phone_number,website,opening_hours,reviews,url';
+      const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&language=pt-BR&key=${GOOGLE_API_KEY}`;
+      
+      try {
+        const response = await fetch(url);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.status === 'OK') {
+            return data.result;
+          }
+        }
+      } catch (e) {
+        console.log(`⚠️ Details fetch error for ${placeId}:`, e);
+      }
+      return null;
+    }
     
-    const apifyPayload = {
-      searchStringsArray,
-      locationQuery,
-      maxCrawledPlacesPerSearch: placesPerSearch,
-      language,
-      skipClosedPlaces: true
-    };
+    // Search all terms in parallel
+    console.log('📤 Starting Google Places search...');
     
-    console.log('📤 Starting async Apify run...');
+    const searchPromises = searchTerms.map(term => searchPlaces(term, locationQuery));
+    const searchResults = await Promise.all(searchPromises);
     
-    const startResponse = await fetch(startRunUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(apifyPayload)
+    // Combine all results
+    let allPlaces = searchResults.flat();
+    console.log(`📊 Total raw places from Google: ${allPlaces.length}`);
+    
+    // Deduplicate by place_id
+    const seenIds = new Set<string>();
+    allPlaces = allPlaces.filter(place => {
+      if (seenIds.has(place.place_id)) return false;
+      seenIds.add(place.place_id);
+      return true;
     });
+    console.log(`📊 After deduplication: ${allPlaces.length} unique places`);
     
-    if (!startResponse.ok) {
-      const errorText = await startResponse.text();
-      console.error('❌ Apify start error:', startResponse.status, errorText);
-      throw new Error(`Apify start error: ${startResponse.status}`);
-    }
+    // Transform Google Places format to our expected format
+    const transformedPlaces = allPlaces.map(place => ({
+      placeId: place.place_id,
+      title: place.name,
+      address: place.formatted_address || place.vicinity,
+      categoryName: place.types?.[0]?.replace(/_/g, ' ') || '',
+      categories: place.types || [],
+      stars: place.rating || 0,
+      reviewsCount: place.user_ratings_total || 0,
+      phone: '', // Will be filled from details
+      website: '', // Will be filled from details
+      permanentlyClosed: place.permanently_closed || place.business_status === 'CLOSED_PERMANENTLY',
+      location: place.geometry?.location
+    }));
     
-    const runData = await startResponse.json();
-    const runId = runData.data?.id;
-    const datasetId = runData.data?.defaultDatasetId;
+    // Filter out closed businesses
+    const activePlaces = transformedPlaces.filter(p => !p.permanentlyClosed);
+    console.log(`📊 Active businesses: ${activePlaces.length}`);
     
-    if (!runId || !datasetId) {
-      console.error('❌ Missing runId or datasetId:', runData);
-      throw new Error('Failed to start Apify run');
-    }
+    // Get details for places (in batches to avoid rate limits)
+    const BATCH_SIZE = 10;
+    const DETAILS_DELAY = 100; // 100ms between requests
     
-    console.log(`✅ Run started: ${runId}, Dataset: ${datasetId}`);
+    console.log('📞 Fetching contact details...');
     
-    // POLLING LOOP
-    const startTime = Date.now();
-    let allResults: any[] = [];
-    let lastResultCount = 0;
-    
-    while (Date.now() - startTime < MAX_WAIT_TIME) {
-      await sleep(POLL_INTERVAL);
+    for (let i = 0; i < Math.min(activePlaces.length, 200); i += BATCH_SIZE) {
+      const batch = activePlaces.slice(i, i + BATCH_SIZE);
       
-      const elapsedTime = Date.now() - startTime;
-      console.log(`⏱️ Polling... ${Math.round(elapsedTime / 1000)}s elapsed`);
-      
-      // Fetch current dataset items
-      const datasetUrl = `https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY_API_KEY}`;
-      
-      try {
-        const dataResponse = await fetch(datasetUrl);
-        if (dataResponse.ok) {
-          const items = await dataResponse.json();
-          allResults = items;
-          
-          const leads = processResults(allResults, segment, cleanRegion, MAX_TOTAL_LEADS, bizType);
-          console.log(`📊 Current: ${allResults.length} raw, ${leads.length} valid leads`);
-          
-          // Early exit: if we have 60+ leads after 30 seconds, wait 5 more seconds then return
-          if (elapsedTime >= EARLY_EXIT_WAIT && leads.length >= MIN_LEADS_EARLY_EXIT) {
-            console.log(`🎯 Found ${leads.length} leads at ${Math.round(elapsedTime / 1000)}s - waiting 5 more seconds...`);
-            
-            // Wait 5 more seconds to collect additional leads
-            await sleep(5000);
-            
-            // Fetch final results after the extra wait
-            try {
-              const finalDataResponse = await fetch(datasetUrl);
-              if (finalDataResponse.ok) {
-                const finalItems = await finalDataResponse.json();
-                allResults = finalItems;
-                const finalLeads = processResults(allResults, segment, cleanRegion, MAX_TOTAL_LEADS, bizType);
-                console.log(`🚀 Early exit after extra 5s: ${finalLeads.length} leads`);
-                
-                // Abort the run to save credits
-                try {
-                  await fetch(`https://api.apify.com/v2/actor-runs/${runId}/abort?token=${APIFY_API_KEY}`, {
-                    method: 'POST'
-                  });
-                  console.log('🛑 Run aborted to save credits');
-                } catch (e) {
-                  console.log('⚠️ Could not abort run:', e);
-                }
-                
-                return new Response(JSON.stringify({ leads: finalLeads }), {
-                  headers: { ...corsHeaders, "Content-Type": "application/json" },
-                });
-              }
-            } catch (e) {
-              console.log('⚠️ Final fetch error:', e);
-            }
-            
-            // Fallback to current leads if final fetch fails
-            try {
-              await fetch(`https://api.apify.com/v2/actor-runs/${runId}/abort?token=${APIFY_API_KEY}`, {
-                method: 'POST'
-              });
-            } catch (e) {}
-            
-            return new Response(JSON.stringify({ leads }), {
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-          }
-          
-          // If we hit 150 leads, return immediately
-          if (leads.length >= MAX_TOTAL_LEADS) {
-            console.log(`✅ Max leads reached: ${leads.length}`);
-            
-            // Abort the run
-            try {
-              await fetch(`https://api.apify.com/v2/actor-runs/${runId}/abort?token=${APIFY_API_KEY}`, {
-                method: 'POST'
-              });
-              console.log('🛑 Run aborted - max leads reached');
-            } catch (e) {
-              console.log('⚠️ Could not abort run:', e);
-            }
-            
-            return new Response(JSON.stringify({ leads: leads.slice(0, MAX_TOTAL_LEADS) }), {
-              headers: { ...corsHeaders, "Content-Type": "application/json" },
-            });
-          }
-          
-          lastResultCount = leads.length;
+      const detailsPromises = batch.map(async (place, idx) => {
+        await sleep(idx * DETAILS_DELAY); // Stagger requests
+        const details = await getPlaceDetails(place.placeId);
+        if (details) {
+          place.phone = details.international_phone_number || details.formatted_phone_number || '';
+          place.website = details.website || '';
         }
-      } catch (e) {
-        console.log('⚠️ Polling error:', e);
-      }
-      
-      // Check run status
-      const statusUrl = `https://api.apify.com/v2/actor-runs/${runId}?token=${APIFY_API_KEY}`;
-      try {
-        const statusResponse = await fetch(statusUrl);
-        if (statusResponse.ok) {
-          const statusData = await statusResponse.json();
-          const status = statusData.data?.status;
-          
-          if (status === 'SUCCEEDED' || status === 'FAILED' || status === 'ABORTED') {
-            console.log(`🏁 Run finished with status: ${status}`);
-            break;
-          }
-        }
-      } catch (e) {
-        console.log('⚠️ Status check error:', e);
-      }
-    }
-    
-    // Timeout reached or run finished - return what we have
-    console.log(`⏰ Polling complete. Total raw results: ${allResults.length}`);
-    
-    // Abort if still running
-    try {
-      await fetch(`https://api.apify.com/v2/actor-runs/${runId}/abort?token=${APIFY_API_KEY}`, {
-        method: 'POST'
       });
-      console.log('🛑 Run aborted after timeout');
-    } catch (e) {
-      // Ignore - might already be finished
+      
+      await Promise.all(detailsPromises);
+      console.log(`📞 Batch ${Math.floor(i / BATCH_SIZE) + 1} complete`);
+      
+      // Check if we have enough leads with phone numbers
+      const placesWithPhone = activePlaces.filter(p => p.phone && p.phone.trim() !== '');
+      if (placesWithPhone.length >= MIN_LEADS_EARLY_EXIT) {
+        console.log(`🎯 Found ${placesWithPhone.length} places with phones - continuing to get more...`);
+      }
     }
     
-    const leads = processResults(allResults, segment, cleanRegion, MAX_TOTAL_LEADS, bizType);
+    // Process results with our existing filtering logic
+    const leads = processResults(activePlaces, segment, cleanRegion, MAX_TOTAL_LEADS, bizType);
     console.log(`✅ FINAL: ${leads.length} leads ready`);
     
     if (leads.length === 0) {
