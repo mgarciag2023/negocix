@@ -378,9 +378,9 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     exclude: ['cueca', 'roupa', 'móvel', 'vestuário', 'moda', 'eletro', 'auto peça', 'construção', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'supermercado', 'mercado']
   },
   'lanchonetes': {
-    include: ['lanchonete', 'lanche', 'snack', 'fast food', 'hamburgueria', 'hot dog', 'sanduíche', 'salgado', 'pastel'],
-    mustMatch: ['lanchonete', 'lanche', 'hamburgueria', 'hot dog', 'sanduíche', 'fast food', 'salgado', 'pastel'],
-    exclude: ['pizzaria', 'pizza', 'restaurante', 'churrascaria', 'buffet', 'cueca', 'roupa', 'móvel', 'vestuário', 'moda', 'eletro', 'auto peça', 'construção', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'supermercado', 'mercado']
+    include: ['lanchonete', 'lanche', 'snack', 'fast food', 'hamburgueria', 'burger', 'hot dog', 'sanduíche', 'salgado', 'pastel', 'açaí', 'crepe', 'tapioca', 'espetinho', 'porção', 'petisco'],
+    mustMatch: [], // Removed strict matching - let include keywords work more broadly
+    exclude: ['cueca', 'roupa', 'móvel', 'vestuário', 'moda', 'eletro', 'auto peça', 'construção', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'supermercado', 'mercado', 'farmácia', 'drogaria', 'pet shop', 'veterinár']
   },
   'pizzarias': {
     include: ['pizzaria', 'pizza', 'rodízio de pizza', 'pizzas'],
@@ -464,7 +464,7 @@ function isRelevantToNiche(place: any, segment: string): boolean {
     }
   }
   
-  // For strict categories like hipermercados, MUST match one of the mustMatch keywords
+  // For categories with mustMatch requirements, enforce them
   if (nicheConfig.mustMatch && nicheConfig.mustMatch.length > 0) {
     let hasRequiredMatch = false;
     for (const must of nicheConfig.mustMatch) {
@@ -477,6 +477,13 @@ function isRelevantToNiche(place: any, segment: string): boolean {
       console.log(`❌ Excluded "${place.title}" - no required keyword match for ${segmentLower}`);
       return false;
     }
+  }
+  
+  // If mustMatch is empty, just check if ANY include keyword is present
+  // This is more permissive for categories like lanchonetes
+  if (!nicheConfig.mustMatch || nicheConfig.mustMatch.length === 0) {
+    // Accept any result that wasn't excluded - Google already filtered by category
+    return true;
   }
   
   return true;
@@ -770,7 +777,7 @@ serve(async (req) => {
       const results: any[] = [];
       let nextPageToken: string | null = null;
       let pageCount = 0;
-      const maxPages = 2; // Limit to 2 pages (40 results per query) to control costs
+      const maxPages = 3; // Increased to 3 pages (60 results per query) for more leads
       
       while (pageCount < maxPages) {
         const searchUrl: string = nextPageToken 
