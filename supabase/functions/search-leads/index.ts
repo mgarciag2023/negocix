@@ -765,7 +765,7 @@ serve(async (req) => {
       const results: any[] = [];
       let nextPageToken: string | null = null;
       let pageCount = 0;
-      const maxPages = 3;
+      const maxPages = 5;
       
       while (pageCount < maxPages) {
         const searchUrl: string = nextPageToken 
