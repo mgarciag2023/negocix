@@ -360,6 +360,115 @@ function generateReasons(place: any, category: string, companySize: string, matc
   return reasons.slice(0, 3);
 }
 
+// Detect if segment is an industry search
+function isIndustrySearch(segment: string): boolean {
+  const lower = segment.toLowerCase();
+  const industryTerms = [
+    'indústria', 'industria', 'fábrica', 'fabrica', 'indústrias', 'industrias',
+    'fábricas', 'fabricas', 'industrial', 'industriais'
+  ];
+  return industryTerms.some(term => lower.includes(term));
+}
+
+// Strict exclusions for industry searches - these are NEVER real industries
+const industryExclusions = [
+  // Food service establishments
+  'bar', 'bares', 'boteco', 'botequim', 'pub', 'cervejaria artesanal',
+  'restaurante', 'restaurantes', 'self-service', 'self service', 'buffet', 'bistrô', 'bistro',
+  'lanchonete', 'lanchonetes', 'lanches', 'fast food', 'fast-food',
+  'pizzaria', 'pizzarias', 'pizza', 'rodízio',
+  'padaria', 'padarias', 'panificadora', 'confeitaria', 'confeitarias', 'bakery',
+  'cafeteria', 'cafeterias', 'café', 'coffee', 'expresso',
+  'hamburgueria', 'hamburguerias', 'burger', 'hot dog', 'cachorro quente',
+  'churrascaria', 'churrascarias', 'rodízio de carnes',
+  'sushi', 'sushis', 'japonês', 'japones', 'temaki',
+  'pastelaria', 'pastel', 'pastéis',
+  'sorveteria', 'sorvete', 'açaí', 'acai', 'gelato',
+  'food truck', 'food-truck', 'trailer de comida',
+  'cantina', 'refeitório', 'refeição coletiva',
+  'doceria', 'doces', 'brigadeiro', 'chocolate artesanal',
+  
+  // Retail and commerce
+  'loja', 'lojas', 'comércio', 'comercio', 'varejo', 'varejista',
+  'atacado', 'atacadista', 'atacadão', 'distribuidora', 'distribuidor',
+  'supermercado', 'mercado', 'mercearia', 'minimercado', 'hortifruti',
+  'magazine', 'americanas', 'casas bahia', 'ponto frio',
+  
+  // Food-related services that use "industrial" but aren't industries
+  'cozinha industrial', 'cozinhas industriais', 'catering',
+  'fornecedor', 'fornecimento', 'fornecedora',
+  'linha industrial', 'produtos industriais',
+  'equipamentos para cozinha', 'equipamento industrial',
+  
+  // Other services
+  'açougue', 'casa de carnes', 'frigorífico', 'frios e embutidos',
+  'empório', 'armazém', 'conveniência'
+];
+
+// Keywords that indicate REAL industries
+const industryMustHaveTerms = [
+  'indústria', 'industria', 'fábrica', 'fabrica', 'fabricante', 'fabricação',
+  'manufacturing', 'manufacturer', 'ind.', 'ind ', 'ltda', 'eireli',
+  'produção', 'producao', 'processamento', 'transformação',
+  'metalúrgica', 'metalurgica', 'siderúrgica', 'siderurgica',
+  'têxtil', 'textil', 'confecção', 'confeccao',
+  'química', 'quimica', 'petroquímica', 'petroquimica',
+  'alimentícia', 'alimenticia', 'alimentos',
+  'plástico', 'plastico', 'embalagem', 'embalagens',
+  'papel', 'celulose', 'papeleira',
+  'cimento', 'cerâmica', 'ceramica', 'vidro', 'vidros',
+  'farmacêutica', 'farmaceutica', 'cosméticos', 'cosmeticos',
+  'automotiva', 'autopeças', 'autopecas', 'componentes',
+  'eletrônica', 'eletronica', 'eletroeletrônica', 'eletroeletronica',
+  'mecânica', 'mecanica', 'usinagem', 'fundição', 'fundicao',
+  'borracha', 'pneu', 'pneus',
+  'madeira', 'madeireira', 'móveis', 'moveis', 'mobiliário',
+  'calçados', 'calcados', 'couro', 'curtume',
+  'bebidas', 'cervejaria industrial', 'refrigerante',
+  'laticínio', 'laticinio', 'lácteos', 'lacteos',
+  'frigorífica', 'frigorifica', 'abatedouro', 'matadouro',
+  'ração', 'racao', 'pet food',
+  'fertilizante', 'adubo', 'agroquímico', 'agroquimico',
+  'implementos', 'máquinas', 'maquinas', 'equipamentos industriais'
+];
+
+// Check if a place is a REAL industry (not a food service or retail)
+function isRealIndustry(place: any): boolean {
+  const title = (place.title || '').toLowerCase();
+  const category = (place.categoryName || place.categories?.[0] || '').toLowerCase();
+  const allCategories = (place.categories || []).join(' ').toLowerCase();
+  const combinedText = `${title} ${category} ${allCategories}`;
+  
+  // First check: EXCLUDE if matches any food service / retail exclusion
+  for (const exclusion of industryExclusions) {
+    if (combinedText.includes(exclusion)) {
+      // Exception: if it explicitly says "indústria" or "fábrica" AND the exclusion word, might still be valid
+      // e.g., "Indústria de Pães" is an industry, but "Padaria Industrial" is not
+      const hasExplicitIndustry = title.includes('indústria') || title.includes('fábrica') || title.includes('ind.');
+      if (!hasExplicitIndustry) {
+        console.log(`❌ Industry filter: Excluded "${place.title}" - matches service/retail: ${exclusion}`);
+        return false;
+      }
+    }
+  }
+  
+  // Second check: MUST have at least one industry indicator in the title/category
+  let hasIndustryIndicator = false;
+  for (const term of industryMustHaveTerms) {
+    if (combinedText.includes(term)) {
+      hasIndustryIndicator = true;
+      break;
+    }
+  }
+  
+  if (!hasIndustryIndicator) {
+    console.log(`❌ Industry filter: Excluded "${place.title}" - no industry indicator found`);
+    return false;
+  }
+  
+  return true;
+}
+
 // STRICT niche relevance keywords - VERY STRICT FOR SPECIFIC CATEGORIES
 const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mustMatch: string[] } } = {
   'hipermercados': {
@@ -431,6 +540,15 @@ function isRelevantToNiche(place: any, segment: string): boolean {
   const category = (place.categoryName || place.categories?.[0] || '').toLowerCase();
   const allCategories = (place.categories || []).join(' ').toLowerCase();
   const combinedText = `${title} ${category} ${allCategories}`;
+  
+  // ===== SPECIAL HANDLING FOR INDUSTRY SEARCHES =====
+  // If this is an industry search, apply STRICT industry filtering
+  if (isIndustrySearch(segmentLower)) {
+    if (!isRealIndustry(place)) {
+      return false;
+    }
+    // Industry passed the strict filter, continue with normal checks
+  }
   
   // Find matching niche keywords
   let nicheConfig = nicheKeywords[segmentLower];
