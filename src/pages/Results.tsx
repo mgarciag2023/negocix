@@ -26,6 +26,8 @@ interface Lead {
   companySize?: string;
   hasWhatsApp?: boolean;
   isMatriz?: boolean;
+  digitalPresence?: 'no-site' | 'basic-site' | 'structured-site';
+  digitalActivity?: 'low' | 'basic' | 'active';
 }
 
 // Function to alternate leads by category for variety
@@ -211,6 +213,8 @@ const Results = () => {
             country: searchConfig.country || 'BR',
             ecommerceType: searchConfig.ecommerceType || '',
             businessType: searchConfig.businessType || 'all',
+            digitalPresence: searchConfig.digitalPresence || 'all',
+            digitalActivity: searchConfig.digitalActivity || 'all',
             filters: {
               category: searchConfig.category,
               companySize: searchConfig.companySize,

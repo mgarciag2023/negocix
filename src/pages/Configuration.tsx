@@ -26,6 +26,8 @@ const Configuration = () => {
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [ecommerceType, setEcommerceType] = useState("");
   const [businessType, setBusinessType] = useState("all"); // all, matriz, filial
+  const [digitalPresence, setDigitalPresence] = useState("all"); // all, no-site, basic-site, structured-site
+  const [digitalActivity, setDigitalActivity] = useState("all"); // all, low, basic, active
 
   const countries = [
     { code: "BR", name: "Brasil" },
@@ -247,6 +249,8 @@ const Configuration = () => {
       companySize,
       revenueRange,
       businessType,
+      digitalPresence,
+      digitalActivity,
       ecommerceType: selectedCustomers.includes("E-commerce") ? ecommerceType : "",
     };
     
@@ -565,6 +569,78 @@ const Configuration = () => {
                       </Label>
                     </div>
                   </RadioGroup>
+                </div>
+
+                {/* Digital Presence (Website) */}
+                <div>
+                  <Label className="text-base font-semibold mb-4 block" translate="no">
+                    Presença Digital (Site):
+                  </Label>
+                  <RadioGroup value={digitalPresence} onValueChange={setDigitalPresence}>
+                    <div className="flex items-center space-x-2" translate="no">
+                      <RadioGroupItem value="no-site" id="no-site" />
+                      <Label htmlFor="no-site" className="font-normal cursor-pointer" translate="no">
+                        Não possui site
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2" translate="no">
+                      <RadioGroupItem value="basic-site" id="basic-site" />
+                      <Label htmlFor="basic-site" className="font-normal cursor-pointer" translate="no">
+                        Possui site básico / institucional
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2" translate="no">
+                      <RadioGroupItem value="structured-site" id="structured-site" />
+                      <Label htmlFor="structured-site" className="font-normal cursor-pointer" translate="no">
+                        Possui site estruturado
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2" translate="no">
+                      <RadioGroupItem value="all" id="all-presence" />
+                      <Label htmlFor="all-presence" className="font-normal cursor-pointer" translate="no">
+                        Todos
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Filtre empresas pela presença de site institucional
+                  </p>
+                </div>
+
+                {/* Digital Activity Level */}
+                <div>
+                  <Label className="text-base font-semibold mb-4 block" translate="no">
+                    Nível de Atividade Digital:
+                  </Label>
+                  <RadioGroup value={digitalActivity} onValueChange={setDigitalActivity}>
+                    <div className="flex items-center space-x-2" translate="no">
+                      <RadioGroupItem value="low" id="low-activity" />
+                      <Label htmlFor="low-activity" className="font-normal cursor-pointer" translate="no">
+                        Baixa ou inexistente
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2" translate="no">
+                      <RadioGroupItem value="basic" id="basic-activity" />
+                      <Label htmlFor="basic-activity" className="font-normal cursor-pointer" translate="no">
+                        Básica
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2" translate="no">
+                      <RadioGroupItem value="active" id="active-activity" />
+                      <Label htmlFor="active-activity" className="font-normal cursor-pointer" translate="no">
+                        Ativa
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2" translate="no">
+                      <RadioGroupItem value="all" id="all-activity" />
+                      <Label htmlFor="all-activity" className="font-normal cursor-pointer" translate="no">
+                        Todos os níveis
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Filtre pelo nível de engajamento digital da empresa
+                  </p>
                 </div>
 
                 {/* Submit */}
