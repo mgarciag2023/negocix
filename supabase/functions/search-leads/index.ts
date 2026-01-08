@@ -1089,96 +1089,158 @@ serve(async (req) => {
   }
 });
 
-// Classify digital presence level of a place
+// Classify digital presence level of a place - OPTIMIZED
 function classifyDigitalPresence(place: any): 'no-site' | 'basic-site' | 'structured-site' {
   const website = getCleanWebsite(place);
   
-  // No website at all
+  // No website at all = no-site
   if (!website) {
     return 'no-site';
   }
   
   const websiteLower = website.toLowerCase();
   
-  // Indicators of structured/professional site
-  const structuredIndicators = [
-    '.com.br', '.com', '.net', '.org', '.io',
-    'loja', 'shop', 'store', 'ecommerce', 'vendas',
-    'produtos', 'servicos', 'catalogo', 'orcamento'
+  // Link aggregators and social profiles = no real website (treat as no-site for marketing purposes)
+  const notRealWebsite = [
+    'linktr.ee', 'linktree', 'bio.link', 'taplink', 'beacons.ai',
+    'instagram.com', 'facebook.com', 'twitter.com', 'tiktok.com',
+    'youtube.com', 'wa.me', 'whatsapp.com', 'api.whatsapp',
+    'bit.ly', 'goo.gl', 'rebrand.ly', 't.me', 'telegram'
   ];
   
-  // Indicators of basic/simple site
-  const basicIndicators = [
-    'wix', 'blogspot', 'wordpress.com', 'sites.google', 
-    'weebly', 'jimdo', 'webnode', 'squarespace',
-    'linktr.ee', 'linktree', 'bio.link', 'taplink'
-  ];
-  
-  // Check for basic site indicators
-  for (const indicator of basicIndicators) {
+  for (const indicator of notRealWebsite) {
     if (websiteLower.includes(indicator)) {
+      return 'no-site'; // Link aggregators don't count as websites
+    }
+  }
+  
+  // Free/low-cost site builders = basic site
+  const basicSiteBuilders = [
+    'wix.com', 'wixsite.com', 'blogspot', 'blogger.com',
+    'wordpress.com', 'sites.google.com', 'google.com/site',
+    'weebly.com', 'jimdo.com', 'webnode', 'squarespace.com',
+    'carrd.co', 'notion.site', 'notion.so', 'canva.com',
+    'godaddysites', 'strikingly.com', 'page.link', 'webflow.io',
+    'my.id', 'neocities', 'geocities', 'tripod.com',
+    'yelp.com', 'tripadvisor', 'ifood.com.br', 'rappi.com'
+  ];
+  
+  for (const builder of basicSiteBuilders) {
+    if (websiteLower.includes(builder)) {
       return 'basic-site';
     }
   }
   
-  // If has own domain with professional indicators, it's structured
-  for (const indicator of structuredIndicators) {
-    if (websiteLower.includes(indicator)) {
-      return 'structured-site';
+  // Check for own domain indicators (structured site)
+  // Own domain = has a proper domain that's not a builder
+  const hasOwnDomain = /^https?:\/\/(?:www\.)?[a-z0-9][-a-z0-9]*\.[a-z]{2,}(?:\.[a-z]{2,})?(?:\/|$)/i.test(website);
+  
+  if (hasOwnDomain) {
+    // Additional check: e-commerce/professional indicators
+    const professionalIndicators = [
+      '/loja', '/shop', '/store', '/produtos', '/catalogo', '/servicos',
+      '/orcamento', '/contato', '/sobre', '/empresa', '/quem-somos',
+      'ecommerce', 'checkout', 'carrinho', 'pedido'
+    ];
+    
+    for (const indicator of professionalIndicators) {
+      if (websiteLower.includes(indicator)) {
+        return 'structured-site';
+      }
     }
+    
+    // Check domain extension quality
+    const premiumExtensions = ['.com.br', '.com', '.net', '.org', '.io', '.co', '.app'];
+    for (const ext of premiumExtensions) {
+      if (websiteLower.includes(ext)) {
+        return 'structured-site';
+      }
+    }
+    
+    // Has own domain but not premium extension = still structured
+    return 'structured-site';
   }
   
-  // Default: if has a website but no clear indicators, assume basic
+  // Default fallback: if has URL but couldn't classify, assume basic
   return 'basic-site';
 }
 
-// Classify digital activity level of a place
+// Classify digital activity level of a place - OPTIMIZED
+// Focus: Find companies with LOW digital activity = best targets for marketing agencies
 function classifyDigitalActivity(place: any): 'low' | 'basic' | 'active' {
   const website = getCleanWebsite(place);
   const instagram = extractInstagram(place);
-  const reviewCount = place.reviewsCount || 0;
-  const rating = place.stars || 0;
+  const reviewCount = place.reviewsCount || place.reviews || 0;
+  const rating = place.stars || place.totalScore || 0;
+  const digitalPresence = classifyDigitalPresence(place);
   
-  // Calculate digital presence score
-  let digitalScore = 0;
+  // ===== CALCULATE DIGITAL ACTIVITY SCORE (0-100) =====
+  let activityScore = 0;
   
-  // Website presence
-  if (website) {
-    const presenceLevel = classifyDigitalPresence(place);
-    if (presenceLevel === 'structured-site') {
-      digitalScore += 30;
-    } else if (presenceLevel === 'basic-site') {
-      digitalScore += 15;
-    }
+  // ----- Website Presence (0-35 points) -----
+  if (digitalPresence === 'structured-site') {
+    activityScore += 35; // Has professional website
+  } else if (digitalPresence === 'basic-site') {
+    activityScore += 15; // Has basic website
   }
+  // no-site = 0 points
   
-  // Social media presence
+  // ----- Social Media Presence (0-25 points) -----
   if (instagram) {
-    digitalScore += 20;
+    activityScore += 25; // Has Instagram presence
+  }
+  // Note: Could expand to check Facebook, but Instagram is primary indicator
+  
+  // ----- Customer Engagement via Reviews (0-25 points) -----
+  // High review count = customers are engaging = business has digital footprint
+  if (reviewCount >= 200) {
+    activityScore += 25;
+  } else if (reviewCount >= 100) {
+    activityScore += 20;
+  } else if (reviewCount >= 50) {
+    activityScore += 15;
+  } else if (reviewCount >= 20) {
+    activityScore += 10;
+  } else if (reviewCount >= 10) {
+    activityScore += 5;
+  } else if (reviewCount >= 5) {
+    activityScore += 2;
+  }
+  // < 5 reviews = 0 points (low engagement)
+  
+  // ----- Business Reputation Quality (0-15 points) -----
+  // High rating + reviews = actively managing reputation
+  if (rating >= 4.5 && reviewCount >= 30) {
+    activityScore += 15; // Excellent reputation management
+  } else if (rating >= 4.0 && reviewCount >= 15) {
+    activityScore += 10; // Good reputation
+  } else if (rating >= 3.5 && reviewCount >= 5) {
+    activityScore += 5; // Basic presence
   }
   
-  // Google Reviews activity (indicates customer engagement)
-  if (reviewCount > 100) {
-    digitalScore += 25;
-  } else if (reviewCount > 50) {
-    digitalScore += 18;
-  } else if (reviewCount > 20) {
-    digitalScore += 12;
-  } else if (reviewCount > 5) {
-    digitalScore += 5;
-  }
+  // ===== CLASSIFY BASED ON SCORE =====
+  // 
+  // LOW (0-24): No/minimal digital presence
+  //   - No website or just link aggregator
+  //   - No social media
+  //   - Few/no reviews
+  //   = IDEAL TARGET for marketing agencies
+  //
+  // BASIC (25-54): Minimal effort digital presence
+  //   - Basic website OR social media (not both well-developed)
+  //   - Some reviews but not actively managed
+  //   = GOOD TARGET for marketing agencies
+  //
+  // ACTIVE (55-100): Established digital presence
+  //   - Professional website + social media
+  //   - High engagement/reviews
+  //   - Actively managing online reputation
+  //   = May not need marketing help
+  //
   
-  // Rating indicates active business
-  if (rating >= 4.5 && reviewCount > 20) {
-    digitalScore += 15;
-  } else if (rating >= 4.0 && reviewCount > 10) {
-    digitalScore += 10;
-  }
-  
-  // Classify based on score
-  if (digitalScore >= 50) {
+  if (activityScore >= 55) {
     return 'active';
-  } else if (digitalScore >= 20) {
+  } else if (activityScore >= 25) {
     return 'basic';
   } else {
     return 'low';
