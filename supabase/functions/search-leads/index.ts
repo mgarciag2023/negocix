@@ -849,11 +849,13 @@ serve(async (req) => {
   }
 
   try {
-    const { segment, products, region, country, filters, ecommerceType, businessType } = await req.json();
-    console.log('🔍 SEARCH v9 - Per-Segment Categories - Input:', { segment, products, region, country, ecommerceType, businessType });
+    const { segment, products, region, country, filters, ecommerceType, businessType, digitalPresence, digitalActivity } = await req.json();
+    console.log('🔍 SEARCH v10 - Digital Presence Filters - Input:', { segment, products, region, country, ecommerceType, businessType, digitalPresence, digitalActivity });
     
     const countryCode = country || 'BR';
     const bizType = businessType || 'all';
+    const digPresence = digitalPresence || 'all';
+    const digActivity = digitalActivity || 'all';
     
     // Check if this is an e-commerce search with specific type
     const isEcommerceSearch = segment.toLowerCase().includes('e-commerce') || segment.toLowerCase().includes('ecommerce');
@@ -1057,7 +1059,7 @@ serve(async (req) => {
     }
     
     // Process results with our existing filtering logic - pass full segment for filtering, but category comes from _displayCategory
-    const leads = processResultsWithCategories(activePlaces, segment, cleanRegion, MAX_TOTAL_LEADS, bizType);
+    const leads = processResultsWithCategories(activePlaces, segment, cleanRegion, MAX_TOTAL_LEADS, bizType, digPresence, digActivity);
     console.log(`✅ FINAL: ${leads.length} leads ready`);
     
     if (leads.length === 0) {
@@ -1087,9 +1089,105 @@ serve(async (req) => {
   }
 });
 
+// Classify digital presence level of a place
+function classifyDigitalPresence(place: any): 'no-site' | 'basic-site' | 'structured-site' {
+  const website = getCleanWebsite(place);
+  
+  // No website at all
+  if (!website) {
+    return 'no-site';
+  }
+  
+  const websiteLower = website.toLowerCase();
+  
+  // Indicators of structured/professional site
+  const structuredIndicators = [
+    '.com.br', '.com', '.net', '.org', '.io',
+    'loja', 'shop', 'store', 'ecommerce', 'vendas',
+    'produtos', 'servicos', 'catalogo', 'orcamento'
+  ];
+  
+  // Indicators of basic/simple site
+  const basicIndicators = [
+    'wix', 'blogspot', 'wordpress.com', 'sites.google', 
+    'weebly', 'jimdo', 'webnode', 'squarespace',
+    'linktr.ee', 'linktree', 'bio.link', 'taplink'
+  ];
+  
+  // Check for basic site indicators
+  for (const indicator of basicIndicators) {
+    if (websiteLower.includes(indicator)) {
+      return 'basic-site';
+    }
+  }
+  
+  // If has own domain with professional indicators, it's structured
+  for (const indicator of structuredIndicators) {
+    if (websiteLower.includes(indicator)) {
+      return 'structured-site';
+    }
+  }
+  
+  // Default: if has a website but no clear indicators, assume basic
+  return 'basic-site';
+}
+
+// Classify digital activity level of a place
+function classifyDigitalActivity(place: any): 'low' | 'basic' | 'active' {
+  const website = getCleanWebsite(place);
+  const instagram = extractInstagram(place);
+  const reviewCount = place.reviewsCount || 0;
+  const rating = place.stars || 0;
+  
+  // Calculate digital presence score
+  let digitalScore = 0;
+  
+  // Website presence
+  if (website) {
+    const presenceLevel = classifyDigitalPresence(place);
+    if (presenceLevel === 'structured-site') {
+      digitalScore += 30;
+    } else if (presenceLevel === 'basic-site') {
+      digitalScore += 15;
+    }
+  }
+  
+  // Social media presence
+  if (instagram) {
+    digitalScore += 20;
+  }
+  
+  // Google Reviews activity (indicates customer engagement)
+  if (reviewCount > 100) {
+    digitalScore += 25;
+  } else if (reviewCount > 50) {
+    digitalScore += 18;
+  } else if (reviewCount > 20) {
+    digitalScore += 12;
+  } else if (reviewCount > 5) {
+    digitalScore += 5;
+  }
+  
+  // Rating indicates active business
+  if (rating >= 4.5 && reviewCount > 20) {
+    digitalScore += 15;
+  } else if (rating >= 4.0 && reviewCount > 10) {
+    digitalScore += 10;
+  }
+  
+  // Classify based on score
+  if (digitalScore >= 50) {
+    return 'active';
+  } else if (digitalScore >= 20) {
+    return 'basic';
+  } else {
+    return 'low';
+  }
+}
+
 // New version of processResults that uses the tagged category from search
-function processResultsWithCategories(apifyResults: any[], segment: string, cleanRegion: string, maxLeads: number, businessType: string = 'all'): any[] {
-  console.log(`📊 Processing ${apifyResults.length} raw results for segment: ${segment}, businessType: ${businessType}`);
+function processResultsWithCategories(apifyResults: any[], segment: string, cleanRegion: string, maxLeads: number, businessType: string = 'all', digitalPresence: string = 'all', digitalActivity: string = 'all'): any[] {
+  console.log(`📊 Processing ${apifyResults.length} raw results for segment: ${segment}, businessType: ${businessType}, digitalPresence: ${digitalPresence}, digitalActivity: ${digitalActivity}`);
   
   // Step 1: Filter by basic requirements AND niche relevance
   let results = apifyResults.filter((place: any) => {
@@ -1122,7 +1220,27 @@ function processResultsWithCategories(apifyResults: any[], segment: string, clea
     console.log(`📊 After Filial filter: ${results.length} results (removed ${beforeFilial - results.length})`);
   }
   
-  // Step 3: Deduplicate by placeId
+  // Step 3: Apply Digital Presence filter (STRICT - eliminatory)
+  if (digitalPresence !== 'all') {
+    const beforeDigitalPresence = results.length;
+    results = results.filter(place => {
+      const presence = classifyDigitalPresence(place);
+      return presence === digitalPresence;
+    });
+    console.log(`📊 After Digital Presence (${digitalPresence}) filter: ${results.length} results (removed ${beforeDigitalPresence - results.length})`);
+  }
+  
+  // Step 4: Apply Digital Activity filter (STRICT - eliminatory)
+  if (digitalActivity !== 'all') {
+    const beforeDigitalActivity = results.length;
+    results = results.filter(place => {
+      const activity = classifyDigitalActivity(place);
+      return activity === digitalActivity;
+    });
+    console.log(`📊 After Digital Activity (${digitalActivity}) filter: ${results.length} results (removed ${beforeDigitalActivity - results.length})`);
+  }
+  
+  // Step 5: Deduplicate by placeId
   const seenPlaceIds = new Set<string>();
   results = results.filter((place: any) => {
     if (place.placeId && seenPlaceIds.has(place.placeId)) return false;
@@ -1130,7 +1248,7 @@ function processResultsWithCategories(apifyResults: any[], segment: string, clea
     return true;
   });
   
-  // Step 4: Deduplicate by normalized company name
+  // Step 6: Deduplicate by normalized company name
   if (businessType === 'matriz') {
     const seenCompanies = new Map<string, any>();
     
@@ -1182,6 +1300,8 @@ function processResultsWithCategories(apifyResults: any[], segment: string, clea
     const reasons = generateReasons(place, category, companySize, matchScore);
     const instagram = extractInstagram(place);
     const website = getCleanWebsite(place);
+    const digitalPresenceLevel = classifyDigitalPresence(place);
+    const digitalActivityLevel = classifyDigitalActivity(place);
     
     return {
       id: `apify-${place.placeId || Date.now()}-${index}`,
@@ -1208,6 +1328,8 @@ function processResultsWithCategories(apifyResults: any[], segment: string, clea
       openedDate,
       reasons,
       isMatriz: isMatriz(place),
+      digitalPresence: digitalPresenceLevel,
+      digitalActivity: digitalActivityLevel,
       dataQuality: {
         hasValidPhone: phoneValidation.valid,
         hasSocialMedia: !!instagram,
