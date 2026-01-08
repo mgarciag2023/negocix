@@ -31,10 +31,8 @@ const LeadDetail = () => {
     }
   };
   
-  // Scroll to top on mount
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+  // Do NOT scroll to top - let the back navigation work naturally
+  // The Results page will restore the scroll position
   
   // Redirect back if no lead data
   useEffect(() => {

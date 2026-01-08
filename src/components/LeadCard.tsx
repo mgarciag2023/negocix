@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 import { useFavorites } from "@/hooks/useFavorites";
+import { useScrollPosition } from "@/hooks/useScrollPosition";
 import { toast } from "sonner";
 interface LeadCardProps {
   id: string;
@@ -43,6 +44,7 @@ const LeadCard = ({
   hasWhatsApp,
 }: LeadCardProps) => {
   const { isFavorite, toggleFavorite } = useFavorites();
+  const { saveScrollPosition } = useScrollPosition();
   const isLeadFavorite = isFavorite(id);
   
   const handleFavoriteClick = () => {
@@ -218,7 +220,7 @@ const LeadCard = ({
       
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-2">
-        <Button asChild className="flex-1 text-sm md:text-base h-9 md:h-10">
+        <Button asChild className="flex-1 text-sm md:text-base h-9 md:h-10" onClick={saveScrollPosition}>
           <Link 
             to={`/lead/${id}`}
             state={{ 
