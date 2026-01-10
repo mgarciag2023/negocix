@@ -107,37 +107,46 @@ function getCleanWebsite(place: any): string | null {
   return null;
 }
 
-// Generate search terms
+// Generate search terms - OPTIMIZED for best results with fewer API calls
 function generateSearchTerms(segment: string): string[] {
   const term = segment.split(',')[0].trim().toLowerCase();
   
+  // Optimized category terms - prioritize most specific terms first
   const categoryTerms: { [key: string]: string[] } = {
-    'restaurantes': ['restaurante', 'lanchonete', 'buffet', 'pizzaria', 'hamburgueria'],
-    'supermercados': ['supermercado', 'mercado', 'mercearia', 'minimercado', 'hortifruti'],
-    'hipermercados': ['hipermercado', 'carrefour', 'big', 'walmart', 'assaí', 'makro'],
-    'padarias': ['padaria', 'panificadora', 'confeitaria', 'bakery'],
-    'materiais de construção': ['material de construção', 'home center', 'depósito', 'ferragem'],
-    'ferramentas': ['ferramentas', 'loja de ferramentas', 'ferragem', 'ferramentaria'],
-    'agropecuária': ['agropecuária', 'loja agropecuária', 'produtos rurais', 'veterinária'],
-    'farmácias': ['farmácia', 'drogaria', 'medicamentos'],
-    'pet shop': ['pet shop', 'loja de animais', 'veterinária', 'banho e tosa'],
-    'lojas de roupas': ['loja de roupas', 'vestuário', 'moda', 'boutique'],
-    'autopeças': ['autopeças', 'peças automotivas', 'loja de peças'],
-    'eletrônicos': ['eletrônicos', 'loja de eletrônicos', 'informática', 'celular'],
-    'móveis': ['móveis', 'loja de móveis', 'móveis planejados', 'decoração'],
-    'óticas': ['ótica', 'óculos', 'lentes'],
-    'joalherias': ['joalheria', 'joias', 'ouro', 'relógios'],
-    'academias': ['academia', 'fitness', 'musculação', 'crossfit'],
-    'salões de beleza': ['salão de beleza', 'cabeleireiro', 'barbearia', 'estética'],
-    'hotéis': ['hotel', 'pousada', 'hospedagem'],
-    'clínicas': ['clínica', 'consultório', 'médico', 'dentista'],
-    'transportadoras': ['transportadora', 'transporte', 'frete', 'logística'],
-    'gráficas': ['gráfica', 'impressão', 'comunicação visual'],
-    'construtoras': ['construtora', 'construção civil', 'empreiteira'],
-    'cozinhas industriais': ['cozinha industrial', 'refeição coletiva', 'catering'],
-    'indústrias de salgados': ['fábrica de salgados', 'salgados congelados', 'salgaderia'],
-    'distribuidores de frios': ['distribuidor de frios', 'frios e embutidos', 'laticínios'],
-    'cestas básicas': ['cestas básicas', 'cesta básica', 'cestas de alimentos']
+    'restaurantes': ['restaurante', 'churrascaria'],
+    'supermercados': ['supermercado', 'mercado'],
+    'hipermercados': ['hipermercado', 'atacadão'],
+    'padarias': ['padaria', 'panificadora'],
+    'materiais de construção': ['material de construção', 'home center'],
+    'ferramentas': ['ferramentas', 'ferragem'],
+    'agropecuária': ['agropecuária', 'produtos rurais'],
+    'farmácias': ['farmácia', 'drogaria'],
+    'pet shop': ['pet shop', 'veterinária'],
+    'lojas de roupas': ['loja de roupas', 'vestuário'],
+    'autopeças': ['autopeças', 'peças automotivas'],
+    'eletrônicos': ['eletrônicos', 'informática'],
+    'móveis': ['móveis', 'móveis planejados'],
+    'óticas': ['ótica', 'óculos'],
+    'joalherias': ['joalheria', 'joias'],
+    'academias': ['academia', 'fitness'],
+    'salões de beleza': ['salão de beleza', 'cabeleireiro'],
+    'hotéis': ['hotel', 'pousada'],
+    'clínicas': ['clínica', 'consultório'],
+    'transportadoras': ['transportadora', 'logística'],
+    'gráficas': ['gráfica', 'comunicação visual'],
+    'construtoras': ['construtora', 'construção civil'],
+    'cozinhas industriais': ['cozinha industrial', 'refeição coletiva'],
+    'indústrias de salgados': ['fábrica de salgados', 'salgaderia'],
+    'distribuidores de frios': ['distribuidor de frios', 'laticínios'],
+    'cestas básicas': ['cestas básicas', 'cesta básica'],
+    'lanchonetes': ['lanchonete', 'hamburgueria'],
+    'pizzarias': ['pizzaria', 'pizza'],
+    'oficinas mecânicas': ['oficina mecânica', 'auto center'],
+    'postos de combustível': ['posto de combustível', 'posto de gasolina'],
+    'escolas': ['escola', 'colégio'],
+    'papelarias': ['papelaria', 'livraria'],
+    'atacadistas': ['atacadista', 'atacado'],
+    'distribuidoras': ['distribuidora', 'distribuidor']
   };
   
   let searchTerms = categoryTerms[term] || null;
@@ -152,10 +161,12 @@ function generateSearchTerms(segment: string): string[] {
   }
   
   if (!searchTerms) {
-    searchTerms = [term, `${term}s`, `loja de ${term}`];
+    // Fallback: just use the term as-is
+    searchTerms = [term];
   }
   
-  return searchTerms.slice(0, 3);
+  // Return only the 2 best terms (cost optimization)
+  return searchTerms.slice(0, 2);
 }
 
 // Estimate revenue based on reviews, rating, and category - MORE PRECISE
@@ -876,16 +887,26 @@ serve(async (req) => {
     }
     
     const MAX_TOTAL_LEADS = 150;
+    const MIN_LEADS_TARGET = 50;
     const MIN_LEADS_EARLY_EXIT = 60;
     
-    console.log(`🔎 Google Places API search: targeting ${MAX_TOTAL_LEADS} leads`);
+    console.log(`🔎 Google Places API search: targeting ${MIN_LEADS_TARGET}-${MAX_TOTAL_LEADS} leads (cost-optimized)`);
     
-    // Function to search places using Google Places API
-    async function searchPlaces(query: string, location: string): Promise<any[]> {
+    // OPTIMIZATION: Cache to avoid duplicate API calls
+    const searchCache = new Map<string, any[]>();
+    
+    // Function to search places using Google Places API - OPTIMIZED
+    async function searchPlaces(query: string, location: string, maxPages: number = 3): Promise<any[]> {
+      // Check cache first to save API credits
+      const cacheKey = `${query}|${location}`;
+      if (searchCache.has(cacheKey)) {
+        console.log(`💾 Cache hit for: ${query}`);
+        return searchCache.get(cacheKey) || [];
+      }
+      
       const results: any[] = [];
       let nextPageToken: string | null = null;
       let pageCount = 0;
-      const maxPages = 5;
       
       while (pageCount < maxPages) {
         const searchUrl: string = nextPageToken 
@@ -910,18 +931,29 @@ serve(async (req) => {
         if (searchData.results) {
           results.push(...searchData.results);
           console.log(`📊 Page ${pageCount + 1}: ${searchData.results.length} results (total: ${results.length})`);
+          
+          // OPTIMIZATION: Stop early if we have enough unique results
+          if (results.length >= 80 && pageCount >= 2) {
+            console.log(`⚡ Early exit: enough results (${results.length}) after ${pageCount + 1} pages`);
+            break;
+          }
         }
         
         nextPageToken = searchData.next_page_token || null;
         pageCount++;
         
-        if (nextPageToken && pageCount < maxPages) {
+        // OPTIMIZATION: Only fetch more if needed and token exists
+        if (nextPageToken && pageCount < maxPages && results.length < 60) {
           await sleep(2000);
-        } else {
+        } else if (!nextPageToken || results.length >= 60) {
           break;
+        } else {
+          await sleep(2000);
         }
       }
       
+      // Cache results
+      searchCache.set(cacheKey, results);
       return results;
     }
     
@@ -969,23 +1001,29 @@ serve(async (req) => {
     console.log('📋 Segment display names:', segmentDisplayNames);
     
     // Search each segment separately and tag results with their segment
+    // OPTIMIZATION: Dynamic page limit based on number of segments
     let allPlacesWithSegment: any[] = [];
+    const pagesPerSegment = Math.max(2, Math.min(4, Math.floor(12 / segments.length)));
+    console.log(`⚡ Optimization: ${pagesPerSegment} pages per segment (${segments.length} segments)`);
     
     for (const seg of segments) {
       let searchTerms: string[];
       
       if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
         const ecomType = ecommerceType.trim().toLowerCase();
-        searchTerms = [`loja ${ecomType}`, ecomType, `loja de ${ecomType}`];
+        // OPTIMIZATION: Only 2 most relevant terms for e-commerce
+        searchTerms = [`loja ${ecomType}`, `${ecomType}`];
         console.log(`🛒 E-commerce específico: ${ecomType}`);
       } else {
         searchTerms = generateSearchTerms(seg);
+        // OPTIMIZATION: Limit to 2 best terms per segment to reduce API calls
+        searchTerms = searchTerms.slice(0, 2);
       }
       
       console.log(`📤 Searching segment "${seg}" with terms:`, searchTerms);
       
-      // Search all terms for this segment in parallel
-      const searchPromises = searchTerms.map(term => searchPlaces(term, locationQuery));
+      // OPTIMIZATION: Search terms in parallel with dynamic page limit
+      const searchPromises = searchTerms.map(term => searchPlaces(term, locationQuery, pagesPerSegment));
       const searchResults = await Promise.all(searchPromises);
       
       // Tag each place with its segment
@@ -997,6 +1035,12 @@ serve(async (req) => {
       
       allPlacesWithSegment.push(...placesFromSegment);
       console.log(`📊 Segment "${seg}": ${placesFromSegment.length} raw places`);
+      
+      // OPTIMIZATION: Early exit if we already have plenty of results
+      if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 2) {
+        console.log(`⚡ Enough raw places (${allPlacesWithSegment.length}), skipping remaining segments`);
+        break;
+      }
     }
     
     console.log(`📊 Total raw places from all segments: ${allPlacesWithSegment.length}`);
@@ -1031,13 +1075,24 @@ serve(async (req) => {
     const activePlaces = transformedPlaces.filter(p => !p.permanentlyClosed);
     console.log(`📊 Active businesses: ${activePlaces.length}`);
     
-    // Get details for places (in batches to avoid rate limits)
-    const BATCH_SIZE = 10;
-    const DETAILS_DELAY = 100;
+    // OPTIMIZATION: Smart batching for details - prioritize high-value leads first
+    const BATCH_SIZE = 15; // Increased batch size
+    const DETAILS_DELAY = 50; // Reduced delay
     
-    console.log('📞 Fetching contact details...');
+    // OPTIMIZATION: Sort by rating/reviews first to get best leads initially
+    activePlaces.sort((a, b) => {
+      const scoreA = (a.stars || 0) * 10 + Math.min(a.reviewsCount || 0, 100);
+      const scoreB = (b.stars || 0) * 10 + Math.min(b.reviewsCount || 0, 100);
+      return scoreB - scoreA;
+    });
     
-    for (let i = 0; i < Math.min(activePlaces.length, 150); i += BATCH_SIZE) {
+    console.log('📞 Fetching contact details (optimized batches)...');
+    
+    // OPTIMIZATION: Track valid leads and stop early when we have enough
+    let validLeadsCount = 0;
+    const MAX_DETAILS_FETCH = Math.min(activePlaces.length, 180); // Cap at 180 to save credits
+    
+    for (let i = 0; i < MAX_DETAILS_FETCH; i += BATCH_SIZE) {
       const batch = activePlaces.slice(i, i + BATCH_SIZE);
       
       const detailsPromises = batch.map(async (place, idx) => {
@@ -1050,17 +1105,35 @@ serve(async (req) => {
       });
       
       await Promise.all(detailsPromises);
-      console.log(`📞 Batch ${Math.floor(i / BATCH_SIZE) + 1} complete`);
       
-      const placesWithPhone = activePlaces.filter(p => p.phone && p.phone.trim() !== '');
-      if (placesWithPhone.length >= MIN_LEADS_EARLY_EXIT) {
-        console.log(`🎯 Found ${placesWithPhone.length} places with phones - continuing to get more...`);
+      // Count valid leads so far
+      const placesWithPhone = activePlaces.slice(0, i + BATCH_SIZE).filter(p => p.phone && p.phone.trim() !== '');
+      validLeadsCount = placesWithPhone.length;
+      console.log(`📞 Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${validLeadsCount} leads with phone`);
+      
+      // OPTIMIZATION: Stop fetching details when we have enough leads
+      // But ensure we have at least 50 (minimum target)
+      if (validLeadsCount >= MAX_TOTAL_LEADS) {
+        console.log(`🎯 Reached max leads (${validLeadsCount}), stopping details fetch`);
+        break;
+      }
+      
+      // If we have enough for minimum and already fetched 100+ details, consider stopping
+      if (validLeadsCount >= MIN_LEADS_TARGET && i >= 100) {
+        const remainingBatches = Math.ceil((MAX_DETAILS_FETCH - i) / BATCH_SIZE);
+        const estimatedAdditional = Math.floor(validLeadsCount * (remainingBatches * BATCH_SIZE) / (i + BATCH_SIZE) * 0.3);
+        
+        // If we won't get much more, stop to save credits
+        if (estimatedAdditional < 10) {
+          console.log(`⚡ Optimization: ${validLeadsCount} leads found, stopping early to save credits`);
+          break;
+        }
       }
     }
     
-    // Process results with our existing filtering logic - pass full segment for filtering, but category comes from _displayCategory
+    // Process results with our existing filtering logic
     const leads = processResultsWithCategories(activePlaces, segment, cleanRegion, MAX_TOTAL_LEADS, bizType, digPresence, digActivity);
-    console.log(`✅ FINAL: ${leads.length} leads ready`);
+    console.log(`✅ FINAL: ${leads.length} leads ready (target: ${MIN_LEADS_TARGET}-${MAX_TOTAL_LEADS})`);
     
     if (leads.length === 0) {
       return new Response(JSON.stringify({ 
