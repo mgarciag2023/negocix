@@ -21,7 +21,7 @@ const Configuration = () => {
   const [customCountry, setCustomCountry] = useState("");
   const [state, setState] = useState("");
   const [city, setCity] = useState("");
-  const [companySize, setCompanySize] = useState("all");
+  const [companySizes, setCompanySizes] = useState<string[]>([]);
   const [revenueRange, setRevenueRange] = useState("all");
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [ecommerceType, setEcommerceType] = useState("");
@@ -72,6 +72,8 @@ const Configuration = () => {
     "Mercearias",
     "Atacadistas de Alimentos",
     "Distribuidores de Alimentos",
+    "Distribuidores de Food Service",
+    "Atacadistas de Food Service",
     "Cestas Básicas",
     "Cestas Natalinas",
     // Novos segmentos solicitados
@@ -246,7 +248,7 @@ const Configuration = () => {
       state,
       city,
       country: finalCountry,
-      companySize,
+      companySizes: companySizes.length > 0 ? companySizes : ['all'],
       revenueRange,
       businessType,
       digitalPresence,
@@ -499,37 +501,64 @@ const Configuration = () => {
                   </div>
                 </div>
 
-                {/* Company Size */}
+                {/* Company Size - Multiple Selection */}
                 <div>
                   <Label className="text-base font-semibold mb-4 block" translate="no">
-                    Tamanho do cliente:
+                    Tamanho do cliente (seleção múltipla):
                   </Label>
-                  <RadioGroup value={companySize} onValueChange={setCompanySize}>
+                  <div className="space-y-3">
                     <div className="flex items-center space-x-2" translate="no">
-                      <RadioGroupItem value="small" id="small" />
-                      <Label htmlFor="small" className="font-normal cursor-pointer" translate="no">
+                      <Checkbox 
+                        id="size-small" 
+                        checked={companySizes.includes('small')}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setCompanySizes(prev => [...prev.filter(s => s !== 'all'), 'small']);
+                          } else {
+                            setCompanySizes(prev => prev.filter(s => s !== 'small'));
+                          }
+                        }}
+                      />
+                      <Label htmlFor="size-small" className="font-normal cursor-pointer" translate="no">
                         Pequeno (até 10 funcionários)
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2" translate="no">
-                      <RadioGroupItem value="medium" id="medium" />
-                      <Label htmlFor="medium" className="font-normal cursor-pointer" translate="no">
+                      <Checkbox 
+                        id="size-medium" 
+                        checked={companySizes.includes('medium')}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setCompanySizes(prev => [...prev.filter(s => s !== 'all'), 'medium']);
+                          } else {
+                            setCompanySizes(prev => prev.filter(s => s !== 'medium'));
+                          }
+                        }}
+                      />
+                      <Label htmlFor="size-medium" className="font-normal cursor-pointer" translate="no">
                         Médio (11-50 funcionários)
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2" translate="no">
-                      <RadioGroupItem value="large" id="large" />
-                      <Label htmlFor="large" className="font-normal cursor-pointer" translate="no">
+                      <Checkbox 
+                        id="size-large" 
+                        checked={companySizes.includes('large')}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setCompanySizes(prev => [...prev.filter(s => s !== 'all'), 'large']);
+                          } else {
+                            setCompanySizes(prev => prev.filter(s => s !== 'large'));
+                          }
+                        }}
+                      />
+                      <Label htmlFor="size-large" className="font-normal cursor-pointer" translate="no">
                         Grande (+50 funcionários)
                       </Label>
                     </div>
-                    <div className="flex items-center space-x-2" translate="no">
-                      <RadioGroupItem value="all" id="all" />
-                      <Label htmlFor="all" className="font-normal cursor-pointer" translate="no">
-                        Todos os tamanhos
-                      </Label>
-                    </div>
-                  </RadioGroup>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Selecione uma ou mais faixas de funcionários. Deixe em branco para todos os tamanhos.
+                  </p>
                 </div>
 
                 {/* Revenue Range */}

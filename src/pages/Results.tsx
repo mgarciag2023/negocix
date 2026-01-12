@@ -222,7 +222,7 @@ const Results = () => {
             digitalActivity: searchConfig.digitalActivity || 'all',
             filters: {
               category: searchConfig.category,
-              companySize: searchConfig.companySize,
+              companySizes: searchConfig.companySizes || ['all'],
               revenueRange: searchConfig.revenueRange,
             }
           }

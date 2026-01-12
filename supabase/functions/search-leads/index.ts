@@ -146,7 +146,9 @@ function generateSearchTerms(segment: string): string[] {
     'escolas': ['escola', 'colégio'],
     'papelarias': ['papelaria', 'livraria'],
     'atacadistas': ['atacadista', 'atacado'],
-    'distribuidoras': ['distribuidora', 'distribuidor']
+    'distribuidoras': ['distribuidora', 'distribuidor'],
+    'distribuidores de food service': ['distribuidor food service', 'distribuidor restaurantes'],
+    'atacadistas de food service': ['atacadista food service', 'atacado restaurantes']
   };
   
   let searchTerms = categoryTerms[term] || null;
