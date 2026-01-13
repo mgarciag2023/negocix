@@ -504,9 +504,23 @@ const Configuration = () => {
                 {/* Company Size - Multiple Selection */}
                 <div>
                   <Label className="text-base font-semibold mb-4 block" translate="no">
-                    Tamanho do cliente (seleção múltipla):
+                    Tamanho do cliente:
                   </Label>
                   <div className="space-y-3">
+                    <div className="flex items-center space-x-2" translate="no">
+                      <Checkbox 
+                        id="size-all" 
+                        checked={companySizes.length === 0 || companySizes.includes('all')}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setCompanySizes([]);
+                          }
+                        }}
+                      />
+                      <Label htmlFor="size-all" className="font-normal cursor-pointer" translate="no">
+                        Todos os tamanhos
+                      </Label>
+                    </div>
                     <div className="flex items-center space-x-2" translate="no">
                       <Checkbox 
                         id="size-small" 
@@ -556,9 +570,6 @@ const Configuration = () => {
                       </Label>
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Selecione uma ou mais faixas de funcionários. Deixe em branco para todos os tamanhos.
-                  </p>
                 </div>
 
                 {/* Revenue Range */}
