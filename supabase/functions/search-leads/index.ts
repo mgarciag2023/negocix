@@ -935,7 +935,7 @@ serve(async (req) => {
           console.log(`📊 Page ${pageCount + 1}: ${searchData.results.length} results (total: ${results.length})`);
           
           // OPTIMIZATION: Stop early if we have enough unique results
-          if (results.length >= 80 && pageCount >= 2) {
+          if (results.length >= 120 && pageCount >= 3) {
             console.log(`⚡ Early exit: enough results (${results.length}) after ${pageCount + 1} pages`);
             break;
           }
@@ -945,9 +945,9 @@ serve(async (req) => {
         pageCount++;
         
         // OPTIMIZATION: Only fetch more if needed and token exists
-        if (nextPageToken && pageCount < maxPages && results.length < 60) {
+        if (nextPageToken && pageCount < maxPages && results.length < 100) {
           await sleep(2000);
-        } else if (!nextPageToken || results.length >= 60) {
+        } else if (!nextPageToken || results.length >= 100) {
           break;
         } else {
           await sleep(2000);
@@ -1003,9 +1003,9 @@ serve(async (req) => {
     console.log('📋 Segment display names:', segmentDisplayNames);
     
     // Search each segment separately and tag results with their segment
-    // OPTIMIZATION: Dynamic page limit based on number of segments
+    // OPTIMIZATION: Dynamic page limit based on number of segments - INCREASED for more leads
     let allPlacesWithSegment: any[] = [];
-    const pagesPerSegment = Math.max(2, Math.min(4, Math.floor(12 / segments.length)));
+    const pagesPerSegment = Math.max(3, Math.min(5, Math.floor(15 / segments.length)));
     console.log(`⚡ Optimization: ${pagesPerSegment} pages per segment (${segments.length} segments)`);
     
     for (const seg of segments) {
@@ -1039,7 +1039,7 @@ serve(async (req) => {
       console.log(`📊 Segment "${seg}": ${placesFromSegment.length} raw places`);
       
       // OPTIMIZATION: Early exit if we already have plenty of results
-      if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 2) {
+      if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 2.5) {
         console.log(`⚡ Enough raw places (${allPlacesWithSegment.length}), skipping remaining segments`);
         break;
       }
@@ -1078,8 +1078,8 @@ serve(async (req) => {
     console.log(`📊 Active businesses: ${activePlaces.length}`);
     
     // OPTIMIZATION: Smart batching for details - prioritize high-value leads first
-    const BATCH_SIZE = 15; // Increased batch size
-    const DETAILS_DELAY = 50; // Reduced delay
+    const BATCH_SIZE = 20; // Increased batch size for more leads
+    const DETAILS_DELAY = 40; // Reduced delay for faster processing
     
     // OPTIMIZATION: Sort by rating/reviews first to get best leads initially
     activePlaces.sort((a, b) => {
@@ -1092,7 +1092,7 @@ serve(async (req) => {
     
     // OPTIMIZATION: Track valid leads and stop early when we have enough
     let validLeadsCount = 0;
-    const MAX_DETAILS_FETCH = Math.min(activePlaces.length, 180); // Cap at 180 to save credits
+    const MAX_DETAILS_FETCH = Math.min(activePlaces.length, 280); // Increased to 280 for more leads
     
     for (let i = 0; i < MAX_DETAILS_FETCH; i += BATCH_SIZE) {
       const batch = activePlaces.slice(i, i + BATCH_SIZE);
@@ -1120,13 +1120,13 @@ serve(async (req) => {
         break;
       }
       
-      // If we have enough for minimum and already fetched 100+ details, consider stopping
-      if (validLeadsCount >= MIN_LEADS_TARGET && i >= 100) {
+      // If we have enough for minimum and already fetched 150+ details, consider stopping
+      if (validLeadsCount >= MIN_LEADS_TARGET + 20 && i >= 150) {
         const remainingBatches = Math.ceil((MAX_DETAILS_FETCH - i) / BATCH_SIZE);
         const estimatedAdditional = Math.floor(validLeadsCount * (remainingBatches * BATCH_SIZE) / (i + BATCH_SIZE) * 0.3);
         
-        // If we won't get much more, stop to save credits
-        if (estimatedAdditional < 10) {
+        // If we won't get much more and already have 80+, stop to save credits
+        if (estimatedAdditional < 15 && validLeadsCount >= 80) {
           console.log(`⚡ Optimization: ${validLeadsCount} leads found, stopping early to save credits`);
           break;
         }
