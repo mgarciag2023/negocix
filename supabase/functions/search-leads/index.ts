@@ -1291,47 +1291,56 @@ serve(async (req) => {
     });
     
     console.log('📞 Fetching contact details (optimized batches)...');
-    
-    // OPTIMIZATION: Track valid leads and stop early when we have enough
-    let validLeadsCount = 0;
-    const MAX_DETAILS_FETCH = Math.min(activePlaces.length, 800); // Increased to 800 for more leads after location filtering
-    
-    for (let i = 0; i < MAX_DETAILS_FETCH; i += BATCH_SIZE) {
-      const batch = activePlaces.slice(i, i + BATCH_SIZE);
-      
-      const detailsPromises = batch.map(async (place, idx) => {
-        await sleep(idx * DETAILS_DELAY);
-        const details = await getPlaceDetails(place.placeId);
-        if (details) {
-          place.phone = details.international_phone_number || details.formatted_phone_number || '';
-          place.website = details.website || '';
-        }
-      });
-      
-      await Promise.all(detailsPromises);
-      
-      // Count valid leads so far
-      const placesWithPhone = activePlaces.slice(0, i + BATCH_SIZE).filter(p => p.phone && p.phone.trim() !== '');
-      validLeadsCount = placesWithPhone.length;
-      console.log(`📞 Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${validLeadsCount} leads with phone`);
-      
-      // Stop if we have enough leads with buffer for filtering
-      if (validLeadsCount >= MAX_TOTAL_LEADS + 100) {
-        console.log(`🎯 Reached buffer (${validLeadsCount}), stopping details fetch`);
-        break;
+
+    // IMPORTANT: Minimum leads (50) must be evaluated AFTER all strict filters (location, niche, matriz/filial, digital).
+    // We fetch details in a window (800) and expand (up to 1200) only if the final filtered result is below 50.
+    let leads: any[] = [];
+    let detailsFetched = 0;
+    let detailsFetchLimit = Math.min(activePlaces.length, 800);
+    const HARD_MAX_DETAILS_FETCH = Math.min(activePlaces.length, 1200);
+
+    while (true) {
+      // Fetch details for the next window
+      for (let i = detailsFetched; i < detailsFetchLimit; i += BATCH_SIZE) {
+        const batch = activePlaces.slice(i, i + BATCH_SIZE);
+
+        const detailsPromises = batch.map(async (place, idx) => {
+          await sleep(idx * DETAILS_DELAY);
+          const details = await getPlaceDetails(place.placeId);
+          if (details) {
+            place.phone = details.international_phone_number || details.formatted_phone_number || '';
+            place.website = details.website || '';
+          }
+        });
+
+        await Promise.all(detailsPromises);
+
+        const placesWithPhone = activePlaces
+          .slice(0, i + BATCH_SIZE)
+          .filter(p => p.phone && p.phone.trim() !== '');
+        console.log(`📞 Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${placesWithPhone.length} leads with phone`);
       }
-      
-      // Stop early if we have good amount after many batches
-      if (validLeadsCount >= MAX_TOTAL_LEADS && i >= 500) {
-        console.log(`⚡ Have ${validLeadsCount} leads after ${i} details, stopping`);
-        break;
-      }
+
+      detailsFetched = detailsFetchLimit;
+
+      // Compute final leads after ALL strict filters
+      leads = processResultsWithCategories(activePlaces, segment, cleanRegion, MAX_TOTAL_LEADS, bizType, digPresence, digActivity);
+      console.log(`📊 After full filtering: ${leads.length} leads (min target: ${MIN_LEADS_TARGET})`);
+
+      // Stop conditions
+      if (leads.length >= MIN_LEADS_TARGET) break;
+      if (detailsFetched >= HARD_MAX_DETAILS_FETCH) break;
+      if (detailsFetched >= activePlaces.length) break;
+
+      // Expand details fetch only when we are below minimum
+      const nextLimit = Math.min(HARD_MAX_DETAILS_FETCH, detailsFetchLimit + 200);
+      console.log(`⚠️ Below minimum (${leads.length} < ${MIN_LEADS_TARGET}). Expanding details fetch: ${detailsFetchLimit} -> ${nextLimit}`);
+      if (nextLimit === detailsFetchLimit) break;
+      detailsFetchLimit = nextLimit;
     }
-    
-    // Process results with our existing filtering logic
-    const leads = processResultsWithCategories(activePlaces, segment, cleanRegion, MAX_TOTAL_LEADS, bizType, digPresence, digActivity);
+
     console.log(`✅ FINAL: ${leads.length} leads ready (target: ${MIN_LEADS_TARGET}-${MAX_TOTAL_LEADS})`);
-    
+
     if (leads.length === 0) {
       return new Response(JSON.stringify({ 
         error: `Nenhum estabelecimento encontrado em ${cleanRegion}. Tente outra região ou categoria.` 
