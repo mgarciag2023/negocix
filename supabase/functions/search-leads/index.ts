@@ -1018,9 +1018,9 @@ serve(async (req) => {
       throw new Error("GOOGLE_API_KEY is not configured");
     }
     
-    const MAX_TOTAL_LEADS = 150;
+    const MAX_TOTAL_LEADS = 300;
     const MIN_LEADS_TARGET = 50; // Minimum 50 leads required
-    const MIN_LEADS_EARLY_EXIT = 80; // Only exit early if we have at least 80
+    const MIN_LEADS_EARLY_EXIT = 100; // Only exit early if we have at least 100
     
     console.log(`🔎 Google Places API search: targeting ${MIN_LEADS_TARGET}-${MAX_TOTAL_LEADS} leads (cost-optimized)`);
     
@@ -1239,15 +1239,14 @@ serve(async (req) => {
       validLeadsCount = placesWithPhone.length;
       console.log(`📞 Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${validLeadsCount} leads with phone`);
       
-      // Only stop if we have WAY more than needed (to account for location filtering)
-      if (validLeadsCount >= MAX_TOTAL_LEADS * 2) {
-        console.log(`🎯 Reached double buffer (${validLeadsCount}), stopping details fetch`);
+      // Stop if we have enough leads with buffer for filtering
+      if (validLeadsCount >= MAX_TOTAL_LEADS + 50) {
+        console.log(`🎯 Reached buffer (${validLeadsCount}), stopping details fetch`);
         break;
       }
       
-      // Never stop early if we have less than minimum
-      // Only consider stopping if we have well above minimum AND fetched many details
-      if (validLeadsCount >= MIN_LEADS_TARGET * 3 && i >= 500) {
+      // Stop early if we have good amount after many batches
+      if (validLeadsCount >= MIN_LEADS_EARLY_EXIT && i >= 400) {
         console.log(`⚡ Have ${validLeadsCount} leads after ${i} details, stopping`);
         break;
       }
