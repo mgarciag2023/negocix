@@ -79,6 +79,8 @@ const Configuration = () => {
     // Novos segmentos solicitados
     "Cozinhas Industriais",
     "Indústrias de Salgados",
+    "Indústrias de Biscoitos",
+    "Distribuidoras de Doces",
     "Distribuidores de Frios",
     "Farmácias",
     "Lojas de Roupas",
