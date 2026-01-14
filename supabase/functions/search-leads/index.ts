@@ -1019,8 +1019,8 @@ serve(async (req) => {
     }
     
     const MAX_TOTAL_LEADS = 150;
-    const MIN_LEADS_TARGET = 80; // Increased minimum target
-    const MIN_LEADS_EARLY_EXIT = 100; // Increased early exit threshold
+    const MIN_LEADS_TARGET = 100; // Increased minimum target
+    const MIN_LEADS_EARLY_EXIT = 130; // Increased early exit threshold
     
     console.log(`🔎 Google Places API search: targeting ${MIN_LEADS_TARGET}-${MAX_TOTAL_LEADS} leads (cost-optimized)`);
     
@@ -1066,7 +1066,7 @@ serve(async (req) => {
           
           // OPTIMIZATION: Early exit if we have enough unique results
           // Increased threshold due to location filtering removing some results
-          if (results.length >= 200 && pageCount >= 5) {
+          if (results.length >= 300 && pageCount >= 6) {
             console.log(`⚡ Early exit: enough results (${results.length}) after ${pageCount + 1} pages`);
             break;
           }
@@ -1076,9 +1076,9 @@ serve(async (req) => {
         pageCount++;
         
         // OPTIMIZATION: Only fetch more if needed and token exists - MAXIMIZED thresholds
-        if (nextPageToken && pageCount < maxPages && results.length < 180) {
+        if (nextPageToken && pageCount < maxPages && results.length < 280) {
           await sleep(2000);
-        } else if (!nextPageToken || results.length >= 180) {
+        } else if (!nextPageToken || results.length >= 280) {
           break;
         } else {
           await sleep(2000);
@@ -1136,7 +1136,7 @@ serve(async (req) => {
     // Search each segment separately and tag results with their segment
     // MAXIMIZED page limits for more leads - increased to get better location coverage
     let allPlacesWithSegment: any[] = [];
-    const pagesPerSegment = Math.max(5, Math.min(8, Math.floor(24 / segments.length)));
+    const pagesPerSegment = Math.max(6, Math.min(10, Math.floor(30 / segments.length)));
     console.log(`⚡ Optimization: ${pagesPerSegment} pages per segment (${segments.length} segments)`);
     
     for (const seg of segments) {
@@ -1171,7 +1171,7 @@ serve(async (req) => {
       
       // OPTIMIZATION: Early exit if we already have plenty of results
       // Increased multiplier due to location filtering
-      if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 4) {
+      if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 5) {
         console.log(`⚡ Enough raw places (${allPlacesWithSegment.length}), skipping remaining segments`);
         break;
       }
@@ -1210,8 +1210,8 @@ serve(async (req) => {
     console.log(`📊 Active businesses: ${activePlaces.length}`);
     
     // OPTIMIZATION: Smart batching for details - prioritize high-value leads first
-    const BATCH_SIZE = 30; // Increased batch size for more leads
-    const DETAILS_DELAY = 25; // Reduced delay for faster processing
+    const BATCH_SIZE = 40; // Increased batch size for more leads
+    const DETAILS_DELAY = 20; // Reduced delay for faster processing
     
     // OPTIMIZATION: Sort by rating/reviews first to get best leads initially
     activePlaces.sort((a, b) => {
@@ -1224,7 +1224,7 @@ serve(async (req) => {
     
     // OPTIMIZATION: Track valid leads and stop early when we have enough
     let validLeadsCount = 0;
-    const MAX_DETAILS_FETCH = Math.min(activePlaces.length, 450); // Increased to 450 for more leads after location filtering
+    const MAX_DETAILS_FETCH = Math.min(activePlaces.length, 600); // Increased to 600 for more leads after location filtering
     
     for (let i = 0; i < MAX_DETAILS_FETCH; i += BATCH_SIZE) {
       const batch = activePlaces.slice(i, i + BATCH_SIZE);
@@ -1247,18 +1247,18 @@ serve(async (req) => {
       
       // OPTIMIZATION: Stop fetching details when we have enough leads
       // With location filtering, we need more raw leads to hit target
-      if (validLeadsCount >= MAX_TOTAL_LEADS + 50) { // Over-fetch due to location filtering
+      if (validLeadsCount >= MAX_TOTAL_LEADS + 80) { // Over-fetch due to location filtering
         console.log(`🎯 Reached buffer leads (${validLeadsCount}), stopping details fetch`);
         break;
       }
       
-      // If we have enough for minimum and already fetched 250+ details, consider stopping
-      if (validLeadsCount >= MIN_LEADS_TARGET + 50 && i >= 250) {
+      // If we have enough for minimum and already fetched 350+ details, consider stopping
+      if (validLeadsCount >= MIN_LEADS_TARGET + 60 && i >= 350) {
         const remainingBatches = Math.ceil((MAX_DETAILS_FETCH - i) / BATCH_SIZE);
         const estimatedAdditional = Math.floor(validLeadsCount * (remainingBatches * BATCH_SIZE) / (i + BATCH_SIZE) * 0.3);
         
-        // If we won't get much more and already have 120+, stop to save credits
-        if (estimatedAdditional < 25 && validLeadsCount >= 120) {
+        // If we won't get much more and already have 140+, stop to save credits
+        if (estimatedAdditional < 30 && validLeadsCount >= 140) {
           console.log(`⚡ Optimization: ${validLeadsCount} leads found, stopping early to save credits`);
           break;
         }
