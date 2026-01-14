@@ -137,6 +137,8 @@ function generateSearchTerms(segment: string): string[] {
     'construtoras': ['construtora', 'construção civil'],
     'cozinhas industriais': ['cozinha industrial', 'refeição coletiva'],
     'indústrias de salgados': ['fábrica de salgados', 'salgaderia'],
+    'indústrias de biscoitos': ['fábrica de biscoitos', 'indústria de biscoitos', 'biscoitaria'],
+    'distribuidoras de doces': ['distribuidora de doces', 'atacado de doces', 'distribuidor de doces'],
     'distribuidores de frios': ['distribuidor de frios', 'laticínios'],
     'cestas básicas': ['cestas básicas', 'cesta básica'],
     'lanchonetes': ['lanchonete', 'hamburgueria'],
