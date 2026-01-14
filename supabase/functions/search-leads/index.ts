@@ -1019,8 +1019,8 @@ serve(async (req) => {
     }
     
     const MAX_TOTAL_LEADS = 150;
-    const MIN_LEADS_TARGET = 100; // Increased minimum target
-    const MIN_LEADS_EARLY_EXIT = 130; // Increased early exit threshold
+    const MIN_LEADS_TARGET = 50; // Minimum 50 leads required
+    const MIN_LEADS_EARLY_EXIT = 80; // Only exit early if we have at least 80
     
     console.log(`🔎 Google Places API search: targeting ${MIN_LEADS_TARGET}-${MAX_TOTAL_LEADS} leads (cost-optimized)`);
     
@@ -1064,24 +1064,18 @@ serve(async (req) => {
           results.push(...searchData.results);
           console.log(`📊 Page ${pageCount + 1}: ${searchData.results.length} results (total: ${results.length})`);
           
-          // OPTIMIZATION: Early exit if we have enough unique results
-          // Increased threshold due to location filtering removing some results
-          if (results.length >= 300 && pageCount >= 6) {
-            console.log(`⚡ Early exit: enough results (${results.length}) after ${pageCount + 1} pages`);
-            break;
-          }
+          // REMOVED early exit - always fetch all available pages to maximize leads
+          // Location filtering removes many results, so we need maximum raw data
         }
         
         nextPageToken = searchData.next_page_token || null;
         pageCount++;
         
-        // OPTIMIZATION: Only fetch more if needed and token exists - MAXIMIZED thresholds
-        if (nextPageToken && pageCount < maxPages && results.length < 280) {
+        // Always fetch more pages if token exists - maximize results
+        if (nextPageToken && pageCount < maxPages) {
           await sleep(2000);
-        } else if (!nextPageToken || results.length >= 280) {
-          break;
         } else {
-          await sleep(2000);
+          break;
         }
       }
       
@@ -1245,23 +1239,17 @@ serve(async (req) => {
       validLeadsCount = placesWithPhone.length;
       console.log(`📞 Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${validLeadsCount} leads with phone`);
       
-      // OPTIMIZATION: Stop fetching details when we have enough leads
-      // With location filtering, we need more raw leads to hit target
-      if (validLeadsCount >= MAX_TOTAL_LEADS + 80) { // Over-fetch due to location filtering
-        console.log(`🎯 Reached buffer leads (${validLeadsCount}), stopping details fetch`);
+      // Only stop if we have WAY more than needed (to account for location filtering)
+      if (validLeadsCount >= MAX_TOTAL_LEADS * 2) {
+        console.log(`🎯 Reached double buffer (${validLeadsCount}), stopping details fetch`);
         break;
       }
       
-      // If we have enough for minimum and already fetched 350+ details, consider stopping
-      if (validLeadsCount >= MIN_LEADS_TARGET + 60 && i >= 350) {
-        const remainingBatches = Math.ceil((MAX_DETAILS_FETCH - i) / BATCH_SIZE);
-        const estimatedAdditional = Math.floor(validLeadsCount * (remainingBatches * BATCH_SIZE) / (i + BATCH_SIZE) * 0.3);
-        
-        // If we won't get much more and already have 140+, stop to save credits
-        if (estimatedAdditional < 30 && validLeadsCount >= 140) {
-          console.log(`⚡ Optimization: ${validLeadsCount} leads found, stopping early to save credits`);
-          break;
-        }
+      // Never stop early if we have less than minimum
+      // Only consider stopping if we have well above minimum AND fetched many details
+      if (validLeadsCount >= MIN_LEADS_TARGET * 3 && i >= 500) {
+        console.log(`⚡ Have ${validLeadsCount} leads after ${i} details, stopping`);
+        break;
       }
     }
     
