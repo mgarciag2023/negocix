@@ -243,6 +243,136 @@ function estimateRevenue(place: any, category: string): {
   }
 }
 
+// ===== LOCATION VALIDATION FUNCTIONS =====
+// Critical: Ensure leads are from the requested location
+
+// Normalize location string for comparison
+function normalizeLocationString(str: string): string {
+  return (str || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove accents
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Extract city and state from an address
+function extractLocationParts(address: string): { city: string | null; state: string | null; neighborhood: string | null } {
+  const normalized = normalizeLocationString(address);
+  
+  // Brazilian state abbreviations
+  const brazilianStates: { [key: string]: string } = {
+    'ac': 'acre', 'al': 'alagoas', 'ap': 'amapa', 'am': 'amazonas',
+    'ba': 'bahia', 'ce': 'ceara', 'df': 'distrito federal', 'es': 'espirito santo',
+    'go': 'goias', 'ma': 'maranhao', 'mt': 'mato grosso', 'ms': 'mato grosso do sul',
+    'mg': 'minas gerais', 'pa': 'para', 'pb': 'paraiba', 'pr': 'parana',
+    'pe': 'pernambuco', 'pi': 'piaui', 'rj': 'rio de janeiro', 'rn': 'rio grande do norte',
+    'rs': 'rio grande do sul', 'ro': 'rondonia', 'rr': 'roraima', 'sc': 'santa catarina',
+    'sp': 'sao paulo', 'se': 'sergipe', 'to': 'tocantins'
+  };
+  
+  // Try to extract state from address (format: "City - ST" or "City, ST")
+  let state: string | null = null;
+  let city: string | null = null;
+  
+  // Look for state abbreviation at the end (e.g., "- SC", ", SP")
+  const stateMatch = normalized.match(/[\s,\-]+([a-z]{2})[\s,\-]*(?:brasil|brazil)?[\s,\-]*$/);
+  if (stateMatch && brazilianStates[stateMatch[1]]) {
+    state = stateMatch[1];
+  }
+  
+  // Try to extract city from common patterns
+  // Pattern: "..., City - ST" or "..., City, ST"
+  const cityMatch = normalized.match(/,\s*([^,\-]+)\s*[\-,]\s*[a-z]{2}[\s,\-]*(?:brasil|brazil)?[\s,\-]*$/);
+  if (cityMatch) {
+    city = cityMatch[1].trim();
+  }
+  
+  // Alternative: try "City - ST, Brazil"
+  if (!city) {
+    const altMatch = normalized.match(/[\-,]\s*([^,\-]+)\s*[\-,]\s*[a-z]{2}\s*[\-,]/);
+    if (altMatch) {
+      city = altMatch[1].trim();
+    }
+  }
+  
+  return { city, state, neighborhood: null };
+}
+
+// Check if an address matches the requested location
+function isAddressInLocation(address: string, requestedRegion: string, countryCode: string): boolean {
+  if (!address || !requestedRegion) return false;
+  
+  const normalizedAddress = normalizeLocationString(address);
+  const normalizedRegion = normalizeLocationString(requestedRegion);
+  
+  // Split region into parts (could be "City, State" or "City - State" or just "City")
+  const regionParts = normalizedRegion.split(/[\s,\-]+/).filter(p => p.length > 1);
+  
+  // For Brazilian addresses, be VERY strict
+  if (countryCode === 'BR') {
+    // Extract location from address
+    const addressParts = extractLocationParts(address);
+    
+    // If region contains a city name, check if it appears in the address
+    // The city MUST appear before the state abbreviation
+    let cityMatch = false;
+    let regionCityWords = regionParts.filter(p => p.length > 2 && !['brasil', 'brazil', 'br'].includes(p));
+    
+    for (const word of regionCityWords) {
+      // Check if this word appears in the address
+      if (normalizedAddress.includes(word)) {
+        cityMatch = true;
+        break;
+      }
+    }
+    
+    if (!cityMatch) {
+      // City not found in address - reject
+      console.log(`❌ Location mismatch: "${address}" does not contain city from "${requestedRegion}"`);
+      return false;
+    }
+    
+    // Additional check: the matched word should appear in the city position, not just anywhere
+    // (avoid false positives like street names matching city names)
+    // Check that the region word appears after a comma or dash (indicating city/state section)
+    let foundInCityPosition = false;
+    for (const word of regionCityWords) {
+      // Check if word appears after a comma or dash (city position in Brazilian addresses)
+      const cityPositionPattern = new RegExp(`[,\\-]\\s*[^,\\-]*${word}[^,\\-]*\\s*[,\\-]`);
+      const endPositionPattern = new RegExp(`[,\\-]\\s*[^,\\-]*${word}[^,\\-]*$`);
+      
+      if (cityPositionPattern.test(normalizedAddress) || endPositionPattern.test(normalizedAddress)) {
+        foundInCityPosition = true;
+        break;
+      }
+    }
+    
+    if (!foundInCityPosition) {
+      // Check if the word appears standalone (not as part of a street name)
+      // Allow if the word is clearly separated
+      const addressWords = normalizedAddress.split(/[\s,\-]+/);
+      for (const word of regionCityWords) {
+        if (addressWords.includes(word)) {
+          foundInCityPosition = true;
+          break;
+        }
+      }
+    }
+    
+    return foundInCityPosition;
+  }
+  
+  // For international addresses, be more flexible but still check
+  for (const part of regionParts) {
+    if (part.length > 2 && normalizedAddress.includes(part)) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
 // Estimate years in operation based on reviews and data
 function estimateYearsInOperation(place: any): string {
   const reviewCount = place.reviewsCount || 0;
@@ -889,8 +1019,8 @@ serve(async (req) => {
     }
     
     const MAX_TOTAL_LEADS = 150;
-    const MIN_LEADS_TARGET = 50;
-    const MIN_LEADS_EARLY_EXIT = 60;
+    const MIN_LEADS_TARGET = 80; // Increased minimum target
+    const MIN_LEADS_EARLY_EXIT = 100; // Increased early exit threshold
     
     console.log(`🔎 Google Places API search: targeting ${MIN_LEADS_TARGET}-${MAX_TOTAL_LEADS} leads (cost-optimized)`);
     
@@ -934,8 +1064,9 @@ serve(async (req) => {
           results.push(...searchData.results);
           console.log(`📊 Page ${pageCount + 1}: ${searchData.results.length} results (total: ${results.length})`);
           
-          // OPTIMIZATION: Stop early if we have enough unique results
-          if (results.length >= 150 && pageCount >= 4) {
+          // OPTIMIZATION: Early exit if we have enough unique results
+          // Increased threshold due to location filtering removing some results
+          if (results.length >= 200 && pageCount >= 5) {
             console.log(`⚡ Early exit: enough results (${results.length}) after ${pageCount + 1} pages`);
             break;
           }
@@ -944,10 +1075,10 @@ serve(async (req) => {
         nextPageToken = searchData.next_page_token || null;
         pageCount++;
         
-        // OPTIMIZATION: Only fetch more if needed and token exists - INCREASED thresholds
-        if (nextPageToken && pageCount < maxPages && results.length < 140) {
+        // OPTIMIZATION: Only fetch more if needed and token exists - MAXIMIZED thresholds
+        if (nextPageToken && pageCount < maxPages && results.length < 180) {
           await sleep(2000);
-        } else if (!nextPageToken || results.length >= 140) {
+        } else if (!nextPageToken || results.length >= 180) {
           break;
         } else {
           await sleep(2000);
@@ -1003,9 +1134,9 @@ serve(async (req) => {
     console.log('📋 Segment display names:', segmentDisplayNames);
     
     // Search each segment separately and tag results with their segment
-    // OPTIMIZATION: Dynamic page limit based on number of segments - MAXIMIZED for more leads
+    // MAXIMIZED page limits for more leads - increased to get better location coverage
     let allPlacesWithSegment: any[] = [];
-    const pagesPerSegment = Math.max(4, Math.min(6, Math.floor(18 / segments.length)));
+    const pagesPerSegment = Math.max(5, Math.min(8, Math.floor(24 / segments.length)));
     console.log(`⚡ Optimization: ${pagesPerSegment} pages per segment (${segments.length} segments)`);
     
     for (const seg of segments) {
@@ -1039,7 +1170,8 @@ serve(async (req) => {
       console.log(`📊 Segment "${seg}": ${placesFromSegment.length} raw places`);
       
       // OPTIMIZATION: Early exit if we already have plenty of results
-      if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 3) {
+      // Increased multiplier due to location filtering
+      if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 4) {
         console.log(`⚡ Enough raw places (${allPlacesWithSegment.length}), skipping remaining segments`);
         break;
       }
@@ -1078,8 +1210,8 @@ serve(async (req) => {
     console.log(`📊 Active businesses: ${activePlaces.length}`);
     
     // OPTIMIZATION: Smart batching for details - prioritize high-value leads first
-    const BATCH_SIZE = 25; // Maximized batch size for more leads
-    const DETAILS_DELAY = 30; // Reduced delay for faster processing
+    const BATCH_SIZE = 30; // Increased batch size for more leads
+    const DETAILS_DELAY = 25; // Reduced delay for faster processing
     
     // OPTIMIZATION: Sort by rating/reviews first to get best leads initially
     activePlaces.sort((a, b) => {
@@ -1092,7 +1224,7 @@ serve(async (req) => {
     
     // OPTIMIZATION: Track valid leads and stop early when we have enough
     let validLeadsCount = 0;
-    const MAX_DETAILS_FETCH = Math.min(activePlaces.length, 350); // Maximized to 350 for more leads
+    const MAX_DETAILS_FETCH = Math.min(activePlaces.length, 450); // Increased to 450 for more leads after location filtering
     
     for (let i = 0; i < MAX_DETAILS_FETCH; i += BATCH_SIZE) {
       const batch = activePlaces.slice(i, i + BATCH_SIZE);
@@ -1114,19 +1246,19 @@ serve(async (req) => {
       console.log(`📞 Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${validLeadsCount} leads with phone`);
       
       // OPTIMIZATION: Stop fetching details when we have enough leads
-      // But ensure we have at least 50 (minimum target)
-      if (validLeadsCount >= MAX_TOTAL_LEADS) {
-        console.log(`🎯 Reached max leads (${validLeadsCount}), stopping details fetch`);
+      // With location filtering, we need more raw leads to hit target
+      if (validLeadsCount >= MAX_TOTAL_LEADS + 50) { // Over-fetch due to location filtering
+        console.log(`🎯 Reached buffer leads (${validLeadsCount}), stopping details fetch`);
         break;
       }
       
-      // If we have enough for minimum and already fetched 200+ details, consider stopping
-      if (validLeadsCount >= MIN_LEADS_TARGET + 40 && i >= 200) {
+      // If we have enough for minimum and already fetched 250+ details, consider stopping
+      if (validLeadsCount >= MIN_LEADS_TARGET + 50 && i >= 250) {
         const remainingBatches = Math.ceil((MAX_DETAILS_FETCH - i) / BATCH_SIZE);
         const estimatedAdditional = Math.floor(validLeadsCount * (remainingBatches * BATCH_SIZE) / (i + BATCH_SIZE) * 0.3);
         
-        // If we won't get much more and already have 100+, stop to save credits
-        if (estimatedAdditional < 20 && validLeadsCount >= 100) {
+        // If we won't get much more and already have 120+, stop to save credits
+        if (estimatedAdditional < 25 && validLeadsCount >= 120) {
           console.log(`⚡ Optimization: ${validLeadsCount} leads found, stopping early to save credits`);
           break;
         }
@@ -1326,12 +1458,22 @@ function classifyDigitalActivity(place: any): 'low' | 'basic' | 'active' {
 function processResultsWithCategories(apifyResults: any[], segment: string, cleanRegion: string, maxLeads: number, businessType: string = 'all', digitalPresence: string = 'all', digitalActivity: string = 'all'): any[] {
   console.log(`📊 Processing ${apifyResults.length} raw results for segment: ${segment}, businessType: ${businessType}, digitalPresence: ${digitalPresence}, digitalActivity: ${digitalActivity}`);
   
-  // Step 1: Filter by basic requirements AND niche relevance
+  // Extract country code from segment context (passed via cleanRegion context)
+  const countryCode = 'BR'; // Default to Brazil, could be passed as parameter
+  
+  // Step 1: Filter by basic requirements, LOCATION VALIDATION, AND niche relevance
   let results = apifyResults.filter((place: any) => {
     const phone = place.phone || place.phoneUnformatted;
     if (!phone || phone.trim() === '') return false;
     if (!isValidName(place.title)) {
       console.log(`❌ Invalid name: "${place.title}"`);
+      return false;
+    }
+    
+    // CRITICAL: LOCATION VALIDATION - Ensure lead is in the requested region
+    const address = place.address || '';
+    if (!isAddressInLocation(address, cleanRegion, countryCode)) {
+      console.log(`❌ Location mismatch: "${place.title}" at "${address}" not in "${cleanRegion}"`);
       return false;
     }
     
