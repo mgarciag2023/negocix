@@ -1018,7 +1018,7 @@ serve(async (req) => {
       throw new Error("GOOGLE_API_KEY is not configured");
     }
     
-    const MAX_TOTAL_LEADS = 300;
+    const MAX_TOTAL_LEADS = 150;
     const MIN_LEADS_TARGET = 50; // Minimum 50 leads required
     const MIN_LEADS_EARLY_EXIT = 100; // Only exit early if we have at least 100
     
