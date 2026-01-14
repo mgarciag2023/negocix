@@ -693,6 +693,15 @@ function isRelevantToNiche(place: any, segment: string): boolean {
     // Industry passed the strict filter, continue with normal checks
   }
   
+  // ===== SPECIAL HANDLING FOR SOCCER SCHOOL SEARCHES =====
+  // Exclude franchises and professional club academies
+  if (isSoccerSchoolSearch(segmentLower)) {
+    if (!isIndependentSoccerSchool(place)) {
+      return false;
+    }
+    // Independent soccer school, continue with normal checks
+  }
+  
   // Find matching niche keywords
   let nicheConfig = nicheKeywords[segmentLower];
   
@@ -797,6 +806,73 @@ function normalizeCompanyName(name: string): string {
     .replace(/\s+(ltda|me|eireli|s\.a\.|sa|epp|mei|s\/a)\.?$/gi, '')
     .replace(/[^a-záàâãéèêíìîóòôõúùûç0-9]/gi, '')
     .trim();
+}
+
+// Professional football clubs to exclude from soccer school searches
+const professionalClubs = [
+  // Brazilian clubs
+  'flamengo', 'fluminense', 'vasco', 'botafogo', 'palmeiras', 'corinthians',
+  'são paulo', 'sao paulo', 'santos', 'grêmio', 'gremio', 'internacional', 'inter',
+  'cruzeiro', 'atlético mineiro', 'atletico mineiro', 'galo', 'athletico', 'coritiba',
+  'bahia', 'vitória', 'sport', 'náutico', 'nautico', 'santa cruz', 'fortaleza',
+  'ceará', 'ceara', 'américa', 'america', 'goiás', 'goias', 'cuiabá', 'cuiaba',
+  'juventude', 'chapecoense', 'avaí', 'avai', 'figueirense', 'criciúma', 'criciuma',
+  'joinville', 'brusque', 'marcílio dias', 'marcilio dias', 'ponte preta',
+  'guarani', 'red bull bragantino', 'bragantino', 'botafogo sp', 'mirassol',
+  'novorizontino', 'ituano', 'são bento', 'sao bento', 'ferroviária', 'ferroviaria',
+  'são caetano', 'sao caetano', 'portuguesa', 'santo andré', 'santo andre',
+  'atlético goianiense', 'atletico goianiense', 'vila nova', 'crac', 'anápolis',
+  'londrina', 'paraná', 'parana', 'operário', 'operario', 'maringá', 'maringa',
+  'crb', 'csa', 'sergipe', 'confiança', 'confianca', 'sampaio corrêa', 'sampaio correa',
+  'remo', 'paysandu', 'abc', 'américa rn', 'america rn', 'campinense', 'treze',
+  
+  // Argentine clubs
+  'boca juniors', 'boca', 'river plate', 'river', 'racing', 'independiente',
+  'san lorenzo', 'huracán', 'huracan', 'vélez', 'velez', 'estudiantes',
+  'newell\'s', 'newells', 'rosario central',
+  
+  // European clubs
+  'paris saint-germain', 'paris saint germain', 'psg',
+  'barcelona', 'barça', 'barca', 'real madrid', 'atlético madrid', 'atletico madrid',
+  'manchester united', 'manchester city', 'liverpool', 'chelsea', 'arsenal', 'tottenham',
+  'bayern', 'munique', 'munich', 'borussia dortmund', 'dortmund',
+  'juventus', 'juve', 'milan', 'ac milan', 'inter de milão', 'inter milan', 'internazionale',
+  'napoli', 'roma', 'lazio', 'fiorentina',
+  'benfica', 'porto', 'sporting',
+  'ajax', 'psv', 'feyenoord',
+  
+  // Other indicators of franchises/academies
+  'franquia', 'licenciada', 'licenciado', 'oficial', 'academy', 'base oficial',
+  'ct ', 'centro de treinamento', 'núcleo', 'nucleo', 'polo ', 'sede '
+];
+
+// Check if a soccer school is an independent school (not a franchise/professional club)
+function isIndependentSoccerSchool(place: any): boolean {
+  const title = (place.title || '').toLowerCase();
+  const category = (place.categoryName || place.categories?.[0] || '').toLowerCase();
+  const allCategories = (place.categories || []).join(' ').toLowerCase();
+  const combinedText = `${title} ${category} ${allCategories}`;
+  
+  // Check if name contains any professional club reference
+  for (const club of professionalClubs) {
+    if (combinedText.includes(club)) {
+      console.log(`⚽ Soccer school filter: Excluded "${place.title}" - franchise/club detected: ${club}`);
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+// Check if segment is a soccer school search
+function isSoccerSchoolSearch(segment: string): boolean {
+  const lower = segment.toLowerCase();
+  const soccerTerms = [
+    'escolinha de futebol', 'escolinhas de futebol', 'escola de futebol', 'escolas de futebol',
+    'escolinha futebol', 'escola futebol', 'futebol infantil', 'aula de futebol',
+    'categoria de base', 'base de futebol'
+  ];
+  return soccerTerms.some(term => lower.includes(term));
 }
 
 // Process and filter results with Matriz filter and deduplication
