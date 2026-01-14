@@ -1130,7 +1130,7 @@ serve(async (req) => {
     // Search each segment separately and tag results with their segment
     // MAXIMIZED page limits for more leads - increased to get better location coverage
     let allPlacesWithSegment: any[] = [];
-    const pagesPerSegment = Math.max(6, Math.min(10, Math.floor(30 / segments.length)));
+    const pagesPerSegment = Math.max(8, Math.min(12, Math.floor(40 / segments.length)));
     console.log(`⚡ Optimization: ${pagesPerSegment} pages per segment (${segments.length} segments)`);
     
     for (const seg of segments) {
@@ -1143,8 +1143,8 @@ serve(async (req) => {
         console.log(`🛒 E-commerce específico: ${ecomType}`);
       } else {
         searchTerms = generateSearchTerms(seg);
-        // OPTIMIZATION: Use 3 best terms per segment for more coverage
-        searchTerms = searchTerms.slice(0, 3);
+        // OPTIMIZATION: Use 4 best terms per segment for maximum coverage
+        searchTerms = searchTerms.slice(0, 4);
       }
       
       console.log(`📤 Searching segment "${seg}" with terms:`, searchTerms);
@@ -1165,7 +1165,7 @@ serve(async (req) => {
       
       // OPTIMIZATION: Early exit if we already have plenty of results
       // Increased multiplier due to location filtering
-      if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 5) {
+      if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 6) {
         console.log(`⚡ Enough raw places (${allPlacesWithSegment.length}), skipping remaining segments`);
         break;
       }
@@ -1204,8 +1204,8 @@ serve(async (req) => {
     console.log(`📊 Active businesses: ${activePlaces.length}`);
     
     // OPTIMIZATION: Smart batching for details - prioritize high-value leads first
-    const BATCH_SIZE = 40; // Increased batch size for more leads
-    const DETAILS_DELAY = 20; // Reduced delay for faster processing
+    const BATCH_SIZE = 50; // Large batch size for more leads
+    const DETAILS_DELAY = 15; // Reduced delay for faster processing
     
     // OPTIMIZATION: Sort by rating/reviews first to get best leads initially
     activePlaces.sort((a, b) => {
@@ -1218,7 +1218,7 @@ serve(async (req) => {
     
     // OPTIMIZATION: Track valid leads and stop early when we have enough
     let validLeadsCount = 0;
-    const MAX_DETAILS_FETCH = Math.min(activePlaces.length, 600); // Increased to 600 for more leads after location filtering
+    const MAX_DETAILS_FETCH = Math.min(activePlaces.length, 800); // Increased to 800 for more leads after location filtering
     
     for (let i = 0; i < MAX_DETAILS_FETCH; i += BATCH_SIZE) {
       const batch = activePlaces.slice(i, i + BATCH_SIZE);
@@ -1240,13 +1240,13 @@ serve(async (req) => {
       console.log(`📞 Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${validLeadsCount} leads with phone`);
       
       // Stop if we have enough leads with buffer for filtering
-      if (validLeadsCount >= MAX_TOTAL_LEADS + 50) {
+      if (validLeadsCount >= MAX_TOTAL_LEADS + 100) {
         console.log(`🎯 Reached buffer (${validLeadsCount}), stopping details fetch`);
         break;
       }
       
       // Stop early if we have good amount after many batches
-      if (validLeadsCount >= MIN_LEADS_EARLY_EXIT && i >= 400) {
+      if (validLeadsCount >= MAX_TOTAL_LEADS && i >= 500) {
         console.log(`⚡ Have ${validLeadsCount} leads after ${i} details, stopping`);
         break;
       }
