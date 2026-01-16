@@ -139,6 +139,7 @@ function generateSearchTerms(segment: string): string[] {
     'indústrias de salgados': ['fábrica de salgados', 'salgaderia'],
     'indústrias de biscoitos': ['fábrica de biscoitos', 'indústria de biscoitos', 'biscoitaria'],
     'distribuidoras de doces': ['distribuidora de doces', 'atacado de doces', 'distribuidor de doces'],
+    'indústrias de produtos pet': ['fábrica de ração', 'indústria pet', 'fábrica de produtos pet', 'indústria de ração animal', 'fábrica de petiscos para animais'],
     'distribuidores de frios': ['distribuidor de frios', 'laticínios'],
     'cestas básicas': ['cestas básicas', 'cesta básica'],
     'lanchonetes': ['lanchonete', 'hamburgueria'],
