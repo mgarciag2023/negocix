@@ -82,6 +82,7 @@ const Configuration = () => {
     "Indústrias de Biscoitos",
     "Distribuidoras de Doces",
     "Indústrias de Produtos Pet",
+    "Agência de Eventos",
     "Distribuidores de Frios",
     "Farmácias",
     "Lojas de Roupas",
