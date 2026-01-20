@@ -32,15 +32,15 @@ const Index = () => {
               </div>
               
               <h1 className="mb-6 text-4xl md:text-6xl font-bold leading-tight text-primary-foreground opacity-0 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-                Encontre Clientes, Representantes e Crie{" "}
+                Encontre Clientes e{" "}
                 <span className="relative">
-                  <span className="relative z-10">Abordagens Inteligentes</span>
+                  <span className="relative z-10">Fornecedores Qualificados</span>
                   <span className="absolute bottom-2 left-0 right-0 h-3 bg-success-glow/40 -rotate-1 rounded" />
                 </span>
               </h1>
               
               <p className="mb-10 text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto opacity-0 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-                IA poderosa que encontra leads qualificados, representantes comerciais e cria abordagens profissionais personalizadas para cada cliente.
+                Plataforma inteligente que encontra leads qualificados e fornecedores para o seu negócio.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center flex-wrap opacity-0 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
@@ -62,48 +62,22 @@ const Index = () => {
                   asChild 
                   className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/20 hover:-translate-y-1 transition-all duration-300 text-base h-14 px-8 rounded-xl backdrop-blur-sm"
                 >
-                  <Link to="/search-representatives" onClick={() => window.scrollTo(0, 0)}>
-                    <Users className="mr-2 h-5 w-5" />
-                    Buscar Representantes
-                  </Link>
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  asChild 
-                  className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/20 hover:-translate-y-1 transition-all duration-300 text-base h-14 px-8 rounded-xl backdrop-blur-sm"
-                >
                   <Link to="/search-suppliers" onClick={() => window.scrollTo(0, 0)}>
                     <Package className="mr-2 h-5 w-5" />
                     Buscar Fornecedores
                   </Link>
                 </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  asChild 
-                  className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/20 hover:-translate-y-1 transition-all duration-300 text-base h-14 px-8 rounded-xl backdrop-blur-sm"
-                >
-                  <Link to="/abordagem" onClick={() => window.scrollTo(0, 0)}>
-                    <Sparkles className="mr-2 h-5 w-5" />
-                    Criar Abordagem IA
-                  </Link>
-                </Button>
               </div>
               
               {/* Stats */}
-              <div className="mt-16 grid grid-cols-3 gap-8 max-w-md mx-auto opacity-0 animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
+              <div className="mt-16 grid grid-cols-2 gap-8 max-w-xs mx-auto opacity-0 animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
                 <div className="text-center">
                   <div className="text-2xl md:text-3xl font-bold text-primary-foreground">150+</div>
                   <div className="text-sm text-primary-foreground/60">Leads/busca</div>
                 </div>
-                <div className="text-center border-x border-primary-foreground/20">
+                <div className="text-center border-l border-primary-foreground/20">
                   <div className="text-2xl md:text-3xl font-bold text-primary-foreground">22</div>
                   <div className="text-sm text-primary-foreground/60">Países</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl md:text-3xl font-bold text-primary-foreground">IA</div>
-                  <div className="text-sm text-primary-foreground/60">Abordagens</div>
                 </div>
               </div>
             </div>
@@ -269,9 +243,9 @@ const Index = () => {
                     asChild 
                     className="border-2 hover:-translate-y-1 transition-all duration-300 text-base h-14 px-8 rounded-xl"
                   >
-                    <Link to="/abordagem" onClick={() => window.scrollTo(0, 0)}>
-                      <Sparkles className="mr-2 h-5 w-5" />
-                      Criar Abordagem IA
+                    <Link to="/search-suppliers" onClick={() => window.scrollTo(0, 0)}>
+                      <Package className="mr-2 h-5 w-5" />
+                      Buscar Fornecedores
                     </Link>
                   </Button>
                 </div>

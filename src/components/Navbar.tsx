@@ -15,9 +15,7 @@ const Navbar = () => {
   
   const navItems = [
     { path: "/configuracao", icon: Settings, label: "Buscar" },
-    { path: "/search-representatives", icon: Users, label: "Representantes" },
     { path: "/search-suppliers", icon: Package, label: "Fornecedores" },
-    { path: "/abordagem", icon: Sparkles, label: "Abordagem" },
     { path: "/favoritos", icon: Heart, label: "Favoritos" },
   ];
   
