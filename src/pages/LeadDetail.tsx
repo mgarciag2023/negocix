@@ -31,8 +31,10 @@ const LeadDetail = () => {
     }
   };
   
-  // Do NOT scroll to top - let the back navigation work naturally
-  // The Results page will restore the scroll position
+  // Scroll to top when entering the page
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   
   // Redirect back if no lead data
   useEffect(() => {
