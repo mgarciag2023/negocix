@@ -616,7 +616,7 @@ function isRealIndustry(place: any): boolean {
   return true;
 }
 
-// STRICT niche relevance keywords - VERY STRICT FOR SPECIFIC CATEGORIES
+// STRICT niche relevance keywords - ULTRA STRICT: only returns EXACTLY what was requested
 const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mustMatch: string[] } } = {
   'hipermercados': {
     include: ['hipermercado', 'hiper', 'carrefour', 'big', 'walmart', 'assaí', 'makro', 'sam\'s club', 'atacarejo', 'extra hiper'],
@@ -626,61 +626,198 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
   'supermercados': {
     include: ['supermercado', 'mercado', 'mercearia', 'minimercado', 'hortifruti', 'sacolão', 'feira', 'empório', 'armazém'],
     mustMatch: ['supermercado', 'mercado', 'mercearia', 'minimercado', 'hortifruti'],
-    exclude: ['cueca', 'roupa', 'móvel', 'móveis', 'vestuário', 'tecido', 'moda', 'calçado', 'eletro', 'eletrônico', 'auto peça', 'construção', 'ferragem', 'brinquedo', 'papelaria', 'pet', 'veterinár', 'ótica', 'joalheria', 'salão', 'beleza', 'academia', 'hotel', 'magazine', 'americanas', 'casas bahia']
+    exclude: ['cueca', 'roupa', 'móvel', 'móveis', 'vestuário', 'tecido', 'moda', 'calçado', 'eletro', 'eletrônico', 'auto peça', 'construção', 'ferragem', 'brinquedo', 'papelaria', 'pet', 'veterinár', 'ótica', 'joalheria', 'salão', 'beleza', 'academia', 'hotel', 'magazine', 'americanas', 'casas bahia', 'restaurante', 'lanchonete', 'pizzaria', 'padaria']
   },
   'restaurantes': {
     include: ['restaurante', 'churrascaria', 'buffet', 'self-service', 'gastronomia', 'bistrô', 'cantina', 'refeitório'],
-    mustMatch: ['restaurante', 'churrascaria', 'buffet', 'self-service'],
-    exclude: ['cueca', 'roupa', 'móvel', 'vestuário', 'moda', 'eletro', 'auto peça', 'construção', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'supermercado', 'mercado']
+    mustMatch: ['restaurante', 'churrascaria', 'buffet', 'self-service', 'bistrô', 'gastronomia'],
+    exclude: ['cueca', 'roupa', 'móvel', 'vestuário', 'moda', 'eletro', 'auto peça', 'construção', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'supermercado', 'mercado', 'lanchonete', 'hamburgueria', 'pizzaria', 'padaria', 'confeitaria', 'sorveteria', 'açaí', 'food truck']
   },
   'lanchonetes': {
-    include: ['lanchonete', 'lanche', 'snack', 'fast food', 'hamburgueria', 'burger', 'hot dog', 'sanduíche', 'salgado', 'pastel', 'açaí', 'crepe', 'tapioca', 'espetinho', 'porção', 'petisco'],
-    mustMatch: [], // Removed strict matching - let include keywords work more broadly
-    exclude: ['cueca', 'roupa', 'móvel', 'vestuário', 'moda', 'eletro', 'auto peça', 'construção', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'supermercado', 'mercado', 'farmácia', 'drogaria', 'pet shop', 'veterinár']
+    include: ['lanchonete', 'lanche', 'snack bar'],
+    mustMatch: ['lanchonete', 'lanche', 'snack'],
+    exclude: ['cueca', 'roupa', 'móvel', 'vestuário', 'moda', 'eletro', 'auto peça', 'construção', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'supermercado', 'mercado', 'farmácia', 'drogaria', 'pet shop', 'veterinár', 'restaurante', 'churrascaria', 'pizzaria', 'hamburgueria', 'padaria', 'confeitaria', 'sorveteria', 'açaí', 'bar', 'boteco', 'pub']
+  },
+  'hamburguerias': {
+    include: ['hamburgueria', 'burger', 'hamburguer', 'hambúrguer'],
+    mustMatch: ['hamburgueria', 'burger', 'hamburguer', 'hambúrguer'],
+    exclude: ['restaurante', 'lanchonete', 'pizzaria', 'padaria', 'supermercado', 'mercado', 'bar', 'pub', 'churrascaria']
   },
   'pizzarias': {
     include: ['pizzaria', 'pizza', 'rodízio de pizza', 'pizzas'],
     mustMatch: ['pizzaria', 'pizza'],
-    exclude: ['lanchonete', 'hamburgueria', 'cueca', 'roupa', 'móvel', 'vestuário', 'moda', 'eletro', 'auto peça', 'construção', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'supermercado', 'mercado']
+    exclude: ['lanchonete', 'hamburgueria', 'cueca', 'roupa', 'móvel', 'vestuário', 'moda', 'eletro', 'auto peça', 'construção', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'supermercado', 'mercado', 'restaurante', 'churrascaria', 'padaria', 'bar']
+  },
+  'padarias': {
+    include: ['padaria', 'panificadora', 'panificação', 'pão', 'paes'],
+    mustMatch: ['padaria', 'panificadora', 'panificação'],
+    exclude: ['restaurante', 'lanchonete', 'pizzaria', 'hamburgueria', 'supermercado', 'mercado', 'confeitaria', 'sorveteria', 'bar']
+  },
+  'confeitarias': {
+    include: ['confeitaria', 'doces', 'bolos', 'tortas', 'doceria'],
+    mustMatch: ['confeitaria', 'doceria', 'bolos'],
+    exclude: ['padaria', 'restaurante', 'lanchonete', 'pizzaria', 'supermercado', 'mercado', 'sorveteria', 'bar']
+  },
+  'sorveterias': {
+    include: ['sorveteria', 'sorvete', 'gelato', 'picolé'],
+    mustMatch: ['sorveteria', 'sorvete', 'gelato'],
+    exclude: ['açaí', 'lanchonete', 'restaurante', 'padaria', 'confeitaria', 'supermercado', 'bar']
+  },
+  'açaí': {
+    include: ['açaí', 'acai', 'açaiteria'],
+    mustMatch: ['açaí', 'acai'],
+    exclude: ['sorveteria', 'lanchonete', 'restaurante', 'padaria', 'supermercado', 'bar']
   },
   'materiais de construção': {
     include: ['material de construção', 'construção', 'home center', 'depósito', 'ferragem', 'cimento', 'tijolo', 'telha', 'madeira', 'madeireira', 'hidráulico', 'acabamento', 'piso', 'azulejo', 'tintas', 'leroy', 'tumelero'],
     mustMatch: ['material de construção', 'construção', 'home center', 'depósito', 'ferragem', 'madeireira', 'tintas'],
-    exclude: ['cueca', 'roupa', 'móvel', 'alimento', 'supermercado', 'mercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel']
+    exclude: ['cueca', 'roupa', 'móvel', 'alimento', 'supermercado', 'mercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'lanchonete', 'pizzaria', 'padaria']
   },
   'ferramentas': {
     include: ['ferramenta', 'ferramentaria', 'ferragem', 'parafuso', 'chave', 'furadeira', 'serra', 'martelo', 'alicate', 'máquina', 'equipamento'],
     mustMatch: ['ferramenta', 'ferramentaria', 'ferragem'],
-    exclude: ['cueca', 'roupa', 'móvel', 'alimento', 'supermercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'brinquedo']
+    exclude: ['cueca', 'roupa', 'móvel', 'alimento', 'supermercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'brinquedo', 'lanchonete', 'pizzaria', 'padaria']
   },
   'pet shop': {
     include: ['pet', 'animal', 'veterinár', 'cão', 'cachorro', 'gato', 'ração', 'banho e tosa', 'petshop'],
     mustMatch: ['pet', 'veterinár', 'ração', 'banho e tosa'],
-    exclude: ['cueca', 'roupa', 'móvel', 'supermercado', 'restaurante', 'construção', 'ótica', 'joalheria', 'salão humano', 'academia', 'hotel']
+    exclude: ['cueca', 'roupa', 'móvel', 'supermercado', 'restaurante', 'construção', 'ótica', 'joalheria', 'salão humano', 'academia', 'hotel', 'lanchonete', 'pizzaria', 'padaria']
   },
   'farmácias': {
     include: ['farmácia', 'drogaria', 'medicamento', 'remédio', 'manipulação'],
     mustMatch: ['farmácia', 'drogaria', 'manipulação'],
-    exclude: ['cueca', 'roupa', 'móvel', 'supermercado', 'restaurante', 'construção', 'pet', 'ótica', 'joalheria', 'academia', 'hotel']
+    exclude: ['cueca', 'roupa', 'móvel', 'supermercado', 'restaurante', 'construção', 'pet', 'ótica', 'joalheria', 'academia', 'hotel', 'lanchonete', 'pizzaria', 'padaria']
   },
   'agropecuária': {
     include: ['agropecuária', 'agrícola', 'rural', 'fazenda', 'semente', 'adubo', 'fertilizante', 'ração animal', 'trator', 'implemento'],
-    mustMatch: ['agropecuária', 'agrícola', 'rural', 'semente'],
-    exclude: ['cueca', 'roupa', 'móvel', 'supermercado', 'restaurante', 'ótica', 'joalheria', 'salão', 'academia', 'hotel']
+    mustMatch: ['agropecuária', 'agrícola', 'rural', 'semente', 'implemento'],
+    exclude: ['cueca', 'roupa', 'móvel', 'supermercado', 'restaurante', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'pet shop', 'lanchonete', 'pizzaria', 'padaria']
   },
   'autopeças': {
-    include: ['autopeça', 'auto peça', 'peça automotiva', 'carro', 'moto', 'veículo', 'motor', 'pneu', 'oficina', 'mecânica'],
-    mustMatch: ['autopeça', 'auto peça', 'peça', 'pneu', 'mecânica'],
-    exclude: ['cueca', 'roupa', 'móvel', 'alimento', 'supermercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel']
+    include: ['autopeça', 'auto peça', 'peça automotiva', 'peças automotivas'],
+    mustMatch: ['autopeça', 'auto peça', 'peça automotiva', 'peças'],
+    exclude: ['cueca', 'roupa', 'móvel', 'alimento', 'supermercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'oficina', 'mecânica', 'lanchonete', 'pizzaria', 'padaria']
+  },
+  'oficinas mecânicas': {
+    include: ['oficina', 'mecânica', 'auto center', 'autocenter', 'funilaria', 'lanternagem'],
+    mustMatch: ['oficina', 'mecânica', 'auto center', 'funilaria'],
+    exclude: ['autopeça', 'loja', 'supermercado', 'restaurante', 'pet', 'salão', 'academia', 'hotel', 'lanchonete', 'pizzaria']
   },
   'academias': {
     include: ['academia', 'fitness', 'musculação', 'crossfit', 'pilates', 'ginástica', 'treino', 'gym'],
     mustMatch: ['academia', 'fitness', 'musculação', 'crossfit', 'gym'],
-    exclude: ['cueca', 'roupa', 'móvel', 'supermercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'hotel', 'construção']
+    exclude: ['cueca', 'roupa', 'móvel', 'supermercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'hotel', 'construção', 'lanchonete', 'pizzaria', 'padaria']
+  },
+  'bares': {
+    include: ['bar', 'boteco', 'pub', 'cervejaria', 'choperia', 'taberna'],
+    mustMatch: ['bar', 'boteco', 'pub', 'cervejaria', 'choperia'],
+    exclude: ['restaurante', 'lanchonete', 'pizzaria', 'hamburgueria', 'supermercado', 'mercado', 'padaria', 'confeitaria', 'sorveteria']
+  },
+  'hotéis': {
+    include: ['hotel', 'pousada', 'hospedagem', 'resort'],
+    mustMatch: ['hotel', 'pousada', 'hospedagem', 'resort'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'loja', 'academia']
+  },
+  'lojas de roupas': {
+    include: ['loja de roupa', 'vestuário', 'moda', 'confecção', 'boutique', 'roupas'],
+    mustMatch: ['roupa', 'vestuário', 'moda', 'boutique', 'confecção'],
+    exclude: ['supermercado', 'mercado', 'restaurante', 'lanchonete', 'padaria', 'pet', 'farmácia', 'construção', 'ferragem']
+  },
+  'óticas': {
+    include: ['ótica', 'óptica', 'óculos', 'lentes'],
+    mustMatch: ['ótica', 'óptica', 'óculos'],
+    exclude: ['supermercado', 'mercado', 'restaurante', 'lanchonete', 'padaria', 'pet', 'farmácia', 'construção', 'roupa']
+  },
+  'joalherias': {
+    include: ['joalheria', 'joias', 'jóias', 'relojoaria', 'relógios', 'bijuteria'],
+    mustMatch: ['joalheria', 'joias', 'jóias', 'relojoaria'],
+    exclude: ['supermercado', 'mercado', 'restaurante', 'lanchonete', 'padaria', 'pet', 'farmácia', 'construção', 'roupa', 'ótica']
+  },
+  'salões de beleza': {
+    include: ['salão', 'beleza', 'cabeleireiro', 'cabelo', 'barbearia', 'estética'],
+    mustMatch: ['salão', 'beleza', 'cabeleireiro', 'barbearia', 'estética'],
+    exclude: ['supermercado', 'mercado', 'restaurante', 'lanchonete', 'padaria', 'pet', 'farmácia', 'construção', 'roupa', 'academia']
+  },
+  'clínicas': {
+    include: ['clínica', 'consultório', 'médico', 'saúde', 'odontológica', 'dentista'],
+    mustMatch: ['clínica', 'consultório', 'médico', 'odontológica', 'dentista'],
+    exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel']
+  },
+  'escolas': {
+    include: ['escola', 'colégio', 'educação', 'ensino', 'curso'],
+    mustMatch: ['escola', 'colégio', 'educação', 'ensino'],
+    exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel', 'padaria']
+  },
+  'papelarias': {
+    include: ['papelaria', 'livraria', 'material escolar', 'escritório'],
+    mustMatch: ['papelaria', 'livraria', 'material escolar'],
+    exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel', 'padaria', 'construção']
+  },
+  'gráficas': {
+    include: ['gráfica', 'impressão', 'comunicação visual', 'banner', 'panfleto'],
+    mustMatch: ['gráfica', 'impressão', 'comunicação visual'],
+    exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel', 'padaria', 'papelaria']
+  },
+  'transportadoras': {
+    include: ['transportadora', 'transporte', 'logística', 'frete', 'encomenda'],
+    mustMatch: ['transportadora', 'transporte', 'logística', 'frete'],
+    exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel', 'padaria']
+  },
+  'construtoras': {
+    include: ['construtora', 'construção civil', 'empreiteira', 'incorporadora', 'engenharia'],
+    mustMatch: ['construtora', 'empreiteira', 'incorporadora', 'construção civil'],
+    exclude: ['material de construção', 'loja', 'depósito', 'supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel', 'padaria']
+  },
+  'atacadistas': {
+    include: ['atacadista', 'atacado', 'atacadão', 'distribuidor atacado'],
+    mustMatch: ['atacadista', 'atacado', 'atacadão'],
+    exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel', 'padaria', 'varejo', 'loja']
+  },
+  'distribuidoras': {
+    include: ['distribuidora', 'distribuidor', 'distribuição'],
+    mustMatch: ['distribuidora', 'distribuidor', 'distribuição'],
+    exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel', 'padaria', 'loja']
   }
 };
 
-// Check if result is relevant to searched niche - STRICT VERSION
+// ULTRA-STRICT: Universal exclusion map - when searching for X, ALWAYS exclude these other business types
+const universalExclusionsByCategory: { [key: string]: string[] } = {
+  // Food industries - exclude ALL food service
+  'indústrias de alimentos': ['restaurante', 'lanchonete', 'padaria', 'confeitaria', 'pizzaria', 'hamburgueria', 'bar', 'boteco', 'cafeteria', 'sorveteria', 'açaí', 'mercado', 'supermercado', 'mercearia', 'açougue', 'empório', 'armazém', 'food truck', 'buffet', 'churrascaria', 'cozinha industrial', 'catering', 'distribuidora', 'atacado'],
+  'indústrias de salgados': ['restaurante', 'lanchonete', 'padaria', 'confeitaria', 'pizzaria', 'hamburgueria', 'bar', 'boteco', 'cafeteria', 'sorveteria', 'açaí', 'mercado', 'supermercado', 'mercearia', 'food truck', 'buffet'],
+  'indústrias de biscoitos': ['restaurante', 'lanchonete', 'padaria', 'confeitaria', 'pizzaria', 'hamburgueria', 'bar', 'boteco', 'cafeteria', 'sorveteria', 'açaí', 'mercado', 'supermercado', 'mercearia', 'food truck', 'doceria'],
+  'indústrias de massas': ['restaurante', 'lanchonete', 'padaria', 'confeitaria', 'pizzaria', 'hamburgueria', 'bar', 'supermercado', 'mercado'],
+  'indústrias de pães': ['restaurante', 'lanchonete', 'padaria', 'confeitaria', 'pizzaria', 'hamburgueria', 'bar', 'supermercado', 'mercado', 'food truck'],
+  'indústrias de doces': ['restaurante', 'lanchonete', 'padaria', 'confeitaria', 'pizzaria', 'hamburgueria', 'bar', 'supermercado', 'mercado', 'sorveteria', 'açaí', 'doceria'],
+  'indústrias de laticínios': ['restaurante', 'lanchonete', 'padaria', 'pizzaria', 'bar', 'supermercado', 'mercado', 'açougue'],
+  'indústrias de produtos pet': ['pet shop', 'veterinária', 'clínica veterinária', 'banho e tosa', 'loja de animais', 'restaurante', 'lanchonete', 'mercado'],
+  
+  // Distributors - exclude retail
+  'distribuidoras de doces': ['doceria', 'confeitaria', 'loja de doces', 'restaurante', 'lanchonete', 'padaria', 'mercado', 'supermercado', 'sorveteria'],
+  'distribuidores de frios': ['açougue', 'casa de carnes', 'restaurante', 'lanchonete', 'mercado', 'supermercado'],
+  'distribuidoras': ['loja', 'varejo', 'restaurante', 'lanchonete', 'mercado', 'supermercado'],
+  
+  // Food service - exclude industries and other types
+  'restaurantes': ['lanchonete', 'hamburgueria', 'pizzaria', 'padaria', 'confeitaria', 'bar', 'pub', 'sorveteria', 'açaí', 'food truck', 'mercado', 'supermercado', 'fábrica', 'indústria'],
+  'lanchonetes': ['restaurante', 'hamburgueria', 'pizzaria', 'padaria', 'confeitaria', 'bar', 'pub', 'sorveteria', 'açaí', 'churrascaria', 'mercado', 'supermercado', 'fábrica', 'indústria'],
+  'pizzarias': ['restaurante', 'lanchonete', 'hamburgueria', 'padaria', 'confeitaria', 'bar', 'pub', 'sorveteria', 'churrascaria', 'mercado', 'supermercado', 'fábrica', 'indústria'],
+  'hamburguerias': ['restaurante', 'lanchonete', 'pizzaria', 'padaria', 'confeitaria', 'bar', 'pub', 'sorveteria', 'churrascaria', 'mercado', 'supermercado', 'fábrica', 'indústria'],
+  'padarias': ['restaurante', 'lanchonete', 'hamburgueria', 'pizzaria', 'confeitaria', 'bar', 'pub', 'sorveteria', 'churrascaria', 'mercado', 'supermercado', 'fábrica', 'indústria'],
+  'confeitarias': ['restaurante', 'lanchonete', 'hamburgueria', 'pizzaria', 'padaria', 'bar', 'pub', 'churrascaria', 'mercado', 'supermercado', 'fábrica', 'indústria'],
+  'bares': ['restaurante', 'lanchonete', 'hamburgueria', 'pizzaria', 'padaria', 'confeitaria', 'sorveteria', 'mercado', 'supermercado', 'fábrica', 'indústria'],
+  'churrascarias': ['restaurante', 'lanchonete', 'hamburgueria', 'pizzaria', 'padaria', 'confeitaria', 'bar', 'mercado', 'supermercado', 'fábrica', 'indústria'],
+  'sorveterias': ['restaurante', 'lanchonete', 'hamburgueria', 'pizzaria', 'padaria', 'confeitaria', 'bar', 'churrascaria', 'mercado', 'supermercado', 'açaí', 'fábrica', 'indústria'],
+  'açaí': ['restaurante', 'lanchonete', 'hamburgueria', 'pizzaria', 'padaria', 'confeitaria', 'bar', 'churrascaria', 'mercado', 'supermercado', 'sorveteria', 'fábrica', 'indústria'],
+  
+  // Retail - exclude each other
+  'supermercados': ['hipermercado', 'atacado', 'atacadista', 'restaurante', 'lanchonete', 'padaria', 'farmácia', 'pet shop', 'loja de roupa', 'ótica', 'joalheria', 'fábrica', 'indústria'],
+  'hipermercados': ['supermercado', 'mercado', 'mercearia', 'minimercado', 'restaurante', 'lanchonete', 'padaria', 'farmácia', 'fábrica', 'indústria'],
+  'atacadistas': ['supermercado', 'mercado', 'mercearia', 'minimercado', 'varejo', 'loja', 'restaurante', 'lanchonete', 'fábrica', 'indústria'],
+  'farmácias': ['supermercado', 'mercado', 'restaurante', 'lanchonete', 'pet shop', 'ótica', 'salão', 'academia', 'fábrica', 'indústria'],
+  'pet shop': ['supermercado', 'mercado', 'restaurante', 'lanchonete', 'farmácia', 'ótica', 'salão', 'academia', 'fábrica', 'indústria'],
+};
+
+// Check if result is relevant to searched niche - ULTRA STRICT VERSION
 function isRelevantToNiche(place: any, segment: string): boolean {
   const segmentLower = segment.toLowerCase();
   const title = (place.title || '').toLowerCase();
@@ -688,25 +825,52 @@ function isRelevantToNiche(place: any, segment: string): boolean {
   const allCategories = (place.categories || []).join(' ').toLowerCase();
   const combinedText = `${title} ${category} ${allCategories}`;
   
-  // ===== SPECIAL HANDLING FOR INDUSTRY SEARCHES =====
-  // If this is an industry search, apply STRICT industry filtering
+  // ===== STEP 1: UNIVERSAL EXCLUSIONS =====
+  // Check if the segment has universal exclusions
+  let universalExclusions = universalExclusionsByCategory[segmentLower];
+  
+  // Try partial matching for universal exclusions
+  if (!universalExclusions) {
+    for (const [key, exclusions] of Object.entries(universalExclusionsByCategory)) {
+      if (segmentLower.includes(key) || key.includes(segmentLower)) {
+        universalExclusions = exclusions;
+        break;
+      }
+    }
+  }
+  
+  // Apply universal exclusions STRICTLY
+  if (universalExclusions) {
+    for (const exclusion of universalExclusions) {
+      if (combinedText.includes(exclusion)) {
+        // Exception: if title explicitly contains the search term, allow it
+        // e.g., searching "indústrias de alimentos" and title contains "indústria de alimentos"
+        const segmentWords = segmentLower.split(/\s+/).filter(w => w.length > 3);
+        const hasExplicitMatch = segmentWords.some(word => title.includes(word));
+        
+        if (!hasExplicitMatch) {
+          console.log(`❌ Universal exclusion: "${place.title}" excluded for "${segmentLower}" - matches: ${exclusion}`);
+          return false;
+        }
+      }
+    }
+  }
+  
+  // ===== STEP 2: SPECIAL HANDLING FOR INDUSTRY SEARCHES =====
   if (isIndustrySearch(segmentLower)) {
     if (!isRealIndustry(place)) {
       return false;
     }
-    // Industry passed the strict filter, continue with normal checks
   }
   
-  // ===== SPECIAL HANDLING FOR SOCCER SCHOOL SEARCHES =====
-  // Exclude franchises and professional club academies
+  // ===== STEP 3: SPECIAL HANDLING FOR SOCCER SCHOOL SEARCHES =====
   if (isSoccerSchoolSearch(segmentLower)) {
     if (!isIndependentSoccerSchool(place)) {
       return false;
     }
-    // Independent soccer school, continue with normal checks
   }
   
-  // Find matching niche keywords
+  // ===== STEP 4: NICHE-SPECIFIC KEYWORD MATCHING =====
   let nicheConfig = nicheKeywords[segmentLower];
   
   // Try partial matching if exact match not found
@@ -719,26 +883,48 @@ function isRelevantToNiche(place: any, segment: string): boolean {
     }
   }
   
-  // If no specific niche config, be more permissive but still filter obvious mismatches
+  // If no specific niche config, apply strict generic filtering
   if (!nicheConfig) {
-    const genericExclusions = ['cueca', 'lingerie', 'moda íntima', 'roupa íntima', 'magazine luiza', 'americanas', 'casas bahia'];
+    // Generic exclusions for any category not explicitly defined
+    const genericExclusions = [
+      'cueca', 'lingerie', 'moda íntima', 'roupa íntima', 
+      'magazine luiza', 'americanas', 'casas bahia', 'ponto frio',
+      'lojas americanas'
+    ];
     for (const exclude of genericExclusions) {
       if (combinedText.includes(exclude)) {
+        console.log(`❌ Generic exclusion: "${place.title}" - matches: ${exclude}`);
         return false;
       }
     }
+    
+    // For undefined categories, require the search term to appear in title/category
+    const searchTermWords = segmentLower.split(/\s+/).filter(w => w.length > 3);
+    let foundSearchTermInPlace = false;
+    for (const word of searchTermWords) {
+      if (combinedText.includes(word)) {
+        foundSearchTermInPlace = true;
+        break;
+      }
+    }
+    
+    if (!foundSearchTermInPlace && searchTermWords.length > 0) {
+      console.log(`❌ No term match: "${place.title}" does not contain any term from "${segmentLower}"`);
+      return false;
+    }
+    
     return true;
   }
   
-  // Check exclusions first (strict)
+  // ===== STEP 5: Check exclusions from niche config =====
   for (const exclude of nicheConfig.exclude) {
     if (combinedText.includes(exclude)) {
-      console.log(`❌ Excluded "${place.title}" - matches exclusion: ${exclude}`);
+      console.log(`❌ Niche exclusion: "${place.title}" - matches: ${exclude}`);
       return false;
     }
   }
   
-  // For categories with mustMatch requirements, enforce them
+  // ===== STEP 6: Check mustMatch requirements =====
   if (nicheConfig.mustMatch && nicheConfig.mustMatch.length > 0) {
     let hasRequiredMatch = false;
     for (const must of nicheConfig.mustMatch) {
@@ -748,16 +934,9 @@ function isRelevantToNiche(place: any, segment: string): boolean {
       }
     }
     if (!hasRequiredMatch) {
-      console.log(`❌ Excluded "${place.title}" - no required keyword match for ${segmentLower}`);
+      console.log(`❌ No required match: "${place.title}" - none of [${nicheConfig.mustMatch.join(', ')}] found for ${segmentLower}`);
       return false;
     }
-  }
-  
-  // If mustMatch is empty, just check if ANY include keyword is present
-  // This is more permissive for categories like lanchonetes
-  if (!nicheConfig.mustMatch || nicheConfig.mustMatch.length === 0) {
-    // Accept any result that wasn't excluded - Google already filtered by category
-    return true;
   }
   
   return true;
