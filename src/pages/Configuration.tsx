@@ -28,6 +28,7 @@ const Configuration = () => {
   const [businessType, setBusinessType] = useState("all"); // all, matriz, filial
   const [digitalPresence, setDigitalPresence] = useState("all"); // all, no-site, basic-site, structured-site
   const [digitalActivity, setDigitalActivity] = useState("all"); // all, low, basic, active
+  const [customerSearch, setCustomerSearch] = useState(""); // Search filter for customer types
 
   const countries = [
     { code: "BR", name: "Brasil" },
@@ -348,13 +349,39 @@ const Configuration = () => {
                     />
                 </div>
 
-                {/* Customer Types - Ordenado alfabeticamente */}
+                {/* Customer Types - Com campo de pesquisa */}
                 <div>
                   <Label className="text-base font-semibold mb-4 block" translate="no">
                     Clientes que quero encontrar: *
                   </Label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4" translate="no">
-                    {customerTypes.map((customer) => (
+                  
+                  {/* Search field */}
+                  <div className="relative mb-4">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      value={customerSearch}
+                      onChange={(e) => setCustomerSearch(e.target.value)}
+                      placeholder="Pesquisar tipo de estabelecimento..."
+                      className="pl-10"
+                      translate="no"
+                    />
+                  </div>
+                  
+                  {/* Selected count */}
+                  {selectedCustomers.length > 0 && (
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {selectedCustomers.length} selecionado{selectedCustomers.length > 1 ? 's' : ''}
+                      {customerSearch && ` (mostrando resultados para "${customerSearch}")`}
+                    </p>
+                  )}
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 max-h-[400px] overflow-y-auto pr-2" translate="no">
+                    {customerTypes
+                      .filter(customer => 
+                        customerSearch === "" || 
+                        customer.toLowerCase().includes(customerSearch.toLowerCase())
+                      )
+                      .map((customer) => (
                       <div key={customer} className="flex flex-col" translate="no">
                         <div className="flex items-center space-x-2">
                           <Checkbox
@@ -382,6 +409,15 @@ const Configuration = () => {
                         )}
                       </div>
                     ))}
+                    
+                    {customerTypes.filter(customer => 
+                      customerSearch === "" || 
+                      customer.toLowerCase().includes(customerSearch.toLowerCase())
+                    ).length === 0 && (
+                      <p className="text-muted-foreground text-sm col-span-full py-4 text-center">
+                        Nenhum tipo de estabelecimento encontrado para "{customerSearch}"
+                      </p>
+                    )}
                   </div>
                 </div>
 
