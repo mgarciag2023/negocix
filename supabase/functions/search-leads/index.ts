@@ -1255,10 +1255,10 @@ serve(async (req) => {
     }
     
     const MAX_TOTAL_LEADS = 150;
-    const MIN_LEADS_TARGET = 30; // Reduced minimum to 30 leads for more permissive filtering
-    const MIN_LEADS_EARLY_EXIT = 80; // Only exit early if we have at least 80
+    const MIN_LEADS_TARGET = 20; // Very low minimum to maximize results
+    const MIN_LEADS_EARLY_EXIT = 60; // Exit early with 60+ leads
     
-    console.log(`🔎 Google Places API search: targeting ${MIN_LEADS_TARGET}-${MAX_TOTAL_LEADS} leads (relaxed filtering)`);
+    console.log(`🔎 Google Places API search: targeting ${MIN_LEADS_TARGET}-${MAX_TOTAL_LEADS} leads (MAXIMUM VOLUME MODE)`);
     
     // OPTIMIZATION: Cache to avoid duplicate API calls
     const searchCache = new Map<string, any[]>();
@@ -1307,9 +1307,9 @@ serve(async (req) => {
         nextPageToken = searchData.next_page_token || null;
         pageCount++;
         
-        // Always fetch more pages if token exists - maximize results
+        // Reduced delay for faster searches - Google requires ~2s between page token requests
         if (nextPageToken && pageCount < maxPages) {
-          await sleep(2000);
+          await sleep(1800); // Minimum safe delay
         } else {
           break;
         }
@@ -1364,10 +1364,10 @@ serve(async (req) => {
     console.log('📋 Segment display names:', segmentDisplayNames);
     
     // Search each segment separately and tag results with their segment
-    // MAXIMIZED page limits for more leads - increased to get better location coverage
+    // MAXIMUM page limits for maximum leads
     let allPlacesWithSegment: any[] = [];
-    const pagesPerSegment = Math.max(8, Math.min(12, Math.floor(40 / segments.length)));
-    console.log(`⚡ Optimization: ${pagesPerSegment} pages per segment (${segments.length} segments)`);
+    const pagesPerSegment = Math.max(10, Math.min(15, Math.floor(50 / segments.length))); // Increased from 8-12 to 10-15
+    console.log(`⚡ MAXIMUM VOLUME: ${pagesPerSegment} pages per segment (${segments.length} segments)`);
     
     for (const seg of segments) {
       let searchTerms: string[];
@@ -1379,8 +1379,8 @@ serve(async (req) => {
         console.log(`🛒 E-commerce específico: ${ecomType}`);
       } else {
         searchTerms = generateSearchTerms(seg);
-        // OPTIMIZATION: Use 4 best terms per segment for maximum coverage
-        searchTerms = searchTerms.slice(0, 4);
+        // MAXIMUM VOLUME: Use 5 terms per segment for maximum coverage
+        searchTerms = searchTerms.slice(0, 5);
       }
       
       console.log(`📤 Searching segment "${seg}" with terms:`, searchTerms);
@@ -1399,9 +1399,8 @@ serve(async (req) => {
       allPlacesWithSegment.push(...placesFromSegment);
       console.log(`📊 Segment "${seg}": ${placesFromSegment.length} raw places`);
       
-      // OPTIMIZATION: Early exit if we already have plenty of results
-      // Increased multiplier due to location filtering
-      if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 6) {
+      // MAXIMUM VOLUME: Higher threshold before early exit
+      if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 8) {
         console.log(`⚡ Enough raw places (${allPlacesWithSegment.length}), skipping remaining segments`);
         break;
       }
@@ -1439,9 +1438,9 @@ serve(async (req) => {
     const activePlaces = transformedPlaces.filter(p => !p.permanentlyClosed);
     console.log(`📊 Active businesses: ${activePlaces.length}`);
     
-    // OPTIMIZATION: Smart batching for details - prioritize high-value leads first
-    const BATCH_SIZE = 50; // Large batch size for more leads
-    const DETAILS_DELAY = 15; // Reduced delay for faster processing
+    // MAXIMUM VOLUME: Larger batches and faster processing
+    const BATCH_SIZE = 60; // Increased from 50
+    const DETAILS_DELAY = 10; // Reduced from 15ms for faster processing
     
     // OPTIMIZATION: Sort by rating/reviews first to get best leads initially
     activePlaces.sort((a, b) => {
@@ -1452,12 +1451,11 @@ serve(async (req) => {
     
     console.log('📞 Fetching contact details (optimized batches)...');
 
-    // IMPORTANT: Minimum leads (50) must be evaluated AFTER all strict filters (location, niche, matriz/filial, digital).
-    // We fetch details in a window (800) and expand (up to 1200) only if the final filtered result is below 50.
+    // MAXIMUM VOLUME: Start with larger window and expand more aggressively
     let leads: any[] = [];
     let detailsFetched = 0;
-    let detailsFetchLimit = Math.min(activePlaces.length, 800);
-    const HARD_MAX_DETAILS_FETCH = Math.min(activePlaces.length, 1200);
+    let detailsFetchLimit = Math.min(activePlaces.length, 1000); // Increased from 800
+    const HARD_MAX_DETAILS_FETCH = Math.min(activePlaces.length, 1500); // Increased from 1200
 
     while (true) {
       // Fetch details for the next window
