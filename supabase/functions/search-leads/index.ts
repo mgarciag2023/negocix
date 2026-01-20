@@ -310,41 +310,90 @@ function isAddressInLocation(address: string, requestedRegion: string, countryCo
   const normalizedAddress = normalizeLocationString(address);
   const normalizedRegion = normalizeLocationString(requestedRegion);
   
+  // Brazilian state abbreviations - MUST recognize these as valid
+  const brazilianStates: { [key: string]: string } = {
+    'ac': 'acre', 'al': 'alagoas', 'ap': 'amapa', 'am': 'amazonas',
+    'ba': 'bahia', 'ce': 'ceara', 'df': 'distrito federal', 'es': 'espirito santo',
+    'go': 'goias', 'ma': 'maranhao', 'mt': 'mato grosso', 'ms': 'mato grosso do sul',
+    'mg': 'minas gerais', 'pa': 'para', 'pb': 'paraiba', 'pr': 'parana',
+    'pe': 'pernambuco', 'pi': 'piaui', 'rj': 'rio de janeiro', 'rn': 'rio grande do norte',
+    'rs': 'rio grande do sul', 'ro': 'rondonia', 'rr': 'roraima', 'sc': 'santa catarina',
+    'sp': 'sao paulo', 'se': 'sergipe', 'to': 'tocantins'
+  };
+  
   // Split region into parts (could be "City, State" or "City - State" or just "City")
   const regionParts = normalizedRegion.split(/[\s,\-]+/).filter(p => p.length > 1);
   
-  // For Brazilian addresses, be VERY strict
+  // For Brazilian addresses
   if (countryCode === 'BR') {
+    // Check if the search is ONLY for a state (2-letter code or state name)
+    const cleanRegion = normalizedRegion.trim().toLowerCase();
+    const isStateOnlySearch = brazilianStates[cleanRegion] !== undefined || 
+                              Object.values(brazilianStates).includes(cleanRegion);
+    
+    if (isStateOnlySearch) {
+      // STATE-ONLY SEARCH: Accept any address that contains this state
+      const stateAbbrev = brazilianStates[cleanRegion] ? cleanRegion : 
+                          Object.keys(brazilianStates).find(k => brazilianStates[k] === cleanRegion);
+      
+      if (stateAbbrev) {
+        // Check if address contains " - XX," or " - XX " or ", XX," pattern (state abbreviation position)
+        const statePattern = new RegExp(`[,\\s\\-]\\s*${stateAbbrev}\\s*[,\\s\\-]|[,\\s\\-]\\s*${stateAbbrev}\\s*$`, 'i');
+        if (statePattern.test(address.toLowerCase())) {
+          return true;
+        }
+        // Also check for full state name
+        const stateName = brazilianStates[stateAbbrev];
+        if (stateName && normalizedAddress.includes(stateName)) {
+          return true;
+        }
+      }
+      
+      // If search is state name, check for abbreviation in address
+      const searchedStateAbbrev = Object.keys(brazilianStates).find(k => brazilianStates[k] === cleanRegion);
+      if (searchedStateAbbrev) {
+        const statePattern = new RegExp(`[,\\s\\-]\\s*${searchedStateAbbrev}\\s*[,\\s\\-]|[,\\s\\-]\\s*${searchedStateAbbrev}\\s*$`, 'i');
+        if (statePattern.test(address.toLowerCase())) {
+          return true;
+        }
+      }
+      
+      console.log(`❌ State search: "${address}" not in state "${requestedRegion}"`);
+      return false;
+    }
+    
+    // CITY + STATE or CITY-ONLY SEARCH: Original logic but more flexible
     // Extract location from address
     const addressParts = extractLocationParts(address);
     
-    // If region contains a city name, check if it appears in the address
-    // The city MUST appear before the state abbreviation
-    let cityMatch = false;
-    let regionCityWords = regionParts.filter(p => p.length > 2 && !['brasil', 'brazil', 'br'].includes(p));
+    // Filter region words - include state abbreviations (2 chars) too!
+    let regionCityWords = regionParts.filter(p => {
+      // Accept words > 2 chars, OR state abbreviations
+      return (p.length > 2 || brazilianStates[p.toLowerCase()] !== undefined) && 
+             !['brasil', 'brazil', 'br'].includes(p.toLowerCase());
+    });
     
+    // Check if any region word appears in the address
+    let cityMatch = false;
     for (const word of regionCityWords) {
-      // Check if this word appears in the address
-      if (normalizedAddress.includes(word)) {
+      if (normalizedAddress.includes(word.toLowerCase())) {
         cityMatch = true;
         break;
       }
     }
     
     if (!cityMatch) {
-      // City not found in address - reject
       console.log(`❌ Location mismatch: "${address}" does not contain city from "${requestedRegion}"`);
       return false;
     }
     
-    // Additional check: the matched word should appear in the city position, not just anywhere
-    // (avoid false positives like street names matching city names)
-    // Check that the region word appears after a comma or dash (indicating city/state section)
+    // Additional check: the matched word should appear in the city position
     let foundInCityPosition = false;
     for (const word of regionCityWords) {
+      const wordLower = word.toLowerCase();
       // Check if word appears after a comma or dash (city position in Brazilian addresses)
-      const cityPositionPattern = new RegExp(`[,\\-]\\s*[^,\\-]*${word}[^,\\-]*\\s*[,\\-]`);
-      const endPositionPattern = new RegExp(`[,\\-]\\s*[^,\\-]*${word}[^,\\-]*$`);
+      const cityPositionPattern = new RegExp(`[,\\-]\\s*[^,\\-]*${wordLower}[^,\\-]*\\s*[,\\-]`, 'i');
+      const endPositionPattern = new RegExp(`[,\\-]\\s*[^,\\-]*${wordLower}[^,\\-]*$`, 'i');
       
       if (cityPositionPattern.test(normalizedAddress) || endPositionPattern.test(normalizedAddress)) {
         foundInCityPosition = true;
@@ -354,10 +403,9 @@ function isAddressInLocation(address: string, requestedRegion: string, countryCo
     
     if (!foundInCityPosition) {
       // Check if the word appears standalone (not as part of a street name)
-      // Allow if the word is clearly separated
       const addressWords = normalizedAddress.split(/[\s,\-]+/);
       for (const word of regionCityWords) {
-        if (addressWords.includes(word)) {
+        if (addressWords.includes(word.toLowerCase())) {
           foundInCityPosition = true;
           break;
         }
