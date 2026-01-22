@@ -121,6 +121,7 @@ function generateSearchTerms(segment: string): string[] {
     'ferramentas': ['ferramentas', 'ferragem'],
     'agropecuária': ['agropecuária', 'produtos rurais'],
     'farmácias': ['farmácia', 'drogaria'],
+    'farmácias e drogarias': ['farmácia', 'drogaria', 'farmácia popular'],
     'pet shop': ['pet shop', 'veterinária'],
     'lojas de roupas': ['loja de roupas', 'vestuário'],
     'autopeças': ['autopeças', 'peças automotivas'],
@@ -132,6 +133,12 @@ function generateSearchTerms(segment: string): string[] {
     'salões de beleza': ['salão de beleza', 'cabeleireiro'],
     'hotéis': ['hotel', 'pousada'],
     'clínicas': ['clínica', 'consultório'],
+    'clínicas médicas e odontológicas': ['clínica médica', 'clínica odontológica', 'consultório médico', 'consultório odontológico'],
+    'hospitais e pronto-atendimentos': ['hospital', 'pronto atendimento', 'upa', 'pronto-socorro'],
+    'laboratórios e centros de diagnóstico': ['laboratório', 'análises clínicas', 'centro de diagnóstico', 'diagnóstico por imagem'],
+    'clínicas de fisioterapia e reabilitação': ['fisioterapia', 'clínica de reabilitação', 'reabilitação'],
+    'ortopedias e lojas de produtos ortopédicos': ['ortopedia', 'produtos ortopédicos', 'órteses e próteses', 'loja ortopédica'],
+    'distribuidoras de produtos hospitalares': ['distribuidora hospitalar', 'produtos hospitalares', 'materiais hospitalares', 'produtos médicos'],
     'transportadoras': ['transportadora', 'logística'],
     'gráficas': ['gráfica', 'comunicação visual'],
     'construtoras': ['construtora', 'construção civil'],
@@ -723,6 +730,35 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     include: ['farmácia', 'drogaria', 'medicamento', 'remédio', 'manipulação', 'farmácias'],
     exclude: ['roupa', 'supermercado', 'restaurante', 'construção', 'pet', 'ótica', 'joalheria', 'academia', 'hotel']
   },
+  'farmácias e drogarias': {
+    include: ['farmácia', 'drogaria', 'medicamento', 'remédio', 'manipulação', 'farmácia popular'],
+    exclude: ['roupa', 'supermercado', 'restaurante', 'construção', 'pet', 'ótica', 'joalheria', 'academia', 'hotel']
+  },
+  'clínicas médicas e odontológicas': {
+    include: ['clínica', 'consultório', 'médico', 'medica', 'saúde', 'odontologia', 'odontológica', 'dentista', 'cirurgião dentista', 'cardiologia', 'dermatologia', 'ginecologia', 'pediatria'],
+    exclude: ['veterinár', 'pet', 'supermercado', 'restaurante', 'lanchonete', 'hotel', 'academia']
+  },
+  'hospitais e pronto-atendimentos': {
+    include: ['hospital', 'pronto atendimento', 'pronto-atendimento', 'pronto socorro', 'pronto-socorro', 'upa', 'unidade de pronto atendimento', 'emergência', 'emergencia'],
+    exclude: ['veterinár', 'pet', 'supermercado', 'restaurante', 'lanchonete', 'hotel', 'academia']
+  },
+  'laboratórios e centros de diagnóstico': {
+    include: ['laboratório', 'laboratorio', 'análises clínicas', 'analises clinicas', 'diagnóstico', 'diagnostico', 'centro de diagnóstico', 'imagem', 'radiologia', 'ultrassom', 'tomografia', 'ressonância', 'raio-x', 'exames'],
+    exclude: ['veterinár', 'pet', 'supermercado', 'restaurante', 'lanchonete', 'hotel', 'academia']
+  },
+  'clínicas de fisioterapia e reabilitação': {
+    include: ['fisioterapia', 'fisioterapeuta', 'reabilitação', 'reabilitacao', 'terapia manual', 'ortopédica', 'ortopedica'],
+    exclude: ['academia', 'fitness', 'supermercado', 'restaurante', 'lanchonete', 'hotel', 'veterinár']
+  },
+  'ortopedias e lojas de produtos ortopédicos': {
+    include: ['ortopedia', 'ortopédico', 'ortopedico', 'órtese', 'ortese', 'prótese', 'protese', 'cadeira de rodas', 'muleta', 'andador', 'colete', 'loja ortopédica', 'produtos ortopédicos'],
+    exclude: ['academia', 'fitness', 'supermercado', 'restaurante', 'lanchonete', 'hotel', 'veterinár']
+  },
+  'distribuidoras de produtos hospitalares': {
+    include: ['distribuidora', 'distribuidor', 'hospitalar', 'produtos hospitalares', 'materiais hospitalares', 'produtos médicos', 'materiais médicos', 'material cirúrgico', 'insumos hospitalares', 'med-hosp'],
+    mustMatch: ['distribuidora', 'distribuidor'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'academia', 'hotel', 'loja de roupa']
+  },
   'agropecuária': {
     include: ['agropecuária', 'agrícola', 'rural', 'fazenda', 'semente', 'adubo', 'fertilizante', 'ração animal', 'trator', 'implemento', 'agro'],
     exclude: ['roupa', 'supermercado', 'restaurante', 'ótica', 'joalheria', 'salão', 'academia', 'hotel']
@@ -837,7 +873,15 @@ const universalExclusionsByCategory: { [key: string]: string[] } = {
   'hipermercados': ['fábrica', 'indústria'],
   'atacadistas': ['fábrica', 'indústria'],
   'farmácias': ['fábrica', 'indústria'],
+  'farmácias e drogarias': ['fábrica', 'indústria'],
   'pet shop': ['fábrica', 'indústria'],
+  // Saúde (evitar misturar com varejo/serviços não-relacionados)
+  'hospitais e pronto-atendimentos': ['supermercado', 'mercado', 'restaurante', 'lanchonete', 'bar', 'hotel', 'academia'],
+  'laboratórios e centros de diagnóstico': ['supermercado', 'mercado', 'restaurante', 'lanchonete', 'bar', 'hotel', 'academia'],
+  'clínicas médicas e odontológicas': ['supermercado', 'mercado', 'restaurante', 'lanchonete', 'bar', 'hotel'],
+  'clínicas de fisioterapia e reabilitação': ['supermercado', 'mercado', 'restaurante', 'lanchonete', 'bar', 'hotel'],
+  'ortopedias e lojas de produtos ortopédicos': ['supermercado', 'mercado', 'restaurante', 'lanchonete', 'bar', 'hotel'],
+  'distribuidoras de produtos hospitalares': ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'academia'],
 };
 
 // Check if result is relevant to searched niche - ULTRA STRICT VERSION
