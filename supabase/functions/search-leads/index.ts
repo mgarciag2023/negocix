@@ -117,6 +117,20 @@ function generateSearchTerms(segment: string): string[] {
     'supermercados': ['supermercado', 'mercado'],
     'hipermercados': ['hipermercado', 'atacadão'],
     'padarias': ['padaria', 'panificadora'],
+    'panificadoras': ['panificadora', 'padaria'],
+    'confeitarias': ['confeitaria', 'doceria', 'bolos'],
+    'docerias': ['doceria', 'confeitaria', 'doces'],
+    'indústrias de salgados': ['fábrica de salgados', 'salgaderia'],
+    'salgadeiros': ['salgaderia', 'fábrica de salgados', 'salgados'],
+    'empresas de gulla': ['gulla', 'guloseimas', 'doces industriais'],
+    'pastelarias': ['pastelaria', 'pastel'],
+    'hamburguerias': ['hamburgueria', 'burger', 'hamburguer'],
+    'esfiharias': ['esfiharia', 'esfiha', 'esfirra'],
+    'hot dogs': ['hot dog', 'cachorro quente', 'lanchonete'],
+    'food trucks': ['food truck', 'comida de rua'],
+    'churrascarias': ['churrascaria', 'churrasco', 'rodízio'],
+    'catering': ['catering', 'buffet', 'eventos'],
+    'casas de massas': ['casa de massas', 'massa fresca', 'restaurante italiano'],
     'materiais de construção': ['material de construção', 'home center'],
     'ferramentas': ['ferramentas', 'ferragem'],
     'agropecuária': ['agropecuária', 'produtos rurais'],
@@ -132,6 +146,7 @@ function generateSearchTerms(segment: string): string[] {
     'academias': ['academia', 'fitness'],
     'salões de beleza': ['salão de beleza', 'cabeleireiro'],
     'hotéis': ['hotel', 'pousada'],
+    'hotéis e pousadas': ['hotel', 'pousada', 'hospedagem'],
     'clínicas': ['clínica', 'consultório'],
     'clínicas médicas e odontológicas': ['clínica médica', 'clínica odontológica', 'consultório médico', 'consultório odontológico'],
     'hospitais e pronto-atendimentos': ['hospital', 'pronto atendimento', 'upa', 'pronto-socorro'],
@@ -143,7 +158,6 @@ function generateSearchTerms(segment: string): string[] {
     'gráficas': ['gráfica', 'comunicação visual'],
     'construtoras': ['construtora', 'construção civil'],
     'cozinhas industriais': ['cozinha industrial', 'refeição coletiva'],
-    'indústrias de salgados': ['fábrica de salgados', 'salgaderia'],
     'indústrias de biscoitos': ['fábrica de biscoitos', 'indústria de biscoitos', 'biscoitaria'],
     'distribuidoras de doces': ['distribuidora de doces', 'atacado de doces', 'distribuidor de doces'],
     'indústrias de produtos pet': ['fábrica de ração', 'indústria pet', 'fábrica de produtos pet', 'indústria de ração animal', 'fábrica de petiscos para animais'],
@@ -835,6 +849,55 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     include: ['distribuidora', 'distribuidor', 'distribuição'],
     mustMatch: ['distribuidora', 'distribuidor', 'distribuição'],
     exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel', 'padaria', 'loja']
+  },
+  // Novos segmentos alimentícios
+  'panificadoras': {
+    include: ['panificadora', 'padaria', 'panificação', 'pão', 'paes'],
+    exclude: ['supermercado', 'mercado']
+  },
+  'docerias': {
+    include: ['doceria', 'doces', 'confeitaria', 'brigadeiro', 'trufas', 'chocolate'],
+    exclude: ['supermercado', 'mercado']
+  },
+  'salgadeiros': {
+    include: ['salgaderia', 'salgados', 'salgadinho', 'coxinha', 'empada'],
+    exclude: ['supermercado', 'mercado']
+  },
+  'empresas de gulla': {
+    include: ['gulla', 'guloseimas', 'doces', 'balas', 'pirulitos'],
+    exclude: ['supermercado', 'mercado']
+  },
+  'pastelarias': {
+    include: ['pastelaria', 'pastel', 'pastéis'],
+    exclude: ['supermercado', 'mercado']
+  },
+  'esfiharias': {
+    include: ['esfiharia', 'esfiha', 'esfirra', 'esfirras', 'árabe'],
+    exclude: ['supermercado', 'mercado']
+  },
+  'hot dogs': {
+    include: ['hot dog', 'cachorro quente', 'dogão'],
+    exclude: ['supermercado', 'mercado']
+  },
+  'food trucks': {
+    include: ['food truck', 'comida de rua', 'trailer', 'truck'],
+    exclude: ['supermercado', 'mercado', 'fábrica', 'indústria']
+  },
+  'churrascarias': {
+    include: ['churrascaria', 'churrasco', 'rodízio de carnes', 'espetaria'],
+    exclude: ['supermercado', 'mercado']
+  },
+  'catering': {
+    include: ['catering', 'buffet', 'eventos', 'festas', 'coffee break'],
+    exclude: ['supermercado', 'mercado', 'fábrica', 'indústria']
+  },
+  'casas de massas': {
+    include: ['casa de massas', 'massa fresca', 'massas artesanais', 'italiano', 'macarrão'],
+    exclude: ['supermercado', 'mercado']
+  },
+  'hotéis e pousadas': {
+    include: ['hotel', 'pousada', 'hospedagem', 'resort', 'hostel', 'inn'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'loja']
   }
 };
 
@@ -862,9 +925,17 @@ const universalExclusionsByCategory: { [key: string]: string[] } = {
   'pizzarias': ['mercado', 'supermercado', 'fábrica', 'indústria'],
   'hamburguerias': ['mercado', 'supermercado', 'fábrica', 'indústria'],
   'padarias': ['mercado', 'supermercado', 'fábrica', 'indústria'],
+  'panificadoras': ['mercado', 'supermercado', 'fábrica', 'indústria'],
   'confeitarias': ['mercado', 'supermercado', 'fábrica', 'indústria'],
+  'docerias': ['mercado', 'supermercado', 'fábrica', 'indústria'],
+  'pastelarias': ['mercado', 'supermercado', 'fábrica', 'indústria'],
+  'esfiharias': ['mercado', 'supermercado', 'fábrica', 'indústria'],
+  'hot dogs': ['mercado', 'supermercado', 'fábrica', 'indústria'],
+  'food trucks': ['mercado', 'supermercado', 'fábrica', 'indústria'],
   'bares': ['mercado', 'supermercado', 'fábrica', 'indústria'],
   'churrascarias': ['mercado', 'supermercado', 'fábrica', 'indústria'],
+  'catering': ['mercado', 'supermercado', 'fábrica', 'indústria'],
+  'casas de massas': ['mercado', 'supermercado', 'fábrica', 'indústria'],
   'sorveterias': ['mercado', 'supermercado', 'fábrica', 'indústria'],
   'açaí': ['mercado', 'supermercado', 'fábrica', 'indústria'],
   
@@ -875,6 +946,8 @@ const universalExclusionsByCategory: { [key: string]: string[] } = {
   'farmácias': ['fábrica', 'indústria'],
   'farmácias e drogarias': ['fábrica', 'indústria'],
   'pet shop': ['fábrica', 'indústria'],
+  // Hospitalidade
+  'hotéis e pousadas': ['supermercado', 'mercado', 'fábrica', 'indústria', 'loja'],
   // Saúde (evitar misturar com varejo/serviços não-relacionados)
   'hospitais e pronto-atendimentos': ['supermercado', 'mercado', 'restaurante', 'lanchonete', 'bar', 'hotel', 'academia'],
   'laboratórios e centros de diagnóstico': ['supermercado', 'mercado', 'restaurante', 'lanchonete', 'bar', 'hotel', 'academia'],
@@ -883,6 +956,7 @@ const universalExclusionsByCategory: { [key: string]: string[] } = {
   'ortopedias e lojas de produtos ortopédicos': ['supermercado', 'mercado', 'restaurante', 'lanchonete', 'bar', 'hotel'],
   'distribuidoras de produtos hospitalares': ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'academia'],
 };
+
 
 // Check if result is relevant to searched niche - ULTRA STRICT VERSION
 function isRelevantToNiche(place: any, segment: string): boolean {
