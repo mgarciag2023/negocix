@@ -47,21 +47,21 @@ const SavedLeadCard = ({ lead, onUpdate, onDelete }: SavedLeadCardProps) => {
   const [notes, setNotes] = useState(lead.notes || '');
   const [nextFollowUp, setNextFollowUp] = useState(lead.next_follow_up_date || '');
 
-  const handleSaveNotes = async () => {
-    const success = await onUpdate(lead.id, { notes });
+  const handleSaveNotes = () => {
+    const success = onUpdate(lead.id, { notes });
     if (success) setIsEditingNotes(false);
   };
 
-  const handleStageChange = async (stage: LeadStage) => {
-    await onUpdate(lead.id, { 
+  const handleStageChange = (stage: LeadStage) => {
+    onUpdate(lead.id, { 
       lead_stage: stage,
       last_contact_date: new Date().toISOString(),
     });
   };
 
-  const handleFollowUpChange = async (date: string) => {
+  const handleFollowUpChange = (date: string) => {
     setNextFollowUp(date);
-    await onUpdate(lead.id, { next_follow_up_date: date || null });
+    onUpdate(lead.id, { next_follow_up_date: date || null });
   };
 
   const isFollowUpOverdue = lead.next_follow_up_date && isPast(parseISO(lead.next_follow_up_date));
