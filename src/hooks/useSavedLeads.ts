@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 export type ContactStatus = 'not_contacted' | 'message_sent' | 'conversation_started';
@@ -38,24 +37,46 @@ export interface SavedLead {
 
 export type SortOption = 'newest' | 'oldest' | 'alpha_asc' | 'alpha_desc';
 
+const STORAGE_KEY = 'savedLeads_data';
+const SORT_KEY = 'savedLeads_sortBy';
+const NOTIFIED_KEY = 'savedLeads_notifiedToday';
+
+const getStoredLeads = (): SavedLead[] => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+const setStoredLeads = (leads: SavedLead[]) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
+};
+
+// Check if we already notified today to avoid spam
+const hasNotifiedToday = (): boolean => {
+  const today = new Date().toDateString();
+  return localStorage.getItem(NOTIFIED_KEY) === today;
+};
+
+const markNotifiedToday = () => {
+  localStorage.setItem(NOTIFIED_KEY, new Date().toDateString());
+};
+
 export const useSavedLeads = () => {
   const [savedLeads, setSavedLeads] = useState<SavedLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<SortOption>(() => {
-    return (localStorage.getItem('savedLeads_sortBy') as SortOption) || 'newest';
+    return (localStorage.getItem(SORT_KEY) as SortOption) || 'newest';
   });
 
-  const fetchSavedLeads = useCallback(async () => {
+  // Load leads from localStorage
+  const fetchSavedLeads = useCallback(() => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('saved_leads')
-        .select('*');
-      
-      if (error) throw error;
-      
-      // Type assertion since Supabase types may not be updated yet
-      setSavedLeads((data as unknown as SavedLead[]) || []);
+      const leads = getStoredLeads();
+      setSavedLeads(leads);
     } catch (error) {
       console.error('Error fetching saved leads:', error);
       toast.error('Erro ao carregar leads salvos');
@@ -64,15 +85,57 @@ export const useSavedLeads = () => {
     }
   }, []);
 
+  // Check for follow-up notifications on mount
   useEffect(() => {
     fetchSavedLeads();
   }, [fetchSavedLeads]);
 
+  // Check follow-ups after leads are loaded
   useEffect(() => {
-    localStorage.setItem('savedLeads_sortBy', sortBy);
+    if (loading || savedLeads.length === 0) return;
+    if (hasNotifiedToday()) return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const todayFollowUps = savedLeads.filter(lead => {
+      if (!lead.next_follow_up_date) return false;
+      const followUpDate = new Date(lead.next_follow_up_date);
+      followUpDate.setHours(0, 0, 0, 0);
+      return followUpDate.getTime() === today.getTime();
+    });
+
+    const overdueFollowUps = savedLeads.filter(lead => {
+      if (!lead.next_follow_up_date) return false;
+      const followUpDate = new Date(lead.next_follow_up_date);
+      followUpDate.setHours(0, 0, 0, 0);
+      return followUpDate.getTime() < today.getTime();
+    });
+
+    if (todayFollowUps.length > 0) {
+      const names = todayFollowUps.map(l => l.name).slice(0, 3).join(', ');
+      const extra = todayFollowUps.length > 3 ? ` e mais ${todayFollowUps.length - 3}` : '';
+      toast.info(`📅 Hoje é dia de follow-up: ${names}${extra}`, {
+        duration: 8000,
+      });
+    }
+
+    if (overdueFollowUps.length > 0) {
+      toast.warning(`⚠️ Você tem ${overdueFollowUps.length} follow-up(s) vencido(s)`, {
+        duration: 6000,
+      });
+    }
+
+    if (todayFollowUps.length > 0 || overdueFollowUps.length > 0) {
+      markNotifiedToday();
+    }
+  }, [savedLeads, loading]);
+
+  useEffect(() => {
+    localStorage.setItem(SORT_KEY, sortBy);
   }, [sortBy]);
 
-  const saveLead = useCallback(async (lead: {
+  const saveLead = useCallback((lead: {
     id: string;
     name: string;
     address: string;
@@ -91,60 +154,67 @@ export const useSavedLeads = () => {
     hasWhatsApp?: boolean;
   }) => {
     try {
-      const { error } = await supabase
-        .from('saved_leads')
-        .insert({
-          lead_id: lead.id,
-          name: lead.name,
-          address: lead.address,
-          phone: lead.phone,
-          email: lead.email || null,
-          instagram: lead.instagram || null,
-          website: lead.website || null,
-          responsible: lead.responsible || null,
-          match_score: lead.matchScore,
-          reasons: lead.reasons,
-          revenue: lead.revenue || null,
-          opened_date: lead.openedDate || null,
-          category: lead.category,
-          employee_count: lead.employeeCount || null,
-          company_size: lead.companySize || null,
-          has_whatsapp: lead.hasWhatsApp || false,
-          contact_status: 'conversation_started' as ContactStatus,
-          interest_status: 'interested' as InterestStatus,
-          lead_stage: 'interested' as LeadStage,
-        });
+      const currentLeads = getStoredLeads();
       
-      if (error) {
-        if (error.code === '23505') {
-          toast.info('Este lead já está salvo');
-          return false;
-        }
-        throw error;
+      // Check if already exists
+      if (currentLeads.some(l => l.lead_id === lead.id)) {
+        toast.info('Este lead já está salvo');
+        return false;
       }
+
+      const now = new Date().toISOString();
+      const newLead: SavedLead = {
+        id: crypto.randomUUID(),
+        lead_id: lead.id,
+        name: lead.name,
+        address: lead.address,
+        phone: lead.phone,
+        email: lead.email || null,
+        instagram: lead.instagram || null,
+        website: lead.website || null,
+        responsible: lead.responsible || null,
+        match_score: lead.matchScore,
+        reasons: lead.reasons,
+        revenue: lead.revenue || null,
+        opened_date: lead.openedDate || null,
+        category: lead.category,
+        employee_count: lead.employeeCount || null,
+        company_size: lead.companySize || null,
+        has_whatsapp: lead.hasWhatsApp || false,
+        contact_status: 'conversation_started',
+        interest_status: 'interested',
+        lead_stage: 'interested',
+        first_contact_date: null,
+        last_contact_date: null,
+        next_follow_up_date: null,
+        saved_at: now,
+        notes: null,
+        created_at: now,
+        updated_at: now,
+      };
+
+      const updatedLeads = [...currentLeads, newLead];
+      setStoredLeads(updatedLeads);
+      setSavedLeads(updatedLeads);
       
       toast.success('Lead salvo com sucesso!');
-      await fetchSavedLeads();
       return true;
     } catch (error) {
       console.error('Error saving lead:', error);
       toast.error('Erro ao salvar lead');
       return false;
     }
-  }, [fetchSavedLeads]);
+  }, []);
 
-  const updateLead = useCallback(async (id: string, updates: Partial<SavedLead>) => {
+  const updateLead = useCallback((id: string, updates: Partial<SavedLead>) => {
     try {
-      const { error } = await supabase
-        .from('saved_leads')
-        .update(updates)
-        .eq('id', id);
-      
-      if (error) throw error;
-      
-      setSavedLeads(prev => 
-        prev.map(lead => lead.id === id ? { ...lead, ...updates } : lead)
+      const currentLeads = getStoredLeads();
+      const updatedLeads = currentLeads.map(lead => 
+        lead.id === id ? { ...lead, ...updates, updated_at: new Date().toISOString() } : lead
       );
+      
+      setStoredLeads(updatedLeads);
+      setSavedLeads(updatedLeads);
       return true;
     } catch (error) {
       console.error('Error updating lead:', error);
@@ -153,16 +223,13 @@ export const useSavedLeads = () => {
     }
   }, []);
 
-  const deleteLead = useCallback(async (id: string) => {
+  const deleteLead = useCallback((id: string) => {
     try {
-      const { error } = await supabase
-        .from('saved_leads')
-        .delete()
-        .eq('id', id);
+      const currentLeads = getStoredLeads();
+      const updatedLeads = currentLeads.filter(lead => lead.id !== id);
       
-      if (error) throw error;
-      
-      setSavedLeads(prev => prev.filter(lead => lead.id !== id));
+      setStoredLeads(updatedLeads);
+      setSavedLeads(updatedLeads);
       toast.success('Lead removido');
       return true;
     } catch (error) {
