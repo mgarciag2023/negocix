@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Building2, Heart, Settings, Sparkles, Users, Package, Menu } from "lucide-react";
+import { Building2, Settings, Users, Package, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,7 +16,7 @@ const Navbar = () => {
   const navItems = [
     { path: "/configuracao", icon: Settings, label: "Buscar" },
     { path: "/search-suppliers", icon: Package, label: "Fornecedores" },
-    { path: "/favoritos", icon: Heart, label: "Favoritos" },
+    { path: "/leads-salvos", icon: Users, label: "Leads Salvos" },
   ];
   
   return (
@@ -63,13 +63,13 @@ const Navbar = () => {
             </Button>
             
             <Button
-              variant={isActive("/favoritos") ? "default" : "ghost"}
+              variant={isActive("/leads-salvos") ? "default" : "ghost"}
               size="sm"
               className="h-8 px-2"
               asChild
             >
-              <Link to="/favoritos">
-                <Heart className="h-4 w-4" />
+              <Link to="/leads-salvos">
+                <Users className="h-4 w-4" />
               </Link>
             </Button>
             

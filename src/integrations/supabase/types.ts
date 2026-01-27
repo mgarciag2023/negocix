@@ -14,7 +14,96 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      saved_leads: {
+        Row: {
+          address: string
+          category: string
+          company_size: string | null
+          contact_status: Database["public"]["Enums"]["contact_status"]
+          created_at: string
+          email: string | null
+          employee_count: string | null
+          first_contact_date: string | null
+          has_whatsapp: boolean | null
+          id: string
+          instagram: string | null
+          interest_status: Database["public"]["Enums"]["interest_status"]
+          last_contact_date: string | null
+          lead_id: string
+          lead_stage: Database["public"]["Enums"]["lead_stage"]
+          match_score: number
+          name: string
+          next_follow_up_date: string | null
+          notes: string | null
+          opened_date: string | null
+          phone: string
+          reasons: string[] | null
+          responsible: string | null
+          revenue: string | null
+          saved_at: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address: string
+          category: string
+          company_size?: string | null
+          contact_status?: Database["public"]["Enums"]["contact_status"]
+          created_at?: string
+          email?: string | null
+          employee_count?: string | null
+          first_contact_date?: string | null
+          has_whatsapp?: boolean | null
+          id?: string
+          instagram?: string | null
+          interest_status?: Database["public"]["Enums"]["interest_status"]
+          last_contact_date?: string | null
+          lead_id: string
+          lead_stage?: Database["public"]["Enums"]["lead_stage"]
+          match_score?: number
+          name: string
+          next_follow_up_date?: string | null
+          notes?: string | null
+          opened_date?: string | null
+          phone: string
+          reasons?: string[] | null
+          responsible?: string | null
+          revenue?: string | null
+          saved_at?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string
+          category?: string
+          company_size?: string | null
+          contact_status?: Database["public"]["Enums"]["contact_status"]
+          created_at?: string
+          email?: string | null
+          employee_count?: string | null
+          first_contact_date?: string | null
+          has_whatsapp?: boolean | null
+          id?: string
+          instagram?: string | null
+          interest_status?: Database["public"]["Enums"]["interest_status"]
+          last_contact_date?: string | null
+          lead_id?: string
+          lead_stage?: Database["public"]["Enums"]["lead_stage"]
+          match_score?: number
+          name?: string
+          next_follow_up_date?: string | null
+          notes?: string | null
+          opened_date?: string | null
+          phone?: string
+          reasons?: string[] | null
+          responsible?: string | null
+          revenue?: string | null
+          saved_at?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +112,15 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      contact_status: "not_contacted" | "message_sent" | "conversation_started"
+      interest_status: "pending" | "interested" | "not_interested"
+      lead_stage:
+        | "interested"
+        | "in_conversation"
+        | "follow_up_pending"
+        | "in_negotiation"
+        | "closed_won"
+        | "closed_lost"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +247,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      contact_status: ["not_contacted", "message_sent", "conversation_started"],
+      interest_status: ["pending", "interested", "not_interested"],
+      lead_stage: [
+        "interested",
+        "in_conversation",
+        "follow_up_pending",
+        "in_negotiation",
+        "closed_won",
+        "closed_lost",
+      ],
+    },
   },
 } as const
