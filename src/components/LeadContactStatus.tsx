@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
-import { MessageSquare, Send, MessageCircle, ThumbsUp, ThumbsDown, Save, ChevronDown } from 'lucide-react';
+import { MessageSquare, Send, MessageCircle, ThumbsUp, ThumbsDown, Save, ChevronDown, Check } from 'lucide-react';
 import { ContactStatus, InterestStatus } from '@/hooks/useSavedLeads';
 
 interface LeadContactStatusProps {
@@ -20,6 +20,7 @@ interface LeadContactStatusProps {
   onInterestStatusChange: (status: InterestStatus) => void;
   onSaveLead: () => void;
   canSave: boolean;
+  compact?: boolean;
 }
 
 const contactStatusLabels: Record<ContactStatus, { label: string; icon: React.ReactNode; color: string }> = {
@@ -41,14 +42,59 @@ const LeadContactStatus = ({
   onInterestStatusChange,
   onSaveLead,
   canSave,
+  compact = false,
 }: LeadContactStatusProps) => {
   const [isOpen, setIsOpen] = useState(false);
   
   const currentContactStatus = contactStatusLabels[contactStatus];
   const canClassifyInterest = contactStatus === 'conversation_started';
 
+  // Quick save button - always visible if canSave
+  if (compact) {
+    return (
+      <div className="flex gap-2">
+        {canSave ? (
+          <Button
+            size="sm"
+            variant="outline"
+            className="flex-1 h-8 text-xs border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+            onClick={onSaveLead}
+          >
+            <Save className="h-3 w-3 mr-1" />
+            Salvar
+          </Button>
+        ) : (
+          <Badge className="flex-1 justify-center bg-success/10 text-success border border-success/20">
+            <Check className="h-3 w-3 mr-1" />
+            Salvo
+          </Badge>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-2">
+      {/* Quick Save Button */}
+      {canSave && (
+        <Button
+          size="sm"
+          className="w-full h-8 text-xs bg-primary"
+          onClick={onSaveLead}
+        >
+          <Save className="h-3 w-3 mr-1" />
+          Salvar Lead
+        </Button>
+      )}
+      
+      {!canSave && (
+        <Badge className="w-full justify-center bg-success/10 text-success border border-success/20 py-1.5">
+          <Check className="h-3 w-3 mr-1" />
+          Lead Salvo
+        </Badge>
+      )}
+
+      {/* Contact Status Dropdown */}
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm" className="w-full justify-between text-xs h-8">
@@ -111,18 +157,6 @@ const LeadContactStatus = ({
           {interestStatusLabels[interestStatus].icon}
           <span className="ml-1">{interestStatusLabels[interestStatus].label}</span>
         </Badge>
-      )}
-
-      {/* Save button - only when interested */}
-      {canSave && interestStatus === 'interested' && (
-        <Button
-          size="sm"
-          className="w-full h-8 text-xs bg-primary"
-          onClick={onSaveLead}
-        >
-          <Save className="h-3 w-3 mr-1" />
-          Salvar Lead Interessado
-        </Button>
       )}
     </div>
   );
