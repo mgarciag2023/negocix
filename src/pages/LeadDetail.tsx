@@ -4,31 +4,29 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
   MapPin, Phone, Instagram, User, TrendingUp, Calendar, 
-  ArrowLeft, Heart, MessageCircle, Mail, Globe, ExternalLink, Users
+  ArrowLeft, MessageCircle, Mail, Globe, ExternalLink, Users, Save
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useEffect } from "react";
-import { useFavorites } from "@/hooks/useFavorites";
-import { toast } from "sonner";
+import { useSavedLeads } from "@/hooks/useSavedLeads";
+import { useLeadContactState } from "@/hooks/useLeadContactState";
+import LeadContactStatus from "@/components/LeadContactStatus";
 
 const LeadDetail = () => {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
-  const { isFavorite, toggleFavorite } = useFavorites();
+  const { saveLead, isLeadSaved } = useSavedLeads();
+  const { getContactState, setContactStatus, setInterestStatus } = useLeadContactState();
   
   // Get lead data from navigation state
   const leadData = location.state?.lead;
-  const isLeadFavorite = leadData ? isFavorite(leadData.id) : false;
+  const isSaved = leadData ? isLeadSaved(leadData.id) : false;
+  const { contactStatus, interestStatus } = leadData ? getContactState(leadData.id) : { contactStatus: 'not_contacted', interestStatus: 'pending' };
   
-  const handleFavoriteClick = () => {
+  const handleSaveLead = () => {
     if (!leadData) return;
-    const added = toggleFavorite(leadData);
-    if (added) {
-      toast.success("Lead adicionado aos favoritos!");
-    } else {
-      toast.info("Lead removido dos favoritos");
-    }
+    saveLead(leadData);
   };
   
   // Scroll to top when entering the page
@@ -267,15 +265,26 @@ const LeadDetail = () => {
                     Ligar
                   </a>
                 </Button>
-                
-                <Button 
-                  variant="outline" 
-                  className={`w-full h-10 md:h-11 text-sm md:text-base ${isLeadFavorite ? 'border-destructive text-destructive' : ''}`}
-                  onClick={handleFavoriteClick}
-                >
-                  <Heart className={`mr-2 h-4 w-4 ${isLeadFavorite ? 'fill-destructive' : ''}`} />
-                  {isLeadFavorite ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos'}
-                </Button>
+              </div>
+              
+              {/* Contact Status Control */}
+              <div className="mt-4 pt-4 border-t">
+                <h4 className="font-semibold text-foreground text-sm mb-3">Controle de Contato</h4>
+                <LeadContactStatus
+                  leadId={lead.id}
+                  contactStatus={contactStatus as any}
+                  interestStatus={interestStatus as any}
+                  onContactStatusChange={(status) => setContactStatus(lead.id, status)}
+                  onInterestStatusChange={(status) => setInterestStatus(lead.id, status)}
+                  onSaveLead={handleSaveLead}
+                  canSave={!isSaved}
+                />
+                {isSaved && (
+                  <Badge className="w-full justify-center mt-2 bg-success text-success-foreground">
+                    <Save className="h-3 w-3 mr-1" />
+                    Lead Salvo
+                  </Badge>
+                )}
               </div>
             </Card>
 

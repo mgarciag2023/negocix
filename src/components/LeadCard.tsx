@@ -1,11 +1,13 @@
-import { MapPin, Phone, Instagram, User, Users, TrendingUp, Calendar, Heart, Mail, Globe, ExternalLink } from "lucide-react";
+import { MapPin, Phone, Instagram, User, Users, TrendingUp, Calendar, Mail, Globe, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { useFavorites } from "@/hooks/useFavorites";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
-import { toast } from "sonner";
+import { useLeadContactState } from "@/hooks/useLeadContactState";
+import { useSavedLeads } from "@/hooks/useSavedLeads";
+import LeadContactStatus from "@/components/LeadContactStatus";
+
 interface LeadCardProps {
   id: string;
   name: string;
@@ -43,21 +45,19 @@ const LeadCard = ({
   companySize,
   hasWhatsApp,
 }: LeadCardProps) => {
-  const { isFavorite, toggleFavorite } = useFavorites();
   const { saveScrollPosition } = useScrollPosition();
-  const isLeadFavorite = isFavorite(id);
+  const { getContactState, setContactStatus, setInterestStatus } = useLeadContactState();
+  const { saveLead, isLeadSaved } = useSavedLeads();
   
-  const handleFavoriteClick = () => {
+  const { contactStatus, interestStatus } = getContactState(id);
+  const isSaved = isLeadSaved(id);
+  
+  const handleSaveLead = () => {
     const lead = {
       id, name, address, phone, email, instagram, website, responsible,
-      matchScore, reasons, revenue, openedDate, category, employeeCount, companySize, hasWhatsApp
+      matchScore, reasons, revenue, openedDate: openedDate, category, employeeCount, companySize, hasWhatsApp
     };
-    const added = toggleFavorite(lead);
-    if (added) {
-      toast.success("Lead adicionado aos favoritos!");
-    } else {
-      toast.info("Lead removido dos favoritos");
-    }
+    saveLead(lead);
   };
   
   const getScoreColor = (score: number) => {
@@ -82,14 +82,12 @@ const LeadCard = ({
   
   return (
     <Card className="p-4 md:p-6 hover:shadow-card-hover transition-all duration-300 relative">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute top-2 right-2 md:top-4 md:right-4 h-8 w-8 md:h-10 md:w-10"
-        onClick={handleFavoriteClick}
-      >
-        <Heart className={`h-4 w-4 md:h-5 md:w-5 ${isLeadFavorite ? "fill-destructive text-destructive" : ""}`} />
-      </Button>
+      {/* Saved Badge */}
+      {isSaved && (
+        <Badge className="absolute top-2 right-2 bg-success text-success-foreground text-xs">
+          Salvo
+        </Badge>
+      )}
       
       <div className="flex items-start justify-between mb-4 gap-2">
         <div className="flex-1 min-w-0">
@@ -216,6 +214,20 @@ const LeadCard = ({
             <span className="text-foreground truncate">{responsible}</span>
           </div>
         )}
+      </div>
+      
+      {/* Contact Status Control */}
+      <div className="mb-4 p-3 border border-border rounded-lg bg-muted/20">
+        <h4 className="font-semibold text-foreground text-xs mb-2">Controle de Contato</h4>
+        <LeadContactStatus
+          leadId={id}
+          contactStatus={contactStatus}
+          interestStatus={interestStatus}
+          onContactStatusChange={(status) => setContactStatus(id, status)}
+          onInterestStatusChange={(status) => setInterestStatus(id, status)}
+          onSaveLead={handleSaveLead}
+          canSave={!isSaved}
+        />
       </div>
       
       {/* Action Buttons */}

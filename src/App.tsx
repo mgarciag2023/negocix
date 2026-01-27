@@ -7,7 +7,7 @@ import Index from "./pages/Index";
 import Configuration from "./pages/Configuration";
 import Results from "./pages/Results";
 import LeadDetail from "./pages/LeadDetail";
-import Favorites from "./pages/Favorites";
+import SavedLeads from "./pages/SavedLeads";
 import CreateApproach from "./pages/CreateApproach";
 import SearchRepresentatives from "./pages/SearchRepresentatives";
 import RepresentativesResults from "./pages/RepresentativesResults";
@@ -28,7 +28,7 @@ const App = () => (
           <Route path="/configuracao" element={<Configuration />} />
           <Route path="/resultados" element={<Results />} />
           <Route path="/lead/:id" element={<LeadDetail />} />
-          <Route path="/favoritos" element={<Favorites />} />
+          <Route path="/leads-salvos" element={<SavedLeads />} />
           <Route path="/abordagem" element={<CreateApproach />} />
           <Route path="/search-representatives" element={<SearchRepresentatives />} />
           <Route path="/representatives-results" element={<RepresentativesResults />} />
