@@ -29,8 +29,8 @@ import { ptBR } from 'date-fns/locale';
 
 interface SavedLeadCardProps {
   lead: SavedLead;
-  onUpdate: (id: string, updates: Partial<SavedLead>) => Promise<boolean>;
-  onDelete: (id: string) => Promise<boolean>;
+  onUpdate: (id: string, updates: Partial<SavedLead>) => boolean;
+  onDelete: (id: string) => boolean;
 }
 
 const stageLabels: Record<LeadStage, { label: string; color: string }> = {
