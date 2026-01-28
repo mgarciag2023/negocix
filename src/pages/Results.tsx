@@ -220,6 +220,7 @@ const Results = () => {
             businessType: searchConfig.businessType || 'all',
             digitalPresence: searchConfig.digitalPresence || 'all',
             digitalActivity: searchConfig.digitalActivity || 'all',
+            whatsappOnly: searchConfig.whatsappOnly || false,
             filters: {
               category: searchConfig.category,
               companySizes: searchConfig.companySizes || ['all'],

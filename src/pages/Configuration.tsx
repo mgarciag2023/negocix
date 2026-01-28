@@ -29,6 +29,7 @@ const Configuration = () => {
   const [digitalPresence, setDigitalPresence] = useState("all"); // all, no-site, basic-site, structured-site
   const [digitalActivity, setDigitalActivity] = useState("all"); // all, low, basic, active
   const [customerSearch, setCustomerSearch] = useState(""); // Search filter for customer types
+  const [whatsappOnly, setWhatsappOnly] = useState(false); // Filter for leads with WhatsApp only
 
   const countries = [
     { code: "BR", name: "Brasil" },
@@ -280,6 +281,7 @@ const Configuration = () => {
       digitalPresence,
       digitalActivity,
       ecommerceType: selectedCustomers.includes("E-commerce") ? ecommerceType : "",
+      whatsappOnly,
     };
     
     const newConfigStr = JSON.stringify(newSearchConfig);
@@ -478,6 +480,27 @@ const Configuration = () => {
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
                     Selecione se deseja ver matriz, filiais ou ambos
+                  </p>
+                </div>
+
+                {/* WhatsApp Filter */}
+                <div>
+                  <Label className="text-base font-semibold mb-4 block" translate="no">
+                    Filtro de WhatsApp:
+                  </Label>
+                  <div className="flex items-center space-x-3">
+                    <Checkbox 
+                      id="whatsapp-only" 
+                      checked={whatsappOnly}
+                      onCheckedChange={(checked) => setWhatsappOnly(checked === true)}
+                    />
+                    <Label htmlFor="whatsapp-only" className="font-normal cursor-pointer flex items-center gap-2" translate="no">
+                      <span className="text-green-600">📱</span>
+                      Apenas leads com WhatsApp confirmado
+                    </Label>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Quando ativado, mostra apenas leads que possuem número de WhatsApp verificado
                   </p>
                 </div>
 
