@@ -1436,9 +1436,9 @@ serve(async (req) => {
       throw new Error("GOOGLE_API_KEY is not configured");
     }
     
-    const MAX_TOTAL_LEADS = 350; // Increased from 250
-    const MIN_LEADS_TARGET = 80; // Increased from 50
-    const MIN_LEADS_EARLY_EXIT = 150; // Increased from 100
+    const MAX_TOTAL_LEADS = 200; // Max leads per search
+    const MIN_LEADS_TARGET = 60; // Minimum target
+    const MIN_LEADS_EARLY_EXIT = 100; // Early exit threshold
     
     console.log(`🔎 Google Places API search: targeting ${MIN_LEADS_TARGET}-${MAX_TOTAL_LEADS} leads (MAXIMUM VOLUME MODE)`);
     
