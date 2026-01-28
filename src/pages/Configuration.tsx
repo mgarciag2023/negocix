@@ -217,6 +217,7 @@ const Configuration = () => {
     "Centros de Bem-Estar",
     // Novos segmentos de alta demanda
     "Pet Shops",
+    "Loja de Ração Pet",
     "Clínicas Veterinárias",
     "Oficinas Mecânicas",
     "Autopeças",
