@@ -1394,13 +1394,14 @@ serve(async (req) => {
   }
 
   try {
-    const { segment, products, region, country, filters, ecommerceType, businessType, digitalPresence, digitalActivity } = await req.json();
-    console.log('🔍 SEARCH v10 - Digital Presence Filters - Input:', { segment, products, region, country, ecommerceType, businessType, digitalPresence, digitalActivity });
+    const { segment, products, region, country, filters, ecommerceType, businessType, digitalPresence, digitalActivity, whatsappOnly } = await req.json();
+    console.log('🔍 SEARCH v11 - WhatsApp Filter + More Leads - Input:', { segment, products, region, country, ecommerceType, businessType, digitalPresence, digitalActivity, whatsappOnly });
     
     const countryCode = country || 'BR';
     const bizType = businessType || 'all';
     const digPresence = digitalPresence || 'all';
     const digActivity = digitalActivity || 'all';
+    const filterWhatsappOnly = whatsappOnly || false;
     
     // Check if this is an e-commerce search with specific type
     const isEcommerceSearch = segment.toLowerCase().includes('e-commerce') || segment.toLowerCase().includes('ecommerce');
@@ -1413,6 +1414,7 @@ serve(async (req) => {
     
     console.log('📍 Location:', locationQuery);
     console.log('🏢 Business type:', bizType);
+    console.log('📱 WhatsApp only:', filterWhatsappOnly);
     
     // Get Google API key
     const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY");
@@ -1420,9 +1422,9 @@ serve(async (req) => {
       throw new Error("GOOGLE_API_KEY is not configured");
     }
     
-    const MAX_TOTAL_LEADS = 150;
-    const MIN_LEADS_TARGET = 20; // Very low minimum to maximize results
-    const MIN_LEADS_EARLY_EXIT = 60; // Exit early with 60+ leads
+    const MAX_TOTAL_LEADS = 250; // Increased from 150
+    const MIN_LEADS_TARGET = 50; // Increased from 20
+    const MIN_LEADS_EARLY_EXIT = 100; // Increased from 60
     
     console.log(`🔎 Google Places API search: targeting ${MIN_LEADS_TARGET}-${MAX_TOTAL_LEADS} leads (MAXIMUM VOLUME MODE)`);
     
@@ -1664,10 +1666,18 @@ serve(async (req) => {
     }
 
     console.log(`✅ FINAL: ${leads.length} leads ready (target: ${MIN_LEADS_TARGET}-${MAX_TOTAL_LEADS})`);
+    
+    // Apply WhatsApp filter if requested
+    if (filterWhatsappOnly && leads.length > 0) {
+      const beforeWhatsapp = leads.length;
+      leads = leads.filter((lead: any) => lead.hasWhatsApp === true);
+      console.log(`📱 WhatsApp filter applied: ${leads.length} leads with WhatsApp (removed ${beforeWhatsapp - leads.length})`);
+    }
 
     if (leads.length === 0) {
+      const whatsappMsg = filterWhatsappOnly ? ' com WhatsApp' : '';
       return new Response(JSON.stringify({ 
-        error: `Nenhum estabelecimento encontrado em ${cleanRegion}. Tente outra região ou categoria.` 
+        error: `Nenhum estabelecimento${whatsappMsg} encontrado em ${cleanRegion}. Tente outra região ou desative o filtro de WhatsApp.` 
       }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
