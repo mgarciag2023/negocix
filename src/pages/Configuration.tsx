@@ -494,8 +494,7 @@ const Configuration = () => {
                       checked={whatsappOnly}
                       onCheckedChange={(checked) => setWhatsappOnly(checked === true)}
                     />
-                    <Label htmlFor="whatsapp-only" className="font-normal cursor-pointer flex items-center gap-2" translate="no">
-                      <span className="text-green-600">📱</span>
+                    <Label htmlFor="whatsapp-only" className="font-normal cursor-pointer" translate="no">
                       Apenas leads com WhatsApp confirmado
                     </Label>
                   </div>
