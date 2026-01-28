@@ -11,22 +11,26 @@ function validatePhone(phone: string): { valid: boolean; normalized: string; isW
   
   const digitsOnly = phone.replace(/\D/g, '');
   
-  // Brazilian format with country code
+  // Brazilian format with country code (+55 XX 9XXXX-XXXX)
   if (digitsOnly.startsWith('55') && (digitsOnly.length === 12 || digitsOnly.length === 13)) {
+    // 13 digits with 9 after DDD = mobile = likely WhatsApp
+    const isMobile = digitsOnly.length === 13 && digitsOnly.charAt(4) === '9';
     return { 
       valid: true, 
       normalized: `+${digitsOnly}`, 
-      isWhatsApp: digitsOnly.length === 13 && digitsOnly.charAt(4) === '9'
+      isWhatsApp: isMobile
     };
   }
   
-  // Brazilian format without country code
+  // Brazilian format without country code (XX 9XXXX-XXXX)
   if (digitsOnly.length === 10 || digitsOnly.length === 11) {
     const normalized = `+55${digitsOnly}`;
+    // 11 digits starting with 9 after DDD = mobile = likely WhatsApp
+    const isMobile = digitsOnly.length === 11 && digitsOnly.charAt(2) === '9';
     return { 
       valid: true, 
       normalized, 
-      isWhatsApp: digitsOnly.length === 11 && digitsOnly.charAt(2) === '9'
+      isWhatsApp: isMobile
     };
   }
   
@@ -136,9 +140,11 @@ function generateSearchTerms(segment: string): string[] {
     'agropecuária': ['agropecuária', 'produtos rurais'],
     'farmácias': ['farmácia', 'drogaria'],
     'farmácias e drogarias': ['farmácia', 'drogaria', 'farmácia popular'],
-    'pet shop': ['pet shop', 'veterinária'],
-    'lojas de roupas': ['loja de roupas', 'vestuário'],
-    'autopeças': ['autopeças', 'peças automotivas'],
+    'pet shop': ['pet shop', 'petshop', 'pet center', 'loja de animais'],
+    'pet shops': ['pet shop', 'petshop', 'pet center', 'loja de animais'],
+    'loja de ração pet': ['loja de ração', 'ração pet', 'ração animal', 'ração para cães', 'ração para gatos', 'pet shop ração', 'agropet', 'casa de ração'],
+    'lojas de roupas': ['loja de roupas', 'vestuário', 'boutique', 'moda'],
+    'autopeças': ['autopeças', 'peças automotivas', 'auto peças'],
     'eletrônicos': ['eletrônicos', 'informática'],
     'móveis': ['móveis', 'móveis planejados'],
     'óticas': ['ótica', 'óculos'],
@@ -737,8 +743,16 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     exclude: ['roupa', 'alimento', 'supermercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel']
   },
   'pet shop': {
-    include: ['pet', 'animal', 'veterinár', 'cão', 'cachorro', 'gato', 'ração', 'banho e tosa', 'petshop', 'pet center'],
+    include: ['pet', 'animal', 'veterinár', 'cão', 'cachorro', 'gato', 'ração', 'banho e tosa', 'petshop', 'pet center', 'agropet'],
     exclude: ['roupa', 'supermercado', 'restaurante', 'construção', 'ótica', 'joalheria', 'academia', 'hotel']
+  },
+  'pet shops': {
+    include: ['pet', 'animal', 'veterinár', 'cão', 'cachorro', 'gato', 'ração', 'banho e tosa', 'petshop', 'pet center', 'agropet'],
+    exclude: ['roupa', 'supermercado', 'restaurante', 'construção', 'ótica', 'joalheria', 'academia', 'hotel']
+  },
+  'loja de ração pet': {
+    include: ['ração', 'pet', 'animal', 'agropet', 'pet shop', 'petshop', 'cão', 'cachorro', 'gato', 'aves', 'peixe', 'casa de ração'],
+    exclude: ['restaurante', 'lanchonete', 'supermercado', 'construção', 'academia', 'hotel', 'salão']
   },
   'farmácias': {
     include: ['farmácia', 'drogaria', 'medicamento', 'remédio', 'manipulação', 'farmácias'],
@@ -1422,9 +1436,9 @@ serve(async (req) => {
       throw new Error("GOOGLE_API_KEY is not configured");
     }
     
-    const MAX_TOTAL_LEADS = 250; // Increased from 150
-    const MIN_LEADS_TARGET = 50; // Increased from 20
-    const MIN_LEADS_EARLY_EXIT = 100; // Increased from 60
+    const MAX_TOTAL_LEADS = 350; // Increased from 250
+    const MIN_LEADS_TARGET = 80; // Increased from 50
+    const MIN_LEADS_EARLY_EXIT = 150; // Increased from 100
     
     console.log(`🔎 Google Places API search: targeting ${MIN_LEADS_TARGET}-${MAX_TOTAL_LEADS} leads (MAXIMUM VOLUME MODE)`);
     
@@ -1534,7 +1548,7 @@ serve(async (req) => {
     // Search each segment separately and tag results with their segment
     // MAXIMUM page limits for maximum leads
     let allPlacesWithSegment: any[] = [];
-    const pagesPerSegment = Math.max(10, Math.min(15, Math.floor(50 / segments.length))); // Increased from 8-12 to 10-15
+    const pagesPerSegment = Math.max(12, Math.min(20, Math.floor(60 / segments.length))); // Increased to 12-20 pages
     console.log(`⚡ MAXIMUM VOLUME: ${pagesPerSegment} pages per segment (${segments.length} segments)`);
     
     for (const seg of segments) {
@@ -1547,8 +1561,8 @@ serve(async (req) => {
         console.log(`🛒 E-commerce específico: ${ecomType}`);
       } else {
         searchTerms = generateSearchTerms(seg);
-        // MAXIMUM VOLUME: Use 5 terms per segment for maximum coverage
-        searchTerms = searchTerms.slice(0, 5);
+        // MAXIMUM VOLUME: Use up to 6 terms per segment for maximum coverage
+        searchTerms = searchTerms.slice(0, 6);
       }
       
       console.log(`📤 Searching segment "${seg}" with terms:`, searchTerms);
@@ -1607,8 +1621,8 @@ serve(async (req) => {
     console.log(`📊 Active businesses: ${activePlaces.length}`);
     
     // MAXIMUM VOLUME: Larger batches and faster processing
-    const BATCH_SIZE = 60; // Increased from 50
-    const DETAILS_DELAY = 10; // Reduced from 15ms for faster processing
+    const BATCH_SIZE = 80; // Increased from 60
+    const DETAILS_DELAY = 6; // Reduced from 10ms for faster processing
     
     // OPTIMIZATION: Sort by rating/reviews first to get best leads initially
     activePlaces.sort((a, b) => {
@@ -1622,8 +1636,8 @@ serve(async (req) => {
     // MAXIMUM VOLUME: Start with larger window and expand more aggressively
     let leads: any[] = [];
     let detailsFetched = 0;
-    let detailsFetchLimit = Math.min(activePlaces.length, 1000); // Increased from 800
-    const HARD_MAX_DETAILS_FETCH = Math.min(activePlaces.length, 1500); // Increased from 1200
+    let detailsFetchLimit = Math.min(activePlaces.length, 1400); // Increased from 1000
+    const HARD_MAX_DETAILS_FETCH = Math.min(activePlaces.length, 2000); // Increased from 1500
 
     while (true) {
       // Fetch details for the next window
@@ -1659,7 +1673,7 @@ serve(async (req) => {
       if (detailsFetched >= activePlaces.length) break;
 
       // Expand details fetch only when we are below minimum
-      const nextLimit = Math.min(HARD_MAX_DETAILS_FETCH, detailsFetchLimit + 200);
+      const nextLimit = Math.min(HARD_MAX_DETAILS_FETCH, detailsFetchLimit + 300);
       console.log(`⚠️ Below minimum (${leads.length} < ${MIN_LEADS_TARGET}). Expanding details fetch: ${detailsFetchLimit} -> ${nextLimit}`);
       if (nextLimit === detailsFetchLimit) break;
       detailsFetchLimit = nextLimit;
