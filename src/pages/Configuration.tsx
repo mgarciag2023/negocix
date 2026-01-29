@@ -353,6 +353,8 @@ const Configuration = () => {
                       <SelectItem value="tecidos">Tecidos</SelectItem>
                       <SelectItem value="aviamentos">Aviamentos</SelectItem>
                       <SelectItem value="fios-linhas">Fios e Linhas</SelectItem>
+                      <SelectItem value="cama-mesa-banho">Cama, Mesa e Banho</SelectItem>
+                      <SelectItem value="utilidade-domestica">Utilidade Doméstica</SelectItem>
                       <SelectItem value="protecao-veicular">Proteção Veicular</SelectItem>
                       <SelectItem value="telemedicina">Telemedicina / Saúde</SelectItem>
                       <SelectItem value="grafica">Gráfica / Comunicação Visual</SelectItem>
