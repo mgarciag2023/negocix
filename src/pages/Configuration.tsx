@@ -227,6 +227,10 @@ const Configuration = () => {
     "Papelarias",
     "Óticas",
     "Joalherias e Relojoarias",
+    // Segmentos domésticos e utilidades
+    "Lojas de Cama, Mesa e Banho",
+    "Lojas de Utilidades Domésticas",
+    "Lojas de Utilidades",
   ].sort(); // Ordenação alfabética
 
   const handleCustomerToggle = (customer: string) => {
