@@ -148,14 +148,13 @@ function generateSearchTerms(segment: string): string[] {
     'lojas de utilidades': ['loja de utilidades', 'bazar', 'loja 1,99', 'loja de variedades', 'tudo a 10', 'loja de presentes', 'armarinho', 'loja de R$', 'loja de 1 real', 'loja de desconto', 'loja popular'],
     'utilidades domésticas': ['utilidades domésticas', 'artigos para casa', 'casa e cozinha', 'loja de panelas', 'artigos domésticos', 'utensílios domésticos', 'bazar doméstico'],
     'cama mesa e banho': ['cama mesa banho', 'enxoval', 'loja de enxovais', 'casa de enxovais', 'toalhas', 'lençóis', 'edredom'],
-    // Têxtil e Uniformes
-    'fábricas de uniformes': ['fábrica de uniformes', 'confecção de uniformes', 'uniformes profissionais', 'uniformes industriais', 'uniformes escolares', 'uniformes corporativos', 'indústria de uniformes'],
-    'confecção de roupas profissionais': ['confecção roupas profissionais', 'uniformes profissionais', 'roupas de trabalho', 'epi vestuário', 'jalecos', 'aventais', 'macacões'],
-    'lojas de tecidos para decoração': ['tecidos decoração', 'tecidos decorativos', 'loja de tecidos', 'tecidos para cortinas', 'tecidos para estofados', 'tecidos para móveis'],
-    'comércio varejista de tecidos': ['loja de tecidos', 'armarinho de tecidos', 'casa de tecidos', 'comércio de tecidos', 'tecidos metro'],
-    'lojas de tapeçaria, cortinas e persianas': ['tapeçaria', 'cortinas', 'persianas', 'decoração janelas', 'loja de cortinas', 'persianista', 'cortineiro', 'tapetes'],
-    // Embalagens
-    'distribuidoras de embalagens': ['distribuidora de embalagens', 'embalagens plásticas', 'embalagens descartáveis', 'embalagens para alimentos', 'atacado embalagens', 'fábrica de embalagens'],
+    // Têxtil e Uniformes - OTIMIZADO
+    'fábricas de uniformes': ['fábrica de uniformes', 'confecção de uniformes', 'indústria de uniformes', 'uniformes profissionais', 'uniformes escolares', 'uniformes corporativos', 'uniformes industriais', 'uniformes esportivos', 'malharia uniformes', 'confecção profissional'],
+    'confecção de roupas profissionais': ['confecção roupas profissionais', 'uniformes profissionais', 'roupas de trabalho', 'epi vestuário', 'jalecos', 'aventais profissionais', 'macacões', 'roupas industriais', 'vestimenta profissional', 'fardamento', 'jaleco hospitalar', 'scrubs médicos'],
+    'lojas de tecidos': ['loja de tecidos', 'casa de tecidos', 'tecidos metro', 'armarinho de tecidos', 'comércio de tecidos', 'tecidos decoração', 'tecidos para cortinas', 'tecidos para estofados', 'tecidos para móveis', 'malhas', 'tecidos finos', 'loja de malha', 'atacado de tecidos'],
+    'lojas de tapeçaria, cortinas e persianas': ['tapeçaria', 'cortinas', 'persianas', 'loja de cortinas', 'loja de persianas', 'persianista', 'cortineiro', 'decoração de janelas', 'blackout', 'cortinas sob medida', 'persianas horizontais', 'persianas verticais', 'cortinas e persianas', 'rolô', 'persiana romana', 'loja de tapetes', 'tapetaria'],
+    // Embalagens - OTIMIZADO  
+    'distribuidoras de embalagens': ['distribuidora de embalagens', 'embalagens plásticas', 'embalagens descartáveis', 'embalagens para alimentos', 'atacado embalagens', 'fábrica de embalagens', 'embalagens industriais', 'caixas de papelão', 'embalagens delivery', 'sacolas plásticas', 'bobinas plásticas', 'filme stretch', 'embalagens flexíveis', 'descartáveis plásticos'],
     'lojas de roupas': ['loja de roupas', 'vestuário', 'boutique', 'moda'],
     'autopeças': ['autopeças', 'peças automotivas', 'auto peças'],
     'eletrônicos': ['eletrônicos', 'informática'],
@@ -925,6 +924,29 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
   'hotéis e pousadas': {
     include: ['hotel', 'pousada', 'hospedagem', 'resort', 'hostel', 'inn'],
     exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'loja']
+  },
+  // Têxtil e Uniformes - NOVAS CATEGORIAS OTIMIZADAS
+  'fábricas de uniformes': {
+    include: ['fábrica de uniformes', 'confecção de uniformes', 'indústria de uniformes', 'uniformes profissionais', 'uniformes escolares', 'uniformes corporativos', 'uniformes industriais', 'malharia', 'uniformes esportivos', 'fardamento'],
+    exclude: ['loja de roupa', 'boutique', 'moda feminina', 'moda masculina', 'supermercado', 'restaurante', 'lanchonete', 'hotel']
+  },
+  'confecção de roupas profissionais': {
+    include: ['confecção', 'roupas profissionais', 'uniformes', 'jalecos', 'aventais', 'macacões', 'epi vestuário', 'roupas de trabalho', 'vestimenta', 'fardamento', 'scrubs'],
+    exclude: ['moda casual', 'boutique', 'loja de roupa', 'supermercado', 'restaurante', 'lanchonete', 'hotel']
+  },
+  'lojas de tecidos': {
+    include: ['tecidos', 'loja de tecidos', 'casa de tecidos', 'armarinho', 'malhas', 'tecidos metro', 'aviamentos', 'atacado de tecidos', 'tecidos decoração', 'tecidos para costura'],
+    exclude: ['roupa pronta', 'moda', 'supermercado', 'restaurante', 'lanchonete', 'hotel', 'farmácia']
+  },
+  'lojas de tapeçaria, cortinas e persianas': {
+    include: ['tapeçaria', 'cortinas', 'persianas', 'persianista', 'cortineiro', 'blackout', 'decoração de janelas', 'tapetes', 'cortinas sob medida', 'persianas horizontais', 'persianas verticais', 'rolô'],
+    exclude: ['roupa', 'moda', 'supermercado', 'restaurante', 'lanchonete', 'hotel', 'farmácia', 'construção']
+  },
+  // Embalagens - NOVA CATEGORIA OTIMIZADA
+  'distribuidoras de embalagens': {
+    include: ['embalagens', 'distribuidora de embalagens', 'embalagens plásticas', 'embalagens descartáveis', 'atacado embalagens', 'caixas de papelão', 'sacolas', 'filme stretch', 'embalagens flexíveis', 'bobinas'],
+    mustMatch: ['embalagens', 'embalagem', 'descartáveis'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'loja de roupa']
   }
 };
 
