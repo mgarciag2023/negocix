@@ -124,7 +124,7 @@ const Configuration = () => {
     "Lojas de Aviamentos",
     "Malharias",
     "Fábricas de Uniformes",
-    "Tapeçarias e Cortinas",
+    "Lojas de Tapeçaria, Cortinas e Persianas",
     // Transporte e Logística
     "Transportadoras",
     "Frotistas",
