@@ -148,6 +148,14 @@ function generateSearchTerms(segment: string): string[] {
     'lojas de utilidades': ['loja de utilidades', 'bazar', 'loja 1,99', 'loja de variedades', 'tudo a 10', 'loja de presentes', 'armarinho', 'loja de R$', 'loja de 1 real', 'loja de desconto', 'loja popular'],
     'utilidades domésticas': ['utilidades domésticas', 'artigos para casa', 'casa e cozinha', 'loja de panelas', 'artigos domésticos', 'utensílios domésticos', 'bazar doméstico'],
     'cama mesa e banho': ['cama mesa banho', 'enxoval', 'loja de enxovais', 'casa de enxovais', 'toalhas', 'lençóis', 'edredom'],
+    // Têxtil e Uniformes
+    'fábricas de uniformes': ['fábrica de uniformes', 'confecção de uniformes', 'uniformes profissionais', 'uniformes industriais', 'uniformes escolares', 'uniformes corporativos', 'indústria de uniformes'],
+    'confecção de roupas profissionais': ['confecção roupas profissionais', 'uniformes profissionais', 'roupas de trabalho', 'epi vestuário', 'jalecos', 'aventais', 'macacões'],
+    'lojas de tecidos para decoração': ['tecidos decoração', 'tecidos decorativos', 'loja de tecidos', 'tecidos para cortinas', 'tecidos para estofados', 'tecidos para móveis'],
+    'comércio varejista de tecidos': ['loja de tecidos', 'armarinho de tecidos', 'casa de tecidos', 'comércio de tecidos', 'tecidos metro'],
+    'lojas de tapeçaria, cortinas e persianas': ['tapeçaria', 'cortinas', 'persianas', 'decoração janelas', 'loja de cortinas', 'persianista', 'cortineiro', 'tapetes'],
+    // Embalagens
+    'distribuidoras de embalagens': ['distribuidora de embalagens', 'embalagens plásticas', 'embalagens descartáveis', 'embalagens para alimentos', 'atacado embalagens', 'fábrica de embalagens'],
     'lojas de roupas': ['loja de roupas', 'vestuário', 'boutique', 'moda'],
     'autopeças': ['autopeças', 'peças automotivas', 'auto peças'],
     'eletrônicos': ['eletrônicos', 'informática'],

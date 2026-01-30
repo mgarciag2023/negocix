@@ -231,6 +231,14 @@ const Configuration = () => {
     "Lojas de Cama, Mesa e Banho",
     "Lojas de Utilidades Domésticas",
     "Lojas de Utilidades",
+    // Setor Têxtil e Uniformes
+    "Fábricas de Uniformes",
+    "Confecção de Roupas Profissionais",
+    "Lojas de Tecidos para Decoração",
+    "Comércio Varejista de Tecidos",
+    "Lojas de Tapeçaria, Cortinas e Persianas",
+    // Embalagens
+    "Distribuidoras de Embalagens",
   ].sort(); // Ordenação alfabética
 
   const handleCustomerToggle = (customer: string) => {
