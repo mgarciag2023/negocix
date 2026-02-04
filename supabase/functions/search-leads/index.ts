@@ -155,6 +155,10 @@ function generateSearchTerms(segment: string): string[] {
     'lojas de tapeçaria, cortinas e persianas': ['tapeçaria', 'cortinas', 'persianas', 'loja de cortinas', 'loja de persianas', 'persianista', 'cortineiro', 'decoração de janelas', 'blackout', 'cortinas sob medida', 'persianas horizontais', 'persianas verticais', 'cortinas e persianas', 'rolô', 'persiana romana', 'loja de tapetes', 'tapetaria'],
     // Embalagens - OTIMIZADO  
     'distribuidoras de embalagens': ['distribuidora de embalagens', 'embalagens plásticas', 'embalagens descartáveis', 'embalagens para alimentos', 'atacado embalagens', 'fábrica de embalagens', 'embalagens industriais', 'caixas de papelão', 'embalagens delivery', 'sacolas plásticas', 'bobinas plásticas', 'filme stretch', 'embalagens flexíveis', 'descartáveis plásticos'],
+    // Metal e Siderurgia - NOVO
+    'metalúrgicas': ['metalúrgica', 'metalurgica', 'indústria metalúrgica', 'fundição', 'usinagem', 'caldeiraria', 'serralheria industrial', 'metalurgia', 'tornearia', 'ferramentaria'],
+    'siderúrgicas': ['siderúrgica', 'siderurgica', 'siderurgia', 'aço', 'ferro gusa', 'laminação', 'aciaria', 'beneficiamento de aço', 'trefilação'],
+    'empresas de solda': ['solda', 'soldagem', 'caldeiraria', 'soldador', 'empresa de solda', 'soldas industriais', 'solda mig', 'solda tig', 'montagem industrial', 'estruturas metálicas', 'serralheria'],
     'lojas de roupas': ['loja de roupas', 'vestuário', 'boutique', 'moda'],
     'autopeças': ['autopeças', 'peças automotivas', 'auto peças'],
     'eletrônicos': ['eletrônicos', 'informática'],
@@ -171,16 +175,16 @@ function generateSearchTerms(segment: string): string[] {
     'laboratórios e centros de diagnóstico': ['laboratório', 'análises clínicas', 'centro de diagnóstico', 'diagnóstico por imagem'],
     'clínicas de fisioterapia e reabilitação': ['fisioterapia', 'clínica de reabilitação', 'reabilitação'],
     'ortopedias e lojas de produtos ortopédicos': ['ortopedia', 'produtos ortopédicos', 'órteses e próteses', 'loja ortopédica'],
-    'distribuidoras de produtos hospitalares': ['distribuidora hospitalar', 'produtos hospitalares', 'materiais hospitalares', 'produtos médicos'],
+    'distribuidoras de produtos hospitalares': ['distribuidora hospitalar', 'produtos hospitalares', 'materiais hospitalares', 'distribuidor hospitalar', 'material médico', 'produtos médicos'],
     'transportadoras': ['transportadora', 'logística'],
     'gráficas': ['gráfica', 'comunicação visual'],
     'construtoras': ['construtora', 'construção civil'],
     'cozinhas industriais': ['cozinha industrial', 'refeição coletiva'],
     'indústrias de biscoitos': ['fábrica de biscoitos', 'indústria de biscoitos', 'biscoitaria'],
-    'distribuidoras de doces': ['distribuidora de doces', 'atacado de doces', 'distribuidor de doces'],
+    'distribuidoras de doces': ['distribuidora de doces', 'atacado de doces', 'distribuidor de doces', 'doces atacado'],
     'indústrias de produtos pet': ['fábrica de ração', 'indústria pet', 'fábrica de produtos pet', 'indústria de ração animal', 'fábrica de petiscos para animais'],
     'agência de eventos': ['agência de eventos', 'organizadora de eventos', 'empresa de eventos', 'produtora de eventos', 'buffet e eventos', 'cerimonial'],
-    'distribuidores de frios': ['distribuidor de frios', 'laticínios'],
+    'distribuidores de frios': ['distribuidora de frios', 'distribuidor de frios', 'laticínios atacado', 'frios e laticínios', 'frigorífico distribuidor'],
     'cestas básicas': ['cestas básicas', 'cesta básica'],
     'lanchonetes': ['lanchonete', 'hamburgueria'],
     'pizzarias': ['pizzaria', 'pizza'],
@@ -191,7 +195,9 @@ function generateSearchTerms(segment: string): string[] {
     'atacadistas': ['atacadista', 'atacado'],
     'distribuidoras': ['distribuidora', 'distribuidor'],
     'distribuidores de food service': ['distribuidor food service', 'distribuidor restaurantes'],
-    'atacadistas de food service': ['atacadista food service', 'atacado restaurantes']
+    'atacadistas de food service': ['atacadista food service', 'atacado restaurantes'],
+    'distribuidores de alimentos': ['distribuidora de alimentos', 'distribuidor de alimentos', 'atacado alimentos', 'alimentos atacado'],
+    'distribuidores de bebidas': ['distribuidora de bebidas', 'distribuidor de bebidas', 'atacado bebidas', 'bebidas atacado', 'depósito de bebidas']
   };
   
   let searchTerms = categoryTerms[term] || null;
@@ -795,9 +801,9 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     exclude: ['academia', 'fitness', 'supermercado', 'restaurante', 'lanchonete', 'hotel', 'veterinár']
   },
   'distribuidoras de produtos hospitalares': {
-    include: ['distribuidora', 'distribuidor', 'hospitalar', 'produtos hospitalares', 'materiais hospitalares', 'produtos médicos', 'materiais médicos', 'material cirúrgico', 'insumos hospitalares', 'med-hosp'],
-    mustMatch: ['distribuidora', 'distribuidor'],
-    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'academia', 'hotel', 'loja de roupa']
+    include: ['distribuidora hospitalar', 'produtos hospitalares', 'materiais hospitalares', 'distribuidor hospitalar', 'material médico', 'produtos médicos', 'insumos hospitalares', 'med-hosp'],
+    mustMatch: ['hospitalar', 'hospital', 'médico', 'medico', 'saúde', 'distribuidora'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'loja de roupa', 'academia']
   },
   'agropecuária': {
     include: ['agropecuária', 'agrícola', 'rural', 'fazenda', 'semente', 'adubo', 'fertilizante', 'ração animal', 'trator', 'implemento', 'agro'],
@@ -947,6 +953,38 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     include: ['embalagens', 'distribuidora de embalagens', 'embalagens plásticas', 'embalagens descartáveis', 'atacado embalagens', 'caixas de papelão', 'sacolas', 'filme stretch', 'embalagens flexíveis', 'bobinas'],
     mustMatch: ['embalagens', 'embalagem', 'descartáveis'],
     exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'loja de roupa']
+  },
+  // Metal e Siderurgia
+  'metalúrgicas': {
+    include: ['metalúrgica', 'metalurgica', 'fundição', 'usinagem', 'caldeiraria', 'metalurgia', 'tornearia', 'ferramentaria', 'estamparia', 'indústria metalúrgica'],
+    mustMatch: ['metalúrgica', 'metalurgica', 'metalurgia', 'fundição', 'usinagem'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'loja de roupa', 'padaria', 'confeitaria', 'mercado']
+  },
+  'siderúrgicas': {
+    include: ['siderúrgica', 'siderurgica', 'siderurgia', 'aço', 'ferro gusa', 'laminação', 'aciaria', 'trefilação', 'beneficiamento de aço'],
+    mustMatch: ['siderúrgica', 'siderurgica', 'siderurgia', 'aço', 'aciaria', 'laminação'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'loja de roupa', 'padaria', 'mercado']
+  },
+  'empresas de solda': {
+    include: ['solda', 'soldagem', 'caldeiraria', 'soldador', 'montagem industrial', 'estruturas metálicas', 'serralheria', 'solda mig', 'solda tig'],
+    mustMatch: ['solda', 'soldagem', 'caldeiraria', 'soldador'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'loja de roupa', 'padaria', 'mercado', 'escola']
+  },
+  // Distribuidoras específicas - FILTRO RÍGIDO
+  'distribuidoras de doces': {
+    include: ['distribuidora de doces', 'atacado de doces', 'doces atacado', 'distribuidor de doces', 'doces distribuidor'],
+    mustMatch: ['doces', 'guloseimas', 'balas', 'chocolates'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'padaria', 'confeitaria', 'hotel', 'supermercado', 'fábrica']
+  },
+  'distribuidores de frios': {
+    include: ['distribuidora de frios', 'distribuidor de frios', 'laticínios', 'frios e laticínios', 'frigorífico distribuidor', 'frios atacado'],
+    mustMatch: ['frios', 'laticínios', 'lacticínios', 'queijo', 'presunto', 'embutidos'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'padaria', 'confeitaria', 'hotel', 'supermercado']
+  },
+  'distribuidores de alimentos': {
+    include: ['distribuidora de alimentos', 'distribuidor de alimentos', 'atacado alimentos', 'alimentos atacado', 'alimentos distribuidor'],
+    mustMatch: ['alimentos', 'alimentício', 'food service', 'horeca'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'padaria', 'confeitaria', 'hotel', 'farmácia', 'roupa']
   }
 };
 
