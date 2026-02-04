@@ -159,6 +159,10 @@ function generateSearchTerms(segment: string): string[] {
     'metalúrgicas': ['metalúrgica', 'metalurgica', 'indústria metalúrgica', 'fundição', 'usinagem', 'caldeiraria', 'serralheria industrial', 'metalurgia', 'tornearia', 'ferramentaria'],
     'siderúrgicas': ['siderúrgica', 'siderurgica', 'siderurgia', 'aço', 'ferro gusa', 'laminação', 'aciaria', 'beneficiamento de aço', 'trefilação'],
     'empresas de solda': ['solda', 'soldagem', 'caldeiraria', 'soldador', 'empresa de solda', 'soldas industriais', 'solda mig', 'solda tig', 'montagem industrial', 'estruturas metálicas', 'serralheria'],
+    'caldeirarias': ['caldeiraria', 'caldeireiro', 'caldeiras', 'vasos de pressão', 'tubulação industrial', 'montagem industrial', 'estruturas metálicas'],
+    'usinagens': ['usinagem', 'tornearia', 'fresadora', 'torno cnc', 'usinagem cnc', 'retífica', 'ferramentaria', 'peças usinadas', 'centro de usinagem'],
+    'estruturas metálicas': ['estruturas metálicas', 'estrutura metálica', 'galpão metálico', 'cobertura metálica', 'montagem estrutural', 'serralheria industrial', 'steel frame'],
+    'fabricantes de máquinas e equipamentos': ['fábrica de máquinas', 'fabricante de equipamentos', 'máquinas industriais', 'equipamentos industriais', 'indústria de máquinas', 'máquinas e equipamentos'],
     'lojas de roupas': ['loja de roupas', 'vestuário', 'boutique', 'moda'],
     'autopeças': ['autopeças', 'peças automotivas', 'auto peças'],
     'eletrônicos': ['eletrônicos', 'informática'],
@@ -969,6 +973,26 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     include: ['solda', 'soldagem', 'caldeiraria', 'soldador', 'montagem industrial', 'estruturas metálicas', 'serralheria', 'solda mig', 'solda tig'],
     mustMatch: ['solda', 'soldagem', 'caldeiraria', 'soldador'],
     exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'loja de roupa', 'padaria', 'mercado', 'escola']
+  },
+  'caldeirarias': {
+    include: ['caldeiraria', 'caldeireiro', 'caldeiras', 'vasos de pressão', 'tubulação industrial', 'montagem industrial', 'estruturas metálicas'],
+    mustMatch: ['caldeiraria', 'caldeireiro', 'caldeira'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado']
+  },
+  'usinagens': {
+    include: ['usinagem', 'tornearia', 'fresadora', 'torno cnc', 'usinagem cnc', 'retífica', 'ferramentaria', 'peças usinadas', 'centro de usinagem'],
+    mustMatch: ['usinagem', 'tornearia', 'torno', 'fresadora', 'ferramentaria'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado']
+  },
+  'estruturas metálicas': {
+    include: ['estruturas metálicas', 'estrutura metálica', 'galpão metálico', 'cobertura metálica', 'montagem estrutural', 'serralheria industrial', 'steel frame'],
+    mustMatch: ['estrutura', 'metálica', 'metálico', 'galpão', 'serralheria'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado']
+  },
+  'fabricantes de máquinas e equipamentos': {
+    include: ['fábrica de máquinas', 'fabricante de equipamentos', 'máquinas industriais', 'equipamentos industriais', 'indústria de máquinas', 'máquinas e equipamentos'],
+    mustMatch: ['máquina', 'equipamento', 'fabricante', 'fábrica'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'loja']
   },
   // Distribuidoras específicas - FILTRO RÍGIDO
   'distribuidoras de doces': {
