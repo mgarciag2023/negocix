@@ -181,6 +181,10 @@ const Configuration = () => {
     "Metalúrgicas",
     "Siderúrgicas",
     "Empresas de Solda",
+    "Caldeirarias",
+    "Usinagens",
+    "Estruturas Metálicas",
+    "Fabricantes de Máquinas e Equipamentos",
     // Setor Produtos Naturais / Orgânicos
     "Lojas de Produtos Naturais",
     "Empórios Naturais",
