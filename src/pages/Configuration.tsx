@@ -177,6 +177,10 @@ const Configuration = () => {
     "Indústrias Automotivas",
     "Indústrias de Automação",
     "Indústrias de Iluminação e LED",
+    // Metal e Siderurgia
+    "Metalúrgicas",
+    "Siderúrgicas",
+    "Empresas de Solda",
     // Setor Produtos Naturais / Orgânicos
     "Lojas de Produtos Naturais",
     "Empórios Naturais",
