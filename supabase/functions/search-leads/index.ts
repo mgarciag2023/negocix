@@ -155,14 +155,14 @@ function generateSearchTerms(segment: string): string[] {
     'lojas de tapeçaria, cortinas e persianas': ['tapeçaria', 'cortinas', 'persianas', 'loja de cortinas', 'loja de persianas', 'persianista', 'cortineiro', 'decoração de janelas', 'blackout', 'cortinas sob medida', 'persianas horizontais', 'persianas verticais', 'cortinas e persianas', 'rolô', 'persiana romana', 'loja de tapetes', 'tapetaria'],
     // Embalagens - OTIMIZADO  
     'distribuidoras de embalagens': ['distribuidora de embalagens', 'embalagens plásticas', 'embalagens descartáveis', 'embalagens para alimentos', 'atacado embalagens', 'fábrica de embalagens', 'embalagens industriais', 'caixas de papelão', 'embalagens delivery', 'sacolas plásticas', 'bobinas plásticas', 'filme stretch', 'embalagens flexíveis', 'descartáveis plásticos'],
-    // Metal e Siderurgia - NOVO
-    'metalúrgicas': ['metalúrgica', 'metalurgica', 'indústria metalúrgica', 'fundição', 'usinagem', 'caldeiraria', 'serralheria industrial', 'metalurgia', 'tornearia', 'ferramentaria'],
-    'siderúrgicas': ['siderúrgica', 'siderurgica', 'siderurgia', 'aço', 'ferro gusa', 'laminação', 'aciaria', 'beneficiamento de aço', 'trefilação'],
-    'empresas de solda': ['solda', 'soldagem', 'caldeiraria', 'soldador', 'empresa de solda', 'soldas industriais', 'solda mig', 'solda tig', 'montagem industrial', 'estruturas metálicas', 'serralheria'],
-    'caldeirarias': ['caldeiraria', 'caldeireiro', 'caldeiras', 'vasos de pressão', 'tubulação industrial', 'montagem industrial', 'estruturas metálicas'],
-    'usinagens': ['usinagem', 'tornearia', 'fresadora', 'torno cnc', 'usinagem cnc', 'retífica', 'ferramentaria', 'peças usinadas', 'centro de usinagem'],
-    'estruturas metálicas': ['estruturas metálicas', 'estrutura metálica', 'galpão metálico', 'cobertura metálica', 'montagem estrutural', 'serralheria industrial', 'steel frame'],
-    'fabricantes de máquinas e equipamentos': ['fábrica de máquinas', 'fabricante de equipamentos', 'máquinas industriais', 'equipamentos industriais', 'indústria de máquinas', 'máquinas e equipamentos'],
+    // Metal e Siderurgia - OTIMIZADO PARA VOLUME
+    'metalúrgicas': ['metalúrgica', 'metalurgica', 'indústria metalúrgica', 'fundição', 'usinagem', 'caldeiraria', 'serralheria industrial', 'metalurgia', 'tornearia', 'ferramentaria', 'estamparia', 'corte e dobra', 'indústria de metal', 'trabalho em metal', 'forjaria', 'tratamento de metais', 'zincagem', 'galvanização', 'cromação', 'pintura industrial', 'repuxo', 'conformação de metais', 'eletroerosão', 'puncionadeira', 'laser metal'],
+    'siderúrgicas': ['siderúrgica', 'siderurgica', 'siderurgia', 'aço', 'ferro gusa', 'laminação', 'aciaria', 'beneficiamento de aço', 'trefilação', 'perfilados de aço', 'chapas de aço', 'distribuidor de aço', 'corte de aço', 'usina siderúrgica', 'arames de aço', 'vergalhão', 'bobinas de aço', 'ferro e aço', 'metalon', 'tubo de aço'],
+    'empresas de solda': ['solda', 'soldagem', 'caldeiraria', 'soldador', 'empresa de solda', 'soldas industriais', 'solda mig', 'solda tig', 'montagem industrial', 'estruturas metálicas', 'serralheria', 'solda elétrica', 'solda oxiacetilênica', 'serviços de soldagem', 'manutenção industrial solda', 'soldas especiais', 'soldagem industrial', 'recuperação de peças', 'soldas em geral'],
+    'caldeirarias': ['caldeiraria', 'caldeireiro', 'caldeiras', 'vasos de pressão', 'tubulação industrial', 'montagem industrial', 'estruturas metálicas', 'fabricação de tanques', 'reservatórios metálicos', 'silos metálicos', 'dutos industriais', 'caldeiraria pesada', 'caldeiraria leve', 'fabricação de equipamentos', 'montagem mecânica', 'tubulações', 'tanques de aço'],
+    'usinagens': ['usinagem', 'tornearia', 'fresadora', 'torno cnc', 'usinagem cnc', 'retífica', 'ferramentaria', 'peças usinadas', 'centro de usinagem', 'torno mecânico', 'fresagem', 'usinagem de precisão', 'peças sob encomenda', 'usinagem em geral', 'serviços de usinagem', 'tornearia mecânica', 'mandrilhamento', 'brunimento', 'balanceamento', 'torno automático', 'torno convencional'],
+    'estruturas metálicas': ['estruturas metálicas', 'estrutura metálica', 'galpão metálico', 'cobertura metálica', 'montagem estrutural', 'serralheria industrial', 'steel frame', 'mezanino metálico', 'escadas metálicas', 'passarelas metálicas', 'portões industriais', 'grades metálicas', 'gradis', 'estrutura de aço', 'construção metálica', 'montagem de galpão', 'barracão metálico', 'serralheria de obras'],
+    'fabricantes de máquinas e equipamentos': ['fábrica de máquinas', 'fabricante de equipamentos', 'máquinas industriais', 'equipamentos industriais', 'indústria de máquinas', 'máquinas e equipamentos', 'fabricante de máquinas', 'equipamentos sob medida', 'máquinas especiais', 'automação industrial', 'linha de produção', 'equipamentos para indústria', 'máquinas para alimentos', 'máquinas para embalagem', 'equipamentos metalúrgicos', 'máquinas agrícolas', 'implementos', 'fabricação de equipamentos'],
     'lojas de roupas': ['loja de roupas', 'vestuário', 'boutique', 'moda'],
     'autopeças': ['autopeças', 'peças automotivas', 'auto peças'],
     'eletrônicos': ['eletrônicos', 'informática'],
@@ -958,41 +958,41 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     mustMatch: ['embalagens', 'embalagem', 'descartáveis'],
     exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'loja de roupa']
   },
-  // Metal e Siderurgia
+  // Metal e Siderurgia - OTIMIZADO PARA VOLUME (mustMatch flexível)
   'metalúrgicas': {
-    include: ['metalúrgica', 'metalurgica', 'fundição', 'usinagem', 'caldeiraria', 'metalurgia', 'tornearia', 'ferramentaria', 'estamparia', 'indústria metalúrgica'],
-    mustMatch: ['metalúrgica', 'metalurgica', 'metalurgia', 'fundição', 'usinagem'],
-    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'loja de roupa', 'padaria', 'confeitaria', 'mercado']
+    include: ['metalúrgica', 'metalurgica', 'fundição', 'usinagem', 'caldeiraria', 'metalurgia', 'tornearia', 'ferramentaria', 'estamparia', 'indústria metalúrgica', 'corte e dobra', 'forjaria', 'tratamento de metais', 'zincagem', 'galvanização', 'cromação', 'repuxo', 'conformação', 'eletroerosão', 'laser metal', 'serralheria industrial', 'trabalho em metal'],
+    mustMatch: [], // Removido para aumentar volume - include já valida relevância
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'loja de roupa', 'padaria', 'confeitaria', 'mercado', 'escola', 'academia']
   },
   'siderúrgicas': {
-    include: ['siderúrgica', 'siderurgica', 'siderurgia', 'aço', 'ferro gusa', 'laminação', 'aciaria', 'trefilação', 'beneficiamento de aço'],
-    mustMatch: ['siderúrgica', 'siderurgica', 'siderurgia', 'aço', 'aciaria', 'laminação'],
-    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'loja de roupa', 'padaria', 'mercado']
-  },
-  'empresas de solda': {
-    include: ['solda', 'soldagem', 'caldeiraria', 'soldador', 'montagem industrial', 'estruturas metálicas', 'serralheria', 'solda mig', 'solda tig'],
-    mustMatch: ['solda', 'soldagem', 'caldeiraria', 'soldador'],
+    include: ['siderúrgica', 'siderurgica', 'siderurgia', 'aço', 'ferro gusa', 'laminação', 'aciaria', 'trefilação', 'beneficiamento de aço', 'perfilados', 'chapas de aço', 'corte de aço', 'vergalhão', 'bobinas', 'ferro e aço', 'metalon', 'tubo de aço', 'distribuidor de aço', 'arames', 'telas de aço'],
+    mustMatch: [], // Removido para aumentar volume
     exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'loja de roupa', 'padaria', 'mercado', 'escola']
   },
+  'empresas de solda': {
+    include: ['solda', 'soldagem', 'caldeiraria', 'soldador', 'montagem industrial', 'estruturas metálicas', 'serralheria', 'solda mig', 'solda tig', 'solda elétrica', 'serviços de soldagem', 'manutenção industrial', 'soldas especiais', 'recuperação de peças', 'soldas em geral', 'oxicorte'],
+    mustMatch: [], // Removido para aumentar volume
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'loja de roupa', 'padaria', 'mercado', 'escola', 'academia']
+  },
   'caldeirarias': {
-    include: ['caldeiraria', 'caldeireiro', 'caldeiras', 'vasos de pressão', 'tubulação industrial', 'montagem industrial', 'estruturas metálicas'],
-    mustMatch: ['caldeiraria', 'caldeireiro', 'caldeira'],
-    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado']
+    include: ['caldeiraria', 'caldeireiro', 'caldeiras', 'vasos de pressão', 'tubulação industrial', 'montagem industrial', 'estruturas metálicas', 'fabricação de tanques', 'reservatórios metálicos', 'silos metálicos', 'dutos industriais', 'caldeiraria pesada', 'caldeiraria leve', 'montagem mecânica', 'tubulações', 'tanques de aço', 'equipamentos industriais'],
+    mustMatch: [], // Removido para aumentar volume
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'escola']
   },
   'usinagens': {
-    include: ['usinagem', 'tornearia', 'fresadora', 'torno cnc', 'usinagem cnc', 'retífica', 'ferramentaria', 'peças usinadas', 'centro de usinagem'],
-    mustMatch: ['usinagem', 'tornearia', 'torno', 'fresadora', 'ferramentaria'],
-    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado']
+    include: ['usinagem', 'tornearia', 'fresadora', 'torno cnc', 'usinagem cnc', 'retífica', 'ferramentaria', 'peças usinadas', 'centro de usinagem', 'torno mecânico', 'fresagem', 'usinagem de precisão', 'peças sob encomenda', 'serviços de usinagem', 'tornearia mecânica', 'mandrilhamento', 'brunimento', 'balanceamento', 'torno automático', 'torno convencional', 'peças especiais'],
+    mustMatch: [], // Removido para aumentar volume
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'escola']
   },
   'estruturas metálicas': {
-    include: ['estruturas metálicas', 'estrutura metálica', 'galpão metálico', 'cobertura metálica', 'montagem estrutural', 'serralheria industrial', 'steel frame'],
-    mustMatch: ['estrutura', 'metálica', 'metálico', 'galpão', 'serralheria'],
-    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado']
+    include: ['estruturas metálicas', 'estrutura metálica', 'galpão metálico', 'cobertura metálica', 'montagem estrutural', 'serralheria industrial', 'steel frame', 'mezanino metálico', 'escadas metálicas', 'passarelas metálicas', 'portões industriais', 'grades metálicas', 'gradis', 'estrutura de aço', 'construção metálica', 'montagem de galpão', 'barracão metálico', 'serralheria de obras', 'serralheria', 'metalon'],
+    mustMatch: [], // Removido para aumentar volume
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'escola']
   },
   'fabricantes de máquinas e equipamentos': {
-    include: ['fábrica de máquinas', 'fabricante de equipamentos', 'máquinas industriais', 'equipamentos industriais', 'indústria de máquinas', 'máquinas e equipamentos'],
-    mustMatch: ['máquina', 'equipamento', 'fabricante', 'fábrica'],
-    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'loja']
+    include: ['fábrica de máquinas', 'fabricante de equipamentos', 'máquinas industriais', 'equipamentos industriais', 'indústria de máquinas', 'máquinas e equipamentos', 'equipamentos sob medida', 'máquinas especiais', 'automação industrial', 'linha de produção', 'equipamentos para indústria', 'máquinas para alimentos', 'máquinas para embalagem', 'equipamentos metalúrgicos', 'máquinas agrícolas', 'implementos', 'fabricação de equipamentos', 'máquinas sob encomenda'],
+    mustMatch: [], // Removido para aumentar volume
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'loja de roupas', 'escola']
   },
   // Distribuidoras específicas - FILTRO RÍGIDO
   'distribuidoras de doces': {
