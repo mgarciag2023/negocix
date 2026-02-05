@@ -263,8 +263,12 @@ serve(async (req) => {
 
     const stateName = stateNames[state] || state;
     const location = city ? `${city}, ${stateName}` : stateName;
+    const hasCity = !!city && city.trim().length > 0;
     
-    console.log(`📍 Searching representatives in: ${location}`);
+    // Dynamic limit: 20 for city search, 30 for state-only search
+    const MAX_RESULTS = hasCity ? 20 : 30;
+    
+    console.log(`📍 Searching representatives in: ${location} (limit: ${MAX_RESULTS})`);
 
     // Search queries - focused on representation companies
     const searchQueries = [
@@ -353,8 +357,8 @@ serve(async (req) => {
         rating: place.rating
       });
 
-      // Limit to 50 results
-      if (representatives.length >= 50) break;
+      // Apply dynamic limit (20 for city, 30 for state)
+      if (representatives.length >= MAX_RESULTS) break;
     }
 
     // Sort: those with phones first, then by rating

@@ -67,6 +67,17 @@ const Index = () => {
                     Buscar Fornecedores
                   </Link>
                 </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  asChild 
+                  className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/30 hover:bg-primary-foreground/20 hover:-translate-y-1 transition-all duration-300 text-base h-14 px-8 rounded-xl backdrop-blur-sm"
+                >
+                  <Link to="/search-representatives" onClick={() => window.scrollTo(0, 0)}>
+                    <Users className="mr-2 h-5 w-5" />
+                    Buscar Representantes
+                  </Link>
+                </Button>
               </div>
               
               {/* Stats */}
