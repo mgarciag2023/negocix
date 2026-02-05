@@ -72,7 +72,7 @@ const Index = () => {
               {/* Stats */}
               <div className="mt-16 grid grid-cols-2 gap-8 max-w-xs mx-auto opacity-0 animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
                 <div className="text-center">
-                  <div className="text-2xl md:text-3xl font-bold text-primary-foreground">150+</div>
+                  <div className="text-2xl md:text-3xl font-bold text-primary-foreground">90+</div>
                   <div className="text-sm text-primary-foreground/60">Leads/busca</div>
                 </div>
                 <div className="text-center border-l border-primary-foreground/20">

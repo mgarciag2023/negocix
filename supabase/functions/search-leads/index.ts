@@ -1579,11 +1579,17 @@ serve(async (req) => {
       return API_KEYS[currentKeyIndex];
     }
     
-    const MAX_TOTAL_LEADS = 200; // Max leads per search
-    const MIN_LEADS_TARGET = 60; // Minimum target
-    const MIN_LEADS_EARLY_EXIT = 100; // Early exit threshold
+    const MAX_TOTAL_LEADS = 150; // Max leads per search
+    const MIN_LEADS_TARGET = 70; // Minimum target
+    const TARGET_LEADS = 80; // Target around this number
+    const MAX_TARGET_LEADS = 90; // Occasionally try to exceed this
+    const MIN_LEADS_EARLY_EXIT = 85; // Early exit threshold
     
-    console.log(`🔎 Google Places API search: targeting ${MIN_LEADS_TARGET}-${MAX_TOTAL_LEADS} leads (MAXIMUM VOLUME MODE)`);
+    // Occasionally try to get more leads (20% chance)
+    const tryExceedTarget = Math.random() < 0.2;
+    const currentTarget = tryExceedTarget ? MAX_TARGET_LEADS + 20 : TARGET_LEADS;
+    
+    console.log(`🔎 Google Places API search: targeting ${MIN_LEADS_TARGET}-${currentTarget} leads (max ${MAX_TOTAL_LEADS})${tryExceedTarget ? ' [BONUS MODE]' : ''}`);
     
     // OPTIMIZATION: Cache to avoid duplicate API calls
     const searchCache = new Map<string, any[]>();
