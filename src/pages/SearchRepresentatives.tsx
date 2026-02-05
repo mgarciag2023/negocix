@@ -6,113 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Users, MapPin, Briefcase } from "lucide-react";
+import { Search, Users, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-// Segmentos de representação comercial
-const representativeSegments = [
-  "Alimentos",
-  "Bebidas",
-  "Cosméticos",
-  "Vestuário",
-  "Automotivo",
-  "Construção Civil",
-  "Farmacêutico",
-  "Eletrônicos",
-  "Materiais Elétricos",
-  "Agropecuária",
-  "Têxtil",
-  "Químico",
-  "Embalagens",
-  "Máquinas e Equipamentos",
-  "Móveis",
-  "Papelaria",
-  "Brinquedos",
-  "Pet",
-  "Higiene e Limpeza",
-  "Suplementos",
-  "Energia Solar",
-  "Tecnologia",
-  "Saúde",
-  "Ferramentas",
-  "Material de Escritório",
-  "Segurança",
-  "Descartáveis",
-  "Plásticos",
-  "EPIs",
-  "Utilidades Domésticas",
-  "Joias e Bijuterias",
-  "Calçados",
-  "Bolsas e Acessórios",
-  "Perfumaria",
-  "Cama, Mesa e Banho",
-  "Informática",
-  "Celulares e Acessórios",
-  "Ar Condicionado",
-  "Refrigeração",
-  "Iluminação",
-  "Tintas e Pintura",
-  "Hidráulica",
-  "Jardinagem",
-  "Piscinas",
-  "Fitness",
-  "Instrumentos Musicais",
-  "Artigos Religiosos",
-  "Artesanato",
-  "Decoração",
-  "Vidros",
-  "Madeira",
-  "Aço e Metalurgia",
-  "Borrachas",
-  "Lubrificantes",
-  "Alimentos Congelados",
-  "Doces e Chocolates",
-  "Café",
-  "Cereais e Grãos",
-  "Laticínios",
-  "Carnes",
-  "Pescados",
-  "Orgânicos",
-  "Sucos e Polpas",
-  "Água Mineral",
-  "Sorvetes",
-  "Padaria",
-  "Rotisseria",
-];
-
-// Profissões / Profissionais liberais
-const professionalSegments = [
-  "Engenheiros",
-  "Arquitetos",
-  "Contadores",
-  "Eletricistas",
-  "Advogados",
-  "Médicos",
-  "Dentistas",
-  "Nutricionistas",
-  "Psicólogos",
-  "Fisioterapeutas",
-  "Veterinários",
-  "Fonoaudiólogos",
-  "Terapeutas Ocupacionais",
-  "Enfermeiros",
-  "Farmacêuticos",
-  "Biomédicos",
-  "Corretores de Imóveis",
-  "Corretores de Seguros",
-  "Despachantes",
-  "Personal Trainers",
-  "Tradutores",
-  "Designers",
-  "Programadores",
-  "Consultores",
-  "Economistas",
-  "Administradores",
-  "Publicitários",
-  "Jornalistas",
-  "Fotógrafos",
-  "Videomakers",
-];
 
 const brazilianStates = [
   "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
@@ -124,29 +19,11 @@ export default function SearchRepresentatives() {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSegmentToggle = (segment: string) => {
-    setSelectedSegments(prev =>
-      prev.includes(segment)
-        ? prev.filter(s => s !== segment)
-        : [...prev, segment]
-    );
-  };
-
   const handleSearch = async () => {
-    if (selectedSegments.length === 0) {
-      toast({
-        title: "Selecione pelo menos um segmento",
-        description: "Escolha os segmentos de representação que deseja buscar.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (!state) {
       toast({
         title: "Selecione um estado",
@@ -157,7 +34,6 @@ export default function SearchRepresentatives() {
     }
 
     const searchConfig = {
-      segments: selectedSegments,
       city,
       state,
     };
@@ -171,7 +47,7 @@ export default function SearchRepresentatives() {
       <Navbar />
       
       <main className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-2xl mx-auto">
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
               <Users className="w-8 h-8 text-primary" />
@@ -180,120 +56,60 @@ export default function SearchRepresentatives() {
               Buscar Representantes
             </h1>
             <p className="text-muted-foreground">
-              Encontre representantes comerciais para trabalharem com sua empresa
+              Encontre empresas de representação comercial na sua região
             </p>
           </div>
 
-          <div className="space-y-6">
-            {/* Segmentos de Representação */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Briefcase className="w-5 h-5" />
-                  Segmentos de Representação Comercial
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Selecione os segmentos em que deseja encontrar representantes comerciais
-                </p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 max-h-64 overflow-y-auto">
-                  {representativeSegments.map((segment) => (
-                    <div
-                      key={segment}
-                      onClick={() => handleSegmentToggle(segment)}
-                      className={`p-2 sm:p-3 rounded-lg border cursor-pointer transition-all text-center ${
-                        selectedSegments.includes(segment)
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-card hover:bg-accent border-border"
-                      }`}
-                    >
-                      <span className="text-xs sm:text-sm font-medium">{segment}</span>
-                    </div>
-                  ))}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="w-5 h-5" />
+                Localização
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Busca empresas de representação comercial via Google Maps com filtros rígidos para garantir resultados precisos.
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="state">Estado *</Label>
+                  <Select value={state} onValueChange={setState}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {brazilianStates.map((uf) => (
+                        <SelectItem key={uf} value={uf}>
+                          {uf}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Profissionais Liberais */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5" />
-                  Profissionais Liberais
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Ou busque profissionais autônomos e liberais
-                </p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 max-h-48 overflow-y-auto">
-                  {professionalSegments.map((segment) => (
-                    <div
-                      key={segment}
-                      onClick={() => handleSegmentToggle(segment)}
-                      className={`p-2 sm:p-3 rounded-lg border cursor-pointer transition-all text-center ${
-                        selectedSegments.includes(segment)
-                          ? "bg-secondary text-secondary-foreground border-secondary"
-                          : "bg-card hover:bg-accent border-border"
-                      }`}
-                    >
-                      <span className="text-xs sm:text-sm font-medium">{segment}</span>
-                    </div>
-                  ))}
+                <div className="space-y-2">
+                  <Label htmlFor="city">Cidade (opcional)</Label>
+                  <Input
+                    id="city"
+                    placeholder="Ex: São Paulo"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                  />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Localização */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5" />
-                  Localização
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="state">Estado *</Label>
-                    <Select value={state} onValueChange={setState}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o estado" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {brazilianStates.map((uf) => (
-                          <SelectItem key={uf} value={uf}>
-                            {uf}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="city">Cidade (opcional)</Label>
-                    <Input
-                      id="city"
-                      placeholder="Ex: São Paulo"
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Botão de Busca */}
-            <Button
-              onClick={handleSearch}
-              disabled={isLoading}
-              className="w-full py-6 text-lg"
-              size="lg"
-            >
-              <Search className="w-5 h-5 mr-2" />
-              {isLoading ? "Buscando..." : "Buscar Representantes"}
-            </Button>
-          </div>
+              <Button
+                onClick={handleSearch}
+                disabled={isLoading}
+                className="w-full py-6 text-lg mt-4"
+                size="lg"
+              >
+                <Search className="w-5 h-5 mr-2" />
+                {isLoading ? "Buscando..." : "Buscar Representantes"}
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>
