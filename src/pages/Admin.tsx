@@ -7,9 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users, Settings, Ban, CheckCircle, Loader2, Save } from "lucide-react";
+import { Shield, Users, Settings, Ban, CheckCircle, Loader2, Save, Target } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -29,6 +28,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface Profile {
   id: string;
@@ -37,6 +45,7 @@ interface Profile {
   is_blocked: boolean;
   blocked_reason: string | null;
   created_at: string;
+  leads_per_search?: number;
 }
 
 interface LeadSettings {
@@ -58,6 +67,9 @@ const Admin = () => {
   });
   const [savingSettings, setSavingSettings] = useState(false);
   const [blockReason, setBlockReason] = useState("");
+  const [editingUser, setEditingUser] = useState<Profile | null>(null);
+  const [userLeadLimit, setUserLeadLimit] = useState("");
+  const [savingUserLimit, setSavingUserLimit] = useState(false);
 
   useEffect(() => {
     checkAdminAccess();
@@ -99,17 +111,32 @@ const Admin = () => {
   };
 
   const fetchProfiles = async () => {
-    const { data, error } = await supabase
+    // Fetch profiles
+    const { data: profilesData, error: profilesError } = await supabase
       .from("profiles")
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching profiles:", error);
+    if (profilesError) {
+      console.error("Error fetching profiles:", profilesError);
       return;
     }
 
-    setProfiles(data || []);
+    // Fetch user lead limits
+    const { data: limitsData } = await supabase
+      .from("user_lead_limits")
+      .select("user_id, leads_per_search");
+
+    // Merge limits into profiles
+    const profilesWithLimits = (profilesData || []).map((profile) => {
+      const limit = limitsData?.find((l) => l.user_id === profile.user_id);
+      return {
+        ...profile,
+        leads_per_search: limit?.leads_per_search || null,
+      };
+    });
+
+    setProfiles(profilesWithLimits);
   };
 
   const fetchSettings = async () => {
@@ -196,6 +223,65 @@ const Admin = () => {
     }
 
     setSavingSettings(false);
+  };
+
+  const openUserLimitDialog = (profile: Profile) => {
+    setEditingUser(profile);
+    setUserLeadLimit(profile.leads_per_search?.toString() || "");
+  };
+
+  const saveUserLeadLimit = async () => {
+    if (!editingUser) return;
+    
+    setSavingUserLimit(true);
+    
+    const limitValue = userLeadLimit ? parseInt(userLeadLimit) : null;
+    
+    if (limitValue === null || limitValue <= 0) {
+      // Delete the limit if empty or invalid
+      const { error } = await supabase
+        .from("user_lead_limits")
+        .delete()
+        .eq("user_id", editingUser.user_id);
+      
+      if (error && error.code !== "PGRST116") {
+        toast({
+          title: "Erro",
+          description: "Não foi possível remover o limite",
+          variant: "destructive",
+        });
+        setSavingUserLimit(false);
+        return;
+      }
+    } else {
+      // Upsert the limit
+      const { error } = await supabase
+        .from("user_lead_limits")
+        .upsert({
+          user_id: editingUser.user_id,
+          leads_per_search: limitValue,
+        }, { onConflict: "user_id" });
+      
+      if (error) {
+        toast({
+          title: "Erro",
+          description: "Não foi possível salvar o limite",
+          variant: "destructive",
+        });
+        setSavingUserLimit(false);
+        return;
+      }
+    }
+
+    toast({
+      title: "Limite salvo",
+      description: `Limite de leads para ${editingUser.email} foi ${limitValue ? `definido como ${limitValue}` : "removido"}`,
+    });
+
+    setEditingUser(null);
+    setUserLeadLimit("");
+    setSavingUserLimit(false);
+    fetchProfiles();
   };
 
   if (loading) {
@@ -323,6 +409,7 @@ const Admin = () => {
                   <TableRow>
                     <TableHead>Email</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Leads/Pesquisa</TableHead>
                     <TableHead>Cadastro</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -338,66 +425,86 @@ const Admin = () => {
                             Bloqueado
                           </Badge>
                         ) : (
-                          <Badge variant="default" className="gap-1 bg-green-600">
+                          <Badge variant="default" className="gap-1 bg-success">
                             <CheckCircle className="h-3 w-3" />
                             Ativo
                           </Badge>
                         )}
                       </TableCell>
                       <TableCell>
+                        {profile.leads_per_search ? (
+                          <Badge variant="secondary" className="gap-1">
+                            <Target className="h-3 w-3" />
+                            {profile.leads_per_search}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">Padrão</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         {new Date(profile.created_at).toLocaleDateString("pt-BR")}
                       </TableCell>
                       <TableCell className="text-right">
-                        {profile.email !== "mgarciag2023@gmail.com" && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                variant={profile.is_blocked ? "outline" : "destructive"}
-                                size="sm"
-                              >
-                                {profile.is_blocked ? "Desbloquear" : "Bloquear"}
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  {profile.is_blocked ? "Desbloquear usuário?" : "Bloquear usuário?"}
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  {profile.is_blocked
-                                    ? `Tem certeza que deseja desbloquear ${profile.email}?`
-                                    : `Tem certeza que deseja bloquear ${profile.email}? O usuário não poderá mais acessar o sistema.`}
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              {!profile.is_blocked && (
-                                <div className="space-y-2">
-                                  <Label htmlFor="block-reason">Motivo do bloqueio (opcional)</Label>
-                                  <Input
-                                    id="block-reason"
-                                    placeholder="Ex: Uso indevido do sistema"
-                                    value={blockReason}
-                                    onChange={(e) => setBlockReason(e.target.value)}
-                                  />
-                                </div>
-                              )}
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => toggleBlockUser(profile)}
-                                  className={profile.is_blocked ? "" : "bg-destructive hover:bg-destructive/90"}
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openUserLimitDialog(profile)}
+                          >
+                            <Target className="h-3 w-3 mr-1" />
+                            Limite
+                          </Button>
+                          {profile.email !== "mgarciag2023@gmail.com" && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant={profile.is_blocked ? "outline" : "destructive"}
+                                  size="sm"
                                 >
                                   {profile.is_blocked ? "Desbloquear" : "Bloquear"}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        )}
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    {profile.is_blocked ? "Desbloquear usuário?" : "Bloquear usuário?"}
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    {profile.is_blocked
+                                      ? `Tem certeza que deseja desbloquear ${profile.email}?`
+                                      : `Tem certeza que deseja bloquear ${profile.email}? O usuário não poderá mais acessar o sistema.`}
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                {!profile.is_blocked && (
+                                  <div className="space-y-2">
+                                    <Label htmlFor="block-reason">Motivo do bloqueio (opcional)</Label>
+                                    <Input
+                                      id="block-reason"
+                                      placeholder="Ex: Uso indevido do sistema"
+                                      value={blockReason}
+                                      onChange={(e) => setBlockReason(e.target.value)}
+                                    />
+                                  </div>
+                                )}
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => toggleBlockUser(profile)}
+                                    className={profile.is_blocked ? "" : "bg-destructive hover:bg-destructive/90"}
+                                  >
+                                    {profile.is_blocked ? "Desbloquear" : "Bloquear"}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
                   {profiles.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                         Nenhum usuário cadastrado
                       </TableCell>
                     </TableRow>
@@ -407,9 +514,50 @@ const Admin = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* User Lead Limit Dialog */}
+        <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Limite de Leads por Pesquisa</DialogTitle>
+              <DialogDescription>
+                Defina um limite personalizado para {editingUser?.email}. Deixe vazio para usar o padrão do sistema.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="user-lead-limit">Leads por pesquisa</Label>
+                <Input
+                  id="user-lead-limit"
+                  type="number"
+                  placeholder={`Padrão: ${settings.leads_target}`}
+                  value={userLeadLimit}
+                  onChange={(e) => setUserLeadLimit(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Configuração global: Mín {settings.leads_min}, Meta {settings.leads_target}, Máx {settings.leads_max}
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditingUser(null)}>
+                Cancelar
+              </Button>
+              <Button onClick={saveUserLeadLimit} disabled={savingUserLimit}>
+                {savingUserLimit ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                Salvar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );
 };
+
 
 export default Admin;
