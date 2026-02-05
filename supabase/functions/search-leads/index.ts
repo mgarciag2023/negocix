@@ -1527,10 +1527,56 @@ serve(async (req) => {
     console.log('🏢 Business type:', bizType);
     console.log('📱 WhatsApp only:', filterWhatsappOnly);
     
-    // Get Google API key
-    const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY");
-    if (!GOOGLE_API_KEY) {
-      throw new Error("GOOGLE_API_KEY is not configured");
+    // ===== API KEY ROTATION SYSTEM =====
+    // Supports up to 5 API keys with automatic rotation on quota exhaustion
+    const API_KEYS = [
+      Deno.env.get("GOOGLE_API_KEY_1"),
+      Deno.env.get("GOOGLE_API_KEY_2"),
+      Deno.env.get("GOOGLE_API_KEY_3"),
+      Deno.env.get("GOOGLE_API_KEY_4"),
+      Deno.env.get("GOOGLE_API_KEY_5"),
+      Deno.env.get("GOOGLE_API_KEY"), // Fallback to original key
+    ].filter(key => key && key.trim() !== '') as string[];
+    
+    if (API_KEYS.length === 0) {
+      throw new Error("No GOOGLE_API_KEY configured. Please add at least GOOGLE_API_KEY_1");
+    }
+    
+    console.log(`🔑 API Key rotation enabled: ${API_KEYS.length} keys available`);
+    
+    let currentKeyIndex = 0;
+    let GOOGLE_API_KEY = API_KEYS[currentKeyIndex];
+    
+    // Function to check if error is quota-related
+    function isQuotaError(status: string, errorMessage?: string): boolean {
+      const quotaStatuses = ['OVER_QUERY_LIMIT', 'RESOURCE_EXHAUSTED', 'QUOTA_EXCEEDED'];
+      if (quotaStatuses.includes(status)) return true;
+      if (errorMessage && (
+        errorMessage.toLowerCase().includes('quota') ||
+        errorMessage.toLowerCase().includes('limit') ||
+        errorMessage.toLowerCase().includes('exceeded')
+      )) return true;
+      return false;
+    }
+    
+    // Function to rotate to next available API key
+    function rotateApiKey(): boolean {
+      const previousIndex = currentKeyIndex;
+      currentKeyIndex++;
+      
+      if (currentKeyIndex >= API_KEYS.length) {
+        console.error(`❌ All ${API_KEYS.length} API keys exhausted!`);
+        return false;
+      }
+      
+      GOOGLE_API_KEY = API_KEYS[currentKeyIndex];
+      console.log(`🔄 API Key rotated: Key ${previousIndex + 1} → Key ${currentKeyIndex + 1} (${API_KEYS.length - currentKeyIndex} remaining)`);
+      return true;
+    }
+    
+    // Helper function to get current API key (for closures)
+    function getCurrentApiKey(): string {
+      return API_KEYS[currentKeyIndex];
     }
     
     const MAX_TOTAL_LEADS = 200; // Max leads per search
@@ -1542,7 +1588,7 @@ serve(async (req) => {
     // OPTIMIZATION: Cache to avoid duplicate API calls
     const searchCache = new Map<string, any[]>();
     
-    // Function to search places using Google Places API - OPTIMIZED
+    // Function to search places using Google Places API - WITH AUTO KEY ROTATION
     async function searchPlaces(query: string, location: string, maxPages: number = 3): Promise<any[]> {
       // Check cache first to save API credits
       const cacheKey = `${query}|${location}`;
@@ -1554,21 +1600,42 @@ serve(async (req) => {
       const results: any[] = [];
       let nextPageToken: string | null = null;
       let pageCount = 0;
+      let retryWithNewKey = false;
       
       while (pageCount < maxPages) {
+        const currentKey = getCurrentApiKey();
         const searchUrl: string = nextPageToken 
-          ? `https://maps.googleapis.com/maps/api/place/textsearch/json?pagetoken=${nextPageToken}&key=${GOOGLE_API_KEY}`
-          : `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query + ' em ' + location)}&language=pt-BR&key=${GOOGLE_API_KEY}`;
+          ? `https://maps.googleapis.com/maps/api/place/textsearch/json?pagetoken=${nextPageToken}&key=${currentKey}`
+          : `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query + ' em ' + location)}&language=pt-BR&key=${currentKey}`;
         
-        console.log(`📍 Google Places search page ${pageCount + 1}: ${query}`);
+        console.log(`📍 Google Places search page ${pageCount + 1}: ${query} [Key ${currentKeyIndex + 1}]`);
         
         const searchResponse: Response = await fetch(searchUrl);
         if (!searchResponse.ok) {
-          console.error(`❌ Google Places error: ${searchResponse.status}`);
+          console.error(`❌ Google Places HTTP error: ${searchResponse.status}`);
+          // Try rotating key on HTTP errors
+          if (rotateApiKey()) {
+            console.log(`🔄 Retrying with new key after HTTP error`);
+            continue; // Retry same page with new key
+          }
           break;
         }
         
         const searchData: any = await searchResponse.json();
+        
+        // Check for quota errors and rotate key
+        if (isQuotaError(searchData.status, searchData.error_message)) {
+          console.warn(`⚠️ Quota limit hit on Key ${currentKeyIndex + 1}: ${searchData.status}`);
+          if (rotateApiKey()) {
+            console.log(`🔄 Retrying with new key after quota error`);
+            // Clear page token since it's tied to old key
+            nextPageToken = null;
+            continue; // Retry same page with new key
+          } else {
+            console.error(`❌ All API keys exhausted! Returning partial results.`);
+            break;
+          }
+        }
         
         if (searchData.status !== 'OK' && searchData.status !== 'ZERO_RESULTS') {
           console.error(`❌ Google API status: ${searchData.status}`, searchData.error_message);
@@ -1578,9 +1645,6 @@ serve(async (req) => {
         if (searchData.results) {
           results.push(...searchData.results);
           console.log(`📊 Page ${pageCount + 1}: ${searchData.results.length} results (total: ${results.length})`);
-          
-          // REMOVED early exit - always fetch all available pages to maximize leads
-          // Location filtering removes many results, so we need maximum raw data
         }
         
         nextPageToken = searchData.next_page_token || null;
@@ -1599,21 +1663,41 @@ serve(async (req) => {
       return results;
     }
     
-    // Function to get place details (phone, website, etc.)
+    // Function to get place details (phone, website, etc.) - WITH AUTO KEY ROTATION
     async function getPlaceDetails(placeId: string): Promise<any> {
       const fields = 'formatted_phone_number,international_phone_number,website,opening_hours,reviews,url';
-      const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&language=pt-BR&key=${GOOGLE_API_KEY}`;
       
-      try {
-        const response = await fetch(url);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.status === 'OK') {
-            return data.result;
+      let attempts = 0;
+      const maxAttempts = API_KEYS.length;
+      
+      while (attempts < maxAttempts) {
+        const currentKey = getCurrentApiKey();
+        const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&language=pt-BR&key=${currentKey}`;
+        
+        try {
+          const response = await fetch(url);
+          if (response.ok) {
+            const data = await response.json();
+            
+            // Check for quota errors
+            if (isQuotaError(data.status, data.error_message)) {
+              console.warn(`⚠️ Details quota limit on Key ${currentKeyIndex + 1}`);
+              if (!rotateApiKey()) {
+                return null; // All keys exhausted
+              }
+              attempts++;
+              continue;
+            }
+            
+            if (data.status === 'OK') {
+              return data.result;
+            }
           }
+          break; // Non-quota error, don't retry
+        } catch (e) {
+          console.log(`⚠️ Details fetch error for ${placeId}:`, e);
+          break;
         }
-      } catch (e) {
-        console.log(`⚠️ Details fetch error for ${placeId}:`, e);
       }
       return null;
     }
