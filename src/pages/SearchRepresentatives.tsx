@@ -68,10 +68,6 @@ export default function SearchRepresentatives() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Busca empresas de representação comercial via Google Maps com filtros rígidos para garantir resultados precisos.
-              </p>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="state">Estado *</Label>
