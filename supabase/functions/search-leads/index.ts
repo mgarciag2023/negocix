@@ -1528,14 +1528,13 @@ serve(async (req) => {
     console.log('📱 WhatsApp only:', filterWhatsappOnly);
     
     // ===== API KEY ROTATION SYSTEM =====
-    // Supports up to 5 API keys with automatic rotation on quota exhaustion
+    // Uses only the 5 configured API keys with automatic rotation on quota exhaustion
     const API_KEYS = [
       Deno.env.get("GOOGLE_API_KEY_1"),
       Deno.env.get("GOOGLE_API_KEY_2"),
       Deno.env.get("GOOGLE_API_KEY_3"),
       Deno.env.get("GOOGLE_API_KEY_4"),
       Deno.env.get("GOOGLE_API_KEY_5"),
-      Deno.env.get("GOOGLE_API_KEY"), // Fallback to original key
     ].filter(key => key && key.trim() !== '') as string[];
     
     if (API_KEYS.length === 0) {
