@@ -6,7 +6,6 @@ const corsHeaders = {
 };
 
 interface SearchConfig {
-  segments: string[];
   city?: string;
   state: string;
 }
@@ -16,94 +15,9 @@ interface Representative {
   name: string;
   phone?: string;
   whatsapp?: string;
-  email?: string;
-  region: string;
-  segments: string[];
-  description?: string;
-  sourceUrl?: string;
-}
-
-// ============================================
-// UTILITIES
-// ============================================
-
-function validatePhone(phone: string): { valid: boolean; normalized: string; isWhatsApp: boolean } {
-  if (!phone) return { valid: false, normalized: '', isWhatsApp: false };
-  
-  const digitsOnly = phone.replace(/\D/g, '');
-  
-  // Format: 55 + DDD (2 digits) + number (8 or 9 digits)
-  if (digitsOnly.startsWith('55') && (digitsOnly.length === 12 || digitsOnly.length === 13)) {
-    const ddd = digitsOnly.substring(2, 4);
-    const dddNum = parseInt(ddd, 10);
-    if (dddNum < 11 || dddNum > 99) return { valid: false, normalized: '', isWhatsApp: false };
-    
-    const isMobile = digitsOnly.length === 13 && digitsOnly.charAt(4) === '9';
-    return { valid: true, normalized: `+${digitsOnly}`, isWhatsApp: isMobile };
-  }
-  
-  // Format: DDD (2 digits) + number (8 or 9 digits)
-  if (digitsOnly.length === 10 || digitsOnly.length === 11) {
-    const ddd = digitsOnly.substring(0, 2);
-    const dddNum = parseInt(ddd, 10);
-    if (dddNum < 11 || dddNum > 99) return { valid: false, normalized: '', isWhatsApp: false };
-    
-    const isMobile = digitsOnly.length === 11 && digitsOnly.charAt(2) === '9';
-    return { valid: true, normalized: `+55${digitsOnly}`, isWhatsApp: isMobile };
-  }
-  
-  return { valid: false, normalized: '', isWhatsApp: false };
-}
-
-function isValidEmail(email: string): boolean {
-  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  return emailRegex.test(email) && !email.includes('..') && email.length <= 254;
-}
-
-function generateId(): string {
-  return crypto.randomUUID();
-}
-
-function isCompanyName(name: string): boolean {
-  const lower = name.toLowerCase();
-  const companyKeywords = [
-    'ltda', 'eireli', 's.a', 's/a', 'me ', ' me', 'epp', 'cnpj',
-    'industria', 'indústria', 'comercio', 'comércio', 'distribuidora',
-    'atacado', 'loja', 'representações', 'representacoes', 'group', 'grupo',
-    'cia', 'corporation', 'corp', 'inc', 'solutions', 'services', 'comercial',
-    'empreendimentos', 'matriz', 'filial', 'brasil', 'international', 'global',
-    'company', 'home page', 'contato', 'sobre nós', 'quem somos', 'produtos',
-    'serviços', 'blog', 'notícias', 'linkedin', 'facebook', 'instagram'
-  ];
-  
-  for (const keyword of companyKeywords) {
-    if (lower.includes(keyword)) return true;
-  }
-  return false;
-}
-
-function extractName(text: string): string | null {
-  if (!text || text.length < 3) return null;
-  
-  let cleaned = text
-    .replace(/\s+/g, ' ')
-    .replace(/[|•\-–—:]/g, ' ')
-    .replace(/\d+/g, '')
-    .trim()
-    .slice(0, 60);
-  
-  if (isCompanyName(cleaned)) return null;
-  
-  const nameMatch = cleaned.match(/([A-ZÁÉÍÓÚÃÕÂÊÎÔÛ][a-záéíóúãõâêîôû]+(?:\s+(?:da|de|dos|das|e)?\s*[A-ZÁÉÍÓÚÃÕÂÊÎÔÛ]?[a-záéíóúãõâêîôû]+)+)/);
-  if (nameMatch && nameMatch[1].length >= 5 && !isCompanyName(nameMatch[1])) {
-    return nameMatch[1].slice(0, 40);
-  }
-  
-  if (cleaned.length >= 5 && cleaned.length <= 40 && cleaned.includes(' ')) {
-    return cleaned;
-  }
-  
-  return null;
+  address: string;
+  website?: string;
+  rating?: number;
 }
 
 // ============================================
@@ -120,149 +34,209 @@ const stateNames: { [key: string]: string } = {
   'SP': 'São Paulo', 'SE': 'Sergipe', 'TO': 'Tocantins'
 };
 
-const stateCapitals: { [key: string]: string } = {
-  'AC': 'Rio Branco', 'AL': 'Maceió', 'AP': 'Macapá', 'AM': 'Manaus',
-  'BA': 'Salvador', 'CE': 'Fortaleza', 'DF': 'Brasília', 'ES': 'Vitória',
-  'GO': 'Goiânia', 'MA': 'São Luís', 'MT': 'Cuiabá', 'MS': 'Campo Grande',
-  'MG': 'Belo Horizonte', 'PA': 'Belém', 'PB': 'João Pessoa', 'PR': 'Curitiba',
-  'PE': 'Recife', 'PI': 'Teresina', 'RJ': 'Rio de Janeiro', 'RN': 'Natal',
-  'RS': 'Porto Alegre', 'RO': 'Porto Velho', 'RR': 'Boa Vista', 'SC': 'Florianópolis',
-  'SP': 'São Paulo', 'SE': 'Aracaju', 'TO': 'Palmas'
-};
-
 // ============================================
-// SEARCH FUNCTION
+// PHONE VALIDATION
 // ============================================
 
-interface RawResult {
-  name: string;
-  phone?: string;
-  email?: string;
-  description?: string;
-  url: string;
+function validateBrazilianPhone(phone: string): { valid: boolean; normalized: string; isWhatsApp: boolean } {
+  if (!phone) return { valid: false, normalized: '', isWhatsApp: false };
+  
+  const digitsOnly = phone.replace(/\D/g, '');
+  
+  // Format: 55 + DDD (2 digits) + number (8 or 9 digits)
+  if (digitsOnly.startsWith('55') && (digitsOnly.length === 12 || digitsOnly.length === 13)) {
+    const ddd = digitsOnly.substring(2, 4);
+    const dddNum = parseInt(ddd, 10);
+    if (dddNum < 11 || dddNum > 99) return { valid: false, normalized: '', isWhatsApp: false };
+    
+    // WhatsApp: 11 digits with '9' at position 3 (after DDD)
+    const isMobile = digitsOnly.length === 13 && digitsOnly.charAt(4) === '9';
+    return { valid: true, normalized: digitsOnly, isWhatsApp: isMobile };
+  }
+  
+  // Format: DDD (2 digits) + number (8 or 9 digits)
+  if (digitsOnly.length === 10 || digitsOnly.length === 11) {
+    const ddd = digitsOnly.substring(0, 2);
+    const dddNum = parseInt(ddd, 10);
+    if (dddNum < 11 || dddNum > 99) return { valid: false, normalized: '', isWhatsApp: false };
+    
+    // WhatsApp: 11 digits with '9' at position 3
+    const isMobile = digitsOnly.length === 11 && digitsOnly.charAt(2) === '9';
+    return { valid: true, normalized: `55${digitsOnly}`, isWhatsApp: isMobile };
+  }
+  
+  return { valid: false, normalized: '', isWhatsApp: false };
 }
 
-async function quickSearch(query: string, apiKey: string): Promise<RawResult[]> {
-  const results: RawResult[] = [];
+function formatPhoneDisplay(phone: string): string {
+  if (!phone) return '';
+  const digits = phone.replace(/\D/g, '');
+  
+  if (digits.startsWith('55') && digits.length >= 12) {
+    const ddd = digits.substring(2, 4);
+    const number = digits.substring(4);
+    if (number.length === 9) {
+      return `(${ddd}) ${number.slice(0, 5)}-${number.slice(5)}`;
+    } else if (number.length === 8) {
+      return `(${ddd}) ${number.slice(0, 4)}-${number.slice(4)}`;
+    }
+  }
+  return phone;
+}
+
+// ============================================
+// STRICT FILTERING - ONLY REPRESENTATION COMPANIES
+// ============================================
+
+// Terms that MUST appear in the name to be considered a representation company
+const REQUIRED_TERMS = [
+  'representaç', 'representac', 'representante', 'representacao', 'representação',
+  'rep comercial', 'rep. comercial'
+];
+
+// Terms that EXCLUDE the result (distributors, stores, etc.)
+const EXCLUSION_TERMS = [
+  'distribuidora', 'distribuidor', 'atacado', 'atacadista', 
+  'loja', 'store', 'varejo', 'variedades',
+  'supermercado', 'mercado', 'mercearia',
+  'restaurante', 'bar', 'lanchonete', 'padaria', 'pizzaria',
+  'oficina', 'mecânica', 'mecanica', 'auto peças', 'autopeças',
+  'posto', 'combustível', 'combustivel',
+  'farmácia', 'farmacia', 'drogaria',
+  'hotel', 'pousada', 'hostel',
+  'escola', 'colégio', 'colegio', 'faculdade', 'universidade',
+  'hospital', 'clínica', 'clinica', 'laboratório', 'laboratorio',
+  'academia', 'gym', 'fitness',
+  'banco', 'financeira', 'crédito', 'credito',
+  'imobiliária', 'imobiliaria', 'construtora',
+  'despachante', 'cartório', 'cartorio',
+  'igreja', 'templo', 'paróquia', 'paroquia',
+  'salão', 'salao', 'barbearia', 'beleza',
+  'pet shop', 'veterinária', 'veterinario',
+  'lavanderia', 'lava', 'tinturaria',
+  'eletrônica', 'eletronica', 'celular', 'assistência técnica',
+  'serralheria', 'marcenaria', 'vidraçaria', 'vidracaria',
+  'transportadora', 'transporte', 'frete', 'mudança', 'mudanca',
+  'gráfica', 'grafica', 'impressão', 'impressao',
+  'escritório contábil', 'contabilidade', 'contador'
+];
+
+function isRepresentationCompany(name: string, types: string[] = []): boolean {
+  const lowerName = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  
+  // Check for exclusion terms first
+  for (const term of EXCLUSION_TERMS) {
+    const normalizedTerm = term.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (lowerName.includes(normalizedTerm)) {
+      console.log(`❌ Excluded "${name}" - contains "${term}"`);
+      return false;
+    }
+  }
+  
+  // Must contain at least one required term
+  for (const term of REQUIRED_TERMS) {
+    const normalizedTerm = term.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (lowerName.includes(normalizedTerm)) {
+      console.log(`✅ Accepted "${name}" - contains "${term}"`);
+      return true;
+    }
+  }
+  
+  console.log(`❌ Rejected "${name}" - no required terms found`);
+  return false;
+}
+
+// ============================================
+// GOOGLE PLACES API
+// ============================================
+
+interface PlaceResult {
+  id: string;
+  displayName?: { text: string };
+  formattedAddress?: string;
+  nationalPhoneNumber?: string;
+  internationalPhoneNumber?: string;
+  websiteUri?: string;
+  rating?: number;
+  types?: string[];
+}
+
+async function searchPlaces(
+  query: string, 
+  location: string, 
+  apiKey: string,
+  pageToken?: string
+): Promise<{ places: PlaceResult[]; nextPageToken?: string }> {
+  const url = 'https://places.googleapis.com/v1/places:searchText';
+  
+  const body: any = {
+    textQuery: query,
+    locationBias: {
+      rectangle: {
+        low: { latitude: -33.75, longitude: -73.99 },
+        high: { latitude: 5.27, longitude: -34.79 }
+      }
+    },
+    languageCode: 'pt-BR',
+    maxResultCount: 20
+  };
+  
+  if (pageToken) {
+    body.pageToken = pageToken;
+  }
   
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
-    
-    const response = await fetch('https://api.firecrawl.dev/v1/search', {
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.rating,places.types,nextPageToken'
       },
-      body: JSON.stringify({
-        query: query,
-        limit: 30, // Increased limit for more results
-        scrapeOptions: { formats: ['markdown'], onlyMainContent: true }
-      }),
-      signal: controller.signal
+      body: JSON.stringify(body)
     });
     
-    clearTimeout(timeout);
-    
-    if (!response.ok) return results;
-    
-    const data = await response.json();
-    const items = data.data || data.results || [];
-    
-    for (const item of items) {
-      const url = item.url || '';
-      const title = item.title || '';
-      const description = item.description || item.snippet || '';
-      const markdown = item.markdown || '';
-      const allContent = `${title} ${description} ${markdown}`;
-      
-      // Skip social media
-      if (url.includes('facebook.com') || url.includes('youtube.com') || 
-          url.includes('wikipedia.org') || url.includes('twitter.com') ||
-          url.includes('tiktok.com')) {
-        continue;
-      }
-      
-      // Find ALL phones in content
-      const phonePatterns = [
-        /\(?\d{2}\)?\s*9\d{4}[-.\s]?\d{4}/g,   // Mobile: (11) 9xxxx-xxxx
-        /\(?\d{2}\)?\s*[2-5]\d{3}[-.\s]?\d{4}/g, // Landline: (11) 2xxx-xxxx
-        /\d{2}[-.\s]?9\d{4}[-.\s]?\d{4}/g,       // Mobile without parentheses
-        /\d{2}[-.\s]?[2-5]\d{3}[-.\s]?\d{4}/g,   // Landline without parentheses
-      ];
-      
-      const foundPhones: string[] = [];
-      for (const p of phonePatterns) {
-        const matches = allContent.match(p);
-        if (matches) {
-          for (const match of matches) {
-            const validation = validatePhone(match);
-            if (validation.valid && !foundPhones.includes(validation.normalized)) {
-              foundPhones.push(validation.normalized);
-            }
-          }
-        }
-      }
-      
-      // Try to find a name
-      let personName = extractName(title);
-      
-      if (!personName) {
-        const patterns = [
-          /(?:contato|responsável|proprietário|sou o|sou a|me chamo)[:\s]+([A-ZÁÉÍÓÚÃÕ][a-záéíóúãõ]+(?:\s+[A-Za-záéíóúãõ]+)+)/i,
-          /([A-ZÁÉÍÓÚÃÕ][a-záéíóúãõ]+\s+[A-ZÁÉÍÓÚÃÕ][a-záéíóúãõ]+)\s*[-–|]\s*(?:representante|vendedor|consultor|profissional)/i,
-          /representante[:\s]+([A-ZÁÉÍÓÚÃÕ][a-záéíóúãõ]+\s+[A-Za-záéíóúãõ]+)/i,
-        ];
-        
-        for (const pattern of patterns) {
-          const match = allContent.match(pattern);
-          if (match && match[1]) {
-            personName = extractName(match[1]);
-            if (personName) break;
-          }
-        }
-      }
-      
-      // Find email
-      const emailMatch = allContent.match(/[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-      const email = emailMatch && isValidEmail(emailMatch[0]) ? emailMatch[0] : undefined;
-      
-      // Add one result per phone found
-      for (const phone of foundPhones) {
-        results.push({
-          name: personName || `Representante - ${new URL(url).hostname.replace('www.', '')}`,
-          phone,
-          email,
-          description: description.slice(0, 120),
-          url
-        });
-      }
-      
-      // If no phone but has name, still add (might be useful)
-      if (foundPhones.length === 0 && personName) {
-        results.push({
-          name: personName,
-          phone: undefined,
-          email,
-          description: description.slice(0, 120),
-          url
-        });
-      }
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`❌ Google Places API error: ${response.status} - ${errorText}`);
+      return { places: [] };
     }
     
+    const data = await response.json();
+    return {
+      places: data.places || [],
+      nextPageToken: data.nextPageToken
+    };
   } catch (error) {
-    console.error('Search error:', error);
+    console.error('❌ Places search error:', error);
+    return { places: [] };
   }
+}
+
+async function getPlaceDetails(placeId: string, apiKey: string): Promise<PlaceResult | null> {
+  const url = `https://places.googleapis.com/v1/places/${placeId}`;
   
-  return results;
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': 'id,displayName,formattedAddress,nationalPhoneNumber,internationalPhoneNumber,websiteUri,rating,types'
+      }
+    });
+    
+    if (!response.ok) return null;
+    
+    return await response.json();
+  } catch (error) {
+    console.error('❌ Place details error:', error);
+    return null;
+  }
 }
 
 // ============================================
 // MAIN HANDLER
 // ============================================
-
-const MINIMUM_RESULTS = 6;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -271,9 +245,9 @@ serve(async (req) => {
 
   try {
     const config: SearchConfig = await req.json();
-    console.log("🚀 Config:", JSON.stringify(config));
+    console.log("🚀 Search Representatives Config:", JSON.stringify(config));
 
-    const { segments, city, state } = config;
+    const { city, state } = config;
 
     if (!state) {
       return new Response(
@@ -282,154 +256,124 @@ serve(async (req) => {
       );
     }
 
-    const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
-    if (!FIRECRAWL_API_KEY) {
-      throw new Error("FIRECRAWL_API_KEY not configured");
+    const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY_1");
+    if (!GOOGLE_API_KEY) {
+      throw new Error("GOOGLE_API_KEY_1 not configured");
     }
 
-    const location = city || stateCapitals[state] || state;
     const stateName = stateNames[state] || state;
-    const segmentTerms = segments?.slice(0, 2).join(' ') || '';
+    const location = city ? `${city}, ${stateName}` : stateName;
     
-    // EXPANDED search queries for better coverage - guaranteed 6+ results
-    const queries = [
-      // Primary searches
-      `representante comercial ${location} telefone celular whatsapp`,
-      `vendedor externo ${segmentTerms} ${stateName} contato whatsapp`,
-      `consultor vendas ${location} whatsapp celular contato`,
-      `representante ${segmentTerms} ${location} telefone`,
-      `agente comercial ${stateName} contato telefone celular`,
-      // Secondary searches
-      `profissional vendas ${location} celular whatsapp`,
-      `representante autônomo ${stateName} telefone`,
-      `vendedor ${location} whatsapp contato`,
-      `representante comercial ${stateName} telefone celular`,
-      `consultor comercial ${location} contato whatsapp`,
-      // Broader searches
-      `representante ${stateName} celular contato`,
-      `vendedor ${segmentTerms} ${location} telefone`,
-      `comercial ${location} representante contato`,
-      `${segmentTerms} representante ${stateName} telefone`,
+    console.log(`📍 Searching representatives in: ${location}`);
+
+    // Search queries - focused on representation companies
+    const searchQueries = [
+      `representação comercial ${location}`,
+      `representações comerciais ${location}`,
+      `empresa de representação ${location}`,
+      `representante comercial ${location}`,
+      `escritório de representação ${location}`,
     ];
 
-    console.log(`📍 ${location}, ${state} - ${queries.length} searches`);
+    const allPlaces: PlaceResult[] = [];
+    const seenIds = new Set<string>();
 
-    // Run ALL in parallel with timeout
-    const searchPromises = queries.map(q => 
-      Promise.race([
-        quickSearch(q, FIRECRAWL_API_KEY),
-        new Promise<RawResult[]>(resolve => setTimeout(() => resolve([]), 18000))
-      ])
+    // Execute searches in parallel
+    const searchPromises = searchQueries.map(query => 
+      searchPlaces(query, location, GOOGLE_API_KEY)
     );
     
-    const allResults = await Promise.all(searchPromises);
+    const results = await Promise.all(searchPromises);
     
-    // Flatten and deduplicate by normalized phone
-    const flatResults: RawResult[] = [];
-    const seenPhones = new Set<string>();
-    const seenNames = new Set<string>();
+    for (const result of results) {
+      for (const place of result.places) {
+        if (!seenIds.has(place.id)) {
+          seenIds.add(place.id);
+          allPlaces.push(place);
+        }
+      }
+    }
+
+    console.log(`📊 Found ${allPlaces.length} places from searches`);
+
+    // Filter strictly to only representation companies
+    const validPlaces = allPlaces.filter(place => {
+      const name = place.displayName?.text || '';
+      return isRepresentationCompany(name, place.types);
+    });
+
+    console.log(`✅ After strict filtering: ${validPlaces.length} representation companies`);
+
+    // Get phone details for places that don't have them
+    const placesNeedingDetails = validPlaces.filter(p => !p.nationalPhoneNumber && !p.internationalPhoneNumber);
     
-    for (const results of allResults) {
-      for (const r of results) {
-        // Priority: results with phones
-        if (r.phone) {
-          const validation = validatePhone(r.phone);
-          if (!validation.valid) continue;
-          
-          if (!seenPhones.has(validation.normalized)) {
-            seenPhones.add(validation.normalized);
-            flatResults.push({ ...r, phone: validation.normalized });
-          }
-        } else if (r.name && !r.name.startsWith('Representante -')) {
-          // Also keep unique names without phones as fallback
-          const nameKey = r.name.toLowerCase().slice(0, 25);
-          if (!seenNames.has(nameKey)) {
-            seenNames.add(nameKey);
-            flatResults.push(r);
+    if (placesNeedingDetails.length > 0) {
+      console.log(`📞 Fetching details for ${Math.min(placesNeedingDetails.length, 30)} places`);
+      
+      const detailPromises = placesNeedingDetails.slice(0, 30).map(place => 
+        getPlaceDetails(place.id, GOOGLE_API_KEY)
+      );
+      
+      const details = await Promise.all(detailPromises);
+      
+      for (let i = 0; i < details.length; i++) {
+        if (details[i]) {
+          const placeIndex = validPlaces.findIndex(p => p.id === placesNeedingDetails[i].id);
+          if (placeIndex !== -1) {
+            validPlaces[placeIndex] = { ...validPlaces[placeIndex], ...details[i] };
           }
         }
       }
     }
-    
-    console.log(`📊 Found ${flatResults.length} unique results`);
 
-    // Sort: results with phones first, then real names
-    flatResults.sort((a, b) => {
-      if (a.phone && !b.phone) return -1;
-      if (!a.phone && b.phone) return 1;
-      const aHasRealName = !a.name.startsWith('Representante -');
-      const bHasRealName = !b.name.startsWith('Representante -');
-      if (aHasRealName && !bHasRealName) return -1;
-      if (!aHasRealName && bHasRealName) return 1;
-      return 0;
-    });
-
-    // Build final list - prioritize results with phones
+    // Build final representatives list
     const representatives: Representative[] = [];
-    const finalSeenPhones = new Set<string>();
-    
-    // First pass: add all with valid phones
-    for (const r of flatResults) {
-      if (!r.phone) continue;
+    const seenPhones = new Set<string>();
+
+    for (const place of validPlaces) {
+      const phone = place.nationalPhoneNumber || place.internationalPhoneNumber || '';
+      const phoneValidation = validateBrazilianPhone(phone);
       
-      const validation = validatePhone(r.phone);
-      if (!validation.valid) continue;
+      // Skip duplicates by phone
+      if (phoneValidation.valid && seenPhones.has(phoneValidation.normalized)) {
+        continue;
+      }
       
-      if (finalSeenPhones.has(validation.normalized)) continue;
-      finalSeenPhones.add(validation.normalized);
-      
+      if (phoneValidation.valid) {
+        seenPhones.add(phoneValidation.normalized);
+      }
+
       representatives.push({
-        id: generateId(),
-        name: r.name,
-        phone: validation.normalized,
-        whatsapp: validation.isWhatsApp ? validation.normalized : undefined,
-        email: r.email,
-        region: `${location}, ${state}`,
-        segments: segments || [],
-        description: r.description,
-        sourceUrl: r.url
+        id: place.id,
+        name: place.displayName?.text || 'Empresa de Representação',
+        phone: phoneValidation.valid ? formatPhoneDisplay(phoneValidation.normalized) : undefined,
+        whatsapp: phoneValidation.isWhatsApp ? phoneValidation.normalized : undefined,
+        address: place.formattedAddress || location,
+        website: place.websiteUri,
+        rating: place.rating
       });
-      
+
+      // Limit to 50 results
       if (representatives.length >= 50) break;
     }
-    
-    // If still below minimum, add results without phones (that have real names)
-    if (representatives.length < MINIMUM_RESULTS) {
-      const seenNamesInReps = new Set(representatives.map(r => r.name.toLowerCase()));
-      
-      for (const r of flatResults) {
-        if (r.phone) continue; // Already processed
-        if (r.name.startsWith('Representante -')) continue; // Skip generic names
-        if (seenNamesInReps.has(r.name.toLowerCase())) continue;
-        
-        seenNamesInReps.add(r.name.toLowerCase());
-        
-        representatives.push({
-          id: generateId(),
-          name: r.name,
-          phone: undefined,
-          whatsapp: undefined,
-          email: r.email,
-          region: `${location}, ${state}`,
-          segments: segments || [],
-          description: r.description,
-          sourceUrl: r.url
-        });
-        
-        if (representatives.length >= MINIMUM_RESULTS) break;
-      }
-    }
-    
+
+    // Sort: those with phones first, then by rating
+    representatives.sort((a, b) => {
+      if (a.phone && !b.phone) return -1;
+      if (!a.phone && b.phone) return 1;
+      return (b.rating || 0) - (a.rating || 0);
+    });
+
     const withPhone = representatives.filter(r => r.phone).length;
     const withWhatsapp = representatives.filter(r => r.whatsapp).length;
-    console.log(`✅ Final: ${representatives.length} representatives (${withPhone} with phone, ${withWhatsapp} WhatsApp)`);
+    
+    console.log(`✅ Final: ${representatives.length} representatives (${withPhone} with phone, ${withWhatsapp} with WhatsApp)`);
 
     return new Response(
       JSON.stringify({ 
         representatives,
         searchInfo: {
-          location: `${location}, ${state}`,
-          segments,
+          location,
           totalFound: representatives.length,
           withPhone,
           withWhatsapp

@@ -22,10 +22,9 @@ interface Representative {
   name: string;
   phone?: string;
   whatsapp?: string;
-  region: string;
-  segments: string[];
-  description?: string;
-  source?: string;
+  address: string;
+  website?: string;
+  rating?: number;
 }
 
 export default function RepresentativesResults() {
@@ -164,7 +163,7 @@ export default function RepresentativesResults() {
             </h1>
             {searchConfig && (
               <p className="text-muted-foreground">
-                {searchConfig.segments?.join(", ")} em {searchConfig.city ? `${searchConfig.city} - ` : ""}{searchConfig.state}
+                {searchConfig.city ? `${searchConfig.city} - ` : ""}{searchConfig.state}
               </p>
             )}
           </div>
@@ -240,17 +239,22 @@ export default function RepresentativesResults() {
                         </div>
                       </div>
 
-                      {/* Region */}
+                      {/* Address */}
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <MapPin className="w-4 h-4" />
-                        <span>{rep.region}</span>
+                        <span>{rep.address}</span>
                       </div>
 
-                      {/* Description */}
-                      {rep.description && (
-                        <p className="text-sm text-muted-foreground border-l-2 border-primary/20 pl-3">
-                          {rep.description}
-                        </p>
+                      {/* Website */}
+                      {rep.website && (
+                        <a 
+                          href={rep.website} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary hover:underline truncate block"
+                        >
+                          {rep.website}
+                        </a>
                       )}
                     </div>
                   </CardContent>
