@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          blocked_at: string | null
+          blocked_reason: string | null
+          created_at: string
+          email: string
+          id: string
+          is_blocked: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          blocked_at?: string | null
+          blocked_reason?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          is_blocked?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          blocked_at?: string | null
+          blocked_reason?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          is_blocked?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       saved_leads: {
         Row: {
           address: string
@@ -104,14 +137,70 @@ export type Database = {
         }
         Relationships: []
       }
+      system_settings: {
+        Row: {
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_user_blocked: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
+      app_role: "admin" | "user"
       contact_status: "not_contacted" | "message_sent" | "conversation_started"
       interest_status: "pending" | "interested" | "not_interested"
       lead_stage:
@@ -248,6 +337,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "user"],
       contact_status: ["not_contacted", "message_sent", "conversation_started"],
       interest_status: ["pending", "interested", "not_interested"],
       lead_stage: [
