@@ -1,0 +1,415 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import Navbar from "@/components/Navbar";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
+import { Shield, Users, Settings, Ban, CheckCircle, Loader2, Save } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+interface Profile {
+  id: string;
+  user_id: string;
+  email: string;
+  is_blocked: boolean;
+  blocked_reason: string | null;
+  created_at: string;
+}
+
+interface LeadSettings {
+  leads_min: string;
+  leads_max: string;
+  leads_target: string;
+}
+
+const Admin = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [settings, setSettings] = useState<LeadSettings>({
+    leads_min: "70",
+    leads_max: "150",
+    leads_target: "90",
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [blockReason, setBlockReason] = useState("");
+
+  useEffect(() => {
+    checkAdminAccess();
+  }, []);
+
+  const checkAdminAccess = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate("/auth");
+        return;
+      }
+
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+
+      if (!roles) {
+        toast({
+          title: "Acesso negado",
+          description: "Você não tem permissão para acessar esta página",
+          variant: "destructive",
+        });
+        navigate("/");
+        return;
+      }
+
+      setIsAdmin(true);
+      await Promise.all([fetchProfiles(), fetchSettings()]);
+    } catch (error) {
+      console.error("Error checking admin access:", error);
+      navigate("/");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchProfiles = async () => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching profiles:", error);
+      return;
+    }
+
+    setProfiles(data || []);
+  };
+
+  const fetchSettings = async () => {
+    const { data, error } = await supabase
+      .from("system_settings")
+      .select("setting_key, setting_value");
+
+    if (error) {
+      console.error("Error fetching settings:", error);
+      return;
+    }
+
+    if (data) {
+      const settingsMap: LeadSettings = {
+        leads_min: "70",
+        leads_max: "150",
+        leads_target: "90",
+      };
+      data.forEach((s) => {
+        if (s.setting_key in settingsMap) {
+          settingsMap[s.setting_key as keyof LeadSettings] = s.setting_value;
+        }
+      });
+      setSettings(settingsMap);
+    }
+  };
+
+  const toggleBlockUser = async (profile: Profile) => {
+    const newBlockedStatus = !profile.is_blocked;
+    
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        is_blocked: newBlockedStatus,
+        blocked_at: newBlockedStatus ? new Date().toISOString() : null,
+        blocked_reason: newBlockedStatus ? blockReason : null,
+      })
+      .eq("id", profile.id);
+
+    if (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o status do usuário",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: newBlockedStatus ? "Usuário bloqueado" : "Usuário desbloqueado",
+      description: `${profile.email} foi ${newBlockedStatus ? "bloqueado" : "desbloqueado"} com sucesso`,
+    });
+
+    setBlockReason("");
+    fetchProfiles();
+  };
+
+  const saveSettings = async () => {
+    setSavingSettings(true);
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    const updates = Object.entries(settings).map(([key, value]) => 
+      supabase
+        .from("system_settings")
+        .update({ setting_value: value, updated_by: user?.id })
+        .eq("setting_key", key)
+    );
+
+    const results = await Promise.all(updates);
+    const hasError = results.some((r) => r.error);
+
+    if (hasError) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível salvar as configurações",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Configurações salvas",
+        description: "As configurações de leads foram atualizadas com sucesso",
+      });
+    }
+
+    setSavingSettings(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      <Navbar />
+      <main className="container mx-auto px-4 py-8">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="p-3 rounded-xl bg-gradient-primary">
+            <Shield className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Painel Admin</h1>
+            <p className="text-muted-foreground">Gerencie usuários e configurações do sistema</p>
+          </div>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Lead Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                Configurações de Leads
+              </CardTitle>
+              <CardDescription>
+                Defina os limites de leads por pesquisa
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="space-y-2">
+                  <Label htmlFor="leads_min">Mínimo</Label>
+                  <Input
+                    id="leads_min"
+                    type="number"
+                    value={settings.leads_min}
+                    onChange={(e) => setSettings({ ...settings, leads_min: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="leads_target">Meta</Label>
+                  <Input
+                    id="leads_target"
+                    type="number"
+                    value={settings.leads_target}
+                    onChange={(e) => setSettings({ ...settings, leads_target: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="leads_max">Máximo</Label>
+                  <Input
+                    id="leads_max"
+                    type="number"
+                    value={settings.leads_max}
+                    onChange={(e) => setSettings({ ...settings, leads_max: e.target.value })}
+                  />
+                </div>
+              </div>
+              <Button onClick={saveSettings} disabled={savingSettings} className="w-full">
+                {savingSettings ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                Salvar Configurações
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Stats Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Estatísticas
+              </CardTitle>
+              <CardDescription>
+                Resumo dos usuários do sistema
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg bg-muted/50">
+                  <p className="text-2xl font-bold">{profiles.length}</p>
+                  <p className="text-sm text-muted-foreground">Total de usuários</p>
+                </div>
+                <div className="p-4 rounded-lg bg-muted/50">
+                  <p className="text-2xl font-bold text-destructive">
+                    {profiles.filter((p) => p.is_blocked).length}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Usuários bloqueados</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Users Table */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Gerenciar Usuários
+            </CardTitle>
+            <CardDescription>
+              Visualize e gerencie o acesso dos usuários
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Cadastro</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {profiles.map((profile) => (
+                    <TableRow key={profile.id}>
+                      <TableCell className="font-medium">{profile.email}</TableCell>
+                      <TableCell>
+                        {profile.is_blocked ? (
+                          <Badge variant="destructive" className="gap-1">
+                            <Ban className="h-3 w-3" />
+                            Bloqueado
+                          </Badge>
+                        ) : (
+                          <Badge variant="default" className="gap-1 bg-green-600">
+                            <CheckCircle className="h-3 w-3" />
+                            Ativo
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(profile.created_at).toLocaleDateString("pt-BR")}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {profile.email !== "mgarciag2023@gmail.com" && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant={profile.is_blocked ? "outline" : "destructive"}
+                                size="sm"
+                              >
+                                {profile.is_blocked ? "Desbloquear" : "Bloquear"}
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  {profile.is_blocked ? "Desbloquear usuário?" : "Bloquear usuário?"}
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {profile.is_blocked
+                                    ? `Tem certeza que deseja desbloquear ${profile.email}?`
+                                    : `Tem certeza que deseja bloquear ${profile.email}? O usuário não poderá mais acessar o sistema.`}
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              {!profile.is_blocked && (
+                                <div className="space-y-2">
+                                  <Label htmlFor="block-reason">Motivo do bloqueio (opcional)</Label>
+                                  <Input
+                                    id="block-reason"
+                                    placeholder="Ex: Uso indevido do sistema"
+                                    value={blockReason}
+                                    onChange={(e) => setBlockReason(e.target.value)}
+                                  />
+                                </div>
+                              )}
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => toggleBlockUser(profile)}
+                                  className={profile.is_blocked ? "" : "bg-destructive hover:bg-destructive/90"}
+                                >
+                                  {profile.is_blocked ? "Desbloquear" : "Bloquear"}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {profiles.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                        Nenhum usuário cadastrado
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      </main>
+    </div>
+  );
+};
+
+export default Admin;
