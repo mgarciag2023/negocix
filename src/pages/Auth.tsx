@@ -352,7 +352,7 @@ const Auth = () => {
                   }}
                   className="ml-2 text-primary hover:underline font-semibold"
                 >
-                  {isLogin ? "Criar conta grátis" : "Fazer login"}
+                  {isLogin ? "Criar conta" : "Fazer login"}
                 </button>
               </p>
             </div>
