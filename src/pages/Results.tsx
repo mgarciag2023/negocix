@@ -231,9 +231,25 @@ const Results = () => {
 
         if (error) {
           console.error('❌ Error calling search-leads:', error);
+
+          // Try to surface the actual error body returned by the backend function
+          let description = error.message || "Tente novamente mais tarde";
+          try {
+            const anyErr = error as any;
+            const ctx = anyErr?.context;
+            if (ctx && typeof ctx.json === 'function') {
+              const body = await ctx.json();
+              if (body?.error) description = body.error;
+            } else if (typeof anyErr?.details === 'string' && anyErr.details.trim()) {
+              description = anyErr.details;
+            }
+          } catch {
+            // ignore parsing issues
+          }
+
           toast({
             title: "Erro ao buscar leads",
-            description: error.message || "Tente novamente mais tarde",
+            description,
             variant: "destructive",
           });
           setLoading(false);

@@ -1549,7 +1549,7 @@ serve(async (req) => {
     // Function to check if error is quota-related
     function isQuotaError(status: string, errorMessage?: string): boolean {
       const quotaStatuses = ['OVER_QUERY_LIMIT', 'RESOURCE_EXHAUSTED', 'QUOTA_EXCEEDED'];
-      if (quotaStatuses.includes(status)) return true;
+      if (quotaStatuses.includes((status || '').toUpperCase())) return true;
       if (errorMessage && (
         errorMessage.toLowerCase().includes('quota') ||
         errorMessage.toLowerCase().includes('limit') ||
@@ -1557,42 +1557,70 @@ serve(async (req) => {
       )) return true;
       return false;
     }
-    
+
+    // Function to detect invalid/unauthorized API key errors.
+    // These usually mean: invalid key, Places API not enabled, billing missing, or key restrictions.
+    function isKeyAuthError(status: string, errorMessage?: string): boolean {
+      const s = (status || '').toUpperCase();
+      if (s === 'REQUEST_DENIED') return true;
+
+      const msg = (errorMessage || '').toLowerCase();
+      if (!msg) return false;
+
+      return (
+        msg.includes('api key is invalid') ||
+        msg.includes('invalid api key') ||
+        msg.includes('not authorized') ||
+        msg.includes('has not been used in project') ||
+        msg.includes('billing') ||
+        msg.includes('api has not been used')
+      );
+    }
+
+    function googleKeyAuthErrorMessage(): string {
+      return (
+        'Google Places: suas API keys foram recusadas (REQUEST_DENIED). ' +
+        'Isso normalmente é chave inválida, API Places desativada, faturamento não ativo, ' +
+        'ou restrições (HTTP referrer/IP) bloqueando chamadas do backend. ' +
+        'Verifique as 5 chaves e se a Places API (Places/Maps) está habilitada nelas.'
+      );
+    }
+
     // Function to rotate to next available API key
     function rotateApiKey(): boolean {
       const previousIndex = currentKeyIndex;
       currentKeyIndex++;
-      
+
       if (currentKeyIndex >= API_KEYS.length) {
         console.error(`❌ All ${API_KEYS.length} API keys exhausted!`);
         return false;
       }
-      
+
       GOOGLE_API_KEY = API_KEYS[currentKeyIndex];
       console.log(`🔄 API Key rotated: Key ${previousIndex + 1} → Key ${currentKeyIndex + 1} (${API_KEYS.length - currentKeyIndex} remaining)`);
       return true;
     }
-    
+
     // Helper function to get current API key (for closures)
     function getCurrentApiKey(): string {
       return API_KEYS[currentKeyIndex];
     }
-    
+
     const MAX_TOTAL_LEADS = 150; // Max leads per search
     const MIN_LEADS_TARGET = 70; // Minimum target
     const TARGET_LEADS = 80; // Target around this number
     const MAX_TARGET_LEADS = 90; // Occasionally try to exceed this
     const MIN_LEADS_EARLY_EXIT = 85; // Early exit threshold
-    
+
     // Occasionally try to get more leads (20% chance)
     const tryExceedTarget = Math.random() < 0.2;
     const currentTarget = tryExceedTarget ? MAX_TARGET_LEADS + 20 : TARGET_LEADS;
-    
+
     console.log(`🔎 Google Places API search: targeting ${MIN_LEADS_TARGET}-${currentTarget} leads (max ${MAX_TOTAL_LEADS})${tryExceedTarget ? ' [BONUS MODE]' : ''}`);
-    
+
     // OPTIMIZATION: Cache to avoid duplicate API calls
     const searchCache = new Map<string, any[]>();
-    
+
     // Function to search places using Google Places API - WITH AUTO KEY ROTATION
     async function searchPlaces(query: string, location: string, maxPages: number = 3): Promise<any[]> {
       // Check cache first to save API credits
@@ -1601,20 +1629,20 @@ serve(async (req) => {
         console.log(`💾 Cache hit for: ${query}`);
         return searchCache.get(cacheKey) || [];
       }
-      
+
       const results: any[] = [];
       let nextPageToken: string | null = null;
       let pageCount = 0;
       let retryWithNewKey = false;
-      
+
       while (pageCount < maxPages) {
         const currentKey = getCurrentApiKey();
-        const searchUrl: string = nextPageToken 
+        const searchUrl: string = nextPageToken
           ? `https://maps.googleapis.com/maps/api/place/textsearch/json?pagetoken=${nextPageToken}&key=${currentKey}`
           : `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query + ' em ' + location)}&language=pt-BR&key=${currentKey}`;
-        
+
         console.log(`📍 Google Places search page ${pageCount + 1}: ${query} [Key ${currentKeyIndex + 1}]`);
-        
+
         const searchResponse: Response = await fetch(searchUrl);
         if (!searchResponse.ok) {
           console.error(`❌ Google Places HTTP error: ${searchResponse.status}`);
@@ -1625,9 +1653,9 @@ serve(async (req) => {
           }
           break;
         }
-        
+
         const searchData: any = await searchResponse.json();
-        
+
         // Check for quota errors and rotate key
         if (isQuotaError(searchData.status, searchData.error_message)) {
           console.warn(`⚠️ Quota limit hit on Key ${currentKeyIndex + 1}: ${searchData.status}`);
@@ -1641,20 +1669,34 @@ serve(async (req) => {
             break;
           }
         }
-        
+
+        // Invalid/unauthorized key (or missing billing/API) → rotate and retry
+        if (isKeyAuthError(searchData.status, searchData.error_message)) {
+          console.error(`❌ Google API key refused on Key ${currentKeyIndex + 1}: ${searchData.status}`, searchData.error_message);
+
+          if (rotateApiKey()) {
+            console.log(`🔄 Retrying with new key after REQUEST_DENIED`);
+            nextPageToken = null;
+            continue;
+          }
+
+          // All keys refused
+          throw new Error(googleKeyAuthErrorMessage());
+        }
+
         if (searchData.status !== 'OK' && searchData.status !== 'ZERO_RESULTS') {
           console.error(`❌ Google API status: ${searchData.status}`, searchData.error_message);
           break;
         }
-        
+
         if (searchData.results) {
           results.push(...searchData.results);
           console.log(`📊 Page ${pageCount + 1}: ${searchData.results.length} results (total: ${results.length})`);
         }
-        
+
         nextPageToken = searchData.next_page_token || null;
         pageCount++;
-        
+
         // Reduced delay for faster searches - Google requires ~2s between page token requests
         if (nextPageToken && pageCount < maxPages) {
           await sleep(1800); // Minimum safe delay
@@ -1662,28 +1704,28 @@ serve(async (req) => {
           break;
         }
       }
-      
+
       // Cache results
       searchCache.set(cacheKey, results);
       return results;
     }
-    
+
     // Function to get place details (phone, website, etc.) - WITH AUTO KEY ROTATION
     async function getPlaceDetails(placeId: string): Promise<any> {
       const fields = 'formatted_phone_number,international_phone_number,website,opening_hours,reviews,url';
-      
+
       let attempts = 0;
       const maxAttempts = API_KEYS.length;
-      
+
       while (attempts < maxAttempts) {
         const currentKey = getCurrentApiKey();
         const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&language=pt-BR&key=${currentKey}`;
-        
+
         try {
           const response = await fetch(url);
           if (response.ok) {
             const data = await response.json();
-            
+
             // Check for quota errors
             if (isQuotaError(data.status, data.error_message)) {
               console.warn(`⚠️ Details quota limit on Key ${currentKeyIndex + 1}`);
@@ -1693,12 +1735,23 @@ serve(async (req) => {
               attempts++;
               continue;
             }
-            
+
+            // Invalid/unauthorized key (or missing billing/API) → rotate and retry
+            if (isKeyAuthError(data.status, data.error_message)) {
+              console.error(`❌ Google Details key refused on Key ${currentKeyIndex + 1}: ${data.status}`, data.error_message);
+
+              if (!rotateApiKey()) {
+                throw new Error(googleKeyAuthErrorMessage());
+              }
+              attempts++;
+              continue;
+            }
+
             if (data.status === 'OK') {
               return data.result;
             }
           }
-          break; // Non-quota error, don't retry
+          break; // Non-quota / non-auth error, don't retry
         } catch (e) {
           console.log(`⚠️ Details fetch error for ${placeId}:`, e);
           break;
