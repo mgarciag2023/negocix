@@ -1527,21 +1527,16 @@ serve(async (req) => {
     console.log('🏢 Business type:', bizType);
     console.log('📱 WhatsApp only:', filterWhatsappOnly);
     
-    // ===== API KEY ROTATION SYSTEM =====
-    // Uses only the 5 configured API keys with automatic rotation on quota exhaustion
+    // ===== API KEY (single key) =====
     const API_KEYS = [
       Deno.env.get("GOOGLE_API_KEY_1"),
-      Deno.env.get("GOOGLE_API_KEY_2"),
-      Deno.env.get("GOOGLE_API_KEY_3"),
-      Deno.env.get("GOOGLE_API_KEY_4"),
-      Deno.env.get("GOOGLE_API_KEY_5"),
     ].filter(key => key && key.trim() !== '') as string[];
     
     if (API_KEYS.length === 0) {
-      throw new Error("No GOOGLE_API_KEY configured. Please add at least GOOGLE_API_KEY_1");
+      throw new Error("No GOOGLE_API_KEY_1 configured. Please add the secret GOOGLE_API_KEY_1");
     }
     
-    console.log(`🔑 API Key rotation enabled: ${API_KEYS.length} keys available`);
+    console.log(`🔑 API Key configured: ${API_KEYS.length} key(s) available`);
     
     let currentKeyIndex = 0;
     let GOOGLE_API_KEY = API_KEYS[currentKeyIndex];
