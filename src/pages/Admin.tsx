@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users, Settings, Ban, CheckCircle, Loader2, Save, Target } from "lucide-react";
+import { Shield, Users, Settings, Ban, CheckCircle, Loader2, Save, Target, History } from "lucide-react";
+import SearchLogsTable from "@/components/admin/SearchLogsTable";
 import {
   Table,
   TableBody,
@@ -51,6 +52,7 @@ interface LeadSettings {
   leads_min: string;
   leads_max: string;
   leads_target: string;
+  representatives_max: string;
 }
 
 const Admin = () => {
@@ -63,6 +65,7 @@ const Admin = () => {
     leads_min: "70",
     leads_max: "150",
     leads_target: "90",
+    representatives_max: "30",
   });
   const [savingSettings, setSavingSettings] = useState(false);
   const [blockReason, setBlockReason] = useState("");
@@ -153,6 +156,7 @@ const Admin = () => {
         leads_min: "70",
         leads_max: "150",
         leads_target: "90",
+        representatives_max: "30",
       };
       data.forEach((s) => {
         if (s.setting_key in settingsMap) {
@@ -351,6 +355,18 @@ const Admin = () => {
                   />
                 </div>
               </div>
+              <div className="space-y-2 mt-4">
+                <Label htmlFor="representatives_max" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Máx. Representantes por Pesquisa
+                </Label>
+                <Input
+                  id="representatives_max"
+                  type="number"
+                  value={settings.representatives_max}
+                  onChange={(e) => setSettings({ ...settings, representatives_max: e.target.value })}
+                />
+              </div>
               <Button onClick={saveSettings} disabled={savingSettings} className="w-full">
                 {savingSettings ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -513,6 +529,11 @@ const Admin = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Search Logs */}
+        <div className="mt-6">
+          <SearchLogsTable />
+        </div>
 
         {/* User Lead Limit Dialog */}
         <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
