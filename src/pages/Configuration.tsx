@@ -30,7 +30,6 @@ const Configuration = () => {
   const [digitalActivity, setDigitalActivity] = useState("all"); // all, low, basic, active
   const [customerSearch, setCustomerSearch] = useState(""); // Search filter for customer types
   const [whatsappOnly, setWhatsappOnly] = useState(false); // Filter for leads with WhatsApp only
-  const [hospitalChannel, setHospitalChannel] = useState<string[]>([]); // Hospital channel filters
 
   const countries = [
     { code: "BR", name: "Brasil" },
@@ -266,7 +265,7 @@ const Configuration = () => {
       digitalActivity,
       ecommerceType: selectedCustomers.includes("E-commerce") ? ecommerceType : "",
       whatsappOnly,
-      hospitalChannel: hospitalChannel.length > 0 ? hospitalChannel : ['all'],
+      
     };
     
     const newConfigStr = JSON.stringify(newSearchConfig);
@@ -467,160 +466,6 @@ const Configuration = () => {
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
                     Selecione se deseja ver matriz, filiais ou ambos
-                  </p>
-                </div>
-
-                {/* Hospital Channel Filter */}
-                <div>
-                  <Label className="text-base font-semibold mb-4 block" translate="no">
-                    Canal Hospitalar:
-                  </Label>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2" translate="no">
-                      <Checkbox 
-                        id="hospital-all" 
-                        checked={hospitalChannel.length === 0}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setHospitalChannel([]);
-                          }
-                        }}
-                      />
-                      <Label htmlFor="hospital-all" className="font-normal cursor-pointer" translate="no">
-                        Todos
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2" translate="no">
-                      <Checkbox 
-                        id="hospital-publico" 
-                        checked={hospitalChannel.includes('publico')}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setHospitalChannel(prev => [...prev, 'publico']);
-                          } else {
-                            setHospitalChannel(prev => prev.filter(s => s !== 'publico'));
-                          }
-                        }}
-                      />
-                      <Label htmlFor="hospital-publico" className="font-normal cursor-pointer" translate="no">
-                        Hospitais Públicos / SUS
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2" translate="no">
-                      <Checkbox 
-                        id="hospital-privado" 
-                        checked={hospitalChannel.includes('privado')}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setHospitalChannel(prev => [...prev, 'privado']);
-                          } else {
-                            setHospitalChannel(prev => prev.filter(s => s !== 'privado'));
-                          }
-                        }}
-                      />
-                      <Label htmlFor="hospital-privado" className="font-normal cursor-pointer" translate="no">
-                        Hospitais Privados
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2" translate="no">
-                      <Checkbox 
-                        id="hospital-clinicas" 
-                        checked={hospitalChannel.includes('clinicas')}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setHospitalChannel(prev => [...prev, 'clinicas']);
-                          } else {
-                            setHospitalChannel(prev => prev.filter(s => s !== 'clinicas'));
-                          }
-                        }}
-                      />
-                      <Label htmlFor="hospital-clinicas" className="font-normal cursor-pointer" translate="no">
-                        Clínicas e Consultórios
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2" translate="no">
-                      <Checkbox 
-                        id="hospital-laboratorios" 
-                        checked={hospitalChannel.includes('laboratorios')}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setHospitalChannel(prev => [...prev, 'laboratorios']);
-                          } else {
-                            setHospitalChannel(prev => prev.filter(s => s !== 'laboratorios'));
-                          }
-                        }}
-                      />
-                      <Label htmlFor="hospital-laboratorios" className="font-normal cursor-pointer" translate="no">
-                        Laboratórios de Análises
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2" translate="no">
-                      <Checkbox 
-                        id="hospital-distribuidoras" 
-                        checked={hospitalChannel.includes('distribuidoras')}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setHospitalChannel(prev => [...prev, 'distribuidoras']);
-                          } else {
-                            setHospitalChannel(prev => prev.filter(s => s !== 'distribuidoras'));
-                          }
-                        }}
-                      />
-                      <Label htmlFor="hospital-distribuidoras" className="font-normal cursor-pointer" translate="no">
-                        Distribuidoras de Produtos Hospitalares
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2" translate="no">
-                      <Checkbox 
-                        id="hospital-homecare" 
-                        checked={hospitalChannel.includes('homecare')}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setHospitalChannel(prev => [...prev, 'homecare']);
-                          } else {
-                            setHospitalChannel(prev => prev.filter(s => s !== 'homecare'));
-                          }
-                        }}
-                      />
-                      <Label htmlFor="hospital-homecare" className="font-normal cursor-pointer" translate="no">
-                        Home Care / Atendimento Domiciliar
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2" translate="no">
-                      <Checkbox 
-                        id="hospital-farmacias" 
-                        checked={hospitalChannel.includes('farmacias')}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setHospitalChannel(prev => [...prev, 'farmacias']);
-                          } else {
-                            setHospitalChannel(prev => prev.filter(s => s !== 'farmacias'));
-                          }
-                        }}
-                      />
-                      <Label htmlFor="hospital-farmacias" className="font-normal cursor-pointer" translate="no">
-                        Farmácias e Drogarias
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2" translate="no">
-                      <Checkbox 
-                        id="hospital-upas" 
-                        checked={hospitalChannel.includes('upas')}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setHospitalChannel(prev => [...prev, 'upas']);
-                          } else {
-                            setHospitalChannel(prev => prev.filter(s => s !== 'upas'));
-                          }
-                        }}
-                      />
-                      <Label htmlFor="hospital-upas" className="font-normal cursor-pointer" translate="no">
-                        UPAs e Prontos-Socorros
-                      </Label>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Selecione os tipos de canal hospitalar desejados
                   </p>
                 </div>
 
