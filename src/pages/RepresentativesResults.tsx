@@ -56,10 +56,14 @@ export default function RepresentativesResults() {
     setIsLoading(true);
     
     try {
-      console.log("Calling search-representatives with:", config);
+      // Get user id to pass for per-user limits
+      const { data: { user } } = await supabase.auth.getUser();
+      const bodyConfig = { ...config, user_id: user?.id };
+      
+      console.log("Calling search-representatives with:", bodyConfig);
       
       const { data, error } = await supabase.functions.invoke("search-representatives", {
-        body: config,
+        body: bodyConfig,
       });
 
       console.log("Response:", data, error);
