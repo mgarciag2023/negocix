@@ -160,6 +160,8 @@ interface PlaceResult {
   websiteUri?: string;
   rating?: number;
   types?: string[];
+  businessStatus?: string;
+  userRatingCount?: number;
 }
 
 async function searchPlaces(
@@ -192,7 +194,7 @@ async function searchPlaces(
       headers: {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': apiKey,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.rating,places.types,nextPageToken'
+        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.rating,places.types,places.businessStatus,places.userRatingCount,nextPageToken'
       },
       body: JSON.stringify(body)
     });
@@ -222,7 +224,7 @@ async function getPlaceDetails(placeId: string, apiKey: string): Promise<PlaceRe
       method: 'GET',
       headers: {
         'X-Goog-Api-Key': apiKey,
-        'X-Goog-FieldMask': 'id,displayName,formattedAddress,nationalPhoneNumber,internationalPhoneNumber,websiteUri,rating,types'
+        'X-Goog-FieldMask': 'id,displayName,formattedAddress,nationalPhoneNumber,internationalPhoneNumber,websiteUri,rating,types,businessStatus,userRatingCount'
       }
     });
     
@@ -315,9 +317,23 @@ serve(async (req) => {
 
     console.log(`📊 Found ${allPlaces.length} places from searches`);
 
-    // Filter strictly to only representation companies
+    // Filter strictly to only active representation companies
     const validPlaces = allPlaces.filter(place => {
       const name = place.displayName?.text || '';
+      
+      // Exclude closed/inactive businesses
+      const status = place.businessStatus;
+      if (status && status !== 'OPERATIONAL') {
+        console.log(`❌ Excluded "${name}" - business status: ${status}`);
+        return false;
+      }
+      
+      // Exclude places with very low engagement (likely inactive)
+      if (place.userRatingCount !== undefined && place.userRatingCount === 0 && !place.websiteUri && !place.nationalPhoneNumber && !place.internationalPhoneNumber) {
+        console.log(`❌ Excluded "${name}" - no ratings, no website, no phone (likely inactive)`);
+        return false;
+      }
+      
       return isRepresentationCompany(name, place.types);
     });
 
