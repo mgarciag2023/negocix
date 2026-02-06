@@ -46,13 +46,13 @@ interface Profile {
   blocked_reason: string | null;
   created_at: string;
   leads_per_search?: number;
+  representatives_per_search?: number;
 }
 
 interface LeadSettings {
   leads_min: string;
   leads_max: string;
   leads_target: string;
-  representatives_max: string;
 }
 
 const Admin = () => {
@@ -65,12 +65,12 @@ const Admin = () => {
     leads_min: "70",
     leads_max: "150",
     leads_target: "90",
-    representatives_max: "30",
   });
   const [savingSettings, setSavingSettings] = useState(false);
   const [blockReason, setBlockReason] = useState("");
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
   const [userLeadLimit, setUserLeadLimit] = useState("");
+  const [userRepLimit, setUserRepLimit] = useState("");
   const [savingUserLimit, setSavingUserLimit] = useState(false);
 
   useEffect(() => {
@@ -127,7 +127,7 @@ const Admin = () => {
     // Fetch user lead limits
     const { data: limitsData } = await supabase
       .from("user_lead_limits")
-      .select("user_id, leads_per_search");
+      .select("user_id, leads_per_search, representatives_per_search");
 
     // Merge limits into profiles
     const profilesWithLimits = (profilesData || []).map((profile) => {
@@ -135,6 +135,7 @@ const Admin = () => {
       return {
         ...profile,
         leads_per_search: limit?.leads_per_search || null,
+        representatives_per_search: limit?.representatives_per_search || null,
       };
     });
 
@@ -156,7 +157,6 @@ const Admin = () => {
         leads_min: "70",
         leads_max: "150",
         leads_target: "90",
-        representatives_max: "30",
       };
       data.forEach((s) => {
         if (s.setting_key in settingsMap) {
@@ -231,6 +231,7 @@ const Admin = () => {
   const openUserLimitDialog = (profile: Profile) => {
     setEditingUser(profile);
     setUserLeadLimit(profile.leads_per_search?.toString() || "");
+    setUserRepLimit(profile.representatives_per_search?.toString() || "");
   };
 
   const saveUserLeadLimit = async () => {
@@ -238,10 +239,13 @@ const Admin = () => {
     
     setSavingUserLimit(true);
     
-    const limitValue = userLeadLimit ? parseInt(userLeadLimit) : null;
+    const leadLimit = userLeadLimit ? parseInt(userLeadLimit) : null;
+    const repLimit = userRepLimit ? parseInt(userRepLimit) : null;
     
-    if (limitValue === null || limitValue <= 0) {
-      // Delete the limit if empty or invalid
+    const hasAnyLimit = (leadLimit && leadLimit > 0) || (repLimit && repLimit > 0);
+    
+    if (!hasAnyLimit) {
+      // Delete the limit if all empty
       const { error } = await supabase
         .from("user_lead_limits")
         .delete()
@@ -250,25 +254,27 @@ const Admin = () => {
       if (error && error.code !== "PGRST116") {
         toast({
           title: "Erro",
-          description: "Não foi possível remover o limite",
+          description: "Não foi possível remover os limites",
           variant: "destructive",
         });
         setSavingUserLimit(false);
         return;
       }
     } else {
-      // Upsert the limit
+      const upsertData: any = {
+        user_id: editingUser.user_id,
+      };
+      if (leadLimit && leadLimit > 0) upsertData.leads_per_search = leadLimit;
+      if (repLimit && repLimit > 0) upsertData.representatives_per_search = repLimit;
+      
       const { error } = await supabase
         .from("user_lead_limits")
-        .upsert({
-          user_id: editingUser.user_id,
-          leads_per_search: limitValue,
-        }, { onConflict: "user_id" });
+        .upsert(upsertData, { onConflict: "user_id" });
       
       if (error) {
         toast({
           title: "Erro",
-          description: "Não foi possível salvar o limite",
+          description: "Não foi possível salvar os limites",
           variant: "destructive",
         });
         setSavingUserLimit(false);
@@ -277,12 +283,13 @@ const Admin = () => {
     }
 
     toast({
-      title: "Limite salvo",
-      description: `Limite de leads para ${editingUser.email} foi ${limitValue ? `definido como ${limitValue}` : "removido"}`,
+      title: "Limites salvos",
+      description: `Limites para ${editingUser.email} atualizados com sucesso`,
     });
 
     setEditingUser(null);
     setUserLeadLimit("");
+    setUserRepLimit("");
     setSavingUserLimit(false);
     fetchProfiles();
   };
@@ -355,18 +362,6 @@ const Admin = () => {
                   />
                 </div>
               </div>
-              <div className="space-y-2 mt-4">
-                <Label htmlFor="representatives_max" className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Máx. Representantes por Pesquisa
-                </Label>
-                <Input
-                  id="representatives_max"
-                  type="number"
-                  value={settings.representatives_max}
-                  onChange={(e) => setSettings({ ...settings, representatives_max: e.target.value })}
-                />
-              </div>
               <Button onClick={saveSettings} disabled={savingSettings} className="w-full">
                 {savingSettings ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -424,7 +419,8 @@ const Admin = () => {
                   <TableRow>
                     <TableHead>Email</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Leads/Pesquisa</TableHead>
+                    <TableHead>Leads</TableHead>
+                    <TableHead>Representantes</TableHead>
                     <TableHead>Cadastro</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -454,6 +450,16 @@ const Admin = () => {
                           </Badge>
                         ) : (
                           <span className="text-muted-foreground text-sm">Padrão</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {profile.representatives_per_search ? (
+                          <Badge variant="secondary" className="gap-1">
+                            <Users className="h-3 w-3" />
+                            {profile.representatives_per_search}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">Padrão (30)</span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -539,9 +545,9 @@ const Admin = () => {
         <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Limite de Leads por Pesquisa</DialogTitle>
+              <DialogTitle>Limites por Pesquisa</DialogTitle>
               <DialogDescription>
-                Defina um limite personalizado para {editingUser?.email}. Deixe vazio para usar o padrão do sistema.
+                Defina limites personalizados para {editingUser?.email}. Deixe vazio para usar o padrão.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -555,8 +561,18 @@ const Admin = () => {
                   onChange={(e) => setUserLeadLimit(e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Configuração global: Mín {settings.leads_min}, Meta {settings.leads_target}, Máx {settings.leads_max}
+                  Global: Mín {settings.leads_min}, Meta {settings.leads_target}, Máx {settings.leads_max}
                 </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="user-rep-limit">Representantes por pesquisa</Label>
+                <Input
+                  id="user-rep-limit"
+                  type="number"
+                  placeholder="Padrão: 30"
+                  value={userRepLimit}
+                  onChange={(e) => setUserRepLimit(e.target.value)}
+                />
               </div>
             </div>
             <DialogFooter>

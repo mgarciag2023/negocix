@@ -8,6 +8,7 @@ const corsHeaders = {
 interface SearchConfig {
   city?: string;
   state: string;
+  user_id?: string;
 }
 
 interface Representative {
@@ -247,7 +248,7 @@ serve(async (req) => {
     const config: SearchConfig = await req.json();
     console.log("🚀 Search Representatives Config:", JSON.stringify(config));
 
-    const { city, state } = config;
+    const { city, state, user_id } = config;
 
     if (!state) {
       return new Response(
@@ -261,30 +262,26 @@ serve(async (req) => {
       throw new Error("GOOGLE_API_KEY_1 not configured");
     }
 
-    // Fetch max representatives setting from Supabase
-    let MAX_RESULTS_SETTING = 30;
+    // Fetch user-specific representatives limit from Supabase
+    let MAX_RESULTS = 30;
     try {
       const supabaseUrl = Deno.env.get("SUPABASE_URL");
       const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-      if (supabaseUrl && supabaseKey) {
-        const res = await fetch(`${supabaseUrl}/rest/v1/system_settings?setting_key=eq.representatives_max&select=setting_value`, {
+      if (supabaseUrl && supabaseKey && user_id) {
+        const res = await fetch(`${supabaseUrl}/rest/v1/user_lead_limits?user_id=eq.${user_id}&select=representatives_per_search`, {
           headers: { 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` }
         });
-        const settings = await res.json();
-        if (settings?.[0]?.setting_value) {
-          MAX_RESULTS_SETTING = parseInt(settings[0].setting_value) || 30;
+        const limits = await res.json();
+        if (limits?.[0]?.representatives_per_search) {
+          MAX_RESULTS = limits[0].representatives_per_search;
         }
       }
     } catch (e) {
-      console.error("Error fetching setting:", e);
+      console.error("Error fetching user limit:", e);
     }
 
     const stateName = stateNames[state] || state;
     const location = city ? `${city}, ${stateName}` : stateName;
-    const hasCity = !!city && city.trim().length > 0;
-    
-    // Use admin setting, capped by city/state logic
-    const MAX_RESULTS = Math.min(MAX_RESULTS_SETTING, hasCity ? MAX_RESULTS_SETTING : MAX_RESULTS_SETTING);
     
     console.log(`📍 Searching representatives in: ${location} (limit: ${MAX_RESULTS})`);
 
