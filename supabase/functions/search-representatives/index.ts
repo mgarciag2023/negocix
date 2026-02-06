@@ -328,12 +328,6 @@ serve(async (req) => {
         return false;
       }
       
-      // Exclude places with very low engagement (likely inactive)
-      if (place.userRatingCount !== undefined && place.userRatingCount === 0 && !place.websiteUri && !place.nationalPhoneNumber && !place.internationalPhoneNumber) {
-        console.log(`❌ Excluded "${name}" - no ratings, no website, no phone (likely inactive)`);
-        return false;
-      }
-      
       return isRepresentationCompany(name, place.types);
     });
 
