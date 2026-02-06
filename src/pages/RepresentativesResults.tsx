@@ -86,6 +86,22 @@ export default function RepresentativesResults() {
       if (data?.representatives) {
         setRepresentatives(data.representatives);
         
+        // Log the search
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            await supabase.from("search_logs").insert({
+              user_id: user.id,
+              user_email: user.email || "",
+              search_type: "representatives",
+              search_config: config,
+              results_count: data.representatives.length,
+            });
+          }
+        } catch (logErr) {
+          console.error("Error logging search:", logErr);
+        }
+
         if (data.representatives.length === 0) {
           toast({
             title: "Nenhum representante encontrado",

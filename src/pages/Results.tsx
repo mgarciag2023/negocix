@@ -266,6 +266,22 @@ const Results = () => {
           localStorage.setItem('cachedLeads', JSON.stringify(data.leads));
           localStorage.setItem('cacheTimestamp', Date.now().toString());
           console.log('💾 Leads cached successfully:', data.leads.length);
+
+          // Log the search
+          try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              await supabase.from("search_logs").insert({
+                user_id: user.id,
+                user_email: user.email || "",
+                search_type: "leads",
+                search_config: searchConfig,
+                results_count: data.leads.length,
+              });
+            }
+          } catch (logErr) {
+            console.error("Error logging search:", logErr);
+          }
         } else if (data?.error) {
           toast({
             title: "Erro ao buscar leads",

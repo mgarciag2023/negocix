@@ -261,12 +261,30 @@ serve(async (req) => {
       throw new Error("GOOGLE_API_KEY_1 not configured");
     }
 
+    // Fetch max representatives setting from Supabase
+    let MAX_RESULTS_SETTING = 30;
+    try {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL");
+      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      if (supabaseUrl && supabaseKey) {
+        const res = await fetch(`${supabaseUrl}/rest/v1/system_settings?setting_key=eq.representatives_max&select=setting_value`, {
+          headers: { 'apikey': supabaseKey, 'Authorization': `Bearer ${supabaseKey}` }
+        });
+        const settings = await res.json();
+        if (settings?.[0]?.setting_value) {
+          MAX_RESULTS_SETTING = parseInt(settings[0].setting_value) || 30;
+        }
+      }
+    } catch (e) {
+      console.error("Error fetching setting:", e);
+    }
+
     const stateName = stateNames[state] || state;
     const location = city ? `${city}, ${stateName}` : stateName;
     const hasCity = !!city && city.trim().length > 0;
     
-    // Dynamic limit: 20 for city search, 30 for state-only search
-    const MAX_RESULTS = hasCity ? 20 : 30;
+    // Use admin setting, capped by city/state logic
+    const MAX_RESULTS = Math.min(MAX_RESULTS_SETTING, hasCity ? MAX_RESULTS_SETTING : MAX_RESULTS_SETTING);
     
     console.log(`📍 Searching representatives in: ${location} (limit: ${MAX_RESULTS})`);
 
