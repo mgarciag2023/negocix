@@ -30,6 +30,7 @@ const Configuration = () => {
   const [digitalActivity, setDigitalActivity] = useState("all"); // all, low, basic, active
   const [customerSearch, setCustomerSearch] = useState(""); // Search filter for customer types
   const [whatsappOnly, setWhatsappOnly] = useState(false); // Filter for leads with WhatsApp only
+  const [receitaFederalOnly, setReceitaFederalOnly] = useState(false); // Filter for companies registered with Receita Federal
 
   const countries = [
     { code: "BR", name: "Brasil" },
@@ -270,7 +271,7 @@ const Configuration = () => {
       digitalActivity,
       ecommerceType: selectedCustomers.includes("E-commerce") ? ecommerceType : "",
       whatsappOnly,
-      
+      receitaFederalOnly,
     };
     
     const newConfigStr = JSON.stringify(newSearchConfig);
@@ -491,6 +492,26 @@ const Configuration = () => {
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
                     Quando ativado, mostra apenas leads que possuem número de WhatsApp verificado
+                  </p>
+                </div>
+
+                {/* Receita Federal Filter */}
+                <div>
+                  <Label className="text-base font-semibold mb-4 block" translate="no">
+                    Receita Federal:
+                  </Label>
+                  <div className="flex items-center space-x-3">
+                    <Checkbox 
+                      id="receita-federal-only" 
+                      checked={receitaFederalOnly}
+                      onCheckedChange={(checked) => setReceitaFederalOnly(checked === true)}
+                    />
+                    <Label htmlFor="receita-federal-only" className="font-normal cursor-pointer" translate="no">
+                      Apenas empresas ligadas à Receita Federal
+                    </Label>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Quando ativado, busca apenas empresas com CNPJ ativo registrado na Receita Federal
                   </p>
                 </div>
 
