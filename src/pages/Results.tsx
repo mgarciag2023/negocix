@@ -221,6 +221,7 @@ const Results = () => {
             digitalPresence: searchConfig.digitalPresence || 'all',
             digitalActivity: searchConfig.digitalActivity || 'all',
             whatsappOnly: searchConfig.whatsappOnly || false,
+            receitaFederalOnly: searchConfig.receitaFederalOnly || false,
             filters: {
               category: searchConfig.category,
               companySizes: searchConfig.companySizes || ['all'],

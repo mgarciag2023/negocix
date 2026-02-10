@@ -1510,14 +1510,15 @@ serve(async (req) => {
   }
 
   try {
-    const { segment, products, region, country, filters, ecommerceType, businessType, digitalPresence, digitalActivity, whatsappOnly } = await req.json();
-    console.log('🔍 SEARCH v11 - WhatsApp Filter + More Leads - Input:', { segment, products, region, country, ecommerceType, businessType, digitalPresence, digitalActivity, whatsappOnly });
+    const { segment, products, region, country, filters, ecommerceType, businessType, digitalPresence, digitalActivity, whatsappOnly, receitaFederalOnly } = await req.json();
+    console.log('🔍 SEARCH v12 - Receita Federal Filter - Input:', { segment, products, region, country, ecommerceType, businessType, digitalPresence, digitalActivity, whatsappOnly, receitaFederalOnly });
     
     const countryCode = country || 'BR';
     const bizType = businessType || 'all';
     const digPresence = digitalPresence || 'all';
     const digActivity = digitalActivity || 'all';
     const filterWhatsappOnly = whatsappOnly || false;
+    const filterReceitaFederal = receitaFederalOnly || false;
     
     // Check if this is an e-commerce search with specific type
     const isEcommerceSearch = segment.toLowerCase().includes('e-commerce') || segment.toLowerCase().includes('ecommerce');
@@ -1531,6 +1532,7 @@ serve(async (req) => {
     console.log('📍 Location:', locationQuery);
     console.log('🏢 Business type:', bizType);
     console.log('📱 WhatsApp only:', filterWhatsappOnly);
+    console.log('🏛️ Receita Federal only:', filterReceitaFederal);
     
     // ===== API KEY (single key) =====
     const API_KEYS = [
@@ -1927,10 +1929,28 @@ serve(async (req) => {
       console.log(`📱 WhatsApp filter applied: ${leads.length} leads with WhatsApp (removed ${beforeWhatsapp - leads.length})`);
     }
 
+    // Apply Receita Federal filter if requested - keep only businesses with formal registration indicators
+    if (filterReceitaFederal && leads.length > 0) {
+      const beforeRF = leads.length;
+      const formalTerms = ['ltda', 'me ', 'mei', 'eireli', 's/a', 's.a', 'epp', 'sa ', 'ltda.', 'ltda-', 'ss ', 'sociedade', 'comércio', 'comercio', 'indústria', 'industria', 'distribuidora', 'serviços', 'servicos', 'empreendimentos', 'importação', 'exportação', 'cia', 'companhia'];
+      leads = leads.filter((lead: any) => {
+        const name = (lead.name || '').toLowerCase();
+        // Has formal business suffix in name
+        const hasFormalName = formalTerms.some(term => name.includes(term));
+        // Has website (indicates formal registration)
+        const hasWebsite = !!lead.website;
+        // Has significant reviews (established business)
+        const hasGoodReviews = (lead.reviews || 0) >= 10;
+        return hasFormalName || hasWebsite || hasGoodReviews;
+      });
+      console.log(`🏛️ Receita Federal filter applied: ${leads.length} formal businesses (removed ${beforeRF - leads.length})`);
+    }
+
     if (leads.length === 0) {
       const whatsappMsg = filterWhatsappOnly ? ' com WhatsApp' : '';
+      const rfMsg = filterReceitaFederal ? ' ligadas à Receita Federal' : '';
       return new Response(JSON.stringify({ 
-        error: `Nenhum estabelecimento${whatsappMsg} encontrado em ${cleanRegion}. Tente outra região ou desative o filtro de WhatsApp.` 
+        error: `Nenhum estabelecimento${whatsappMsg}${rfMsg} encontrado em ${cleanRegion}. Tente outra região ou desative os filtros.` 
       }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
