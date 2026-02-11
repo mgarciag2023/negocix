@@ -30,7 +30,7 @@ const Configuration = () => {
   const [digitalActivity, setDigitalActivity] = useState("all"); // all, low, basic, active
   const [customerSearch, setCustomerSearch] = useState(""); // Search filter for customer types
   const [whatsappOnly, setWhatsappOnly] = useState(false); // Filter for leads with WhatsApp only
-  const [receitaFederalOnly, setReceitaFederalOnly] = useState(false); // Filter for companies registered with Receita Federal
+  // receitaFederalOnly removed
 
   const countries = [
     { code: "BR", name: "Brasil" },
@@ -215,6 +215,12 @@ const Configuration = () => {
     "Lojas de Cama, Mesa e Banho",
     "Lojas de Utilidades Domésticas",
     "Lojas de Utilidades",
+    // Distribuidores de bebidas específicos
+    "Distribuidores de Água",
+    "Distribuidores de Refrigerantes",
+    "Distribuidores de Cervejas",
+    // Caça, pesca e camping
+    "Artigos de Caça, Pesca e Camping",
   ].sort(); // Ordenação alfabética
 
   const handleCustomerToggle = (customer: string) => {
@@ -271,7 +277,7 @@ const Configuration = () => {
       digitalActivity,
       ecommerceType: selectedCustomers.includes("E-commerce") ? ecommerceType : "",
       whatsappOnly,
-      receitaFederalOnly,
+      receitaFederalOnly: false,
     };
     
     const newConfigStr = JSON.stringify(newSearchConfig);
@@ -495,25 +501,6 @@ const Configuration = () => {
                   </p>
                 </div>
 
-                {/* Receita Federal Filter */}
-                <div>
-                  <Label className="text-base font-semibold mb-4 block" translate="no">
-                    Receita Federal:
-                  </Label>
-                  <div className="flex items-center space-x-3">
-                    <Checkbox 
-                      id="receita-federal-only" 
-                      checked={receitaFederalOnly}
-                      onCheckedChange={(checked) => setReceitaFederalOnly(checked === true)}
-                    />
-                    <Label htmlFor="receita-federal-only" className="font-normal cursor-pointer" translate="no">
-                      Apenas empresas ligadas à Receita Federal
-                    </Label>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Quando ativado, busca apenas empresas com CNPJ ativo registrado na Receita Federal
-                  </p>
-                </div>
 
                 {/* Country */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

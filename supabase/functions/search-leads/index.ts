@@ -206,7 +206,11 @@ function generateSearchTerms(segment: string): string[] {
     'distribuidores de food service': ['distribuidor food service', 'distribuidor restaurantes'],
     'atacadistas de food service': ['atacadista food service', 'atacado restaurantes'],
     'distribuidores de alimentos': ['distribuidora de alimentos', 'distribuidor de alimentos', 'atacado alimentos', 'alimentos atacado'],
-    'distribuidores de bebidas': ['distribuidora de bebidas', 'distribuidor de bebidas', 'atacado bebidas', 'bebidas atacado', 'depósito de bebidas']
+    'distribuidores de bebidas': ['distribuidora de bebidas', 'distribuidor de bebidas', 'atacado bebidas', 'bebidas atacado', 'depósito de bebidas'],
+    'distribuidores de água': ['distribuidora de água', 'distribuidor de água', 'água mineral distribuidora', 'depósito de água', 'distribuidora de água mineral'],
+    'distribuidores de refrigerantes': ['distribuidora de refrigerantes', 'distribuidor de refrigerantes', 'depósito de refrigerantes', 'distribuidora de bebidas refrigerantes', 'atacado de refrigerantes'],
+    'distribuidores de cervejas': ['distribuidora de cervejas', 'distribuidor de cervejas', 'depósito de cerveja', 'distribuidora de cerveja artesanal', 'atacado de cervejas'],
+    'artigos de caça, pesca e camping': ['loja de pesca', 'artigos de pesca', 'caça e pesca', 'camping', 'loja de camping', 'artigos de camping', 'pesca esportiva', 'loja de caça']
   };
   
   let searchTerms = categoryTerms[term] || null;
