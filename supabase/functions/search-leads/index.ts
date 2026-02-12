@@ -1508,7 +1508,11 @@ function processResults(apifyResults: any[], segment: string, cleanRegion: strin
 // Sleep helper
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Global search cache
+const searchCacheGlobal = new Map<string, any[]>();
+
 serve(async (req) => {
+  searchCacheGlobal.clear();
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -1538,232 +1542,93 @@ serve(async (req) => {
     console.log('📱 WhatsApp only:', filterWhatsappOnly);
     console.log('🏛️ Receita Federal only:', filterReceitaFederal);
     
-    // ===== API KEY (single key) =====
-    const API_KEYS = [
-      Deno.env.get("GOOGLE_API_KEY_1"),
-    ].filter(key => key && key.trim() !== '') as string[];
-    
-    if (API_KEYS.length === 0) {
-      throw new Error("No GOOGLE_API_KEY_1 configured. Please add the secret GOOGLE_API_KEY_1");
+    // ===== RAPIDAPI KEY =====
+    const RAPIDAPI_KEY = Deno.env.get("RAPIDAPI_KEY");
+    if (!RAPIDAPI_KEY) {
+      throw new Error("RAPIDAPI_KEY não configurada. Adicione o secret RAPIDAPI_KEY.");
     }
     
-    console.log(`🔑 API Key configured: ${API_KEYS.length} key(s) available`);
-    
-    let currentKeyIndex = 0;
-    let GOOGLE_API_KEY = API_KEYS[currentKeyIndex];
-    
-    // Function to check if error is quota-related
-    function isQuotaError(status: string, errorMessage?: string): boolean {
-      const quotaStatuses = ['OVER_QUERY_LIMIT', 'RESOURCE_EXHAUSTED', 'QUOTA_EXCEEDED'];
-      if (quotaStatuses.includes((status || '').toUpperCase())) return true;
-      if (errorMessage && (
-        errorMessage.toLowerCase().includes('quota') ||
-        errorMessage.toLowerCase().includes('limit') ||
-        errorMessage.toLowerCase().includes('exceeded')
-      )) return true;
-      return false;
-    }
+    console.log(`🔑 RapidAPI Key configured`);
 
-    // Function to detect invalid/unauthorized API key errors.
-    // These usually mean: invalid key, Places API not enabled, billing missing, or key restrictions.
-    function isKeyAuthError(status: string, errorMessage?: string): boolean {
-      const s = (status || '').toUpperCase();
-      if (s === 'REQUEST_DENIED') return true;
+    const MAX_TOTAL_LEADS = 150;
+    const MIN_LEADS_TARGET = 70;
+    const TARGET_LEADS = 80;
+    const MAX_TARGET_LEADS = 90;
+    const MIN_LEADS_EARLY_EXIT = 85;
 
-      const msg = (errorMessage || '').toLowerCase();
-      if (!msg) return false;
+    const RAPIDAPI_HOST = "local-business-data.p.rapidapi.com";
 
-      return (
-        msg.includes('api key is invalid') ||
-        msg.includes('invalid api key') ||
-        msg.includes('not authorized') ||
-        msg.includes('has not been used in project') ||
-        msg.includes('billing') ||
-        msg.includes('api has not been used')
-      );
-    }
-
-    function googleKeyAuthErrorMessage(): string {
-      return (
-        'Google Places: suas API keys foram recusadas (REQUEST_DENIED). ' +
-        'Isso normalmente é chave inválida, API Places desativada, faturamento não ativo, ' +
-        'ou restrições (HTTP referrer/IP) bloqueando chamadas do backend. ' +
-        'Verifique as 5 chaves e se a Places API (Places/Maps) está habilitada nelas.'
-      );
-    }
-
-    // Function to rotate to next available API key
-    function rotateApiKey(): boolean {
-      const previousIndex = currentKeyIndex;
-      currentKeyIndex++;
-
-      if (currentKeyIndex >= API_KEYS.length) {
-        console.error(`❌ All ${API_KEYS.length} API keys exhausted!`);
-        return false;
-      }
-
-      GOOGLE_API_KEY = API_KEYS[currentKeyIndex];
-      console.log(`🔄 API Key rotated: Key ${previousIndex + 1} → Key ${currentKeyIndex + 1} (${API_KEYS.length - currentKeyIndex} remaining)`);
-      return true;
-    }
-
-    // Helper function to get current API key (for closures)
-    function getCurrentApiKey(): string {
-      return API_KEYS[currentKeyIndex];
-    }
-
-    const MAX_TOTAL_LEADS = 150; // Max leads per search
-    const MIN_LEADS_TARGET = 70; // Minimum target
-    const TARGET_LEADS = 80; // Target around this number
-    const MAX_TARGET_LEADS = 90; // Occasionally try to exceed this
-    const MIN_LEADS_EARLY_EXIT = 85; // Early exit threshold
-
-    // Occasionally try to get more leads (20% chance)
-    const tryExceedTarget = Math.random() < 0.2;
-    const currentTarget = tryExceedTarget ? MAX_TARGET_LEADS + 20 : TARGET_LEADS;
-
-    console.log(`🔎 Google Places API search: targeting ${MIN_LEADS_TARGET}-${currentTarget} leads (max ${MAX_TOTAL_LEADS})${tryExceedTarget ? ' [BONUS MODE]' : ''}`);
-
-    // OPTIMIZATION: Cache to avoid duplicate API calls
-    const searchCache = new Map<string, any[]>();
-
-    // Function to search places using Google Places API - WITH AUTO KEY ROTATION
+    // Function to search places using RapidAPI Local Business Data
     async function searchPlaces(query: string, location: string, maxPages: number = 3): Promise<any[]> {
-      // Check cache first to save API credits
+      const searchCache = searchCacheGlobal;
       const cacheKey = `${query}|${location}`;
       if (searchCache.has(cacheKey)) {
         console.log(`💾 Cache hit for: ${query}`);
         return searchCache.get(cacheKey) || [];
       }
 
-      const results: any[] = [];
-      let nextPageToken: string | null = null;
-      let pageCount = 0;
-      let retryWithNewKey = false;
+      const allResults: any[] = [];
+      const limit = Math.min(maxPages * 20, 100); // Up to 100 results per query
 
-      while (pageCount < maxPages) {
-        const currentKey = getCurrentApiKey();
-        const searchUrl: string = nextPageToken
-          ? `https://maps.googleapis.com/maps/api/place/textsearch/json?pagetoken=${nextPageToken}&key=${currentKey}`
-          : `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query + ' em ' + location)}&language=pt-BR&key=${currentKey}`;
+      const url = new URL('https://local-business-data.p.rapidapi.com/search');
+      url.searchParams.set('query', `${query} em ${location}`);
+      url.searchParams.set('limit', String(limit));
+      url.searchParams.set('region', 'br');
+      url.searchParams.set('language', 'pt');
 
-        console.log(`📍 Google Places search page ${pageCount + 1}: ${query} [Key ${currentKeyIndex + 1}]`);
+      console.log(`📍 RapidAPI search: ${query} (limit: ${limit})`);
 
-        const searchResponse: Response = await fetch(searchUrl);
-        if (!searchResponse.ok) {
-          console.error(`❌ Google Places HTTP error: ${searchResponse.status}`);
-          // Try rotating key on HTTP errors
-          if (rotateApiKey()) {
-            console.log(`🔄 Retrying with new key after HTTP error`);
-            continue; // Retry same page with new key
+      try {
+        const response = await fetch(url.toString(), {
+          method: 'GET',
+          headers: {
+            'x-rapidapi-key': RAPIDAPI_KEY,
+            'x-rapidapi-host': RAPIDAPI_HOST,
+          },
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`❌ RapidAPI error: ${response.status} - ${errorText}`);
+          return [];
+        }
+
+        const data = await response.json();
+        if (data.status === 'OK' && Array.isArray(data.data)) {
+          // Map RapidAPI fields to the format expected by the rest of the code
+          for (const place of data.data) {
+            allResults.push({
+              place_id: place.business_id || place.place_id || '',
+              name: place.name || '',
+              formatted_address: place.full_address || '',
+              vicinity: place.full_address || '',
+              rating: place.rating || 0,
+              user_ratings_total: place.review_count || 0,
+              types: place.subtypes || [],
+              geometry: {
+                location: {
+                  lat: place.latitude || 0,
+                  lng: place.longitude || 0,
+                }
+              },
+              business_status: place.business_status || 'OPERATIONAL',
+              permanently_closed: place.business_status === 'CLOSED_PERMANENTLY',
+              // RapidAPI returns phone and website directly - no need for separate detail calls!
+              _phone: place.phone_number || '',
+              _website: place.website || '',
+              _email: place.emails_and_contacts?.emails?.[0] || '',
+            });
           }
-          break;
-        }
-
-        const searchData: any = await searchResponse.json();
-
-        // Check for quota errors and rotate key
-        if (isQuotaError(searchData.status, searchData.error_message)) {
-          console.warn(`⚠️ Quota limit hit on Key ${currentKeyIndex + 1}: ${searchData.status}`);
-          if (rotateApiKey()) {
-            console.log(`🔄 Retrying with new key after quota error`);
-            // Clear page token since it's tied to old key
-            nextPageToken = null;
-            continue; // Retry same page with new key
-          } else {
-            console.error(`❌ All API keys exhausted! Returning partial results.`);
-            break;
-          }
-        }
-
-        // Invalid/unauthorized key (or missing billing/API) → rotate and retry
-        if (isKeyAuthError(searchData.status, searchData.error_message)) {
-          console.error(`❌ Google API key refused on Key ${currentKeyIndex + 1}: ${searchData.status}`, searchData.error_message);
-
-          if (rotateApiKey()) {
-            console.log(`🔄 Retrying with new key after REQUEST_DENIED`);
-            nextPageToken = null;
-            continue;
-          }
-
-          // All keys refused
-          throw new Error(googleKeyAuthErrorMessage());
-        }
-
-        if (searchData.status !== 'OK' && searchData.status !== 'ZERO_RESULTS') {
-          console.error(`❌ Google API status: ${searchData.status}`, searchData.error_message);
-          break;
-        }
-
-        if (searchData.results) {
-          results.push(...searchData.results);
-          console.log(`📊 Page ${pageCount + 1}: ${searchData.results.length} results (total: ${results.length})`);
-        }
-
-        nextPageToken = searchData.next_page_token || null;
-        pageCount++;
-
-        // Reduced delay for faster searches - Google requires ~2s between page token requests
-        if (nextPageToken && pageCount < maxPages) {
-          await sleep(1800); // Minimum safe delay
+          console.log(`📊 RapidAPI: ${allResults.length} results for "${query}"`);
         } else {
-          break;
+          console.error('❌ RapidAPI unexpected status:', data.status);
         }
+      } catch (error) {
+        console.error('❌ RapidAPI search error:', error);
       }
 
-      // Cache results
-      searchCache.set(cacheKey, results);
-      return results;
-    }
-
-    // Function to get place details (phone, website, etc.) - WITH AUTO KEY ROTATION
-    async function getPlaceDetails(placeId: string): Promise<any> {
-      const fields = 'formatted_phone_number,international_phone_number,website,opening_hours,reviews,url';
-
-      let attempts = 0;
-      const maxAttempts = API_KEYS.length;
-
-      while (attempts < maxAttempts) {
-        const currentKey = getCurrentApiKey();
-        const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=${fields}&language=pt-BR&key=${currentKey}`;
-
-        try {
-          const response = await fetch(url);
-          if (response.ok) {
-            const data = await response.json();
-
-            // Check for quota errors
-            if (isQuotaError(data.status, data.error_message)) {
-              console.warn(`⚠️ Details quota limit on Key ${currentKeyIndex + 1}`);
-              if (!rotateApiKey()) {
-                return null; // All keys exhausted
-              }
-              attempts++;
-              continue;
-            }
-
-            // Invalid/unauthorized key (or missing billing/API) → rotate and retry
-            if (isKeyAuthError(data.status, data.error_message)) {
-              console.error(`❌ Google Details key refused on Key ${currentKeyIndex + 1}: ${data.status}`, data.error_message);
-
-              if (!rotateApiKey()) {
-                throw new Error(googleKeyAuthErrorMessage());
-              }
-              attempts++;
-              continue;
-            }
-
-            if (data.status === 'OK') {
-              return data.result;
-            }
-          }
-          break; // Non-quota / non-auth error, don't retry
-        } catch (e) {
-          console.log(`⚠️ Details fetch error for ${placeId}:`, e);
-          break;
-        }
-      }
-      return null;
+      searchCache.set(cacheKey, allResults);
+      return allResults;
     }
     
     // Parse segments - split by comma and clean each one
@@ -1844,7 +1709,8 @@ serve(async (req) => {
     });
     console.log(`📊 After deduplication: ${allPlacesWithSegment.length} unique places`);
     
-    // Transform Google Places format to our expected format
+    // Transform RapidAPI format to our expected format
+    // RapidAPI already includes phone and website - no separate detail calls needed!
     const transformedPlaces = allPlacesWithSegment.map(place => ({
       placeId: place.place_id,
       title: place.name,
@@ -1853,8 +1719,10 @@ serve(async (req) => {
       categories: place.types || [],
       stars: place.rating || 0,
       reviewsCount: place.user_ratings_total || 0,
-      phone: '',
-      website: '',
+      phone: place._phone || '',
+      phoneUnformatted: place._phone || '',
+      website: place._website || '',
+      email: place._email || '',
       permanentlyClosed: place.permanently_closed || place.business_status === 'CLOSED_PERMANENTLY',
       location: place.geometry?.location,
       _searchSegment: place._searchSegment,
@@ -1865,65 +1733,19 @@ serve(async (req) => {
     const activePlaces = transformedPlaces.filter(p => !p.permanentlyClosed);
     console.log(`📊 Active businesses: ${activePlaces.length}`);
     
-    // MAXIMUM VOLUME: Larger batches and faster processing
-    const BATCH_SIZE = 80; // Increased from 60
-    const DETAILS_DELAY = 6; // Reduced from 10ms for faster processing
-    
-    // OPTIMIZATION: Sort by rating/reviews first to get best leads initially
+    // Sort by rating/reviews first to get best leads initially
     activePlaces.sort((a, b) => {
       const scoreA = (a.stars || 0) * 10 + Math.min(a.reviewsCount || 0, 100);
       const scoreB = (b.stars || 0) * 10 + Math.min(b.reviewsCount || 0, 100);
       return scoreB - scoreA;
     });
-    
-    console.log('📞 Fetching contact details (optimized batches)...');
 
-    // MAXIMUM VOLUME: Start with larger window and expand more aggressively
-    let leads: any[] = [];
-    let detailsFetched = 0;
-    let detailsFetchLimit = Math.min(activePlaces.length, 1400); // Increased from 1000
-    const HARD_MAX_DETAILS_FETCH = Math.min(activePlaces.length, 2000); // Increased from 1500
+    // No detail fetching needed - RapidAPI returns phone/website directly!
+    const placesWithPhone = activePlaces.filter(p => p.phone && p.phone.trim() !== '');
+    console.log(`📞 ${placesWithPhone.length} places with phone out of ${activePlaces.length}`);
 
-    while (true) {
-      // Fetch details for the next window
-      for (let i = detailsFetched; i < detailsFetchLimit; i += BATCH_SIZE) {
-        const batch = activePlaces.slice(i, i + BATCH_SIZE);
-
-        const detailsPromises = batch.map(async (place, idx) => {
-          await sleep(idx * DETAILS_DELAY);
-          const details = await getPlaceDetails(place.placeId);
-          if (details) {
-            place.phone = details.international_phone_number || details.formatted_phone_number || '';
-            place.website = details.website || '';
-          }
-        });
-
-        await Promise.all(detailsPromises);
-
-        const placesWithPhone = activePlaces
-          .slice(0, i + BATCH_SIZE)
-          .filter(p => p.phone && p.phone.trim() !== '');
-        console.log(`📞 Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${placesWithPhone.length} leads with phone`);
-      }
-
-      detailsFetched = detailsFetchLimit;
-
-      // Compute final leads after ALL strict filters
-      leads = processResultsWithCategories(activePlaces, segment, cleanRegion, MAX_TOTAL_LEADS, bizType, digPresence, digActivity);
-      console.log(`📊 After full filtering: ${leads.length} leads (min target: ${MIN_LEADS_TARGET})`);
-
-      // Stop conditions
-      if (leads.length >= MIN_LEADS_TARGET) break;
-      if (detailsFetched >= HARD_MAX_DETAILS_FETCH) break;
-      if (detailsFetched >= activePlaces.length) break;
-
-      // Expand details fetch only when we are below minimum
-      const nextLimit = Math.min(HARD_MAX_DETAILS_FETCH, detailsFetchLimit + 300);
-      console.log(`⚠️ Below minimum (${leads.length} < ${MIN_LEADS_TARGET}). Expanding details fetch: ${detailsFetchLimit} -> ${nextLimit}`);
-      if (nextLimit === detailsFetchLimit) break;
-      detailsFetchLimit = nextLimit;
-    }
-
+    // Compute final leads after ALL strict filters
+    let leads = processResultsWithCategories(activePlaces, segment, cleanRegion, MAX_TOTAL_LEADS, bizType, digPresence, digActivity);
     console.log(`✅ FINAL: ${leads.length} leads ready (target: ${MIN_LEADS_TARGET}-${MAX_TOTAL_LEADS})`);
     
     // Apply WhatsApp filter if requested

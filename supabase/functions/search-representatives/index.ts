@@ -5,6 +5,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const RAPIDAPI_HOST = "local-business-data.p.rapidapi.com";
+
 interface SearchConfig {
   city?: string;
   state: string;
@@ -20,10 +22,6 @@ interface Representative {
   website?: string;
   rating?: number;
 }
-
-// ============================================
-// STATE DATA
-// ============================================
 
 const stateNames: { [key: string]: string } = {
   'AC': 'Acre', 'AL': 'Alagoas', 'AP': 'Amapá', 'AM': 'Amazonas',
@@ -44,24 +42,18 @@ function validateBrazilianPhone(phone: string): { valid: boolean; normalized: st
   
   const digitsOnly = phone.replace(/\D/g, '');
   
-  // Format: 55 + DDD (2 digits) + number (8 or 9 digits)
   if (digitsOnly.startsWith('55') && (digitsOnly.length === 12 || digitsOnly.length === 13)) {
     const ddd = digitsOnly.substring(2, 4);
     const dddNum = parseInt(ddd, 10);
     if (dddNum < 11 || dddNum > 99) return { valid: false, normalized: '', isWhatsApp: false };
-    
-    // WhatsApp: 11 digits with '9' at position 3 (after DDD)
     const isMobile = digitsOnly.length === 13 && digitsOnly.charAt(4) === '9';
     return { valid: true, normalized: digitsOnly, isWhatsApp: isMobile };
   }
   
-  // Format: DDD (2 digits) + number (8 or 9 digits)
   if (digitsOnly.length === 10 || digitsOnly.length === 11) {
     const ddd = digitsOnly.substring(0, 2);
     const dddNum = parseInt(ddd, 10);
     if (dddNum < 11 || dddNum > 99) return { valid: false, normalized: '', isWhatsApp: false };
-    
-    // WhatsApp: 11 digits with '9' at position 3
     const isMobile = digitsOnly.length === 11 && digitsOnly.charAt(2) === '9';
     return { valid: true, normalized: `55${digitsOnly}`, isWhatsApp: isMobile };
   }
@@ -89,13 +81,11 @@ function formatPhoneDisplay(phone: string): string {
 // STRICT FILTERING - ONLY REPRESENTATION COMPANIES
 // ============================================
 
-// Terms that MUST appear in the name to be considered a representation company
 const REQUIRED_TERMS = [
   'representaç', 'representac', 'representante', 'representacao', 'representação',
   'rep comercial', 'rep. comercial'
 ];
 
-// Terms that EXCLUDE the result (distributors, stores, etc.)
 const EXCLUSION_TERMS = [
   'distribuidora', 'distribuidor', 'atacado', 'atacadista', 
   'loja', 'store', 'varejo', 'variedades',
@@ -122,10 +112,9 @@ const EXCLUSION_TERMS = [
   'escritório contábil', 'contabilidade', 'contador'
 ];
 
-function isRepresentationCompany(name: string, types: string[] = []): boolean {
+function isRepresentationCompany(name: string): boolean {
   const lowerName = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   
-  // Check for exclusion terms first
   for (const term of EXCLUSION_TERMS) {
     const normalizedTerm = term.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     if (lowerName.includes(normalizedTerm)) {
@@ -134,7 +123,6 @@ function isRepresentationCompany(name: string, types: string[] = []): boolean {
     }
   }
   
-  // Must contain at least one required term
   for (const term of REQUIRED_TERMS) {
     const normalizedTerm = term.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     if (lowerName.includes(normalizedTerm)) {
@@ -148,92 +136,40 @@ function isRepresentationCompany(name: string, types: string[] = []): boolean {
 }
 
 // ============================================
-// GOOGLE PLACES API
+// RAPIDAPI LOCAL BUSINESS DATA
 // ============================================
 
-interface PlaceResult {
-  id: string;
-  displayName?: { text: string };
-  formattedAddress?: string;
-  nationalPhoneNumber?: string;
-  internationalPhoneNumber?: string;
-  websiteUri?: string;
-  rating?: number;
-  types?: string[];
-  businessStatus?: string;
-  userRatingCount?: number;
-}
+async function searchRapidAPI(query: string, apiKey: string, limit: number = 20): Promise<any[]> {
+  const url = new URL('https://local-business-data.p.rapidapi.com/search');
+  url.searchParams.set('query', query);
+  url.searchParams.set('limit', String(limit));
+  url.searchParams.set('region', 'br');
+  url.searchParams.set('language', 'pt');
 
-async function searchPlaces(
-  query: string, 
-  location: string, 
-  apiKey: string,
-  pageToken?: string
-): Promise<{ places: PlaceResult[]; nextPageToken?: string }> {
-  const url = 'https://places.googleapis.com/v1/places:searchText';
-  
-  const body: any = {
-    textQuery: query,
-    locationBias: {
-      rectangle: {
-        low: { latitude: -33.75, longitude: -73.99 },
-        high: { latitude: 5.27, longitude: -34.79 }
-      }
-    },
-    languageCode: 'pt-BR',
-    maxResultCount: 20
-  };
-  
-  if (pageToken) {
-    body.pageToken = pageToken;
-  }
-  
   try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Goog-Api-Key': apiKey,
-        'X-Goog-FieldMask': 'places.id,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.internationalPhoneNumber,places.websiteUri,places.rating,places.types,places.businessStatus,places.userRatingCount,nextPageToken'
-      },
-      body: JSON.stringify(body)
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ Google Places API error: ${response.status} - ${errorText}`);
-      return { places: [] };
-    }
-    
-    const data = await response.json();
-    return {
-      places: data.places || [],
-      nextPageToken: data.nextPageToken
-    };
-  } catch (error) {
-    console.error('❌ Places search error:', error);
-    return { places: [] };
-  }
-}
-
-async function getPlaceDetails(placeId: string, apiKey: string): Promise<PlaceResult | null> {
-  const url = `https://places.googleapis.com/v1/places/${placeId}`;
-  
-  try {
-    const response = await fetch(url, {
+    const response = await fetch(url.toString(), {
       method: 'GET',
       headers: {
-        'X-Goog-Api-Key': apiKey,
-        'X-Goog-FieldMask': 'id,displayName,formattedAddress,nationalPhoneNumber,internationalPhoneNumber,websiteUri,rating,types,businessStatus,userRatingCount'
-      }
+        'x-rapidapi-key': apiKey,
+        'x-rapidapi-host': RAPIDAPI_HOST,
+      },
     });
-    
-    if (!response.ok) return null;
-    
-    return await response.json();
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`❌ RapidAPI error: ${response.status} - ${errorText}`);
+      return [];
+    }
+
+    const data = await response.json();
+    if (data.status === 'OK' && Array.isArray(data.data)) {
+      return data.data;
+    }
+    console.error('❌ RapidAPI unexpected response:', JSON.stringify(data).slice(0, 200));
+    return [];
   } catch (error) {
-    console.error('❌ Place details error:', error);
-    return null;
+    console.error('❌ RapidAPI search error:', error);
+    return [];
   }
 }
 
@@ -259,12 +195,12 @@ serve(async (req) => {
       );
     }
 
-    const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY_1");
-    if (!GOOGLE_API_KEY) {
-      throw new Error("GOOGLE_API_KEY_1 not configured");
+    const RAPIDAPI_KEY = Deno.env.get("RAPIDAPI_KEY");
+    if (!RAPIDAPI_KEY) {
+      throw new Error("RAPIDAPI_KEY not configured");
     }
 
-    // Fetch user-specific representatives limit from Supabase
+    // Fetch user-specific limit
     let MAX_RESULTS = 30;
     try {
       const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -287,7 +223,6 @@ serve(async (req) => {
     
     console.log(`📍 Searching representatives in: ${location} (limit: ${MAX_RESULTS})`);
 
-    // Search queries - focused on representation companies
     const searchQueries = [
       `representação comercial ${location}`,
       `representações comerciais ${location}`,
@@ -296,20 +231,18 @@ serve(async (req) => {
       `escritório de representação ${location}`,
     ];
 
-    const allPlaces: PlaceResult[] = [];
+    const allPlaces: any[] = [];
     const seenIds = new Set<string>();
 
     // Execute searches in parallel
-    const searchPromises = searchQueries.map(query => 
-      searchPlaces(query, location, GOOGLE_API_KEY)
-    );
-    
+    const searchPromises = searchQueries.map(query => searchRapidAPI(query, RAPIDAPI_KEY, 20));
     const results = await Promise.all(searchPromises);
     
-    for (const result of results) {
-      for (const place of result.places) {
-        if (!seenIds.has(place.id)) {
-          seenIds.add(place.id);
+    for (const resultList of results) {
+      for (const place of resultList) {
+        const id = place.business_id || place.place_id;
+        if (id && !seenIds.has(id)) {
+          seenIds.add(id);
           allPlaces.push(place);
         }
       }
@@ -319,48 +252,18 @@ serve(async (req) => {
 
     // Filter strictly to only active representation companies
     const validPlaces = allPlaces.filter(place => {
-      const name = place.displayName?.text || '';
-      
-      // Exclude closed/inactive businesses
-      const status = place.businessStatus;
-      if (status && status !== 'OPERATIONAL') {
-        console.log(`❌ Excluded "${name}" - business status: ${status}`);
-        return false;
-      }
-      
-      return isRepresentationCompany(name, place.types);
+      const name = place.name || '';
+      return isRepresentationCompany(name);
     });
 
     console.log(`✅ After strict filtering: ${validPlaces.length} representation companies`);
-
-    // Get phone details for places that don't have them
-    const placesNeedingDetails = validPlaces.filter(p => !p.nationalPhoneNumber && !p.internationalPhoneNumber);
-    
-    if (placesNeedingDetails.length > 0) {
-      console.log(`📞 Fetching details for ${Math.min(placesNeedingDetails.length, 30)} places`);
-      
-      const detailPromises = placesNeedingDetails.slice(0, 30).map(place => 
-        getPlaceDetails(place.id, GOOGLE_API_KEY)
-      );
-      
-      const details = await Promise.all(detailPromises);
-      
-      for (let i = 0; i < details.length; i++) {
-        if (details[i]) {
-          const placeIndex = validPlaces.findIndex(p => p.id === placesNeedingDetails[i].id);
-          if (placeIndex !== -1) {
-            validPlaces[placeIndex] = { ...validPlaces[placeIndex], ...details[i] };
-          }
-        }
-      }
-    }
 
     // Build final representatives list
     const representatives: Representative[] = [];
     const seenPhones = new Set<string>();
 
     for (const place of validPlaces) {
-      const phone = place.nationalPhoneNumber || place.internationalPhoneNumber || '';
+      const phone = place.phone_number || '';
       const phoneValidation = validateBrazilianPhone(phone);
       
       // Skip duplicates by phone
@@ -373,16 +276,15 @@ serve(async (req) => {
       }
 
       representatives.push({
-        id: place.id,
-        name: place.displayName?.text || 'Empresa de Representação',
+        id: place.business_id || place.place_id || `rep-${Date.now()}`,
+        name: place.name || 'Empresa de Representação',
         phone: phoneValidation.valid ? formatPhoneDisplay(phoneValidation.normalized) : undefined,
         whatsapp: phoneValidation.isWhatsApp ? phoneValidation.normalized : undefined,
-        address: place.formattedAddress || location,
-        website: place.websiteUri,
-        rating: place.rating
+        address: place.full_address || location,
+        website: place.website || undefined,
+        rating: place.rating || undefined
       });
 
-      // Apply dynamic limit (20 for city, 30 for state)
       if (representatives.length >= MAX_RESULTS) break;
     }
 

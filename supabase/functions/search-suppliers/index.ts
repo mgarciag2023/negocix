@@ -5,6 +5,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const RAPIDAPI_HOST = "local-business-data.p.rapidapi.com";
+
 // Validate Brazilian phone numbers
 function validatePhone(phone: string): { isValid: boolean; normalized: string } {
   if (!phone) return { isValid: false, normalized: "" };
@@ -19,14 +21,12 @@ function validatePhone(phone: string): { isValid: boolean; normalized: string } 
   return { isValid: false, normalized: "" };
 }
 
-// Normalize string for comparison (remove accents)
 function normalizeStr(str: string): string {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 }
 
 // ====== SUPPLIER VALIDATION ======
 
-// Terms that indicate a real supplier/distributor/wholesale business
 const SUPPLIER_INDICATORS = [
   'distribuidora', 'distribuidor', 'atacado', 'atacadista', 'atacadão',
   'fornecedor', 'fornecedora', 'fabrica', 'fábrica', 'fabricante',
@@ -41,7 +41,6 @@ const SUPPLIER_INDICATORS = [
   'ltda', 'eireli', 'me', 's/a', 's.a', 'epp', 'sa',
 ];
 
-// Terms that strongly indicate NOT a supplier (retail/services/food service)
 const NON_SUPPLIER_EXCLUDES = [
   'restaurante', 'lanchonete', 'bar ', 'barzinho', 'boteco',
   'padaria', 'confeitaria', 'pizzaria', 'hamburgueria', 'sorveteria',
@@ -66,84 +65,42 @@ const NON_SUPPLIER_EXCLUDES = [
   'lotérica', 'loterica',
 ];
 
-// Google Places categories that are NOT suppliers
-const NON_SUPPLIER_CATEGORIES = [
-  'restaurant', 'food', 'cafe', 'bar', 'bakery', 'pizza',
-  'gym', 'fitness', 'beauty', 'hair', 'spa',
-  'doctor', 'dentist', 'hospital', 'pharmacy', 'health',
-  'school', 'university', 'church',
-  'hotel', 'motel', 'lodging',
-  'gas_station', 'car_repair', 'car_wash',
-  'pet_store', 'veterinary',
-  'real_estate', 'insurance',
-  'laundry', 'funeral',
-  'supermarket', 'grocery', 'convenience_store',
-  'butcher',
-];
-
 function isLikelySupplier(place: any, searchedProducts: string[]): boolean {
-  const title = normalizeStr(place.title || "");
-  const category = normalizeStr(place.categoryName || "");
-  const allCategories = (place.categories || []).map((c: string) => normalizeStr(c));
+  const title = normalizeStr(place.name || "");
+  const category = normalizeStr(place.type || "");
+  const allCategories = (place.subtypes || []).map((c: string) => normalizeStr(c));
   const fullText = `${title} ${category} ${allCategories.join(" ")}`;
 
-  // 1. Check for hard excludes in the title
   for (const exclude of NON_SUPPLIER_EXCLUDES) {
     if (title.includes(normalizeStr(exclude))) {
-      // Exception: if title also has a supplier indicator, allow it
-      // e.g. "Distribuidora e Restaurante" - still a distributor
       const hasSupplierWord = SUPPLIER_INDICATORS.some(ind => title.includes(normalizeStr(ind)));
       if (!hasSupplierWord) {
-        console.log(`❌ Excluded (non-supplier name): "${place.title}"`);
+        console.log(`❌ Excluded (non-supplier name): "${place.name}"`);
         return false;
       }
     }
   }
 
-  // 2. Check for non-supplier Google categories
-  for (const cat of NON_SUPPLIER_CATEGORIES) {
-    if (allCategories.some((c: string) => c.includes(cat)) || category.includes(cat)) {
-      // Exception: if title clearly has supplier indicators
-      const hasSupplierWord = SUPPLIER_INDICATORS.some(ind => title.includes(normalizeStr(ind)));
-      if (!hasSupplierWord) {
-        console.log(`❌ Excluded (non-supplier category "${category}"): "${place.title}"`);
-        return false;
-      }
-    }
-  }
-
-  // 3. Positive check: does the title or category have supplier indicators?
   const hasSupplierIndicator = SUPPLIER_INDICATORS.some(ind => fullText.includes(normalizeStr(ind)));
-  
-  // 4. Check if the title/category matches the searched product context
-  const productContext = searchedProducts.map(p => normalizeStr(p)).join(" ");
-  const hasProductMatch = productContext.split(" ").some(word => 
-    word.length > 3 && fullText.includes(word)
-  );
+  if (hasSupplierIndicator) return true;
 
-  // 5. Scoring: supplier indicators are strong signals
-  if (hasSupplierIndicator) {
-    return true;
-  }
-
-  // 6. If no supplier indicator, check if category from Google suggests wholesale/distribution
   const wholesaleCategories = ['wholesale', 'distributor', 'warehouse', 'supplier', 'factory',
     'atacado', 'distribuidora', 'deposito', 'armazem', 'fabrica', 'industria'];
   const hasWholesaleCategory = allCategories.some((c: string) => 
     wholesaleCategories.some(wc => c.includes(wc))
   );
-  if (hasWholesaleCategory) {
+  if (hasWholesaleCategory) return true;
+
+  const productContext = searchedProducts.map(p => normalizeStr(p)).join(" ");
+  const hasProductMatch = productContext.split(" ").some(word => 
+    word.length > 3 && fullText.includes(word)
+  );
+  if (hasProductMatch && place.website && (place.review_count || 0) >= 3) {
+    console.log(`⚠️ Allowed with caution (product match + website + reviews): "${place.name}"`);
     return true;
   }
 
-  // 7. If we have a product match but no supplier indicator, 
-  //    only allow if it has a website (suggests a real business) AND reviews
-  if (hasProductMatch && place.website && (place.totalScore || 0) > 0 && (place.reviewsCount || 0) >= 3) {
-    console.log(`⚠️ Allowed with caution (product match + website + reviews): "${place.title}"`);
-    return true;
-  }
-
-  console.log(`❌ Excluded (no supplier indicators): "${place.title}" | cat: "${category}"`);
+  console.log(`❌ Excluded (no supplier indicators): "${place.name}" | cat: "${category}"`);
   return false;
 }
 
@@ -206,6 +163,41 @@ const productSearchTerms: { [key: string]: string[] } = {
   "Utilidades Domésticas": ["distribuidora utilidades domésticas", "atacado utilidades"],
 };
 
+// ====== RAPIDAPI SEARCH ======
+
+async function searchRapidAPI(query: string, apiKey: string, limit: number = 20): Promise<any[]> {
+  const url = new URL('https://local-business-data.p.rapidapi.com/search');
+  url.searchParams.set('query', query);
+  url.searchParams.set('limit', String(limit));
+  url.searchParams.set('region', 'br');
+  url.searchParams.set('language', 'pt');
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        'x-rapidapi-key': apiKey,
+        'x-rapidapi-host': RAPIDAPI_HOST,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`❌ RapidAPI error: ${response.status} - ${errorText}`);
+      return [];
+    }
+
+    const data = await response.json();
+    if (data.status === 'OK' && Array.isArray(data.data)) {
+      return data.data;
+    }
+    return [];
+  } catch (error) {
+    console.error('❌ RapidAPI search error:', error);
+    return [];
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -215,17 +207,16 @@ serve(async (req) => {
     const { products, location, state } = await req.json();
     console.log("🔍 Searching suppliers for:", { products, location, state });
 
-    const APIFY_API_KEY = Deno.env.get("APIFY_API_KEY");
-    if (!APIFY_API_KEY) {
-      throw new Error("APIFY_API_KEY is not configured");
+    const RAPIDAPI_KEY = Deno.env.get("RAPIDAPI_KEY");
+    if (!RAPIDAPI_KEY) {
+      throw new Error("RAPIDAPI_KEY is not configured");
     }
 
-    // Build search queries - always prefix with "distribuidora" or "atacado" for quality
+    // Build search queries
     const searchQueries: string[] = [];
     for (const product of products) {
       const terms = productSearchTerms[product];
       if (terms && terms.length > 0) {
-        // Use first term (always a distribuidora/atacado term)
         searchQueries.push(`${terms[0]} ${location} ${state}`);
       } else {
         searchQueries.push(`distribuidora ${product} ${location} ${state}`);
@@ -238,80 +229,59 @@ serve(async (req) => {
     const MAX_TOTAL_SUPPLIERS = 30;
     const placesPerSearch = Math.max(15, Math.floor(50 / limitedQueries.length));
 
-    const apifyRequestBody = {
-      searchStringsArray: limitedQueries,
-      maxCrawledPlacesPerSearch: placesPerSearch,
-      language: "pt-BR",
-      deeperCityScrape: true,
-      exactMatch: false,
-      scrapeReviewsNumber: 0,
-      skipClosedPlaces: true,
-      maxAutomaticZoomOut: 5,
-      includeSearchResultsNearby: true,
-    };
+    // Execute searches in parallel via RapidAPI
+    const searchPromises = limitedQueries.map(query => searchRapidAPI(query, RAPIDAPI_KEY, placesPerSearch));
+    const results = await Promise.all(searchPromises);
 
-    console.log("📡 Calling Apify API...");
-
-    const apifyResponse = await fetch(
-      `https://api.apify.com/v2/acts/compass~crawler-google-places/run-sync-get-dataset-items?token=${APIFY_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(apifyRequestBody),
+    let allPlaces: any[] = [];
+    const seenIds = new Set<string>();
+    for (const resultList of results) {
+      for (const place of resultList) {
+        const id = place.business_id || place.place_id;
+        if (id && !seenIds.has(id)) {
+          seenIds.add(id);
+          allPlaces.push(place);
+        }
       }
-    );
-
-    if (!apifyResponse.ok) {
-      const errorText = await apifyResponse.text();
-      console.error(`❌ Apify API error: ${apifyResponse.status}`, errorText);
-      return new Response(
-        JSON.stringify({ error: "Erro ao buscar fornecedores. Tente novamente." }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
     }
 
-    let apifyResults = await apifyResponse.json();
-    console.log(`📊 Apify returned ${apifyResults.length} raw places`);
+    console.log(`📊 RapidAPI returned ${allPlaces.length} unique places`);
 
     const locationLower = normalizeStr(location);
     const stateLower = normalizeStr(state);
 
-    // STEP 1: Basic filters (phone, location, not closed)
-    let filtered = apifyResults.filter((place: any) => {
-      const address = normalizeStr(place.address || "");
-
-      if (!place.phone || place.phone.trim() === "") return false;
+    // STEP 1: Basic filters (phone, location)
+    let filtered = allPlaces.filter((place: any) => {
+      const address = normalizeStr(place.full_address || "");
+      if (!place.phone_number || place.phone_number.trim() === "") return false;
       if (!address.includes(locationLower) || !address.includes(stateLower)) return false;
-      if (place.permanentlyClosed || place.temporarilyClosed || place.closed) return false;
-
       return true;
     });
 
     console.log(`📍 After location/phone filter: ${filtered.length} places`);
 
-    // STEP 2: Supplier quality filter - THE KEY IMPROVEMENT
+    // STEP 2: Supplier quality filter
     filtered = filtered.filter((place: any) => isLikelySupplier(place, products));
 
     console.log(`✅ After supplier quality filter: ${filtered.length} suppliers`);
 
-    // Limit results
     if (filtered.length > MAX_TOTAL_SUPPLIERS) {
       filtered = filtered.slice(0, MAX_TOTAL_SUPPLIERS);
     }
 
     // Map to supplier format
     const suppliers = filtered.map((place: any, index: number) => {
-      const phoneValidation = validatePhone(place.phone);
-      const normalizedPhone = place.phone.replace(/\D/g, "");
+      const phoneValidation = validatePhone(place.phone_number || "");
+      const normalizedPhone = (place.phone_number || "").replace(/\D/g, "");
       const hasWhatsApp = phoneValidation.isValid && normalizedPhone.length === 11 && normalizedPhone.charAt(2) === '9';
 
       return {
         id: `supplier-${index}-${Date.now()}`,
-        name: place.title || "Fornecedor",
-        address: place.address || "",
-        phone: place.phone || "",
+        name: place.name || "Fornecedor",
+        address: place.full_address || "",
+        phone: place.phone_number || "",
         website: place.website || null,
-        category: place.categoryName || products[0] || "Fornecedor",
+        category: place.type || products[0] || "Fornecedor",
         hasWhatsApp,
       };
     });
