@@ -8,10 +8,7 @@ const corsHeaders = {
 // Validate Brazilian phone numbers
 function validatePhone(phone: string): { isValid: boolean; normalized: string } {
   if (!phone) return { isValid: false, normalized: "" };
-  
   const cleaned = phone.replace(/\D/g, "");
-  
-  // Brazilian phones: 10-11 digits (with area code) or 12-13 with country code
   if (cleaned.length >= 10 && cleaned.length <= 13) {
     let normalized = cleaned;
     if (cleaned.startsWith("55") && cleaned.length >= 12) {
@@ -19,9 +16,195 @@ function validatePhone(phone: string): { isValid: boolean; normalized: string } 
     }
     return { isValid: true, normalized: `+55${normalized}` };
   }
-  
   return { isValid: false, normalized: "" };
 }
+
+// Normalize string for comparison (remove accents)
+function normalizeStr(str: string): string {
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+// ====== SUPPLIER VALIDATION ======
+
+// Terms that indicate a real supplier/distributor/wholesale business
+const SUPPLIER_INDICATORS = [
+  'distribuidora', 'distribuidor', 'atacado', 'atacadista', 'atacadão',
+  'fornecedor', 'fornecedora', 'fabrica', 'fábrica', 'fabricante',
+  'industria', 'indústria', 'industrial',
+  'deposito', 'depósito', 'armazem', 'armazém',
+  'importadora', 'importador', 'exportadora',
+  'representante', 'representação', 'representacoes',
+  'cooperativa', 'coop',
+  'comercio atacadista', 'comércio atacadista',
+  'central de distribuição', 'centro de distribuição',
+  'supply', 'wholesale', 'trading',
+  'ltda', 'eireli', 'me', 's/a', 's.a', 'epp', 'sa',
+];
+
+// Terms that strongly indicate NOT a supplier (retail/services/food service)
+const NON_SUPPLIER_EXCLUDES = [
+  'restaurante', 'lanchonete', 'bar ', 'barzinho', 'boteco',
+  'padaria', 'confeitaria', 'pizzaria', 'hamburgueria', 'sorveteria',
+  'cafeteria', 'café', 'bistrô', 'bistro', 'cantina',
+  'churrascaria', 'rodízio', 'rodizio', 'food truck',
+  'salão', 'salao', 'barbearia', 'estética', 'estetica',
+  'academia', 'crossfit', 'pilates',
+  'consultório', 'consultorio', 'clínica', 'clinica', 'dentista',
+  'hospital', 'laboratório', 'laboratorio', 'farmácia', 'farmacia',
+  'escola', 'colégio', 'colegio', 'universidade', 'faculdade',
+  'igreja', 'templo', 'paróquia', 'paroquia',
+  'posto de gasolina', 'posto de combustível',
+  'oficina mecânica', 'oficina mecanica', 'borracharia',
+  'pet shop', 'petshop', 'banho e tosa',
+  'imobiliária', 'imobiliaria',
+  'hotel', 'pousada', 'hostel', 'motel',
+  'supermercado', 'minimercado', 'mercearia', 'mercadinho', 'mercado municipal',
+  'açougue', 'acougue',
+  'lavanderia', 'lavajato',
+  'funerária', 'funeraria',
+  'cartório', 'cartorio',
+  'lotérica', 'loterica',
+];
+
+// Google Places categories that are NOT suppliers
+const NON_SUPPLIER_CATEGORIES = [
+  'restaurant', 'food', 'cafe', 'bar', 'bakery', 'pizza',
+  'gym', 'fitness', 'beauty', 'hair', 'spa',
+  'doctor', 'dentist', 'hospital', 'pharmacy', 'health',
+  'school', 'university', 'church',
+  'hotel', 'motel', 'lodging',
+  'gas_station', 'car_repair', 'car_wash',
+  'pet_store', 'veterinary',
+  'real_estate', 'insurance',
+  'laundry', 'funeral',
+  'supermarket', 'grocery', 'convenience_store',
+  'butcher',
+];
+
+function isLikelySupplier(place: any, searchedProducts: string[]): boolean {
+  const title = normalizeStr(place.title || "");
+  const category = normalizeStr(place.categoryName || "");
+  const allCategories = (place.categories || []).map((c: string) => normalizeStr(c));
+  const fullText = `${title} ${category} ${allCategories.join(" ")}`;
+
+  // 1. Check for hard excludes in the title
+  for (const exclude of NON_SUPPLIER_EXCLUDES) {
+    if (title.includes(normalizeStr(exclude))) {
+      // Exception: if title also has a supplier indicator, allow it
+      // e.g. "Distribuidora e Restaurante" - still a distributor
+      const hasSupplierWord = SUPPLIER_INDICATORS.some(ind => title.includes(normalizeStr(ind)));
+      if (!hasSupplierWord) {
+        console.log(`❌ Excluded (non-supplier name): "${place.title}"`);
+        return false;
+      }
+    }
+  }
+
+  // 2. Check for non-supplier Google categories
+  for (const cat of NON_SUPPLIER_CATEGORIES) {
+    if (allCategories.some((c: string) => c.includes(cat)) || category.includes(cat)) {
+      // Exception: if title clearly has supplier indicators
+      const hasSupplierWord = SUPPLIER_INDICATORS.some(ind => title.includes(normalizeStr(ind)));
+      if (!hasSupplierWord) {
+        console.log(`❌ Excluded (non-supplier category "${category}"): "${place.title}"`);
+        return false;
+      }
+    }
+  }
+
+  // 3. Positive check: does the title or category have supplier indicators?
+  const hasSupplierIndicator = SUPPLIER_INDICATORS.some(ind => fullText.includes(normalizeStr(ind)));
+  
+  // 4. Check if the title/category matches the searched product context
+  const productContext = searchedProducts.map(p => normalizeStr(p)).join(" ");
+  const hasProductMatch = productContext.split(" ").some(word => 
+    word.length > 3 && fullText.includes(word)
+  );
+
+  // 5. Scoring: supplier indicators are strong signals
+  if (hasSupplierIndicator) {
+    return true;
+  }
+
+  // 6. If no supplier indicator, check if category from Google suggests wholesale/distribution
+  const wholesaleCategories = ['wholesale', 'distributor', 'warehouse', 'supplier', 'factory',
+    'atacado', 'distribuidora', 'deposito', 'armazem', 'fabrica', 'industria'];
+  const hasWholesaleCategory = allCategories.some((c: string) => 
+    wholesaleCategories.some(wc => c.includes(wc))
+  );
+  if (hasWholesaleCategory) {
+    return true;
+  }
+
+  // 7. If we have a product match but no supplier indicator, 
+  //    only allow if it has a website (suggests a real business) AND reviews
+  if (hasProductMatch && place.website && (place.totalScore || 0) > 0 && (place.reviewsCount || 0) >= 3) {
+    console.log(`⚠️ Allowed with caution (product match + website + reviews): "${place.title}"`);
+    return true;
+  }
+
+  console.log(`❌ Excluded (no supplier indicators): "${place.title}" | cat: "${category}"`);
+  return false;
+}
+
+// ====== SEARCH TERM MAPPING ======
+const productSearchTerms: { [key: string]: string[] } = {
+  "Alimentos em Geral": ["distribuidora de alimentos", "atacado alimentos"],
+  "Bebidas": ["distribuidora de bebidas", "atacado bebidas"],
+  "Laticínios": ["distribuidora laticínios", "atacado laticínios"],
+  "Carnes e Frigoríficos": ["frigorífico", "distribuidora de carnes", "atacado carnes"],
+  "Frutas e Verduras": ["distribuidora hortifruti", "atacado frutas verduras"],
+  "Cereais e Grãos": ["distribuidora de grãos", "atacado cereais"],
+  "Congelados": ["distribuidora congelados", "atacado congelados"],
+  "Embalagens para Alimentos": ["distribuidora embalagens alimentos", "fábrica embalagens alimentos"],
+  "Materiais de Construção": ["distribuidora materiais construção", "atacado construção"],
+  "Cimento e Argamassa": ["distribuidora cimento", "atacado cimento argamassa"],
+  "Tintas e Vernizes": ["distribuidora tintas", "atacado tintas vernizes"],
+  "Ferragens": ["distribuidora ferragens", "atacado ferragens"],
+  "Madeiras": ["madeireira atacado", "distribuidora madeiras"],
+  "Tubos e Conexões": ["distribuidora tubos conexões", "atacado hidráulico"],
+  "Pisos e Revestimentos": ["distribuidora pisos revestimentos", "atacado cerâmica porcelanato"],
+  "Materiais Elétricos": ["distribuidora material elétrico", "atacado elétrico"],
+  "Materiais Hidráulicos": ["distribuidora material hidráulico", "atacado hidráulico"],
+  "Tecidos": ["distribuidora tecidos", "atacado tecidos"],
+  "Aviamentos": ["distribuidora aviamentos", "atacado aviamentos"],
+  "Fios e Linhas": ["distribuidora fios linhas", "atacado têxtil"],
+  "Malhas": ["distribuidora malhas", "atacado malhas"],
+  "Uniformes": ["fábrica uniformes", "confecção uniformes atacado"],
+  "Roupas em Geral": ["atacado roupas", "distribuidora confecções"],
+  "Máquinas e Equipamentos": ["distribuidora máquinas", "fornecedor equipamentos industriais"],
+  "Ferramentas Industriais": ["distribuidora ferramentas industriais", "atacado ferramentas"],
+  "Peças e Componentes": ["distribuidora peças industriais", "fornecedor componentes"],
+  "Produtos Químicos": ["distribuidora produtos químicos", "fornecedor químicos"],
+  "Lubrificantes": ["distribuidora lubrificantes", "atacado lubrificantes"],
+  "EPIs": ["distribuidora EPIs", "atacado equipamentos segurança"],
+  "Insumos Agrícolas": ["distribuidora insumos agrícolas", "atacado agrícola"],
+  "Fertilizantes": ["distribuidora fertilizantes", "atacado fertilizantes"],
+  "Sementes": ["distribuidora sementes", "atacado sementes"],
+  "Rações Animais": ["distribuidora rações", "atacado ração animal"],
+  "Medicamentos Veterinários": ["distribuidora veterinária", "atacado veterinário"],
+  "Embalagens Plásticas": ["fábrica embalagens plásticas", "distribuidora plásticos"],
+  "Embalagens de Papelão": ["fábrica papelão", "distribuidora caixas papelão"],
+  "Sacolas e Sacos": ["fábrica sacolas", "distribuidora sacolas embalagens"],
+  "Fitas e Lacres": ["distribuidora fitas adesivas", "fornecedor lacres embalagens"],
+  "Papelaria": ["distribuidora papelaria", "atacado papelaria"],
+  "Material de Escritório": ["distribuidora material escritório", "atacado escritório"],
+  "Informática e Tecnologia": ["distribuidora informática", "atacado tecnologia"],
+  "Produtos de Limpeza": ["distribuidora produtos limpeza", "atacado limpeza"],
+  "Descartáveis": ["distribuidora descartáveis", "atacado descartáveis"],
+  "Produtos de Higiene": ["distribuidora higiene", "atacado higiene"],
+  "Peças Automotivas": ["distribuidora autopeças", "atacado peças automotivas"],
+  "Pneus": ["distribuidora pneus", "atacado pneus"],
+  "Óleos e Lubrificantes": ["distribuidora óleos lubrificantes", "atacado lubrificantes automotivos"],
+  "Acessórios Automotivos": ["distribuidora acessórios automotivos", "atacado automotivo"],
+  "Móveis": ["fábrica móveis", "distribuidora móveis atacado"],
+  "Eletrodomésticos": ["distribuidora eletrodomésticos", "atacado eletro"],
+  "Brinquedos": ["distribuidora brinquedos", "atacado brinquedos"],
+  "Cosméticos": ["distribuidora cosméticos", "atacado beleza cosméticos"],
+  "Produtos Farmacêuticos": ["distribuidora farmacêutica", "atacado medicamentos"],
+  "Bijuterias e Acessórios": ["distribuidora bijuterias", "atacado acessórios bijuterias"],
+  "Utilidades Domésticas": ["distribuidora utilidades domésticas", "atacado utilidades"],
+};
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -37,84 +220,23 @@ serve(async (req) => {
       throw new Error("APIFY_API_KEY is not configured");
     }
 
-    // Map product categories to search terms
-    const productSearchTerms: { [key: string]: string[] } = {
-      "Alimentos em Geral": ["distribuidora de alimentos", "atacado alimentos", "fornecedor alimentos"],
-      "Bebidas": ["distribuidora de bebidas", "atacado bebidas", "fornecedor bebidas"],
-      "Laticínios": ["distribuidora laticínios", "fornecedor laticínios", "atacado laticínios"],
-      "Carnes e Frigoríficos": ["frigorífico", "distribuidora de carnes", "atacado carnes"],
-      "Frutas e Verduras": ["distribuidora hortifruti", "atacado frutas", "fornecedor verduras"],
-      "Cereais e Grãos": ["distribuidora de grãos", "atacado cereais", "fornecedor grãos"],
-      "Congelados": ["distribuidora congelados", "atacado congelados", "fornecedor congelados"],
-      "Embalagens para Alimentos": ["embalagens alimentos", "fornecedor embalagens", "distribuidora embalagens"],
-      "Materiais de Construção": ["distribuidora materiais construção", "atacado construção", "fornecedor construção"],
-      "Cimento e Argamassa": ["distribuidora cimento", "fornecedor argamassa", "atacado cimento"],
-      "Tintas e Vernizes": ["distribuidora tintas", "fornecedor tintas", "atacado tintas"],
-      "Ferragens": ["distribuidora ferragens", "fornecedor ferragens", "atacado ferragens"],
-      "Madeiras": ["madeireira", "distribuidora madeiras", "fornecedor madeiras"],
-      "Tubos e Conexões": ["distribuidora tubos", "fornecedor conexões", "atacado hidráulico"],
-      "Pisos e Revestimentos": ["distribuidora pisos", "fornecedor revestimentos", "atacado cerâmica"],
-      "Materiais Elétricos": ["distribuidora elétrica", "fornecedor material elétrico", "atacado elétrico"],
-      "Materiais Hidráulicos": ["distribuidora hidráulica", "fornecedor hidráulico", "atacado hidráulico"],
-      "Tecidos": ["distribuidora tecidos", "atacado tecidos", "fornecedor tecidos"],
-      "Aviamentos": ["distribuidora aviamentos", "fornecedor aviamentos", "atacado aviamentos"],
-      "Fios e Linhas": ["distribuidora fios", "fornecedor linhas", "atacado têxtil"],
-      "Malhas": ["distribuidora malhas", "fornecedor malhas", "atacado malhas"],
-      "Uniformes": ["fábrica uniformes", "fornecedor uniformes", "confecção uniformes"],
-      "Roupas em Geral": ["atacado roupas", "distribuidora confecções", "fornecedor roupas"],
-      "Máquinas e Equipamentos": ["distribuidora máquinas", "fornecedor equipamentos", "atacado industrial"],
-      "Ferramentas Industriais": ["distribuidora ferramentas", "fornecedor ferramentas industriais"],
-      "Peças e Componentes": ["distribuidora peças", "fornecedor componentes", "atacado peças"],
-      "Produtos Químicos": ["distribuidora química", "fornecedor produtos químicos"],
-      "Lubrificantes": ["distribuidora lubrificantes", "fornecedor lubrificantes", "atacado lubrificantes"],
-      "EPIs": ["distribuidora EPIs", "fornecedor EPIs", "atacado EPIs", "equipamentos segurança"],
-      "Insumos Agrícolas": ["distribuidora agrícola", "fornecedor insumos agrícolas", "atacado agrícola"],
-      "Fertilizantes": ["distribuidora fertilizantes", "fornecedor fertilizantes"],
-      "Sementes": ["distribuidora sementes", "fornecedor sementes", "atacado sementes"],
-      "Rações Animais": ["distribuidora rações", "fornecedor ração animal", "atacado pet"],
-      "Medicamentos Veterinários": ["distribuidora veterinária", "fornecedor veterinário"],
-      "Embalagens Plásticas": ["fábrica embalagens plásticas", "distribuidora plásticos"],
-      "Embalagens de Papelão": ["fábrica papelão", "distribuidora papelão", "fornecedor caixas"],
-      "Sacolas e Sacos": ["fábrica sacolas", "distribuidora sacolas", "fornecedor embalagens"],
-      "Fitas e Lacres": ["distribuidora fitas adesivas", "fornecedor lacres"],
-      "Papelaria": ["distribuidora papelaria", "atacado papelaria", "fornecedor papelaria"],
-      "Material de Escritório": ["distribuidora escritório", "fornecedor material escritório"],
-      "Informática e Tecnologia": ["distribuidora informática", "atacado tecnologia", "fornecedor TI"],
-      "Produtos de Limpeza": ["distribuidora limpeza", "atacado limpeza", "fornecedor produtos limpeza"],
-      "Descartáveis": ["distribuidora descartáveis", "atacado descartáveis", "fornecedor descartáveis"],
-      "Produtos de Higiene": ["distribuidora higiene", "atacado higiene", "fornecedor higiene"],
-      "Peças Automotivas": ["distribuidora autopeças", "atacado peças automotivas", "fornecedor autopeças"],
-      "Pneus": ["distribuidora pneus", "atacado pneus", "fornecedor pneus"],
-      "Óleos e Lubrificantes": ["distribuidora óleos", "fornecedor lubrificantes automotivos"],
-      "Acessórios Automotivos": ["distribuidora acessórios auto", "atacado automotivo"],
-      "Móveis": ["fábrica móveis", "distribuidora móveis", "atacado móveis"],
-      "Eletrodomésticos": ["distribuidora eletrodomésticos", "atacado eletro", "fornecedor eletro"],
-      "Brinquedos": ["distribuidora brinquedos", "atacado brinquedos", "fornecedor brinquedos"],
-      "Cosméticos": ["distribuidora cosméticos", "atacado beleza", "fornecedor cosméticos"],
-      "Produtos Farmacêuticos": ["distribuidora farmacêutica", "fornecedor medicamentos"],
-      "Bijuterias e Acessórios": ["distribuidora bijuterias", "atacado acessórios", "fornecedor bijuterias"],
-      "Utilidades Domésticas": ["distribuidora utilidades", "atacado utilidades domésticas"],
-    };
-
-    // Build search queries from selected products
+    // Build search queries - always prefix with "distribuidora" or "atacado" for quality
     const searchQueries: string[] = [];
     for (const product of products) {
       const terms = productSearchTerms[product];
       if (terms && terms.length > 0) {
-        // Use first term for each product to avoid too many queries
+        // Use first term (always a distribuidora/atacado term)
         searchQueries.push(`${terms[0]} ${location} ${state}`);
       } else {
-        // Fallback for unknown products
-        searchQueries.push(`fornecedor ${product} ${location} ${state}`);
+        searchQueries.push(`distribuidora ${product} ${location} ${state}`);
       }
     }
 
-    // Limit search queries to control API costs
     const limitedQueries = searchQueries.slice(0, 5);
     console.log(`📋 Search queries (${limitedQueries.length}):`, limitedQueries);
 
     const MAX_TOTAL_SUPPLIERS = 30;
-    const placesPerSearch = Math.max(10, Math.floor(MAX_TOTAL_SUPPLIERS / limitedQueries.length));
+    const placesPerSearch = Math.max(15, Math.floor(50 / limitedQueries.length));
 
     const apifyRequestBody = {
       searchStringsArray: limitedQueries,
@@ -149,48 +271,39 @@ serve(async (req) => {
     }
 
     let apifyResults = await apifyResponse.json();
-    console.log(`📊 Apify returned ${apifyResults.length} places`);
+    console.log(`📊 Apify returned ${apifyResults.length} raw places`);
 
-    // Filter results
-    const normalizeString = (str: string) =>
-      str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const locationLower = normalizeString(location.toLowerCase());
-    const stateLower = normalizeString(state.toLowerCase());
+    const locationLower = normalizeStr(location);
+    const stateLower = normalizeStr(state);
 
-    apifyResults = apifyResults.filter((place: any) => {
-      const address = normalizeString((place.address || "").toLowerCase());
+    // STEP 1: Basic filters (phone, location, not closed)
+    let filtered = apifyResults.filter((place: any) => {
+      const address = normalizeStr(place.address || "");
 
-      // Must have phone
-      if (!place.phone || place.phone.trim() === "") {
-        return false;
-      }
-
-      // Must match location
-      const hasCity = address.includes(locationLower);
-      const hasState = address.includes(stateLower);
-      if (!hasCity || !hasState) {
-        return false;
-      }
-
-      // Must not be closed
-      if (place.permanentlyClosed || place.temporarilyClosed || place.closed) {
-        return false;
-      }
+      if (!place.phone || place.phone.trim() === "") return false;
+      if (!address.includes(locationLower) || !address.includes(stateLower)) return false;
+      if (place.permanentlyClosed || place.temporarilyClosed || place.closed) return false;
 
       return true;
     });
 
-    console.log(`✅ After filtering: ${apifyResults.length} suppliers`);
+    console.log(`📍 After location/phone filter: ${filtered.length} places`);
+
+    // STEP 2: Supplier quality filter - THE KEY IMPROVEMENT
+    filtered = filtered.filter((place: any) => isLikelySupplier(place, products));
+
+    console.log(`✅ After supplier quality filter: ${filtered.length} suppliers`);
 
     // Limit results
-    if (apifyResults.length > MAX_TOTAL_SUPPLIERS) {
-      apifyResults = apifyResults.slice(0, MAX_TOTAL_SUPPLIERS);
+    if (filtered.length > MAX_TOTAL_SUPPLIERS) {
+      filtered = filtered.slice(0, MAX_TOTAL_SUPPLIERS);
     }
 
     // Map to supplier format
-    const suppliers = apifyResults.map((place: any, index: number) => {
+    const suppliers = filtered.map((place: any, index: number) => {
       const phoneValidation = validatePhone(place.phone);
-      const hasWhatsApp = phoneValidation.isValid && place.phone?.includes("9");
+      const normalizedPhone = place.phone.replace(/\D/g, "");
+      const hasWhatsApp = phoneValidation.isValid && normalizedPhone.length === 11 && normalizedPhone.charAt(2) === '9';
 
       return {
         id: `supplier-${index}-${Date.now()}`,
