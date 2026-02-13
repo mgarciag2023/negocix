@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const RAPIDAPI_HOST = "local-business-data.p.rapidapi.com";
+// Using Google Places API (New)
 
 interface SearchConfig {
   city?: string;
@@ -136,39 +136,51 @@ function isRepresentationCompany(name: string): boolean {
 }
 
 // ============================================
-// RAPIDAPI LOCAL BUSINESS DATA
+// GOOGLE PLACES API SEARCH
 // ============================================
 
-async function searchRapidAPI(query: string, apiKey: string, limit: number = 20): Promise<any[]> {
-  const url = new URL('https://local-business-data.p.rapidapi.com/search');
-  url.searchParams.set('query', query);
-  url.searchParams.set('limit', String(limit));
-  url.searchParams.set('region', 'br');
-  url.searchParams.set('language', 'pt');
+async function searchGooglePlaces(query: string, apiKey: string, limit: number = 20): Promise<any[]> {
+  const fieldMask = 'places.id,places.displayName,places.formattedAddress,places.internationalPhoneNumber,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.types,places.businessStatus';
 
   try {
-    const response = await fetch(url.toString(), {
-      method: 'GET',
+    const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
+      method: 'POST',
       headers: {
-        'x-rapidapi-key': apiKey,
-        'x-rapidapi-host': RAPIDAPI_HOST,
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': fieldMask,
       },
+      body: JSON.stringify({
+        textQuery: query,
+        languageCode: 'pt',
+        regionCode: 'BR',
+        maxResultCount: Math.min(limit, 20),
+      }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`❌ RapidAPI error: ${response.status} - ${errorText}`);
+      console.error(`❌ Google Places error: ${response.status} - ${errorText}`);
       return [];
     }
 
     const data = await response.json();
-    if (data.status === 'OK' && Array.isArray(data.data)) {
-      return data.data;
-    }
-    console.error('❌ RapidAPI unexpected response:', JSON.stringify(data).slice(0, 200));
-    return [];
+    const places = data.places || [];
+    
+    // Map to compatible format
+    return places.map((place: any) => ({
+      business_id: place.id || '',
+      place_id: place.id || '',
+      name: place.displayName?.text || '',
+      full_address: place.formattedAddress || '',
+      phone_number: place.internationalPhoneNumber || place.nationalPhoneNumber || '',
+      website: place.websiteUri || '',
+      rating: place.rating || 0,
+      review_count: place.userRatingCount || 0,
+      business_status: place.businessStatus || 'OPERATIONAL',
+    }));
   } catch (error) {
-    console.error('❌ RapidAPI search error:', error);
+    console.error('❌ Google Places search error:', error);
     return [];
   }
 }
@@ -195,9 +207,9 @@ serve(async (req) => {
       );
     }
 
-    const RAPIDAPI_KEY = Deno.env.get("RAPIDAPI_KEY");
-    if (!RAPIDAPI_KEY) {
-      throw new Error("RAPIDAPI_KEY not configured");
+    const GOOGLE_PLACES_API_KEY = Deno.env.get("GOOGLE_PLACES_API_KEY");
+    if (!GOOGLE_PLACES_API_KEY) {
+      throw new Error("GOOGLE_PLACES_API_KEY not configured");
     }
 
     // Fetch user-specific limit
@@ -235,7 +247,7 @@ serve(async (req) => {
     const seenIds = new Set<string>();
 
     // Execute searches in parallel
-    const searchPromises = searchQueries.map(query => searchRapidAPI(query, RAPIDAPI_KEY, 20));
+    const searchPromises = searchQueries.map(query => searchGooglePlaces(query, GOOGLE_PLACES_API_KEY, 20));
     const results = await Promise.all(searchPromises);
     
     for (const resultList of results) {
