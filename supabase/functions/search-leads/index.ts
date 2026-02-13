@@ -1542,13 +1542,13 @@ serve(async (req) => {
     console.log('📱 WhatsApp only:', filterWhatsappOnly);
     console.log('🏛️ Receita Federal only:', filterReceitaFederal);
     
-    // ===== RAPIDAPI KEY =====
-    const RAPIDAPI_KEY = Deno.env.get("RAPIDAPI_KEY");
-    if (!RAPIDAPI_KEY) {
-      throw new Error("RAPIDAPI_KEY não configurada. Adicione o secret RAPIDAPI_KEY.");
+    // ===== GOOGLE PLACES API KEY =====
+    const GOOGLE_PLACES_API_KEY = Deno.env.get("GOOGLE_PLACES_API_KEY");
+    if (!GOOGLE_PLACES_API_KEY) {
+      throw new Error("GOOGLE_PLACES_API_KEY não configurada.");
     }
     
-    console.log(`🔑 RapidAPI Key configured`);
+    console.log(`🔑 Google Places API Key configured`);
 
     const MAX_TOTAL_LEADS = 150;
     const MIN_LEADS_TARGET = 70;
@@ -1556,10 +1556,8 @@ serve(async (req) => {
     const MAX_TARGET_LEADS = 90;
     const MIN_LEADS_EARLY_EXIT = 85;
 
-    const RAPIDAPI_HOST = "local-business-data.p.rapidapi.com";
-
-    // Function to search places using RapidAPI Local Business Data
-    async function searchPlaces(query: string, location: string, maxPages: number = 3): Promise<any[]> {
+    // Function to search places using Google Places API (New)
+    async function searchPlaces(query: string, location: string, _maxPages: number = 3): Promise<any[]> {
       const searchCache = searchCacheGlobal;
       const cacheKey = `${query}|${location}`;
       if (searchCache.has(cacheKey)) {
@@ -1568,63 +1566,77 @@ serve(async (req) => {
       }
 
       const allResults: any[] = [];
-      const limit = Math.min(maxPages * 20, 100); // Up to 100 results per query
+      const fieldMask = 'places.id,places.displayName,places.formattedAddress,places.internationalPhoneNumber,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.types,places.businessStatus,places.location';
 
-      const url = new URL('https://local-business-data.p.rapidapi.com/search');
-      url.searchParams.set('query', `${query} em ${location}`);
-      url.searchParams.set('limit', String(limit));
-      url.searchParams.set('region', 'br');
-      url.searchParams.set('language', 'pt');
-
-      console.log(`📍 RapidAPI search: ${query} (limit: ${limit})`);
+      console.log(`📍 Google Places search: ${query} em ${location}`);
 
       try {
-        const response = await fetch(url.toString(), {
-          method: 'GET',
-          headers: {
-            'x-rapidapi-key': RAPIDAPI_KEY,
-            'x-rapidapi-host': RAPIDAPI_HOST,
-          },
-        });
+        let nextPageToken: string | undefined;
+        let pagesSearched = 0;
+        const maxPages = Math.min(_maxPages, 3);
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error(`❌ RapidAPI error: ${response.status} - ${errorText}`);
-          return [];
-        }
+        while (pagesSearched < maxPages) {
+          const body: any = {
+            textQuery: `${query} em ${location}`,
+            languageCode: 'pt',
+            regionCode: 'BR',
+            maxResultCount: 20,
+          };
 
-        const data = await response.json();
-        if (data.status === 'OK' && Array.isArray(data.data)) {
-          // Map RapidAPI fields to the format expected by the rest of the code
-          for (const place of data.data) {
+          if (nextPageToken) {
+            body.pageToken = nextPageToken;
+          }
+
+          const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Goog-Api-Key': GOOGLE_PLACES_API_KEY,
+              'X-Goog-FieldMask': fieldMask,
+            },
+            body: JSON.stringify(body),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`❌ Google Places error: ${response.status} - ${errorText}`);
+            break;
+          }
+
+          const data = await response.json();
+          const places = data.places || [];
+
+          for (const place of places) {
             allResults.push({
-              place_id: place.business_id || place.place_id || '',
-              name: place.name || '',
-              formatted_address: place.full_address || '',
-              vicinity: place.full_address || '',
+              place_id: place.id || '',
+              name: place.displayName?.text || '',
+              formatted_address: place.formattedAddress || '',
+              vicinity: place.formattedAddress || '',
               rating: place.rating || 0,
-              user_ratings_total: place.review_count || 0,
-              types: place.subtypes || [],
+              user_ratings_total: place.userRatingCount || 0,
+              types: place.types || [],
               geometry: {
                 location: {
-                  lat: place.latitude || 0,
-                  lng: place.longitude || 0,
+                  lat: place.location?.latitude || 0,
+                  lng: place.location?.longitude || 0,
                 }
               },
-              business_status: place.business_status || 'OPERATIONAL',
-              permanently_closed: place.business_status === 'CLOSED_PERMANENTLY',
-              // RapidAPI returns phone and website directly - no need for separate detail calls!
-              _phone: place.phone_number || '',
-              _website: place.website || '',
-              _email: place.emails_and_contacts?.emails?.[0] || '',
+              business_status: place.businessStatus || 'OPERATIONAL',
+              permanently_closed: place.businessStatus === 'CLOSED_PERMANENTLY',
+              _phone: place.internationalPhoneNumber || place.nationalPhoneNumber || '',
+              _website: place.websiteUri || '',
+              _email: '',
             });
           }
-          console.log(`📊 RapidAPI: ${allResults.length} results for "${query}"`);
-        } else {
-          console.error('❌ RapidAPI unexpected status:', data.status);
+
+          console.log(`📊 Google Places page ${pagesSearched + 1}: ${places.length} results`);
+
+          pagesSearched++;
+          nextPageToken = data.nextPageToken;
+          if (!nextPageToken || places.length === 0) break;
         }
       } catch (error) {
-        console.error('❌ RapidAPI search error:', error);
+        console.error('❌ Google Places search error:', error);
       }
 
       searchCache.set(cacheKey, allResults);
