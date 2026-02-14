@@ -1550,11 +1550,11 @@ serve(async (req) => {
     
     console.log(`🔑 Google Places API Key configured`);
 
-    const MAX_TOTAL_LEADS = 150;
+    const MAX_TOTAL_LEADS = 187;
     const MIN_LEADS_TARGET = 70;
     const TARGET_LEADS = 80;
     const MAX_TARGET_LEADS = 90;
-    const MIN_LEADS_EARLY_EXIT = 85;
+    const MIN_LEADS_EARLY_EXIT = 95;
 
     // Function to search places using Google Places API (New)
     async function searchPlaces(query: string, location: string, _maxPages: number = 3): Promise<any[]> {
