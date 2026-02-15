@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -180,7 +181,11 @@ function generateSearchTerms(segment: string): string[] {
     'clínicas de fisioterapia e reabilitação': ['fisioterapia', 'clínica de reabilitação', 'reabilitação'],
     'ortopedias e lojas de produtos ortopédicos': ['ortopedia', 'produtos ortopédicos', 'órteses e próteses', 'loja ortopédica'],
     'distribuidoras de produtos hospitalares': ['distribuidora hospitalar', 'produtos hospitalares', 'materiais hospitalares', 'distribuidor hospitalar', 'material médico', 'produtos médicos'],
-    'transportadoras': ['transportadora', 'logística'],
+    'transportadoras': ['transportadora', 'empresa de transporte', 'logística', 'transportes', 'frete', 'mudanças', 'encomendas', 'cargas'],
+    'frotistas': ['frotista', 'gestão de frota', 'frota'],
+    'empresas com frota própria': ['frota própria', 'empresa frota', 'veículos próprios'],
+    'empresas de logística': ['logística', 'operador logístico', 'armazenagem', 'centro de distribuição'],
+    'locadoras de veículos': ['locadora de veículos', 'aluguel de carros', 'rent a car', 'locação de veículos'],
     'gráficas': ['gráfica', 'comunicação visual'],
     'construtoras': ['construtora', 'construção civil'],
     'escritórios de arquitetura': ['escritório de arquitetura', 'arquiteto', 'estúdio de arquitetura', 'arquitetura e urbanismo'],
@@ -875,7 +880,23 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel']
   },
   'transportadoras': {
-    include: ['transportadora', 'transporte', 'logística', 'frete', 'encomenda', 'mudanças', 'carga'],
+    include: ['transportadora', 'transporte', 'logística', 'frete', 'encomenda', 'mudanças', 'carga', 'transportes', 'cargas', 'mudança', 'entrega', 'courier', 'express'],
+    exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel']
+  },
+  'frotistas': {
+    include: ['frotista', 'frota', 'gestão de frota', 'veículos', 'locação'],
+    exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel']
+  },
+  'empresas com frota própria': {
+    include: ['frota própria', 'frota', 'veículos', 'transporte próprio'],
+    exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel']
+  },
+  'empresas de logística': {
+    include: ['logística', 'operador logístico', 'armazenagem', 'distribuição', 'fulfillment', 'supply chain'],
+    exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel']
+  },
+  'locadoras de veículos': {
+    include: ['locadora', 'locação', 'aluguel', 'rent a car', 'veículos', 'carros'],
     exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel']
   },
   'construtoras': {
@@ -1550,11 +1571,40 @@ serve(async (req) => {
     
     console.log(`🔑 Google Places API Key configured`);
 
-    const MAX_TOTAL_LEADS = 187;
+    // ===== FETCH USER-SPECIFIC LEAD LIMITS =====
+    let userMaxLeads: number | null = null;
+    try {
+      const authHeader = req.headers.get('authorization');
+      if (authHeader) {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+        const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+        const supabaseClient = createClient(supabaseUrl, supabaseKey, {
+          global: { headers: { Authorization: authHeader } }
+        });
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (user) {
+          const { data: limitData } = await supabaseClient
+            .from("user_lead_limits")
+            .select("leads_per_search")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          if (limitData?.leads_per_search) {
+            userMaxLeads = limitData.leads_per_search;
+            console.log(`👤 User ${user.email} has custom lead limit: ${userMaxLeads}`);
+          }
+        }
+      }
+    } catch (e) {
+      console.error("⚠️ Error fetching user limits:", e);
+    }
+
+    const MAX_TOTAL_LEADS = userMaxLeads || 187;
     const MIN_LEADS_TARGET = 70;
     const TARGET_LEADS = 80;
     const MAX_TARGET_LEADS = 90;
     const MIN_LEADS_EARLY_EXIT = 95;
+    
+    console.log(`📊 Lead limits: max=${MAX_TOTAL_LEADS}, target=${TARGET_LEADS}`);
 
     // Function to search places using Google Places API (New)
     async function searchPlaces(query: string, location: string, _maxPages: number = 3): Promise<any[]> {
