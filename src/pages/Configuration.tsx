@@ -182,6 +182,14 @@ const Configuration = () => {
     "Indústrias Automotivas",
     "Indústrias de Automação",
     "Indústrias de Iluminação e LED",
+    // Setor Elétrico e Energia
+    "Lojas de Materiais Elétricos",
+    "Montadores de Painel Elétrico",
+    "Empresas de Automação Industrial",
+    "Instaladores Elétricos",
+    "Empresas de Manutenção Elétrica",
+    "Empresas de Energia Solar",
+    "Indústrias que Montam ou Reformam Painéis",
     // Metal e Siderurgia
     "Metalúrgicas",
     "Siderúrgicas",
