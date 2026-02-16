@@ -187,7 +187,13 @@ function generateSearchTerms(segment: string): string[] {
     'empresas de logística': ['logística', 'operador logístico', 'armazenagem', 'centro de distribuição'],
     'locadoras de veículos': ['locadora de veículos', 'aluguel de carros', 'rent a car', 'locação de veículos'],
     'gráficas': ['gráfica', 'comunicação visual'],
-    'construtoras': ['construtora', 'construção civil'],
+    'construtoras': ['construtora', 'construção civil', 'empreiteira', 'incorporadora'],
+    'montadores de painel elétrico': ['montador de painel elétrico', 'painel elétrico', 'quadro elétrico', 'montagem de painéis', 'painéis elétricos', 'quadros de comando'],
+    'empresas de automação industrial': ['automação industrial', 'empresa de automação', 'automação', 'clp', 'plc', 'instrumentação industrial', 'controle industrial'],
+    'instaladores elétricos': ['instalador elétrico', 'instalação elétrica', 'eletricista', 'empresa de instalação elétrica', 'serviços elétricos', 'manutenção elétrica'],
+    'empresas de manutenção elétrica': ['manutenção elétrica', 'manutenção industrial elétrica', 'reparo elétrico', 'serviços elétricos', 'elétrica industrial'],
+    'empresas de energia solar': ['energia solar', 'solar', 'fotovoltaica', 'painel solar', 'placa solar', 'sistema fotovoltaico', 'usina solar'],
+    'indústrias que montam ou reformam painéis': ['montagem de painéis', 'reforma de painéis', 'painel elétrico industrial', 'quadro de comando', 'ccm', 'centro de controle de motores', 'painéis de força'],
     'escritórios de arquitetura': ['escritório de arquitetura', 'arquiteto', 'estúdio de arquitetura', 'arquitetura e urbanismo'],
     'fabricantes de esquadrias de alumínio': ['esquadrias de alumínio', 'fábrica de esquadrias alumínio', 'esquadria alumínio', 'janelas de alumínio', 'portas de alumínio'],
     'fabricantes de esquadrias de madeira': ['esquadrias de madeira', 'fábrica de esquadrias madeira', 'marcenaria esquadrias', 'janelas de madeira', 'portas de madeira'],
@@ -215,7 +221,9 @@ function generateSearchTerms(segment: string): string[] {
     'distribuidores de água': ['distribuidora de água', 'distribuidor de água', 'água mineral distribuidora', 'depósito de água', 'distribuidora de água mineral'],
     'distribuidores de refrigerantes': ['distribuidora de refrigerantes', 'distribuidor de refrigerantes', 'depósito de refrigerantes', 'distribuidora de bebidas refrigerantes', 'atacado de refrigerantes'],
     'distribuidores de cervejas': ['distribuidora de cervejas', 'distribuidor de cervejas', 'depósito de cerveja', 'distribuidora de cerveja artesanal', 'atacado de cervejas'],
-    'artigos de caça, pesca e camping': ['loja de pesca', 'artigos de pesca', 'caça e pesca', 'camping', 'loja de camping', 'artigos de camping', 'pesca esportiva', 'loja de caça']
+    'artigos de caça, pesca e camping': ['loja de pesca', 'artigos de pesca', 'caça e pesca', 'camping', 'loja de camping', 'artigos de camping', 'pesca esportiva', 'loja de caça'],
+    'lojas de materiais elétricos': ['loja de materiais elétricos', 'material elétrico', 'casa de elétrica', 'distribuidora elétrica', 'componentes elétricos'],
+    'empresas de energia solar': ['energia solar', 'solar fotovoltaica', 'instalação solar', 'empresa de energia solar', 'painel solar'],
   };
   
   let searchTerms = categoryTerms[term] || null;
@@ -900,8 +908,36 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel']
   },
   'construtoras': {
-    include: ['construtora', 'construção civil', 'empreiteira', 'incorporadora', 'engenharia', 'obras'],
+    include: ['construtora', 'construção civil', 'empreiteira', 'incorporadora', 'engenharia', 'obras', 'construções', 'edificações', 'engenharia civil', 'construção e reforma'],
     exclude: ['material de construção', 'loja', 'depósito', 'supermercado', 'restaurante', 'lanchonete', 'pet']
+  },
+  'lojas de materiais elétricos': {
+    include: ['materiais elétricos', 'material elétrico', 'elétrica', 'loja de elétrica', 'casa de elétrica', 'distribuidora elétrica', 'componentes elétricos', 'fios e cabos', 'disjuntores', 'eletricidade'],
+    exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel']
+  },
+  'montadores de painel elétrico': {
+    include: ['painel elétrico', 'quadro elétrico', 'montagem de painéis', 'painéis elétricos', 'quadros de comando', 'montador', 'ccm', 'centro de controle de motores', 'quadro de distribuição', 'painel de força'],
+    exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel', 'padaria']
+  },
+  'empresas de automação industrial': {
+    include: ['automação industrial', 'automação', 'clp', 'plc', 'instrumentação', 'controle industrial', 'scada', 'ihm', 'inversor de frequência', 'servo motor', 'robótica industrial', 'integração de sistemas'],
+    exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel', 'padaria']
+  },
+  'instaladores elétricos': {
+    include: ['instalador elétrico', 'instalação elétrica', 'eletricista', 'serviços elétricos', 'manutenção elétrica', 'empresa elétrica', 'elétrica industrial', 'elétrica predial', 'elétrica comercial', 'projetos elétricos'],
+    exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel', 'padaria']
+  },
+  'empresas de manutenção elétrica': {
+    include: ['manutenção elétrica', 'reparo elétrico', 'serviços elétricos', 'elétrica industrial', 'manutenção industrial', 'manutenção preventiva', 'manutenção corretiva', 'elétrica predial'],
+    exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel', 'padaria']
+  },
+  'empresas de energia solar': {
+    include: ['energia solar', 'solar', 'fotovoltaica', 'fotovoltaico', 'painel solar', 'placa solar', 'usina solar', 'geração distribuída', 'on grid', 'off grid', 'inversor solar', 'sistema solar'],
+    exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel', 'padaria']
+  },
+  'indústrias que montam ou reformam painéis': {
+    include: ['montagem de painéis', 'reforma de painéis', 'painel elétrico', 'quadro de comando', 'ccm', 'painéis de força', 'quadro elétrico industrial', 'painel de automação', 'painéis industriais', 'montagem elétrica'],
+    exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel', 'padaria']
   },
   'atacadistas': {
     include: ['atacadista', 'atacado', 'atacadão', 'distribuidor atacado', 'wholesale'],
