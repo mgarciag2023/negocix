@@ -165,7 +165,8 @@ function generateSearchTerms(segment: string): string[] {
     'estruturas metálicas': ['estruturas metálicas', 'estrutura metálica', 'galpão metálico', 'cobertura metálica', 'montagem estrutural', 'serralheria industrial', 'steel frame', 'mezanino metálico', 'escadas metálicas', 'passarelas metálicas', 'portões industriais', 'grades metálicas', 'gradis', 'estrutura de aço', 'construção metálica', 'montagem de galpão', 'barracão metálico', 'serralheria de obras'],
     'fabricantes de máquinas e equipamentos': ['fábrica de máquinas', 'fabricante de equipamentos', 'máquinas industriais', 'equipamentos industriais', 'indústria de máquinas', 'máquinas e equipamentos', 'fabricante de máquinas', 'equipamentos sob medida', 'máquinas especiais', 'automação industrial', 'linha de produção', 'equipamentos para indústria', 'máquinas para alimentos', 'máquinas para embalagem', 'equipamentos metalúrgicos', 'máquinas agrícolas', 'implementos', 'fabricação de equipamentos'],
     'lojas de roupas': ['loja de roupas', 'vestuário', 'boutique', 'moda'],
-    'autopeças': ['autopeças', 'peças automotivas', 'auto peças'],
+    'autopeças': ['autopeças', 'peças automotivas', 'auto peças', 'loja de autopeças', 'casa de autopeças', 'peças para carros', 'peças para veículos', 'auto center peças', 'peças e acessórios automotivos', 'retífica de motores', 'peças de reposição', 'rolamentos automotivos', 'auto elétrica', 'peças para caminhão', 'peças para moto', 'acessórios automotivos'],
+    'distribuidores de autopeças': ['distribuidora de autopeças', 'distribuidor de autopeças', 'atacado de autopeças', 'distribuidora de peças automotivas', 'atacado peças automotivas', 'distribuidor peças para veículos', 'atacadista de autopeças', 'distribuidora de peças para carros', 'distribuidora de peças para caminhões', 'importadora de autopeças', 'fornecedor de autopeças'],
     'eletrônicos': ['eletrônicos', 'informática'],
     'móveis': ['móveis', 'móveis planejados'],
     'óticas': ['ótica', 'óculos'],
@@ -836,8 +837,12 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     exclude: ['roupa', 'supermercado', 'restaurante', 'ótica', 'joalheria', 'salão', 'academia', 'hotel']
   },
   'autopeças': {
-    include: ['autopeça', 'auto peça', 'peça automotiva', 'peças automotivas', 'auto peças', 'peças para carro', 'peças veículos'],
-    exclude: ['roupa', 'alimento', 'supermercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel']
+    include: ['autopeça', 'auto peça', 'peça automotiva', 'peças automotivas', 'auto peças', 'peças para carro', 'peças veículos', 'auto center', 'auto elétrica', 'retífica', 'rolamento', 'freio', 'suspensão', 'motor', 'câmbio', 'embreagem', 'radiador', 'escapamento', 'amortecedor', 'filtro automotivo', 'peças caminhão', 'peças moto', 'acessórios automotivos'],
+    exclude: ['roupa', 'alimento', 'supermercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'padaria', 'farmácia']
+  },
+  'distribuidores de autopeças': {
+    include: ['distribuidora', 'distribuidor', 'atacado', 'autopeça', 'peça automotiva', 'peças automotivas', 'auto peças', 'importadora', 'fornecedor', 'peças para veículos', 'peças para carros', 'peças para caminhões'],
+    exclude: ['roupa', 'alimento', 'supermercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'padaria', 'farmácia']
   },
   'oficinas mecânicas': {
     include: ['oficina', 'mecânica', 'auto center', 'autocenter', 'funilaria', 'lanternagem', 'retífica', 'borracharia', 'car service'],

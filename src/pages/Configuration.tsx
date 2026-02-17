@@ -213,6 +213,7 @@ const Configuration = () => {
     "Clínicas Veterinárias",
     "Oficinas Mecânicas",
     "Autopeças",
+    "Distribuidores de Autopeças",
     "Postos de Combustível",
     "Hotéis e Pousadas",
     "Escolas e Cursos",
