@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.search-suppliers]
 verify_jwt = false
+
+[functions.admin-reset-password]
+verify_jwt = false
