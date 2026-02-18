@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users, Settings, Ban, CheckCircle, Loader2, Save, Target, History, KeyRound } from "lucide-react";
+import { Shield, Users, Settings, Ban, CheckCircle, Loader2, Save, Target, History, KeyRound, Trash2 } from "lucide-react";
 import SearchLogsTable from "@/components/admin/SearchLogsTable";
 import {
   Table,
@@ -75,7 +75,7 @@ const Admin = () => {
   const [passwordUser, setPasswordUser] = useState<Profile | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
-
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   useEffect(() => {
     checkAdminAccess();
   }, []);
@@ -332,6 +332,29 @@ const Admin = () => {
       });
     } finally {
       setSavingPassword(false);
+    }
+  };
+
+  const deleteUser = async (profile: Profile) => {
+    setDeletingUserId(profile.user_id);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-delete-user", {
+        body: { userId: profile.user_id },
+      });
+      if (error) throw error;
+      toast({
+        title: "Conta excluída",
+        description: `A conta ${profile.email} foi excluída com sucesso`,
+      });
+      fetchProfiles();
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error?.message || "Não foi possível excluir a conta",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingUserId(null);
     }
   };
 
@@ -679,7 +702,29 @@ const Admin = () => {
       </main>
     </div>
   );
-};
+  };
 
+  const deleteUser = async (profile: Profile) => {
+    setDeletingUserId(profile.user_id);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-delete-user", {
+        body: { userId: profile.user_id },
+      });
+      if (error) throw error;
+      toast({
+        title: "Conta excluída",
+        description: `A conta ${profile.email} foi excluída com sucesso`,
+      });
+      fetchProfiles();
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error?.message || "Não foi possível excluir a conta",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingUserId(null);
+    }
+  };
 
 export default Admin;
