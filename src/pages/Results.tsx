@@ -163,35 +163,11 @@ const Results = () => {
   useEffect(() => {
     const fetchLeads = async () => {
       try {
-        // Check if we should use cache - only if it exists AND was created for current search
-        const cachedLeadsStr = localStorage.getItem('cachedLeads');
+        // Always clear old cache and fetch fresh results
+        localStorage.removeItem('cachedLeads');
+        localStorage.removeItem('cacheTimestamp');
+        
         const searchConfigStr = localStorage.getItem('leadSearchConfig');
-        const cacheTimestamp = localStorage.getItem('cacheTimestamp');
-        
-        // Cache validity: must have leads, config, and be less than 30 minutes old
-        const cacheMaxAge = 30 * 60 * 1000; // 30 minutes
-        const isCacheValid = cacheTimestamp && (Date.now() - parseInt(cacheTimestamp)) < cacheMaxAge;
-        
-        if (cachedLeadsStr && isCacheValid) {
-          try {
-            const cachedLeads = JSON.parse(cachedLeadsStr);
-            if (Array.isArray(cachedLeads) && cachedLeads.length > 0) {
-              console.log('📦 Cache HIT - Using cached leads:', cachedLeads.length);
-              // Ordenar alfabeticamente por padrão
-              setLeads(sortLeadsAlphabetically(cachedLeads));
-              setLoading(false);
-              return; // STOP HERE - Don't make API call
-            }
-          } catch (parseError) {
-            console.error('❌ Error parsing cached leads, will fetch new ones:', parseError);
-            localStorage.removeItem('cachedLeads');
-            localStorage.removeItem('cacheTimestamp');
-          }
-        } else if (cachedLeadsStr && !isCacheValid) {
-          console.log('🕐 Cache expired, fetching fresh data');
-          localStorage.removeItem('cachedLeads');
-          localStorage.removeItem('cacheTimestamp');
-        }
 
         console.log('💾 Cache MISS - Will fetch from API');
 
