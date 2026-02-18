@@ -163,11 +163,24 @@ const Results = () => {
   useEffect(() => {
     const fetchLeads = async () => {
       try {
-        // Always clear old cache and fetch fresh results
-        localStorage.removeItem('cachedLeads');
-        localStorage.removeItem('cacheTimestamp');
-        
         const searchConfigStr = localStorage.getItem('leadSearchConfig');
+        const cachedLeadsStr = localStorage.getItem('cachedLeads');
+        const cachedConfigStr = localStorage.getItem('cachedSearchConfig');
+
+        // Use cache if the search config hasn't changed
+        if (cachedLeadsStr && cachedConfigStr && cachedConfigStr === searchConfigStr) {
+          try {
+            const cachedLeads = JSON.parse(cachedLeadsStr);
+            if (Array.isArray(cachedLeads) && cachedLeads.length > 0) {
+              console.log('📦 Cache HIT - Using cached leads:', cachedLeads.length);
+              setLeads(sortLeadsAlphabetically(cachedLeads));
+              setLoading(false);
+              return;
+            }
+          } catch {
+            console.error('❌ Error parsing cached leads');
+          }
+        }
 
         console.log('💾 Cache MISS - Will fetch from API');
 
@@ -239,9 +252,9 @@ const Results = () => {
           // Ordenar alfabeticamente por padrão
           const sortedLeads = sortLeadsAlphabetically(data.leads);
           setLeads(sortedLeads);
-          // Cache the leads with timestamp
+          // Cache the leads with the config used
           localStorage.setItem('cachedLeads', JSON.stringify(data.leads));
-          localStorage.setItem('cacheTimestamp', Date.now().toString());
+          localStorage.setItem('cachedSearchConfig', searchConfigStr || '');
           console.log('💾 Leads cached successfully:', data.leads.length);
 
           // Log the search
