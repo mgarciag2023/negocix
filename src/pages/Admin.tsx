@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users, Settings, Ban, CheckCircle, Loader2, Save, Target, History } from "lucide-react";
+import { Shield, Users, Settings, Ban, CheckCircle, Loader2, Save, Target, History, KeyRound } from "lucide-react";
 import SearchLogsTable from "@/components/admin/SearchLogsTable";
 import {
   Table,
@@ -72,6 +72,9 @@ const Admin = () => {
   const [userLeadLimit, setUserLeadLimit] = useState("");
   const [userRepLimit, setUserRepLimit] = useState("");
   const [savingUserLimit, setSavingUserLimit] = useState(false);
+  const [passwordUser, setPasswordUser] = useState<Profile | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
 
   useEffect(() => {
     checkAdminAccess();
@@ -294,6 +297,44 @@ const Admin = () => {
     fetchProfiles();
   };
 
+  const resetUserPassword = async () => {
+    if (!passwordUser || !newPassword) return;
+    if (newPassword.length < 6) {
+      toast({
+        title: "Erro",
+        description: "A senha deve ter pelo menos 6 caracteres",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setSavingPassword(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-reset-password", {
+        body: { userId: passwordUser.user_id, newPassword },
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Senha alterada",
+        description: `Senha de ${passwordUser.email} alterada com sucesso`,
+      });
+      
+      setPasswordUser(null);
+      setNewPassword("");
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error?.message || "Não foi possível alterar a senha",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -475,6 +516,14 @@ const Admin = () => {
                             <Target className="h-3 w-3 mr-1" />
                             Limite
                           </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => { setPasswordUser(profile); setNewPassword(""); }}
+                          >
+                            <KeyRound className="h-3 w-3 mr-1" />
+                            Senha
+                          </Button>
                           {profile.email !== "mgarciag2023@gmail.com" && (
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
@@ -586,6 +635,43 @@ const Admin = () => {
                   <Save className="h-4 w-4 mr-2" />
                 )}
                 Salvar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Password Reset Dialog */}
+        <Dialog open={!!passwordUser} onOpenChange={(open) => !open && setPasswordUser(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Alterar Senha</DialogTitle>
+              <DialogDescription>
+                Defina uma nova senha para {passwordUser?.email}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-password">Nova senha</Label>
+                <Input
+                  id="new-password"
+                  type="text"
+                  placeholder="Mínimo 6 caracteres"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPasswordUser(null)}>
+                Cancelar
+              </Button>
+              <Button onClick={resetUserPassword} disabled={savingPassword || newPassword.length < 6}>
+                {savingPassword ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <KeyRound className="h-4 w-4 mr-2" />
+                )}
+                Alterar Senha
               </Button>
             </DialogFooter>
           </DialogContent>
