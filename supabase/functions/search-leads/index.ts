@@ -662,7 +662,9 @@ function isIndustrySearch(segment: string): boolean {
   const lower = segment.toLowerCase();
   const industryTerms = [
     'indústria', 'industria', 'fábrica', 'fabrica', 'indústrias', 'industrias',
-    'fábricas', 'fabricas', 'industrial', 'industriais'
+    'fábricas', 'fabricas', 'industrial', 'industriais',
+    'fabricante', 'fabricantes',
+    'abatedouro', 'abatedouros', 'frigorífico', 'frigoríficos'
   ];
   return industryTerms.some(term => lower.includes(term));
 }
@@ -698,7 +700,7 @@ const industryExclusions = [
   'equipamentos para cozinha', 'equipamento industrial',
   
   // Other services
-  'açougue', 'casa de carnes', 'frigorífico', 'frios e embutidos',
+  'açougue', 'casa de carnes', 'frios e embutidos',
   'empório', 'armazém', 'conveniência'
 ];
 
@@ -724,9 +726,12 @@ const industryMustHaveTerms = [
   'bebidas', 'cervejaria industrial', 'refrigerante',
   'laticínio', 'laticinio', 'lácteos', 'lacteos',
   'frigorífica', 'frigorifica', 'abatedouro', 'matadouro',
-  'ração', 'racao', 'pet food',
+  'ração', 'racao', 'rações', 'racoes', 'pet food', 'nutrição animal', 'nutricao animal',
   'fertilizante', 'adubo', 'agroquímico', 'agroquimico',
-  'implementos', 'máquinas', 'maquinas', 'equipamentos industriais'
+  'implementos', 'máquinas', 'maquinas', 'equipamentos industriais',
+  // Abatedouros specific
+  'avícola', 'avicola', 'granja', 'abate', 'frigorífico', 'frigorifico',
+  'sala de abate', 'SIF', 'SIE'
 ];
 
 // Check if a place is a REAL industry (not a food service or retail)
@@ -830,8 +835,9 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     exclude: ['restaurante', 'lanchonete', 'supermercado', 'construção', 'academia', 'hotel', 'salão']
   },
   'fabricantes de ração pet': {
-    include: ['ração', 'fábrica', 'indústria', 'fabricante', 'pet food', 'petiscos', 'snacks pet', 'produção'],
-    exclude: ['restaurante', 'lanchonete', 'supermercado', 'construção', 'academia', 'salão', 'loja']
+    include: ['ração', 'rações', 'fábrica', 'indústria', 'fabricante', 'pet food', 'petiscos', 'snacks pet', 'produção', 'nutrição animal', 'nutricao'],
+    mustMatch: ['ração', 'rações', 'ração animal', 'pet food', 'nutrição animal', 'nutricao animal', 'alimento animal', 'alimentos animal'],
+    exclude: ['pet shop', 'petshop', 'banho e tosa', 'veterinária', 'clínica', 'restaurante', 'lanchonete', 'supermercado', 'construção', 'academia', 'salão', 'agropecuária varejo']
   },
   'banho e tosa': {
     include: ['banho', 'tosa', 'grooming', 'estética animal', 'estética pet', 'tosador', 'pet'],
@@ -851,19 +857,23 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
   },
   'abatedouros de aves': {
     include: ['abatedouro', 'frigorífico', 'aves', 'frango', 'avícola', 'abate', 'matadouro', 'processamento', 'granja', 'avicultura', 'galinha', 'peru', 'codorna', 'chester', 'pato', 'caipira'],
-    exclude: ['pet shop', 'restaurante', 'lanchonete', 'supermercado', 'loja de roupas', 'salão', 'academia', 'padaria', 'farmácia']
+    mustMatch: ['abatedouro', 'frigorífico', 'matadouro', 'abate', 'avícola', 'avicola', 'granja', 'frigorific'],
+    exclude: ['pet shop', 'restaurante', 'lanchonete', 'supermercado', 'loja de roupas', 'salão', 'academia', 'padaria', 'farmácia', 'açougue', 'casa de carnes']
   },
   'abatedouros de bovinos': {
     include: ['abatedouro', 'frigorífico', 'bovino', 'boi', 'gado', 'abate', 'matadouro', 'carne bovina', 'novilho', 'búfalo', 'desossa', 'charqueada', 'jerked'],
-    exclude: ['pet shop', 'restaurante', 'lanchonete', 'supermercado', 'loja de roupas', 'salão', 'academia', 'padaria', 'farmácia']
+    mustMatch: ['abatedouro', 'frigorífico', 'matadouro', 'abate', 'frigorific', 'charqueada'],
+    exclude: ['pet shop', 'restaurante', 'lanchonete', 'supermercado', 'loja de roupas', 'salão', 'academia', 'padaria', 'farmácia', 'açougue', 'casa de carnes']
   },
   'abatedouros de suínos': {
     include: ['abatedouro', 'frigorífico', 'suíno', 'porco', 'abate', 'matadouro', 'carne suína', 'leitão', 'desossa', 'embutidos'],
-    exclude: ['pet shop', 'restaurante', 'lanchonete', 'supermercado', 'loja de roupas', 'salão', 'academia', 'padaria', 'farmácia']
+    mustMatch: ['abatedouro', 'frigorífico', 'matadouro', 'abate', 'frigorific'],
+    exclude: ['pet shop', 'restaurante', 'lanchonete', 'supermercado', 'loja de roupas', 'salão', 'academia', 'padaria', 'farmácia', 'açougue', 'casa de carnes']
   },
   'abatedouros e frigoríficos': {
     include: ['abatedouro', 'frigorífico', 'matadouro', 'abate', 'processamento de carnes', 'sala de abate', 'SIF', 'SIE', 'inspeção', 'planta de abate', 'câmara fria'],
-    exclude: ['pet shop', 'restaurante', 'lanchonete', 'supermercado', 'loja de roupas', 'salão', 'academia', 'padaria', 'farmácia']
+    mustMatch: ['abatedouro', 'frigorífico', 'matadouro', 'abate', 'frigorific'],
+    exclude: ['pet shop', 'restaurante', 'lanchonete', 'supermercado', 'loja de roupas', 'salão', 'academia', 'padaria', 'farmácia', 'açougue', 'casa de carnes']
   },
   'farmácias': {
     include: ['farmácia', 'drogaria', 'medicamento', 'remédio', 'manipulação', 'farmácias'],
@@ -1311,19 +1321,32 @@ function isRelevantToNiche(place: any, segment: string): boolean {
     return true;
   }
   
-  // ===== STEP 5: Check exclusions from niche config (RELAXED) =====
-  // Only check critical exclusions, not all of them
-  const criticalExclusions = nicheConfig.exclude.slice(0, 5); // Only first 5 exclusions
-  for (const exclude of criticalExclusions) {
+  // ===== STEP 5: Check exclusions from niche config =====
+  // For segments with mustMatch (strict), check ALL exclusions; otherwise only first 5
+  const hasStrictFilter = nicheConfig.mustMatch && nicheConfig.mustMatch.length > 0;
+  const exclusionsToCheck = hasStrictFilter ? nicheConfig.exclude : nicheConfig.exclude.slice(0, 5);
+  for (const exclude of exclusionsToCheck) {
     if (combinedText.includes(exclude)) {
       console.log(`❌ Niche exclusion: "${place.title}" - matches: ${exclude}`);
       return false;
     }
   }
   
-  // ===== STEP 6: REMOVED mustMatch requirement =====
-  // mustMatch is now optional and NOT enforced to maximize leads
-  // The include keywords are enough to ensure relevance
+  // ===== STEP 6: mustMatch enforcement for strict segments =====
+  // For segments with mustMatch, enforce at least one mustMatch term
+  if (nicheConfig.mustMatch && nicheConfig.mustMatch.length > 0) {
+    let hasMustMatch = false;
+    for (const must of nicheConfig.mustMatch) {
+      if (combinedText.includes(must)) {
+        hasMustMatch = true;
+        break;
+      }
+    }
+    if (!hasMustMatch) {
+      console.log(`❌ mustMatch filter: "${place.title}" - no match for ${segmentLower}`);
+      return false;
+    }
+  }
   
   // Check if at least one include keyword matches (SOFT check)
   let hasIncludeMatch = false;
