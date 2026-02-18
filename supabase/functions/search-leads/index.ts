@@ -1332,21 +1332,11 @@ function isRelevantToNiche(place: any, segment: string): boolean {
     }
   }
   
-  // ===== STEP 6: mustMatch enforcement for strict segments =====
-  // For segments with mustMatch, enforce at least one mustMatch term
-  if (nicheConfig.mustMatch && nicheConfig.mustMatch.length > 0) {
-    let hasMustMatch = false;
-    for (const must of nicheConfig.mustMatch) {
-      if (combinedText.includes(must)) {
-        hasMustMatch = true;
-        break;
-      }
-    }
-    if (!hasMustMatch) {
-      console.log(`❌ mustMatch filter: "${place.title}" - no match for ${segmentLower}`);
-      return false;
-    }
-  }
+  // ===== STEP 6: mustMatch DISABLED =====
+  // mustMatch was removed per user request: all leads returned by the Google Places
+  // search for the segment are accepted as long as they pass exclusion filters.
+  // This ensures businesses with the correct CNAE but without specific keywords
+  // in their name/category are not incorrectly filtered out.
   
   // Check if at least one include keyword matches (SOFT check)
   let hasIncludeMatch = false;
