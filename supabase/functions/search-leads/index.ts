@@ -136,7 +136,7 @@ function generateSearchTerms(segment: string): string[] {
     'churrascarias': ['churrascaria', 'churrasco', 'rodízio'],
     'catering': ['catering', 'buffet', 'eventos'],
     'casas de massas': ['casa de massas', 'massa fresca', 'restaurante italiano'],
-    'materiais de construção': ['material de construção', 'home center'],
+    'materiais de construção': ['material de construção', 'home center', 'depósito de construção', 'loja de material de construção', 'casa de material', 'madeireira'],
     'ferramentas': ['ferramentas', 'ferragem'],
     'agropecuária': ['agropecuária', 'produtos rurais'],
     'farmácias': ['farmácia', 'drogaria'],
@@ -1739,7 +1739,7 @@ serve(async (req) => {
       try {
         let nextPageToken: string | undefined;
         let pagesSearched = 0;
-        const maxPages = Math.min(_maxPages, 3);
+        const maxPages = Math.min(_maxPages, 10);
 
         while (pagesSearched < maxPages) {
           const body: any = {
