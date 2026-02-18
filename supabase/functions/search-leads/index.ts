@@ -209,10 +209,31 @@ function generateSearchTerms(segment: string): string[] {
     'hotéis pet': ['hotel pet', 'hotel para cães', 'hotel para animais', 'hospedagem pet', 'hospedagem animal', 'hotel canino', 'day care pet', 'hotelzinho pet'],
     'creches pet': ['creche pet', 'creche para cães', 'day care pet', 'creche canina', 'creche animal', 'day care canino'],
     'adestramento de animais': ['adestramento', 'adestrador', 'adestramento de cães', 'treinamento canino', 'escola de adestramento', 'adestramento pet', 'comportamento animal'],
-    'abatedouros de aves': ['abatedouro de aves', 'abatedouro de frango', 'frigorífico de aves', 'abate de aves', 'matadouro de aves', 'frigorífico avícola', 'processamento de aves', 'abatedouro avícola'],
-    'abatedouros de bovinos': ['abatedouro de bovinos', 'abatedouro de boi', 'frigorífico de bovinos', 'abate de bovinos', 'matadouro de boi', 'frigorífico bovino', 'abatedouro de gado'],
-    'abatedouros de suínos': ['abatedouro de suínos', 'abatedouro de porco', 'frigorífico de suínos', 'abate de suínos', 'matadouro de suínos', 'frigorífico suíno'],
-    'abatedouros e frigoríficos': ['abatedouro', 'frigorífico', 'matadouro', 'abate', 'abatedouro municipal', 'frigorífico industrial', 'sala de abate', 'processamento de carnes'],
+    'abatedouros de aves': [
+      'abatedouro de aves', 'abatedouro de frango', 'frigorífico de aves', 'abate de aves', 'matadouro de aves', 'frigorífico avícola', 'processamento de aves', 'abatedouro avícola',
+      'avícola', 'granja de abate', 'granja avícola', 'abatedouro de frangos', 'frigorífico de frangos', 'indústria avícola', 'abatedouro de peru', 'abatedouro de codorna',
+      'processamento de frango', 'abate de frango', 'cortes de frango', 'frango abatido', 'abatedouro de galinha', 'frigorífico de galinha',
+      'avicultura de corte', 'avicultura', 'abatedouro de peito de frango', 'processamento avícola', 'industrialização de aves',
+      'frigorífico de carne de frango', 'sala de abate de aves', 'planta de abate de aves', 'unidade de abate avícola',
+      'abatedouro de patos', 'abatedouro de chester', 'abatedouro de aves caipiras', 'frango caipira abate'
+    ],
+    'abatedouros de bovinos': [
+      'abatedouro de bovinos', 'abatedouro de boi', 'frigorífico de bovinos', 'abate de bovinos', 'matadouro de boi', 'frigorífico bovino', 'abatedouro de gado',
+      'frigorífico de carne bovina', 'matadouro bovino', 'abatedouro de novilho', 'abate de gado', 'processamento de carne bovina',
+      'abatedouro de búfalo', 'frigorífico de boi', 'sala de abate bovino', 'planta frigorífica bovina', 'desossa bovina',
+      'indústria de carne bovina', 'abatedouro municipal bovino', 'unidade de abate bovino', 'charqueada', 'jerked beef'
+    ],
+    'abatedouros de suínos': [
+      'abatedouro de suínos', 'abatedouro de porco', 'frigorífico de suínos', 'abate de suínos', 'matadouro de suínos', 'frigorífico suíno',
+      'frigorífico de carne suína', 'matadouro de porco', 'processamento de suínos', 'indústria de suínos', 'suinocultura abate',
+      'sala de abate suíno', 'planta frigorífica suína', 'desossa suína', 'abatedouro de leitão', 'embutidos e abate'
+    ],
+    'abatedouros e frigoríficos': [
+      'abatedouro', 'frigorífico', 'matadouro', 'abate', 'abatedouro municipal', 'frigorífico industrial', 'sala de abate', 'processamento de carnes',
+      'frigorífico de carnes', 'indústria frigorífica', 'planta de abate', 'unidade frigorífica', 'câmara fria abate',
+      'abatedouro de animais', 'matadouro municipal', 'frigorífico regional', 'abatedouro industrial', 'abate e processamento',
+      'SIF abatedouro', 'SIE abatedouro', 'inspeção federal abate', 'abatedouro com SIF', 'abatedouro certificado'
+    ],
     'agência de eventos': ['agência de eventos', 'organizadora de eventos', 'empresa de eventos', 'produtora de eventos', 'buffet e eventos', 'cerimonial'],
     'distribuidores de frios': ['distribuidora de frios', 'distribuidor de frios', 'laticínios atacado', 'frios e laticínios', 'frigorífico distribuidor'],
     'cestas básicas': ['cestas básicas', 'cesta básica'],
@@ -829,20 +850,20 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     exclude: ['restaurante', 'lanchonete', 'supermercado', 'construção', 'academia fitness']
   },
   'abatedouros de aves': {
-    include: ['abatedouro', 'frigorífico', 'aves', 'frango', 'avícola', 'abate', 'matadouro', 'processamento'],
-    exclude: ['pet shop', 'restaurante', 'lanchonete', 'supermercado', 'loja']
+    include: ['abatedouro', 'frigorífico', 'aves', 'frango', 'avícola', 'abate', 'matadouro', 'processamento', 'granja', 'avicultura', 'galinha', 'peru', 'codorna', 'chester', 'pato', 'caipira'],
+    exclude: ['pet shop', 'restaurante', 'lanchonete', 'supermercado', 'loja de roupas', 'salão', 'academia', 'padaria', 'farmácia']
   },
   'abatedouros de bovinos': {
-    include: ['abatedouro', 'frigorífico', 'bovino', 'boi', 'gado', 'abate', 'matadouro', 'carne bovina'],
-    exclude: ['pet shop', 'restaurante', 'lanchonete', 'supermercado', 'loja']
+    include: ['abatedouro', 'frigorífico', 'bovino', 'boi', 'gado', 'abate', 'matadouro', 'carne bovina', 'novilho', 'búfalo', 'desossa', 'charqueada', 'jerked'],
+    exclude: ['pet shop', 'restaurante', 'lanchonete', 'supermercado', 'loja de roupas', 'salão', 'academia', 'padaria', 'farmácia']
   },
   'abatedouros de suínos': {
-    include: ['abatedouro', 'frigorífico', 'suíno', 'porco', 'abate', 'matadouro', 'carne suína'],
-    exclude: ['pet shop', 'restaurante', 'lanchonete', 'supermercado', 'loja']
+    include: ['abatedouro', 'frigorífico', 'suíno', 'porco', 'abate', 'matadouro', 'carne suína', 'leitão', 'desossa', 'embutidos'],
+    exclude: ['pet shop', 'restaurante', 'lanchonete', 'supermercado', 'loja de roupas', 'salão', 'academia', 'padaria', 'farmácia']
   },
   'abatedouros e frigoríficos': {
-    include: ['abatedouro', 'frigorífico', 'matadouro', 'abate', 'processamento de carnes', 'sala de abate'],
-    exclude: ['pet shop', 'restaurante', 'lanchonete', 'supermercado', 'loja']
+    include: ['abatedouro', 'frigorífico', 'matadouro', 'abate', 'processamento de carnes', 'sala de abate', 'SIF', 'SIE', 'inspeção', 'planta de abate', 'câmara fria'],
+    exclude: ['pet shop', 'restaurante', 'lanchonete', 'supermercado', 'loja de roupas', 'salão', 'academia', 'padaria', 'farmácia']
   },
   'farmácias': {
     include: ['farmácia', 'drogaria', 'medicamento', 'remédio', 'manipulação', 'farmácias'],
