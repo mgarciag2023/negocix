@@ -835,8 +835,8 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     exclude: ['restaurante', 'lanchonete', 'supermercado', 'construção', 'academia', 'hotel', 'salão']
   },
   'fabricantes de ração pet': {
-    include: ['ração', 'rações', 'fábrica', 'indústria', 'fabricante', 'pet food', 'petiscos', 'snacks pet', 'produção', 'nutrição animal', 'nutricao'],
-    mustMatch: ['ração', 'rações', 'ração animal', 'pet food', 'nutrição animal', 'nutricao animal', 'alimento animal', 'alimentos animal'],
+    include: ['ração', 'rações', 'fábrica', 'indústria', 'fabricante', 'pet food', 'petiscos', 'snacks pet', 'produção', 'nutrição animal', 'nutricao', 'granvita', 'quatree', 'nutrisantos', 'alimentação animal', 'alimento animal'],
+    mustMatch: ['ração', 'rações', 'ração animal', 'pet food', 'nutrição animal', 'nutricao animal', 'alimento animal', 'alimentos animal', 'alimentação animal', 'alimentacao animal', 'granvita', 'quatree', 'nutrisantos', 'fábrica de ração', 'fabrica de racao', 'indústria de ração', 'industria de racao'],
     exclude: ['pet shop', 'petshop', 'banho e tosa', 'veterinária', 'clínica', 'restaurante', 'lanchonete', 'supermercado', 'construção', 'academia', 'salão', 'agropecuária varejo']
   },
   'banho e tosa': {
