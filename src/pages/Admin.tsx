@@ -548,48 +548,83 @@ const Admin = () => {
                             Senha
                           </Button>
                           {profile.email !== "mgarciag2023@gmail.com" && (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant={profile.is_blocked ? "outline" : "destructive"}
-                                  size="sm"
-                                >
-                                  {profile.is_blocked ? "Desbloquear" : "Bloquear"}
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>
-                                    {profile.is_blocked ? "Desbloquear usuário?" : "Bloquear usuário?"}
-                                  </AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    {profile.is_blocked
-                                      ? `Tem certeza que deseja desbloquear ${profile.email}?`
-                                      : `Tem certeza que deseja bloquear ${profile.email}? O usuário não poderá mais acessar o sistema.`}
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                {!profile.is_blocked && (
-                                  <div className="space-y-2">
-                                    <Label htmlFor="block-reason">Motivo do bloqueio (opcional)</Label>
-                                    <Input
-                                      id="block-reason"
-                                      placeholder="Ex: Uso indevido do sistema"
-                                      value={blockReason}
-                                      onChange={(e) => setBlockReason(e.target.value)}
-                                    />
-                                  </div>
-                                )}
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => toggleBlockUser(profile)}
-                                    className={profile.is_blocked ? "" : "bg-destructive hover:bg-destructive/90"}
+                            <>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant={profile.is_blocked ? "outline" : "destructive"}
+                                    size="sm"
                                   >
                                     {profile.is_blocked ? "Desbloquear" : "Bloquear"}
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>
+                                      {profile.is_blocked ? "Desbloquear usuário?" : "Bloquear usuário?"}
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      {profile.is_blocked
+                                        ? `Tem certeza que deseja desbloquear ${profile.email}?`
+                                        : `Tem certeza que deseja bloquear ${profile.email}? O usuário não poderá mais acessar o sistema.`}
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  {!profile.is_blocked && (
+                                    <div className="space-y-2">
+                                      <Label htmlFor="block-reason">Motivo do bloqueio (opcional)</Label>
+                                      <Input
+                                        id="block-reason"
+                                        placeholder="Ex: Uso indevido do sistema"
+                                        value={blockReason}
+                                        onChange={(e) => setBlockReason(e.target.value)}
+                                      />
+                                    </div>
+                                  )}
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => toggleBlockUser(profile)}
+                                      className={profile.is_blocked ? "" : "bg-destructive hover:bg-destructive/90"}
+                                    >
+                                      {profile.is_blocked ? "Desbloquear" : "Bloquear"}
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    disabled={deletingUserId === profile.user_id}
+                                  >
+                                    {deletingUserId === profile.user_id ? (
+                                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                    ) : (
+                                      <Trash2 className="h-3 w-3 mr-1" />
+                                    )}
+                                    Excluir
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Excluir conta?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Tem certeza que deseja excluir permanentemente a conta de {profile.email}? Esta ação não pode ser desfeita.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deleteUser(profile)}
+                                      className="bg-destructive hover:bg-destructive/90"
+                                    >
+                                      Excluir permanentemente
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </>
                           )}
                         </div>
                       </TableCell>
@@ -702,29 +737,7 @@ const Admin = () => {
       </main>
     </div>
   );
-  };
+};
 
-  const deleteUser = async (profile: Profile) => {
-    setDeletingUserId(profile.user_id);
-    try {
-      const { data, error } = await supabase.functions.invoke("admin-delete-user", {
-        body: { userId: profile.user_id },
-      });
-      if (error) throw error;
-      toast({
-        title: "Conta excluída",
-        description: `A conta ${profile.email} foi excluída com sucesso`,
-      });
-      fetchProfiles();
-    } catch (error: any) {
-      toast({
-        title: "Erro",
-        description: error?.message || "Não foi possível excluir a conta",
-        variant: "destructive",
-      });
-    } finally {
-      setDeletingUserId(null);
-    }
-  };
 
 export default Admin;
