@@ -204,6 +204,15 @@ function generateSearchTerms(segment: string): string[] {
     'indústrias de biscoitos': ['fábrica de biscoitos', 'indústria de biscoitos', 'biscoitaria'],
     'distribuidoras de doces': ['distribuidora de doces', 'atacado de doces', 'distribuidor de doces', 'doces atacado'],
     'indústrias de produtos pet': ['fábrica de ração', 'indústria pet', 'fábrica de produtos pet', 'indústria de ração animal', 'fábrica de petiscos para animais'],
+    'fabricantes de ração pet': ['fábrica de ração', 'fábrica de ração pet', 'fábrica de ração animal', 'indústria de ração', 'fabricante de ração', 'ração animal fábrica', 'indústria pet food', 'fábrica de petiscos pet', 'fábrica de snacks pet'],
+    'banho e tosa': ['banho e tosa', 'pet grooming', 'tosador', 'banho pet', 'estética animal', 'estética pet', 'grooming pet'],
+    'hotéis pet': ['hotel pet', 'hotel para cães', 'hotel para animais', 'hospedagem pet', 'hospedagem animal', 'hotel canino', 'day care pet', 'hotelzinho pet'],
+    'creches pet': ['creche pet', 'creche para cães', 'day care pet', 'creche canina', 'creche animal', 'day care canino'],
+    'adestramento de animais': ['adestramento', 'adestrador', 'adestramento de cães', 'treinamento canino', 'escola de adestramento', 'adestramento pet', 'comportamento animal'],
+    'abatedouros de aves': ['abatedouro de aves', 'abatedouro de frango', 'frigorífico de aves', 'abate de aves', 'matadouro de aves', 'frigorífico avícola', 'processamento de aves', 'abatedouro avícola'],
+    'abatedouros de bovinos': ['abatedouro de bovinos', 'abatedouro de boi', 'frigorífico de bovinos', 'abate de bovinos', 'matadouro de boi', 'frigorífico bovino', 'abatedouro de gado'],
+    'abatedouros de suínos': ['abatedouro de suínos', 'abatedouro de porco', 'frigorífico de suínos', 'abate de suínos', 'matadouro de suínos', 'frigorífico suíno'],
+    'abatedouros e frigoríficos': ['abatedouro', 'frigorífico', 'matadouro', 'abate', 'abatedouro municipal', 'frigorífico industrial', 'sala de abate', 'processamento de carnes'],
     'agência de eventos': ['agência de eventos', 'organizadora de eventos', 'empresa de eventos', 'produtora de eventos', 'buffet e eventos', 'cerimonial'],
     'distribuidores de frios': ['distribuidora de frios', 'distribuidor de frios', 'laticínios atacado', 'frios e laticínios', 'frigorífico distribuidor'],
     'cestas básicas': ['cestas básicas', 'cesta básica'],
@@ -799,6 +808,42 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     include: ['ração', 'pet', 'animal', 'agropet', 'pet shop', 'petshop', 'cão', 'cachorro', 'gato', 'aves', 'peixe', 'casa de ração'],
     exclude: ['restaurante', 'lanchonete', 'supermercado', 'construção', 'academia', 'hotel', 'salão']
   },
+  'fabricantes de ração pet': {
+    include: ['ração', 'fábrica', 'indústria', 'fabricante', 'pet food', 'petiscos', 'snacks pet', 'produção'],
+    exclude: ['restaurante', 'lanchonete', 'supermercado', 'construção', 'academia', 'salão', 'loja']
+  },
+  'banho e tosa': {
+    include: ['banho', 'tosa', 'grooming', 'estética animal', 'estética pet', 'tosador', 'pet'],
+    exclude: ['restaurante', 'lanchonete', 'supermercado', 'construção', 'academia', 'hotel humano']
+  },
+  'hotéis pet': {
+    include: ['hotel pet', 'hospedagem pet', 'hospedagem animal', 'hotel canino', 'hotelzinho', 'day care', 'pet'],
+    exclude: ['restaurante', 'lanchonete', 'supermercado', 'construção', 'academia']
+  },
+  'creches pet': {
+    include: ['creche', 'day care', 'pet', 'canino', 'animal', 'cão', 'cachorro'],
+    exclude: ['restaurante', 'lanchonete', 'supermercado', 'construção', 'academia', 'creche infantil', 'escola infantil']
+  },
+  'adestramento de animais': {
+    include: ['adestramento', 'adestrador', 'treinamento', 'canino', 'comportamento', 'pet', 'cão', 'cachorro'],
+    exclude: ['restaurante', 'lanchonete', 'supermercado', 'construção', 'academia fitness']
+  },
+  'abatedouros de aves': {
+    include: ['abatedouro', 'frigorífico', 'aves', 'frango', 'avícola', 'abate', 'matadouro', 'processamento'],
+    exclude: ['pet shop', 'restaurante', 'lanchonete', 'supermercado', 'loja']
+  },
+  'abatedouros de bovinos': {
+    include: ['abatedouro', 'frigorífico', 'bovino', 'boi', 'gado', 'abate', 'matadouro', 'carne bovina'],
+    exclude: ['pet shop', 'restaurante', 'lanchonete', 'supermercado', 'loja']
+  },
+  'abatedouros de suínos': {
+    include: ['abatedouro', 'frigorífico', 'suíno', 'porco', 'abate', 'matadouro', 'carne suína'],
+    exclude: ['pet shop', 'restaurante', 'lanchonete', 'supermercado', 'loja']
+  },
+  'abatedouros e frigoríficos': {
+    include: ['abatedouro', 'frigorífico', 'matadouro', 'abate', 'processamento de carnes', 'sala de abate'],
+    exclude: ['pet shop', 'restaurante', 'lanchonete', 'supermercado', 'loja']
+  },
   'farmácias': {
     include: ['farmácia', 'drogaria', 'medicamento', 'remédio', 'manipulação', 'farmácias'],
     exclude: ['roupa', 'supermercado', 'restaurante', 'construção', 'pet', 'ótica', 'joalheria', 'academia', 'hotel']
@@ -1095,6 +1140,15 @@ const universalExclusionsByCategory: { [key: string]: string[] } = {
   'indústrias de doces': ['bar', 'pub', 'supermercado', 'mercado'],
   'indústrias de laticínios': ['bar', 'pub', 'supermercado', 'mercado'],
   'indústrias de produtos pet': ['restaurante', 'lanchonete', 'bar', 'pub'],
+  'fabricantes de ração pet': ['restaurante', 'lanchonete', 'bar', 'pub', 'supermercado'],
+  'banho e tosa': ['restaurante', 'lanchonete', 'supermercado', 'construção'],
+  'hotéis pet': ['restaurante', 'lanchonete', 'supermercado', 'construção'],
+  'creches pet': ['restaurante', 'lanchonete', 'supermercado', 'construção'],
+  'adestramento de animais': ['restaurante', 'lanchonete', 'supermercado', 'construção'],
+  'abatedouros de aves': ['pet shop', 'restaurante', 'lanchonete', 'supermercado'],
+  'abatedouros de bovinos': ['pet shop', 'restaurante', 'lanchonete', 'supermercado'],
+  'abatedouros de suínos': ['pet shop', 'restaurante', 'lanchonete', 'supermercado'],
+  'abatedouros e frigoríficos': ['pet shop', 'restaurante', 'lanchonete', 'supermercado'],
   
   // Distributors - only exclude direct retail competitors
   'distribuidoras de doces': ['restaurante', 'lanchonete'],

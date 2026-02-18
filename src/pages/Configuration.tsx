@@ -210,7 +210,17 @@ const Configuration = () => {
     // Novos segmentos de alta demanda
     "Pet Shops",
     "Loja de Ração Pet",
+    "Fabricantes de Ração Pet",
+    "Banho e Tosa",
+    "Hotéis Pet",
+    "Creches Pet",
+    "Adestramento de Animais",
     "Clínicas Veterinárias",
+    // Abatedouros
+    "Abatedouros de Aves",
+    "Abatedouros de Bovinos",
+    "Abatedouros de Suínos",
+    "Abatedouros e Frigoríficos",
     "Oficinas Mecânicas",
     "Autopeças",
     "Distribuidores de Autopeças",
