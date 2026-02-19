@@ -241,6 +241,13 @@ const Configuration = () => {
     "Distribuidores de Cervejas",
     // Caça, pesca e camping
     "Artigos de Caça, Pesca e Camping",
+    // Cartonagem
+    "Cartonagem",
+    // Comida Japonesa / Oriental / Sushi
+    "Restaurantes Japoneses",
+    "Sushi Bars",
+    "Restaurantes Orientais",
+    "Temakerias",
   ].sort(); // Ordenação alfabética
 
   const handleCustomerToggle = (customer: string) => {
