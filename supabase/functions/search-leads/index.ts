@@ -255,6 +255,8 @@ function generateSearchTerms(segment: string): string[] {
     'artigos de caça, pesca e camping': ['loja de pesca', 'artigos de pesca', 'caça e pesca', 'camping', 'loja de camping', 'artigos de camping', 'pesca esportiva', 'loja de caça'],
     'lojas de materiais elétricos': ['loja de materiais elétricos', 'material elétrico', 'casa de elétrica', 'distribuidora elétrica', 'componentes elétricos'],
     'empresas de energia solar': ['energia solar', 'solar fotovoltaica', 'instalação solar', 'empresa de energia solar', 'painel solar'],
+    'distribuidores de aço e ferro': ['distribuidora de aço', 'distribuidor de ferro', 'ferro e aço', 'depósito de ferro', 'comércio de aço', 'distribuidora de ferro', 'aço e ferro', 'distribuidora de metais', 'ferro para construção', 'vergalhão', 'chapas de aço', 'metalon', 'tubo de aço', 'perfilados', 'cantoneira', 'viga de aço', 'barra de ferro'],
+    'serralherias': ['serralheria', 'serralheiro', 'portões', 'grades', 'esquadrias metálicas', 'estruturas metálicas', 'portão de ferro', 'grade de ferro', 'corrimão', 'escada de ferro', 'serralheria artística', 'serralheria industrial', 'portão automático', 'gradil', 'portão basculante'],
   };
   
   let searchTerms = categoryTerms[term] || null;
@@ -1141,6 +1143,16 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     mustMatch: [], // Removido para aumentar volume
     exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'loja de roupas', 'escola']
   },
+  'distribuidores de aço e ferro': {
+    include: ['distribuidora de aço', 'distribuidor de ferro', 'ferro e aço', 'depósito de ferro', 'comércio de aço', 'distribuidora de ferro', 'aço e ferro', 'distribuidora de metais', 'vergalhão', 'chapas de aço', 'metalon', 'tubo de aço', 'perfilados', 'cantoneira', 'viga de aço', 'barra de ferro', 'ferro para construção', 'siderúrgica', 'corte de aço'],
+    mustMatch: [],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'escola']
+  },
+  'serralherias': {
+    include: ['serralheria', 'serralheiro', 'portões', 'grades', 'esquadrias metálicas', 'estruturas metálicas', 'portão de ferro', 'grade de ferro', 'corrimão', 'escada de ferro', 'serralheria artística', 'serralheria industrial', 'portão automático', 'gradil', 'portão basculante', 'metalon', 'ferro e aço'],
+    mustMatch: [],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'escola']
+  },
   // Distribuidoras específicas - FILTRO RÍGIDO
   'distribuidoras de doces': {
     include: ['distribuidora de doces', 'atacado de doces', 'doces atacado', 'distribuidor de doces', 'doces distribuidor'],
@@ -1669,7 +1681,7 @@ serve(async (req) => {
 
   try {
     const { segment, products, region, country, filters, ecommerceType, businessType, digitalPresence, digitalActivity, whatsappOnly, receitaFederalOnly } = await req.json();
-    console.log('🔍 SEARCH v12 - Receita Federal Filter - Input:', { segment, products, region, country, ecommerceType, businessType, digitalPresence, digitalActivity, whatsappOnly, receitaFederalOnly });
+    console.log('🔍 SEARCH v13 - State Search Boost - Input:', { segment, products, region, country, ecommerceType, businessType, digitalPresence, digitalActivity, whatsappOnly, receitaFederalOnly });
     
     const countryCode = country || 'BR';
     const bizType = businessType || 'all';
@@ -1687,10 +1699,17 @@ serve(async (req) => {
       ? `${cleanRegion}, Brazil`
       : `${cleanRegion}, ${countryCode}`;
     
+    // Detect state-only search (2-letter state abbreviation or full state name)
+    const brazilianStateAbbrevs = ['ac','al','ap','am','ba','ce','df','es','go','ma','mt','ms','mg','pa','pb','pr','pe','pi','rj','rn','rs','ro','rr','sc','sp','se','to'];
+    const brazilianStateNames: { [key: string]: boolean } = {'acre':true,'alagoas':true,'amapa':true,'amazonas':true,'bahia':true,'ceara':true,'distrito federal':true,'espirito santo':true,'goias':true,'maranhao':true,'mato grosso':true,'mato grosso do sul':true,'minas gerais':true,'para':true,'paraiba':true,'parana':true,'pernambuco':true,'piaui':true,'rio de janeiro':true,'rio grande do norte':true,'rio grande do sul':true,'rondonia':true,'roraima':true,'santa catarina':true,'sao paulo':true,'sergipe':true,'tocantins':true};
+    const normalizedRegionCheck = cleanRegion.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+    const isStateOnlySearch = brazilianStateAbbrevs.includes(normalizedRegionCheck) || brazilianStateNames[normalizedRegionCheck] === true;
+    
     console.log('📍 Location:', locationQuery);
     console.log('🏢 Business type:', bizType);
     console.log('📱 WhatsApp only:', filterWhatsappOnly);
     console.log('🏛️ Receita Federal only:', filterReceitaFederal);
+    console.log('🗺️ State-only search:', isStateOnlySearch);
     
     // ===== GOOGLE PLACES API KEY =====
     const GOOGLE_PLACES_API_KEY = Deno.env.get("GOOGLE_PLACES_API_KEY");
@@ -1727,13 +1746,14 @@ serve(async (req) => {
       console.error("⚠️ Error fetching user limits:", e);
     }
 
-    const MAX_TOTAL_LEADS = userMaxLeads || 187;
-    const MIN_LEADS_TARGET = 70;
-    const TARGET_LEADS = 80;
-    const MAX_TARGET_LEADS = 90;
-    const MIN_LEADS_EARLY_EXIT = 95;
+    // State-only searches get much higher limits (up to 3000)
+    const MAX_TOTAL_LEADS = userMaxLeads || (isStateOnlySearch ? 3000 : 187);
+    const MIN_LEADS_TARGET = isStateOnlySearch ? 200 : 70;
+    const TARGET_LEADS = isStateOnlySearch ? 500 : 80;
+    const MAX_TARGET_LEADS = isStateOnlySearch ? 1000 : 90;
+    const MIN_LEADS_EARLY_EXIT = isStateOnlySearch ? 1500 : 95;
     
-    console.log(`📊 Lead limits: max=${MAX_TOTAL_LEADS}, target=${TARGET_LEADS}`);
+    console.log(`📊 Lead limits: max=${MAX_TOTAL_LEADS}, target=${TARGET_LEADS}, stateSearch=${isStateOnlySearch}`);
 
     // Function to search places using Google Places API (New)
     async function searchPlaces(query: string, location: string, _maxPages: number = 3): Promise<any[]> {
@@ -1847,10 +1867,12 @@ serve(async (req) => {
     console.log('📋 Segment display names:', segmentDisplayNames);
     
     // Search each segment separately and tag results with their segment
-    // MAXIMUM page limits for maximum leads
+    // State-only searches get much more aggressive pagination
     let allPlacesWithSegment: any[] = [];
-    const pagesPerSegment = Math.max(12, Math.min(20, Math.floor(60 / segments.length))); // Increased to 12-20 pages
-    console.log(`⚡ MAXIMUM VOLUME: ${pagesPerSegment} pages per segment (${segments.length} segments)`);
+    const basePagesPerSegment = isStateOnlySearch ? 20 : 12;
+    const maxPagesPerSegment = isStateOnlySearch ? 40 : 20;
+    const pagesPerSegment = Math.max(basePagesPerSegment, Math.min(maxPagesPerSegment, Math.floor((isStateOnlySearch ? 120 : 60) / segments.length)));
+    console.log(`⚡ ${isStateOnlySearch ? 'STATE SEARCH - ULTRA' : 'MAXIMUM'} VOLUME: ${pagesPerSegment} pages per segment (${segments.length} segments)`);
     
     for (const seg of segments) {
       let searchTerms: string[];

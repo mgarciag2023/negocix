@@ -198,6 +198,7 @@ const Configuration = () => {
     "Usinagens",
     "Estruturas Metálicas",
     "Fabricantes de Máquinas e Equipamentos",
+    "Distribuidores de Aço e Ferro",
     // Setor Produtos Naturais / Orgânicos
     "Lojas de Produtos Naturais",
     "Empórios Naturais",
