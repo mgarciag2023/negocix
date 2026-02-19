@@ -1746,12 +1746,12 @@ serve(async (req) => {
       console.error("⚠️ Error fetching user limits:", e);
     }
 
-    // State-only searches get higher limits (up to 521)
-    const MAX_TOTAL_LEADS = userMaxLeads || (isStateOnlySearch ? 521 : 187);
-    const MIN_LEADS_TARGET = isStateOnlySearch ? 150 : 70;
-    const TARGET_LEADS = isStateOnlySearch ? 300 : 80;
-    const MAX_TARGET_LEADS = isStateOnlySearch ? 450 : 90;
-    const MIN_LEADS_EARLY_EXIT = isStateOnlySearch ? 500 : 95;
+    // State-only searches get higher limits (up to 347)
+    const MAX_TOTAL_LEADS = userMaxLeads || (isStateOnlySearch ? 347 : 187);
+    const MIN_LEADS_TARGET = isStateOnlySearch ? 100 : 70;
+    const TARGET_LEADS = isStateOnlySearch ? 200 : 80;
+    const MAX_TARGET_LEADS = isStateOnlySearch ? 300 : 90;
+    const MIN_LEADS_EARLY_EXIT = isStateOnlySearch ? 340 : 95;
     
     console.log(`📊 Lead limits: max=${MAX_TOTAL_LEADS}, target=${TARGET_LEADS}, stateSearch=${isStateOnlySearch}`);
 
