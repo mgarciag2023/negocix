@@ -145,9 +145,9 @@ function generateSearchTerms(segment: string): string[] {
     'pet shops': ['pet shop', 'petshop', 'pet center', 'loja de animais'],
     'loja de ração pet': ['loja de ração', 'ração pet', 'ração animal', 'ração para cães', 'ração para gatos', 'pet shop ração', 'agropet', 'casa de ração'],
     'lojas de cama, mesa e banho': ['cama mesa banho', 'enxoval', 'loja de enxovais', 'casa de enxovais', 'toalhas', 'lençóis', 'edredom', 'colchas', 'tapetes', 'cortinas', 'roupa de cama', 'artigos de cama', 'jogos de cama'],
-    'lojas de utilidades domésticas': ['utilidades domésticas', 'artigos para casa', 'casa e cozinha', 'loja de panelas', 'artigos domésticos', 'loja de plásticos', 'utensílios domésticos', 'loja de casa', 'artigos para cozinha', 'bazar doméstico'],
-    'lojas de utilidades': ['loja de utilidades', 'bazar', 'loja 1,99', 'loja de variedades', 'tudo a 10', 'loja de presentes', 'armarinho', 'loja de R$', 'loja de 1 real', 'loja de desconto', 'loja popular'],
-    'utilidades domésticas': ['utilidades domésticas', 'artigos para casa', 'casa e cozinha', 'loja de panelas', 'artigos domésticos', 'utensílios domésticos', 'bazar doméstico'],
+    'lojas de utilidades domésticas': ['utilidades domésticas', 'artigos para casa', 'casa e cozinha', 'loja de panelas', 'artigos domésticos', 'loja de plásticos', 'utensílios domésticos', 'loja de casa', 'artigos para cozinha', 'bazar doméstico', 'artigos importados', 'utilidades importadas', 'produtos importados para casa', 'loja de importados', 'bazar importados', 'loja de presentes', 'artigos para o lar', 'loja de artigos para casa', 'casa e decoração', 'loja de organização', 'loja de banheiro e cozinha'],
+    'lojas de utilidades': ['loja de utilidades', 'bazar', 'loja 1,99', 'loja de variedades', 'tudo a 10', 'loja de presentes', 'armarinho', 'loja de R$', 'loja de 1 real', 'loja de desconto', 'loja popular', 'loja de importados', 'utilidades importadas', 'bazar importados', 'loja chinesa', 'produtos importados', 'tudo a 1 real', 'loja a partir de', 'loja multi', 'loja de brinde', 'brindes e presentes'],
+    'utilidades domésticas': ['utilidades domésticas', 'artigos para casa', 'casa e cozinha', 'loja de panelas', 'artigos domésticos', 'utensílios domésticos', 'bazar doméstico', 'artigos importados', 'utilidades importadas', 'bazar importados', 'loja de importados'],
     'cama mesa e banho': ['cama mesa banho', 'enxoval', 'loja de enxovais', 'casa de enxovais', 'toalhas', 'lençóis', 'edredom'],
     // Têxtil e Uniformes - OTIMIZADO
     'fábricas de uniformes': ['fábrica de uniformes', 'confecção de uniformes', 'indústria de uniformes', 'uniformes profissionais', 'uniformes escolares', 'uniformes corporativos', 'uniformes industriais', 'uniformes esportivos', 'malharia uniformes', 'confecção profissional'],
@@ -165,8 +165,8 @@ function generateSearchTerms(segment: string): string[] {
     'estruturas metálicas': ['estruturas metálicas', 'estrutura metálica', 'galpão metálico', 'cobertura metálica', 'montagem estrutural', 'serralheria industrial', 'steel frame', 'mezanino metálico', 'escadas metálicas', 'passarelas metálicas', 'portões industriais', 'grades metálicas', 'gradis', 'estrutura de aço', 'construção metálica', 'montagem de galpão', 'barracão metálico', 'serralheria de obras'],
     'fabricantes de máquinas e equipamentos': ['fábrica de máquinas', 'fabricante de equipamentos', 'máquinas industriais', 'equipamentos industriais', 'indústria de máquinas', 'máquinas e equipamentos', 'fabricante de máquinas', 'equipamentos sob medida', 'máquinas especiais', 'automação industrial', 'linha de produção', 'equipamentos para indústria', 'máquinas para alimentos', 'máquinas para embalagem', 'equipamentos metalúrgicos', 'máquinas agrícolas', 'implementos', 'fabricação de equipamentos'],
     'lojas de roupas': ['loja de roupas', 'vestuário', 'boutique', 'moda'],
-    'autopeças': ['autopeças', 'peças automotivas', 'auto peças', 'loja de autopeças', 'casa de autopeças', 'peças para carros', 'peças para veículos', 'auto center peças', 'peças e acessórios automotivos', 'retífica de motores', 'peças de reposição', 'rolamentos automotivos', 'auto elétrica', 'peças para caminhão', 'peças para moto', 'acessórios automotivos'],
-    'distribuidores de autopeças': ['distribuidora de autopeças', 'distribuidor de autopeças', 'atacado de autopeças', 'distribuidora de peças automotivas', 'atacado peças automotivas', 'distribuidor peças para veículos', 'atacadista de autopeças', 'distribuidora de peças para carros', 'distribuidora de peças para caminhões', 'importadora de autopeças', 'fornecedor de autopeças'],
+    'autopeças': ['autopeças', 'auto peças', 'loja de autopeças', 'casa de autopeças', 'peças automotivas', 'peças para carros', 'peças para veículos', 'auto center', 'retífica de motores', 'peças de reposição', 'rolamentos', 'auto elétrica', 'peças para caminhão', 'peças para moto', 'acessórios automotivos', 'peças e acessórios', 'peças para carro', 'freios', 'suspensão automotiva', 'amortecedores', 'filtros automotivos', 'escapamentos', 'radiadores', 'embreagem', 'correias', 'velas de ignição', 'baterias automotivas', 'pneus e rodas', 'motor de arranque', 'alternador'],
+    'distribuidores de autopeças': ['distribuidora de autopeças', 'distribuidor de autopeças', 'atacado de autopeças', 'distribuidora de peças automotivas', 'atacado peças automotivas', 'distribuidor peças para veículos', 'atacadista de autopeças', 'distribuidora de peças para carros', 'distribuidora de peças para caminhões', 'importadora de autopeças', 'fornecedor de autopeças', 'distribuidora de peças', 'peças importadas', 'autopeças importadas', 'peças genuínas', 'peças originais', 'atacado de peças'],
     'eletrônicos': ['eletrônicos', 'informática', 'loja de eletrônicos', 'assistência técnica eletrônica'],
     'móveis': ['móveis', 'móveis planejados', 'loja de móveis', 'marcenaria'],
     'óticas': ['ótica', 'óculos', 'loja de óculos', 'óptica'],
@@ -257,6 +257,13 @@ function generateSearchTerms(segment: string): string[] {
     'empresas de energia solar': ['energia solar', 'solar fotovoltaica', 'instalação solar', 'empresa de energia solar', 'painel solar'],
     'distribuidores de aço e ferro': ['distribuidora de aço', 'distribuidor de ferro', 'ferro e aço', 'depósito de ferro', 'comércio de aço', 'distribuidora de ferro', 'aço e ferro', 'distribuidora de metais', 'ferro para construção', 'vergalhão', 'chapas de aço', 'metalon', 'tubo de aço', 'perfilados', 'cantoneira', 'viga de aço', 'barra de ferro'],
     'serralherias': ['serralheria', 'serralheiro', 'portões', 'grades', 'esquadrias metálicas', 'estruturas metálicas', 'portão de ferro', 'grade de ferro', 'corrimão', 'escada de ferro', 'serralheria artística', 'serralheria industrial', 'portão automático', 'gradil', 'portão basculante'],
+    // Cartonagem
+    'cartonagem': ['cartonagem', 'caixas de papelão', 'embalagens de papelão', 'fábrica de caixas', 'indústria de caixas', 'caixas cartonadas', 'papelão ondulado', 'cartonaria', 'embalagem cartonada', 'caixa de papelão', 'embalagem de papel cartão', 'papel cartão'],
+    // Comida Japonesa / Oriental / Sushi
+    'restaurantes japoneses': ['restaurante japonês', 'comida japonesa', 'culinária japonesa', 'sushi', 'sashimi', 'temaki', 'yakisoba', 'teppanyaki', 'izakaya', 'ramen', 'udon', 'japanese restaurant', 'japa'],
+    'sushi bars': ['sushi bar', 'sushi', 'sushiman', 'sushi delivery', 'sushi express', 'sushi house', 'sushi place', 'rodízio de sushi', 'sushi rotativo', 'japa'],
+    'restaurantes orientais': ['restaurante oriental', 'comida oriental', 'culinária oriental', 'comida chinesa', 'restaurante chinês', 'comida tailandesa', 'comida coreana', 'restaurante asiático', 'wok', 'dim sum', 'yakisoba'],
+    'temakerias': ['temakeria', 'temaki', 'temaki delivery', 'hand roll', 'sushi temaki', 'temaki bar'],
   };
   
   let searchTerms = categoryTerms[term] || null;
@@ -915,11 +922,11 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     exclude: ['roupa', 'supermercado', 'restaurante', 'ótica', 'joalheria', 'salão', 'academia', 'hotel']
   },
   'autopeças': {
-    include: ['autopeça', 'auto peça', 'peça automotiva', 'peças automotivas', 'auto peças', 'peças para carro', 'peças veículos', 'auto center', 'auto elétrica', 'retífica', 'rolamento', 'freio', 'suspensão', 'motor', 'câmbio', 'embreagem', 'radiador', 'escapamento', 'amortecedor', 'filtro automotivo', 'peças caminhão', 'peças moto', 'acessórios automotivos'],
+    include: ['autopeça', 'auto peça', 'peça automotiva', 'peças automotivas', 'auto peças', 'peças para carro', 'peças veículos', 'auto center', 'auto elétrica', 'retífica', 'rolamento', 'freio', 'suspensão', 'motor', 'câmbio', 'embreagem', 'radiador', 'escapamento', 'amortecedor', 'filtro automotivo', 'peças caminhão', 'peças moto', 'acessórios automotivos', 'autopeças', 'peças e acessórios', 'bateria automotiva', 'pneu', 'correia', 'vela de ignição', 'alternador', 'motor de arranque', 'bomba de combustível', 'disco de freio', 'pastilha de freio', 'junta homocinética', 'kit de embreagem', 'turbina', 'bico injetor'],
     exclude: ['roupa', 'alimento', 'supermercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'padaria', 'farmácia']
   },
   'distribuidores de autopeças': {
-    include: ['distribuidora', 'distribuidor', 'atacado', 'autopeça', 'peça automotiva', 'peças automotivas', 'auto peças', 'importadora', 'fornecedor', 'peças para veículos', 'peças para carros', 'peças para caminhões'],
+    include: ['distribuidora', 'distribuidor', 'atacado', 'autopeça', 'peça automotiva', 'peças automotivas', 'auto peças', 'importadora', 'fornecedor', 'peças para veículos', 'peças para carros', 'peças para caminhões', 'peças importadas', 'autopeças importadas', 'peças genuínas', 'peças originais', 'atacado de peças', 'distribuidora de peças'],
     exclude: ['roupa', 'alimento', 'supermercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'padaria', 'farmácia']
   },
   'oficinas mecânicas': {
