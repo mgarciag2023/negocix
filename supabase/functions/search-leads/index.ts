@@ -1755,6 +1755,50 @@ serve(async (req) => {
     
     console.log(`📊 Lead limits: max=${MAX_TOTAL_LEADS}, target=${TARGET_LEADS}, stateSearch=${isStateOnlySearch}`);
 
+    // Major cities by state for expanded state searches
+    const stateCities: { [key: string]: string[] } = {
+      'ac': ['Rio Branco', 'Cruzeiro do Sul'],
+      'al': ['Maceió', 'Arapiraca'],
+      'ap': ['Macapá', 'Santana'],
+      'am': ['Manaus', 'Parintins'],
+      'ba': ['Salvador', 'Feira de Santana', 'Vitória da Conquista', 'Camaçari', 'Itabuna', 'Lauro de Freitas', 'Ilhéus', 'Juazeiro', 'Barreiras'],
+      'ce': ['Fortaleza', 'Caucaia', 'Juazeiro do Norte', 'Maracanaú', 'Sobral', 'Crato'],
+      'df': ['Brasília', 'Taguatinga', 'Ceilândia', 'Samambaia'],
+      'es': ['Vitória', 'Vila Velha', 'Serra', 'Cariacica', 'Linhares', 'Cachoeiro de Itapemirim'],
+      'go': ['Goiânia', 'Aparecida de Goiânia', 'Anápolis', 'Rio Verde', 'Luziânia'],
+      'ma': ['São Luís', 'Imperatriz', 'Timon'],
+      'mt': ['Cuiabá', 'Várzea Grande', 'Rondonópolis', 'Sinop'],
+      'ms': ['Campo Grande', 'Dourados', 'Três Lagoas'],
+      'mg': ['Belo Horizonte', 'Uberlândia', 'Contagem', 'Juiz de Fora', 'Betim', 'Montes Claros', 'Ribeirão das Neves', 'Uberaba', 'Governador Valadares', 'Ipatinga', 'Sete Lagoas', 'Divinópolis', 'Santa Luzia', 'Poços de Caldas'],
+      'pa': ['Belém', 'Ananindeua', 'Santarém', 'Marabá'],
+      'pb': ['João Pessoa', 'Campina Grande'],
+      'pr': ['Curitiba', 'Londrina', 'Maringá', 'Ponta Grossa', 'Cascavel', 'São José dos Pinhais', 'Foz do Iguaçu', 'Colombo', 'Guarapuava', 'Paranaguá'],
+      'pe': ['Recife', 'Jaboatão dos Guararapes', 'Olinda', 'Caruaru', 'Petrolina', 'Paulista'],
+      'pi': ['Teresina', 'Parnaíba'],
+      'rj': ['Rio de Janeiro', 'São Gonçalo', 'Duque de Caxias', 'Nova Iguaçu', 'Niterói', 'Belford Roxo', 'Campos dos Goytacazes', 'Petrópolis', 'Volta Redonda', 'Macaé'],
+      'rn': ['Natal', 'Mossoró', 'Parnamirim'],
+      'rs': ['Porto Alegre', 'Caxias do Sul', 'Pelotas', 'Canoas', 'Santa Maria', 'Gravataí', 'Viamão', 'Novo Hamburgo', 'São Leopoldo', 'Rio Grande', 'Alvorada', 'Passo Fundo', 'Sapucaia do Sul', 'Uruguaiana', 'Santa Cruz do Sul', 'Cachoeirinha', 'Bagé', 'Bento Gonçalves', 'Erechim', 'Lajeado'],
+      'ro': ['Porto Velho', 'Ji-Paraná'],
+      'rr': ['Boa Vista'],
+      'sc': ['Florianópolis', 'Joinville', 'Blumenau', 'São José', 'Chapecó', 'Criciúma', 'Itajaí', 'Jaraguá do Sul', 'Lages', 'Palhoça', 'Balneário Camboriú'],
+      'sp': ['São Paulo', 'Guarulhos', 'Campinas', 'São Bernardo do Campo', 'Santo André', 'Osasco', 'São José dos Campos', 'Ribeirão Preto', 'Sorocaba', 'Santos', 'São José do Rio Preto', 'Mogi das Cruzes', 'Diadema', 'Jundiaí', 'Piracicaba', 'Bauru', 'Mauá', 'Carapicuíba', 'Limeira', 'Taubaté'],
+      'se': ['Aracaju', 'Nossa Senhora do Socorro'],
+      'to': ['Palmas', 'Araguaína'],
+    };
+
+    // Resolve state abbreviation from region
+    const stateAbbrev = normalizedRegionCheck.length === 2 ? normalizedRegionCheck : 
+      Object.entries({
+        'acre':'ac','alagoas':'al','amapa':'ap','amazonas':'am','bahia':'ba','ceara':'ce',
+        'distrito federal':'df','espirito santo':'es','goias':'go','maranhao':'ma',
+        'mato grosso':'mt','mato grosso do sul':'ms','minas gerais':'mg','para':'pa',
+        'paraiba':'pb','parana':'pr','pernambuco':'pe','piaui':'pi','rio de janeiro':'rj',
+        'rio grande do norte':'rn','rio grande do sul':'rs','rondonia':'ro','roraima':'rr',
+        'santa catarina':'sc','sao paulo':'sp','sergipe':'se','tocantins':'to'
+      }).find(([name]) => name === normalizedRegionCheck)?.[1] || '';
+    
+    const citiesForState = isStateOnlySearch && stateAbbrev ? (stateCities[stateAbbrev] || []) : [];
+
     // Function to search places using Google Places API (New)
     async function searchPlaces(query: string, location: string, _maxPages: number = 3): Promise<any[]> {
       const searchCache = searchCacheGlobal;
@@ -1867,47 +1911,95 @@ serve(async (req) => {
     console.log('📋 Segment display names:', segmentDisplayNames);
     
     // Search each segment separately and tag results with their segment
-    // State-only searches get much more aggressive pagination
     let allPlacesWithSegment: any[] = [];
-    const basePagesPerSegment = isStateOnlySearch ? 20 : 12;
-    const maxPagesPerSegment = isStateOnlySearch ? 40 : 20;
-    const pagesPerSegment = Math.max(basePagesPerSegment, Math.min(maxPagesPerSegment, Math.floor((isStateOnlySearch ? 120 : 60) / segments.length)));
-    console.log(`⚡ ${isStateOnlySearch ? 'STATE SEARCH - ULTRA' : 'MAXIMUM'} VOLUME: ${pagesPerSegment} pages per segment (${segments.length} segments)`);
+    const pagesPerSegment = isStateOnlySearch ? 3 : 12;
     
-    for (const seg of segments) {
-      let searchTerms: string[];
+    if (isStateOnlySearch && citiesForState.length > 0) {
+      // STATE SEARCH: Search by individual cities for much better coverage
+      console.log(`🏙️ STATE SEARCH: Searching across ${citiesForState.length} cities in ${stateAbbrev.toUpperCase()}`);
       
-      if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
-        const ecomType = ecommerceType.trim().toLowerCase();
-        // OPTIMIZATION: 3 terms for e-commerce for better coverage
-        searchTerms = [`loja ${ecomType}`, `${ecomType}`, `loja de ${ecomType}`];
-        console.log(`🛒 E-commerce específico: ${ecomType}`);
-      } else {
-        searchTerms = generateSearchTerms(seg);
-        // MAXIMUM VOLUME: Use up to 6 terms per segment for maximum coverage
-        searchTerms = searchTerms.slice(0, 6);
+      for (const seg of segments) {
+        let searchTerms: string[];
+        
+        if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
+          const ecomType = ecommerceType.trim().toLowerCase();
+          searchTerms = [`loja ${ecomType}`, `${ecomType}`, `loja de ${ecomType}`];
+        } else {
+          searchTerms = generateSearchTerms(seg);
+          searchTerms = searchTerms.slice(0, 4); // Use top 4 terms per segment
+        }
+        
+        console.log(`📤 Searching segment "${seg}" with terms:`, searchTerms);
+        
+        // Search all cities in parallel batches (max 5 cities at a time to avoid overwhelming the API)
+        const batchSize = 5;
+        for (let i = 0; i < citiesForState.length; i += batchSize) {
+          const cityBatch = citiesForState.slice(i, i + batchSize);
+          
+          const cityPromises = cityBatch.flatMap(city => {
+            const cityLocation = `${city}, ${stateAbbrev.toUpperCase()}, Brazil`;
+            return searchTerms.map(term => searchPlaces(term, cityLocation, pagesPerSegment));
+          });
+          
+          const cityResults = await Promise.all(cityPromises);
+          
+          const placesFromBatch = cityResults.flat().map(place => ({
+            ...place,
+            _searchSegment: seg.toLowerCase(),
+            _displayCategory: segmentDisplayNames[seg.toLowerCase()] || seg
+          }));
+          
+          allPlacesWithSegment.push(...placesFromBatch);
+          
+          console.log(`📊 Cities batch ${Math.floor(i/batchSize)+1}: +${placesFromBatch.length} places (total: ${allPlacesWithSegment.length})`);
+          
+          // Early exit if we have enough raw results
+          if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 5) {
+            console.log(`⚡ Enough raw places (${allPlacesWithSegment.length}), stopping city search`);
+            break;
+          }
+        }
+        
+        console.log(`📊 Segment "${seg}": ${allPlacesWithSegment.length} raw places after city search`);
+        
+        if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 5) break;
       }
+    } else {
+      // CITY/REGION SEARCH: Original behavior
+      const maxPagesPerSegment = 20;
+      const adjustedPages = Math.max(12, Math.min(maxPagesPerSegment, Math.floor(60 / segments.length)));
+      console.log(`⚡ MAXIMUM VOLUME: ${adjustedPages} pages per segment (${segments.length} segments)`);
       
-      console.log(`📤 Searching segment "${seg}" with terms:`, searchTerms);
-      
-      // OPTIMIZATION: Search terms in parallel with dynamic page limit
-      const searchPromises = searchTerms.map(term => searchPlaces(term, locationQuery, pagesPerSegment));
-      const searchResults = await Promise.all(searchPromises);
-      
-      // Tag each place with its segment
-      const placesFromSegment = searchResults.flat().map(place => ({
-        ...place,
-        _searchSegment: seg.toLowerCase(),
-        _displayCategory: segmentDisplayNames[seg.toLowerCase()] || seg
-      }));
-      
-      allPlacesWithSegment.push(...placesFromSegment);
-      console.log(`📊 Segment "${seg}": ${placesFromSegment.length} raw places`);
-      
-      // MAXIMUM VOLUME: Higher threshold before early exit
-      if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 8) {
-        console.log(`⚡ Enough raw places (${allPlacesWithSegment.length}), skipping remaining segments`);
-        break;
+      for (const seg of segments) {
+        let searchTerms: string[];
+        
+        if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
+          const ecomType = ecommerceType.trim().toLowerCase();
+          searchTerms = [`loja ${ecomType}`, `${ecomType}`, `loja de ${ecomType}`];
+          console.log(`🛒 E-commerce específico: ${ecomType}`);
+        } else {
+          searchTerms = generateSearchTerms(seg);
+          searchTerms = searchTerms.slice(0, 6);
+        }
+        
+        console.log(`📤 Searching segment "${seg}" with terms:`, searchTerms);
+        
+        const searchPromises = searchTerms.map(term => searchPlaces(term, locationQuery, adjustedPages));
+        const searchResults = await Promise.all(searchPromises);
+        
+        const placesFromSegment = searchResults.flat().map(place => ({
+          ...place,
+          _searchSegment: seg.toLowerCase(),
+          _displayCategory: segmentDisplayNames[seg.toLowerCase()] || seg
+        }));
+        
+        allPlacesWithSegment.push(...placesFromSegment);
+        console.log(`📊 Segment "${seg}": ${placesFromSegment.length} raw places`);
+        
+        if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 8) {
+          console.log(`⚡ Enough raw places (${allPlacesWithSegment.length}), skipping remaining segments`);
+          break;
+        }
       }
     }
     
