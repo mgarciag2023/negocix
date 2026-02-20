@@ -248,6 +248,24 @@ const Configuration = () => {
     "Sushi Bars",
     "Restaurantes Orientais",
     "Temakerias",
+    // Presentes, Perfumaria e Casa
+    "Lojas de Presentes de Alto Padrão",
+    "Perfumarias",
+    // Restaurantes e Eventos Premium
+    "Restaurantes Premium",
+    "Buffets de Festas",
+    "Empresas de Locação de Materiais para Eventos",
+    // Industrial e Mineração
+    "Indústrias de Mineração",
+    "Indústrias Sucroalcooleiras",
+    // Autopeças especializadas
+    "Autopeças de Vans e Utilitários",
+    "E-commerces de Peças Automotivas",
+    // E-commerces especializados
+    "E-commerces de Utilidades Domésticas",
+    "E-commerces de Perfumaria e Casa",
+    "E-commerces de Sabonetes",
+    "E-commerces de Presentes Finos",
   ].sort(); // Ordenação alfabética
 
   const handleCustomerToggle = (customer: string) => {
