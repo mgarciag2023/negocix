@@ -264,6 +264,32 @@ function generateSearchTerms(segment: string): string[] {
     'sushi bars': ['sushi bar', 'sushi', 'sushiman', 'sushi delivery', 'sushi express', 'sushi house', 'sushi place', 'rodízio de sushi', 'sushi rotativo', 'japa'],
     'restaurantes orientais': ['restaurante oriental', 'comida oriental', 'culinária oriental', 'comida chinesa', 'restaurante chinês', 'comida tailandesa', 'comida coreana', 'restaurante asiático', 'wok', 'dim sum', 'yakisoba'],
     'temakerias': ['temakeria', 'temaki', 'temaki delivery', 'hand roll', 'sushi temaki', 'temaki bar'],
+    // Presentes de alto padrão
+    'lojas de presentes de alto padrão': ['loja de presentes', 'presentes finos', 'presentes de luxo', 'gift shop', 'loja de presentes importados', 'presentes corporativos', 'artigos de luxo', 'loja de decoração', 'cristais', 'porcelana fina', 'presentes sofisticados', 'loja de presentes premium'],
+    // Perfumarias
+    'perfumarias': ['perfumaria', 'perfume', 'loja de perfumes', 'fragrâncias', 'cosméticos e perfumes', 'importados perfumes', 'perfumaria importada', 'loja de cosméticos', 'beleza e perfumaria', 'casa de perfumes', 'essências', 'aromatizadores'],
+    // Restaurantes Premium
+    'restaurantes premium': ['restaurante premium', 'restaurante fino', 'restaurante de luxo', 'gastronomia', 'haute cuisine', 'fine dining', 'bistrô', 'chef', 'restaurante gourmet', 'restaurante sofisticado', 'alta gastronomia', 'restaurante executivo'],
+    // Buffets de Festas
+    'buffets de festas': ['buffet de festas', 'buffet infantil', 'espaço para eventos', 'salão de festas', 'casa de festas', 'buffet', 'eventos e festas', 'cerimonial', 'festa infantil', 'decoração de festas', 'buffet casamento'],
+    // Locação de materiais para eventos
+    'empresas de locação de materiais para eventos': ['locação de materiais para eventos', 'aluguel de mesas e cadeiras', 'locação de toalhas', 'aluguel de louças', 'locação para festas', 'aluguel de tendas', 'locação de equipamentos para eventos', 'aluguel de mobiliário', 'locação de som e iluminação', 'aluguel de decoração'],
+    // Indústrias de Mineração
+    'indústrias de mineração': ['mineração', 'mineradora', 'mina', 'extração mineral', 'indústria de mineração', 'minério', 'beneficiamento mineral', 'lavra', 'garimpo', 'pedreira', 'britagem', 'extração de areia', 'cascalho', 'minerais', 'jazida'],
+    // Indústrias Sucroalcooleiras
+    'indústrias sucroalcooleiras': ['usina de açúcar', 'usina de etanol', 'sucroalcooleira', 'usina sucroalcooleira', 'destilaria', 'cana-de-açúcar', 'indústria sucroalcooleira', 'usina de álcool', 'usina de cana', 'bioenergia', 'cogeração', 'bagaço de cana', 'açúcar e álcool'],
+    // Autopeças de Vans e Utilitários
+    'autopeças de vans e utilitários': ['autopeças van', 'peças para van', 'peças para utilitários', 'peças fiat ducato', 'peças sprinter', 'peças master', 'peças iveco', 'peças para furgão', 'peças para veículos utilitários', 'autopeças importadas', 'peças para veículos importados', 'peças land rover', 'peças bmw', 'peças mercedes', 'autopeças para vans', 'peças para hr', 'peças para bongo'],
+    // E-commerces de Peças Automotivas
+    'e-commerces de peças automotivas': ['loja online autopeças', 'e-commerce autopeças', 'autopeças online', 'peças automotivas online', 'loja virtual autopeças', 'autopeças delivery', 'autopeças internet', 'peças para carro online', 'comprar autopeças'],
+    // E-commerces de UD
+    'e-commerces de utilidades domésticas': ['loja online utilidades domésticas', 'e-commerce casa e cozinha', 'utilidades domésticas online', 'artigos para casa online', 'loja virtual utilidades', 'panelas online', 'utensílios online', 'casa e decoração online'],
+    // E-commerces de Perfumaria e Casa
+    'e-commerces de perfumaria e casa': ['loja online perfumaria', 'e-commerce aromatizadores', 'perfumaria online', 'aromatizadores online', 'velas aromáticas online', 'home spray', 'difusor de ambiente', 'perfumaria de casa online', 'loja virtual perfumaria'],
+    // E-commerces de Sabonetes
+    'e-commerces de sabonetes': ['loja online sabonetes', 'e-commerce sabonetes artesanais', 'sabonetes online', 'sabonetes artesanais', 'cosméticos naturais online', 'sabonetes veganos', 'saboaria', 'saboaria artesanal', 'loja virtual sabonetes'],
+    // E-commerces de Presentes Finos
+    'e-commerces de presentes finos': ['loja online presentes', 'e-commerce presentes finos', 'presentes online', 'presentes de luxo online', 'gift shop online', 'presentes corporativos online', 'loja virtual presentes', 'presentes importados online'],
   };
   
   let searchTerms = categoryTerms[term] || null;
@@ -1175,6 +1201,73 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     include: ['distribuidora de alimentos', 'distribuidor de alimentos', 'atacado alimentos', 'alimentos atacado', 'alimentos distribuidor'],
     mustMatch: ['alimentos', 'alimentício', 'food service', 'horeca'],
     exclude: ['restaurante', 'lanchonete', 'bar', 'padaria', 'confeitaria', 'hotel', 'farmácia', 'roupa']
+  },
+  // Presentes de Alto Padrão
+  'lojas de presentes de alto padrão': {
+    include: ['presentes', 'gift', 'cristais', 'porcelana', 'luxo', 'decoração', 'importados', 'presentes finos', 'presentes corporativos', 'artigos de luxo', 'loja de presentes'],
+    exclude: ['supermercado', 'restaurante', 'lanchonete', 'farmácia', 'construção', 'autopeças', 'pet']
+  },
+  // Perfumarias
+  'perfumarias': {
+    include: ['perfumaria', 'perfume', 'fragrância', 'cosmético', 'beleza', 'importados', 'essência', 'aromatizador', 'beauty', 'make up', 'maquiagem'],
+    exclude: ['supermercado', 'restaurante', 'lanchonete', 'farmácia', 'construção', 'autopeças', 'pet']
+  },
+  // Restaurantes Premium
+  'restaurantes premium': {
+    include: ['restaurante', 'gastronomia', 'gourmet', 'fine dining', 'bistrô', 'chef', 'haute cuisine', 'premium', 'sofisticado', 'executivo', 'alta gastronomia'],
+    exclude: ['lanchonete', 'fast food', 'supermercado', 'mercado', 'pet', 'construção', 'autopeças']
+  },
+  // Buffets de Festas
+  'buffets de festas': {
+    include: ['buffet', 'festas', 'eventos', 'salão de festas', 'casa de festas', 'cerimonial', 'festa infantil', 'casamento', 'aniversário', 'decoração de festas', 'espaço para eventos'],
+    exclude: ['supermercado', 'mercado', 'farmácia', 'autopeças', 'pet', 'construção']
+  },
+  // Locação de Materiais para Eventos
+  'empresas de locação de materiais para eventos': {
+    include: ['locação', 'aluguel', 'mesas', 'cadeiras', 'toalhas', 'louças', 'tendas', 'festas', 'eventos', 'mobiliário', 'som', 'iluminação', 'decoração'],
+    exclude: ['supermercado', 'mercado', 'farmácia', 'autopeças', 'pet', 'restaurante', 'lanchonete']
+  },
+  // Indústrias de Mineração
+  'indústrias de mineração': {
+    include: ['mineração', 'mineradora', 'mina', 'extração', 'minério', 'beneficiamento', 'lavra', 'garimpo', 'pedreira', 'britagem', 'areia', 'cascalho', 'minerais', 'jazida', 'mining'],
+    mustMatch: [],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'escola', 'academia']
+  },
+  // Indústrias Sucroalcooleiras
+  'indústrias sucroalcooleiras': {
+    include: ['usina', 'açúcar', 'etanol', 'sucroalcooleira', 'destilaria', 'cana-de-açúcar', 'cana', 'álcool', 'bioenergia', 'cogeração', 'bagaço', 'sucro'],
+    mustMatch: [],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'escola', 'academia']
+  },
+  // Autopeças de Vans e Utilitários
+  'autopeças de vans e utilitários': {
+    include: ['autopeça', 'auto peça', 'peças', 'van', 'utilitário', 'ducato', 'sprinter', 'master', 'iveco', 'furgão', 'importado', 'land rover', 'bmw', 'mercedes', 'hr', 'bongo', 'veículos importados', 'peças importadas'],
+    exclude: ['roupa', 'alimento', 'supermercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'padaria', 'farmácia']
+  },
+  // E-commerces de Peças Automotivas
+  'e-commerces de peças automotivas': {
+    include: ['autopeça', 'auto peça', 'peças automotivas', 'online', 'loja virtual', 'e-commerce', 'delivery', 'internet', 'peças para carro', 'peças veículos'],
+    exclude: ['roupa', 'alimento', 'supermercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'padaria', 'farmácia']
+  },
+  // E-commerces de UD
+  'e-commerces de utilidades domésticas': {
+    include: ['utilidades', 'domésticas', 'casa', 'cozinha', 'panelas', 'utensílios', 'online', 'loja virtual', 'e-commerce', 'artigos para casa', 'decoração'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'autopeças', 'pet', 'farmácia', 'construção']
+  },
+  // E-commerces de Perfumaria e Casa
+  'e-commerces de perfumaria e casa': {
+    include: ['perfumaria', 'aromatizador', 'velas', 'aromáticas', 'home spray', 'difusor', 'ambiente', 'online', 'loja virtual', 'e-commerce', 'fragrância', 'essência'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'autopeças', 'pet', 'farmácia', 'construção', 'supermercado']
+  },
+  // E-commerces de Sabonetes
+  'e-commerces de sabonetes': {
+    include: ['sabonete', 'saboaria', 'artesanal', 'cosméticos naturais', 'vegano', 'online', 'loja virtual', 'e-commerce', 'sabão', 'banho', 'corpo'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'autopeças', 'pet', 'farmácia', 'construção', 'supermercado']
+  },
+  // E-commerces de Presentes Finos
+  'e-commerces de presentes finos': {
+    include: ['presentes', 'gift', 'luxo', 'finos', 'importados', 'corporativos', 'online', 'loja virtual', 'e-commerce', 'presentes premium', 'decoração'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'autopeças', 'pet', 'farmácia', 'construção', 'supermercado']
   }
 };
 
