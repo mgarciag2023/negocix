@@ -198,7 +198,7 @@ const SuppliersResults = () => {
               {searchConfig && (
                 <p className="text-muted-foreground flex items-center gap-2 mt-1">
                   <MapPin className="h-4 w-4" />
-                  {searchConfig.location}, {searchConfig.state}
+                  {searchConfig.location ? `${searchConfig.location}, ${searchConfig.state}` : `Estado: ${searchConfig.state}`}
                 </p>
               )}
             </div>

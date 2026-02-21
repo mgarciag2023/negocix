@@ -290,6 +290,25 @@ function generateSearchTerms(segment: string): string[] {
     'e-commerces de sabonetes': ['loja online sabonetes', 'e-commerce sabonetes artesanais', 'sabonetes online', 'sabonetes artesanais', 'cosméticos naturais online', 'sabonetes veganos', 'saboaria', 'saboaria artesanal', 'loja virtual sabonetes'],
     // E-commerces de Presentes Finos
     'e-commerces de presentes finos': ['loja online presentes', 'e-commerce presentes finos', 'presentes online', 'presentes de luxo online', 'gift shop online', 'presentes corporativos online', 'loja virtual presentes', 'presentes importados online'],
+    // Novos segmentos
+    'lojas de moda infantil': ['loja de moda infantil', 'roupa infantil', 'moda bebê', 'moda kids', 'loja infantil', 'roupa de criança', 'enxoval bebê', 'moda gestante e infantil'],
+    'lojas de móveis': ['loja de móveis', 'móveis planejados', 'móveis sob medida', 'marcenaria', 'loja de móveis planejados', 'móveis para escritório', 'móveis para casa', 'loja de colchões e móveis'],
+    'lojas de variedades': ['loja de variedades', 'bazar', 'loja 1,99', 'loja de R$', 'loja popular', 'loja de desconto', 'armarinho', 'loja de tudo', 'loja de utilidades'],
+    'lojas de material esportivo': ['loja de esportes', 'material esportivo', 'artigos esportivos', 'loja de tênis', 'loja de fitness', 'equipamentos esportivos', 'loja de futebol', 'suplementos esportivos'],
+    'lojas de celular': ['loja de celular', 'assistência técnica celular', 'loja de smartphone', 'acessórios para celular', 'capinhas de celular', 'conserto de celular', 'loja de telefonia'],
+    'lojas de bicicleta': ['loja de bicicleta', 'bike shop', 'bicicletaria', 'ciclismo', 'loja de bikes', 'peças para bicicleta', 'oficina de bicicleta', 'loja de ciclismo'],
+    'lojas de veículos elétricos': ['loja de veículos elétricos', 'patinete elétrico', 'bicicleta elétrica', 'scooter elétrica', 'moto elétrica', 'veículo elétrico', 'mobilidade elétrica', 'carro elétrico'],
+    'lojas de autopropelidos': ['loja de autopropelidos', 'empilhadeira', 'máquinas autopropelidas', 'equipamentos de movimentação', 'transpaleteira', 'plataforma elevatória', 'empilhadeiras e paleteiras'],
+    'lojas de moto': ['loja de moto', 'concessionária de motos', 'revenda de motos', 'moto peças', 'oficina de motos', 'acessórios para moto', 'capacetes', 'concessionária honda', 'concessionária yamaha'],
+    'lojas de carro': ['loja de carros', 'concessionária', 'revenda de veículos', 'loja de veículos', 'seminovos', 'multimarcas', 'agência de automóveis', 'stand de carros'],
+    'concessionárias': ['concessionária', 'concessionária de veículos', 'revenda autorizada', 'concessionária de carros', 'concessionária de motos', 'concessionária de caminhões'],
+    'lojas de informática': ['loja de informática', 'computadores', 'notebook', 'periféricos', 'loja de tecnologia', 'assistência técnica', 'loja de games'],
+    'lojas de calçados': ['loja de calçados', 'sapataria', 'loja de sapatos', 'loja de tênis', 'calçados femininos', 'calçados masculinos', 'calçados infantis'],
+    'lojas de bolsas e acessórios': ['loja de bolsas', 'acessórios femininos', 'bolsas e malas', 'loja de malas', 'bolsas de couro', 'acessórios de moda'],
+    'lojas de brinquedos': ['loja de brinquedos', 'brinquedos educativos', 'toy store', 'loja de brinquedos infantis', 'brinquedos e jogos'],
+    'lojas de colchões': ['loja de colchões', 'colchões e estofados', 'colchoaria', 'loja de camas e colchões', 'colchões ortopédicos'],
+    'lojas de eletrodomésticos': ['loja de eletrodomésticos', 'eletrodomésticos', 'loja de eletrônicos', 'magazine', 'loja de eletro', 'casa de eletro'],
+    'lojas de cosméticos': ['loja de cosméticos', 'perfumaria', 'beleza', 'maquiagem', 'produtos de beleza', 'loja de maquiagem', 'cosméticos e perfumaria'],
   };
   
   let searchTerms = categoryTerms[term] || null;
