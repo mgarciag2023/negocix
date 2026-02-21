@@ -1767,6 +1767,81 @@ function processResults(apifyResults: any[], segment: string, cleanRegion: strin
   });
 }
 
+// Email extraction from website
+async function extractEmailFromWebsite(websiteUrl: string): Promise<string> {
+  if (!websiteUrl || websiteUrl === 'Não disponível') return '';
+  
+  try {
+    let url = websiteUrl.trim();
+    if (!url.startsWith('http')) url = `https://${url}`;
+    
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout
+    
+    const response = await fetch(url, { 
+      signal: controller.signal,
+      headers: { 
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'text/html'
+      }
+    });
+    clearTimeout(timeout);
+    
+    if (!response.ok) return '';
+    
+    const html = await response.text();
+    
+    // Extract emails from mailto: links and text content
+    const emailRegex = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
+    const emails = html.match(emailRegex) || [];
+    
+    // Filter out common false positives
+    const blacklist = ['example.com', 'email.com', 'domain.com', 'yoursite.com', 'sentry.io', 'wixpress.com', 'google.com', 'facebook.com', 'wordpress.com', 'w3.org', 'schema.org', 'gravatar.com', 'jquery.com', 'googleapis.com', 'cloudflare.com'];
+    
+    const validEmails = emails.filter(email => {
+      const domain = email.split('@')[1]?.toLowerCase() || '';
+      return !blacklist.some(bl => domain.includes(bl)) && 
+             !email.includes('..') && 
+             email.length < 60;
+    });
+    
+    // Prefer contact/commercial emails
+    const priorityKeywords = ['contato', 'comercial', 'vendas', 'sac', 'atendimento', 'info', 'contact', 'sales'];
+    const priorityEmail = validEmails.find(e => priorityKeywords.some(k => e.toLowerCase().includes(k)));
+    
+    return priorityEmail || validEmails[0] || '';
+  } catch {
+    return '';
+  }
+}
+
+// Batch extract emails from websites (parallel with concurrency limit)
+async function batchExtractEmails(places: any[], concurrency = 10): Promise<Map<string, string>> {
+  const emailMap = new Map<string, string>();
+  const placesWithWebsite = places.filter(p => p.website && p.website !== 'Não disponível' && p.website.trim().length > 5);
+  
+  if (placesWithWebsite.length === 0) return emailMap;
+  
+  console.log(`📧 Extracting emails from ${placesWithWebsite.length} websites...`);
+  
+  // Process in batches
+  for (let i = 0; i < placesWithWebsite.length; i += concurrency) {
+    const batch = placesWithWebsite.slice(i, i + concurrency);
+    const results = await Promise.all(
+      batch.map(async (place) => {
+        const email = await extractEmailFromWebsite(place.website || place._website);
+        return { id: place.placeId || place.place_id, email };
+      })
+    );
+    results.forEach(r => {
+      if (r.email) emailMap.set(r.id, r.email);
+    });
+  }
+  
+  console.log(`📧 Found ${emailMap.size} emails from ${placesWithWebsite.length} websites`);
+  return emailMap;
+}
+
 // Sleep helper
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -2152,6 +2227,16 @@ serve(async (req) => {
     // Compute final leads after ALL strict filters
     let leads = processResultsWithCategories(activePlaces, segment, cleanRegion, MAX_TOTAL_LEADS, bizType, digPresence, digActivity);
     console.log(`✅ FINAL: ${leads.length} leads ready (target: ${MIN_LEADS_TARGET}-${MAX_TOTAL_LEADS})`);
+    
+    // Extract emails from websites for all leads
+    const emailMap = await batchExtractEmails(leads);
+    if (emailMap.size > 0) {
+      leads = leads.map((lead: any) => ({
+        ...lead,
+        email: lead.email || emailMap.get(lead.placeId) || emailMap.get(lead.id) || ''
+      }));
+      console.log(`📧 Enriched ${emailMap.size} leads with emails`);
+    }
     
     // Apply WhatsApp filter if requested
     if (filterWhatsappOnly && leads.length > 0) {
