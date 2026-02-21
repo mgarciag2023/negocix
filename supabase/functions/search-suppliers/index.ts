@@ -227,7 +227,130 @@ serve(async (req) => {
       throw new Error("GOOGLE_PLACES_API_KEY is not configured");
     }
 
-    // Build search queries
+    const isStateOnlySearch = !location || location.trim() === '';
+
+    // Major cities by state for state-wide searches
+    const stateCities: { [key: string]: string[] } = {
+      'AC': ['Rio Branco', 'Cruzeiro do Sul'],
+      'AL': ['Maceió', 'Arapiraca'],
+      'AP': ['Macapá', 'Santana'],
+      'AM': ['Manaus', 'Parintins'],
+      'BA': ['Salvador', 'Feira de Santana', 'Vitória da Conquista', 'Camaçari', 'Itabuna'],
+      'CE': ['Fortaleza', 'Caucaia', 'Juazeiro do Norte', 'Sobral'],
+      'DF': ['Brasília', 'Taguatinga'],
+      'ES': ['Vitória', 'Vila Velha', 'Serra', 'Cariacica'],
+      'GO': ['Goiânia', 'Aparecida de Goiânia', 'Anápolis', 'Rio Verde'],
+      'MA': ['São Luís', 'Imperatriz'],
+      'MT': ['Cuiabá', 'Várzea Grande', 'Rondonópolis', 'Sinop'],
+      'MS': ['Campo Grande', 'Dourados', 'Três Lagoas'],
+      'MG': ['Belo Horizonte', 'Uberlândia', 'Contagem', 'Juiz de Fora', 'Betim', 'Montes Claros', 'Uberaba'],
+      'PA': ['Belém', 'Ananindeua', 'Santarém', 'Marabá'],
+      'PB': ['João Pessoa', 'Campina Grande'],
+      'PR': ['Curitiba', 'Londrina', 'Maringá', 'Ponta Grossa', 'Cascavel', 'Foz do Iguaçu'],
+      'PE': ['Recife', 'Jaboatão dos Guararapes', 'Olinda', 'Caruaru', 'Petrolina'],
+      'PI': ['Teresina', 'Parnaíba'],
+      'RJ': ['Rio de Janeiro', 'São Gonçalo', 'Duque de Caxias', 'Nova Iguaçu', 'Niterói', 'Campos dos Goytacazes'],
+      'RN': ['Natal', 'Mossoró', 'Parnamirim'],
+      'RS': ['Porto Alegre', 'Caxias do Sul', 'Pelotas', 'Canoas', 'Santa Maria', 'Novo Hamburgo', 'Passo Fundo'],
+      'RO': ['Porto Velho', 'Ji-Paraná'],
+      'RR': ['Boa Vista'],
+      'SC': ['Florianópolis', 'Joinville', 'Blumenau', 'Chapecó', 'Criciúma', 'Itajaí'],
+      'SP': ['São Paulo', 'Guarulhos', 'Campinas', 'São Bernardo do Campo', 'Santo André', 'Osasco', 'São José dos Campos', 'Ribeirão Preto', 'Sorocaba', 'Santos'],
+      'SE': ['Aracaju', 'Nossa Senhora do Socorro'],
+      'TO': ['Palmas', 'Araguaína'],
+    };
+
+    const MAX_TOTAL_SUPPLIERS = 30;
+
+    if (isStateOnlySearch) {
+      // STATE-WIDE SEARCH: search across major cities
+      const cities = stateCities[state] || [state];
+      console.log(`🏙️ State-wide search across ${cities.length} cities:`, cities);
+
+      const allPlaces: any[] = [];
+      const seenIds = new Set<string>();
+
+      // Process cities in batches of 3
+      for (let i = 0; i < cities.length && allPlaces.length < MAX_TOTAL_SUPPLIERS * 2; i += 3) {
+        const cityBatch = cities.slice(i, i + 3);
+        const batchPromises = cityBatch.flatMap(city => {
+          const searchQueries: string[] = [];
+          for (const product of products) {
+            const terms = productSearchTerms[product];
+            if (terms && terms.length > 0) {
+              searchQueries.push(`${terms[0]} ${city} ${state}`);
+            } else {
+              searchQueries.push(`distribuidora ${product} ${city} ${state}`);
+            }
+          }
+          return searchQueries.slice(0, 3).map(q => searchGooglePlaces(q, GOOGLE_PLACES_API_KEY, 15));
+        });
+
+        const batchResults = await Promise.all(batchPromises);
+        for (const resultList of batchResults) {
+          for (const place of resultList) {
+            const id = place.business_id || place.place_id;
+            if (id && !seenIds.has(id)) {
+              seenIds.add(id);
+              allPlaces.push(place);
+            }
+          }
+        }
+        console.log(`📊 After batch ${Math.floor(i/3)+1}: ${allPlaces.length} unique places`);
+      }
+
+      console.log(`📊 Total unique places from state search: ${allPlaces.length}`);
+
+      // Filter by state only (no city filter)
+      const stateLower = normalizeStr(state);
+      let filtered = allPlaces.filter((place: any) => {
+        const address = normalizeStr(place.full_address || "");
+        if (!place.phone_number || place.phone_number.trim() === "") return false;
+        if (!address.includes(stateLower)) return false;
+        return true;
+      });
+
+      console.log(`📍 After state/phone filter: ${filtered.length} places`);
+
+      filtered = filtered.filter((place: any) => isLikelySupplier(place, products));
+      console.log(`✅ After supplier quality filter: ${filtered.length} suppliers`);
+
+      if (filtered.length > MAX_TOTAL_SUPPLIERS) {
+        filtered = filtered.slice(0, MAX_TOTAL_SUPPLIERS);
+      }
+
+      const suppliers = filtered.map((place: any, index: number) => {
+        const phoneValidation = validatePhone(place.phone_number || "");
+        const normalizedPhone = (place.phone_number || "").replace(/\D/g, "");
+        const hasWhatsApp = phoneValidation.isValid && normalizedPhone.length === 11 && normalizedPhone.charAt(2) === '9';
+        return {
+          id: `supplier-${index}-${Date.now()}`,
+          name: place.name || "Fornecedor",
+          address: place.full_address || "",
+          phone: place.phone_number || "",
+          website: place.website || null,
+          category: place.type || products[0] || "Fornecedor",
+          hasWhatsApp,
+        };
+      });
+
+      const seenPhones = new Set<string>();
+      const uniqueSuppliers = suppliers.filter((s: any) => {
+        const phone = s.phone.replace(/\D/g, "");
+        if (seenPhones.has(phone)) return false;
+        seenPhones.add(phone);
+        return true;
+      });
+
+      console.log(`📦 Returning ${uniqueSuppliers.length} unique suppliers (state search)`);
+
+      return new Response(
+        JSON.stringify({ suppliers: uniqueSuppliers }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // CITY-SPECIFIC SEARCH (original logic)
     const searchQueries: string[] = [];
     for (const product of products) {
       const terms = productSearchTerms[product];
@@ -241,10 +364,8 @@ serve(async (req) => {
     const limitedQueries = searchQueries.slice(0, 5);
     console.log(`📋 Search queries (${limitedQueries.length}):`, limitedQueries);
 
-    const MAX_TOTAL_SUPPLIERS = 30;
     const placesPerSearch = Math.max(15, Math.floor(50 / limitedQueries.length));
 
-    // Execute searches in parallel via RapidAPI
     const searchPromises = limitedQueries.map(query => searchGooglePlaces(query, GOOGLE_PLACES_API_KEY, placesPerSearch));
     const results = await Promise.all(searchPromises);
 
@@ -265,7 +386,6 @@ serve(async (req) => {
     const locationLower = normalizeStr(location);
     const stateLower = normalizeStr(state);
 
-    // STEP 1: Basic filters (phone, location)
     let filtered = allPlaces.filter((place: any) => {
       const address = normalizeStr(place.full_address || "");
       if (!place.phone_number || place.phone_number.trim() === "") return false;
@@ -275,21 +395,17 @@ serve(async (req) => {
 
     console.log(`📍 After location/phone filter: ${filtered.length} places`);
 
-    // STEP 2: Supplier quality filter
     filtered = filtered.filter((place: any) => isLikelySupplier(place, products));
-
     console.log(`✅ After supplier quality filter: ${filtered.length} suppliers`);
 
     if (filtered.length > MAX_TOTAL_SUPPLIERS) {
       filtered = filtered.slice(0, MAX_TOTAL_SUPPLIERS);
     }
 
-    // Map to supplier format
     const suppliers = filtered.map((place: any, index: number) => {
       const phoneValidation = validatePhone(place.phone_number || "");
       const normalizedPhone = (place.phone_number || "").replace(/\D/g, "");
       const hasWhatsApp = phoneValidation.isValid && normalizedPhone.length === 11 && normalizedPhone.charAt(2) === '9';
-
       return {
         id: `supplier-${index}-${Date.now()}`,
         name: place.name || "Fornecedor",
@@ -301,7 +417,6 @@ serve(async (req) => {
       };
     });
 
-    // Remove duplicates by phone
     const seenPhones = new Set<string>();
     const uniqueSuppliers = suppliers.filter((s: any) => {
       const phone = s.phone.replace(/\D/g, "");

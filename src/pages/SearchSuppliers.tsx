@@ -118,15 +118,6 @@ const SearchSuppliers = () => {
       return;
     }
 
-    if (!location.trim()) {
-      toast({
-        title: "Cidade obrigatória",
-        description: "Informe a cidade onde deseja buscar fornecedores.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (!state) {
       toast({
         title: "Estado obrigatório",
@@ -139,7 +130,7 @@ const SearchSuppliers = () => {
     // Save search config
     const supplierSearchConfig = {
       products: selectedProducts,
-      location: location.trim(),
+      location: location.trim() || '',
       state,
       timestamp: Date.now(),
     };
@@ -232,7 +223,7 @@ const SearchSuppliers = () => {
                   </Label>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="location" className="text-sm text-muted-foreground">Cidade</Label>
+                      <Label htmlFor="location" className="text-sm text-muted-foreground">Cidade (opcional)</Label>
                       <Input
                         id="location"
                         placeholder="Ex: São Paulo"

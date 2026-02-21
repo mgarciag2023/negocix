@@ -266,6 +266,25 @@ const Configuration = () => {
     "E-commerces de Perfumaria e Casa",
     "E-commerces de Sabonetes",
     "E-commerces de Presentes Finos",
+    // Moda e Vestuário Especializado
+    "Lojas de Moda Infantil",
+    "Lojas de Móveis",
+    "Lojas de Variedades",
+    "Lojas de Material Esportivo",
+    "Lojas de Celular",
+    "Lojas de Bicicleta",
+    "Lojas de Veículos Elétricos",
+    "Lojas de Autopropelidos",
+    "Lojas de Moto",
+    "Lojas de Carro",
+    "Concessionárias",
+    "Lojas de Informática",
+    "Lojas de Calçados",
+    "Lojas de Bolsas e Acessórios",
+    "Lojas de Brinquedos",
+    "Lojas de Colchões",
+    "Lojas de Eletrodomésticos",
+    "Lojas de Cosméticos",
   ].sort(); // Ordenação alfabética
 
   const handleCustomerToggle = (customer: string) => {
