@@ -2109,30 +2109,32 @@ serve(async (req) => {
     const pagesPerSegment = isStateOnlySearch ? 3 : 12;
     
     if (isStateOnlySearch && citiesForState.length > 0) {
-      // STATE SEARCH: Search by individual cities for much better coverage
-      console.log(`🏙️ STATE SEARCH: Searching across ${citiesForState.length} cities in ${stateAbbrev.toUpperCase()}`);
+      // STATE SEARCH: Limit cities to avoid timeout (max 8 cities for large states)
+      const maxCities = 8;
+      const citiesToSearch = citiesForState.slice(0, maxCities);
+      console.log(`🏙️ STATE SEARCH: Searching across ${citiesToSearch.length} cities in ${stateAbbrev.toUpperCase()} (of ${citiesForState.length} total)`);
       
       for (const seg of segments) {
         let searchTerms: string[];
         
         if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
           const ecomType = ecommerceType.trim().toLowerCase();
-          searchTerms = [`loja ${ecomType}`, `${ecomType}`, `loja de ${ecomType}`];
+          searchTerms = [`loja ${ecomType}`, `${ecomType}`];
         } else {
           searchTerms = generateSearchTerms(seg);
-          searchTerms = searchTerms.slice(0, 4); // Use top 4 terms per segment
+          searchTerms = searchTerms.slice(0, 2); // Use only top 2 terms to avoid timeout
         }
         
         console.log(`📤 Searching segment "${seg}" with terms:`, searchTerms);
         
-        // Search all cities in parallel batches (max 5 cities at a time to avoid overwhelming the API)
-        const batchSize = 5;
-        for (let i = 0; i < citiesForState.length; i += batchSize) {
-          const cityBatch = citiesForState.slice(i, i + batchSize);
+        // Search cities in parallel batches of 4
+        const batchSize = 4;
+        for (let i = 0; i < citiesToSearch.length; i += batchSize) {
+          const cityBatch = citiesToSearch.slice(i, i + batchSize);
           
           const cityPromises = cityBatch.flatMap(city => {
             const cityLocation = `${city}, ${stateAbbrev.toUpperCase()}, Brazil`;
-            return searchTerms.map(term => searchPlaces(term, cityLocation, pagesPerSegment));
+            return searchTerms.map(term => searchPlaces(term, cityLocation, 1)); // Only 1 page per search
           });
           
           const cityResults = await Promise.all(cityPromises);
@@ -2148,7 +2150,7 @@ serve(async (req) => {
           console.log(`📊 Cities batch ${Math.floor(i/batchSize)+1}: +${placesFromBatch.length} places (total: ${allPlacesWithSegment.length})`);
           
           // Early exit if we have enough raw results
-          if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 5) {
+          if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 3) {
             console.log(`⚡ Enough raw places (${allPlacesWithSegment.length}), stopping city search`);
             break;
           }
@@ -2156,7 +2158,7 @@ serve(async (req) => {
         
         console.log(`📊 Segment "${seg}": ${allPlacesWithSegment.length} raw places after city search`);
         
-        if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 5) break;
+        if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 3) break;
       }
     } else {
       // CITY/REGION SEARCH: Original behavior
