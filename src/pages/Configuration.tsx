@@ -92,6 +92,7 @@ const Configuration = () => {
     "Casas de Massas",
     // Outros segmentos solicitados
     "Indústrias de Alimentos",
+    "Granjas",
     "Cozinhas Industriais",
     "Indústrias de Biscoitos",
     "Distribuidoras de Doces",

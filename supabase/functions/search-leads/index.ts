@@ -126,6 +126,7 @@ function generateSearchTerms(segment: string): string[] {
     'confeitarias': ['confeitaria', 'doceria', 'bolos'],
     'docerias': ['doceria', 'confeitaria', 'doces'],
     'indústrias de alimentos': ['indústria de alimentos', 'fábrica de alimentos', 'indústria alimentícia', 'alimentos industrializados', 'processamento de alimentos', 'indústria alimentar', 'fábrica de produtos alimentícios', 'indústria de alimentos e bebidas'],
+    'granjas': ['granja', 'granja avícola', 'avicultura', 'granja de ovos', 'granja de frangos', 'produção de ovos', 'avícola', 'granja de postura', 'granja de corte', 'avicultura de postura', 'avicultura de corte', 'granja de galinhas'],
     'indústrias de salgados': ['fábrica de salgados', 'salgaderia'],
     'salgadeiros': ['salgaderia', 'fábrica de salgados', 'salgados'],
     'empresas de gulla': ['gulla', 'guloseimas', 'doces industriais'],
@@ -909,6 +910,11 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
   'adestramento de animais': {
     include: ['adestramento', 'adestrador', 'treinamento', 'canino', 'comportamento', 'pet', 'cão', 'cachorro'],
     exclude: ['restaurante', 'lanchonete', 'supermercado', 'construção', 'academia fitness']
+  },
+  'granjas': {
+    include: ['granja', 'avícola', 'avicola', 'avicultura', 'ovos', 'frango', 'postura', 'corte', 'galinha', 'pintinho', 'aves', 'poedeira', 'matrizes', 'incubatório'],
+    mustMatch: ['granja', 'avícola', 'avicola', 'avicultura'],
+    exclude: ['pet shop', 'restaurante', 'lanchonete', 'supermercado', 'padaria', 'farmácia', 'salão', 'academia', 'loja de roupas', 'açougue', 'abatedouro', 'frigorífico']
   },
   'abatedouros de aves': {
     include: ['abatedouro', 'frigorífico', 'aves', 'frango', 'avícola', 'abate', 'matadouro', 'processamento', 'granja', 'avicultura', 'galinha', 'peru', 'codorna', 'chester', 'pato', 'caipira'],
