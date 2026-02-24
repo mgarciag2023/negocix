@@ -125,6 +125,7 @@ function generateSearchTerms(segment: string): string[] {
     'panificadoras': ['panificadora', 'padaria'],
     'confeitarias': ['confeitaria', 'doceria', 'bolos'],
     'docerias': ['doceria', 'confeitaria', 'doces'],
+    'indústrias de alimentos': ['indústria de alimentos', 'fábrica de alimentos', 'indústria alimentícia', 'alimentos industrializados', 'processamento de alimentos', 'indústria alimentar', 'fábrica de produtos alimentícios', 'indústria de alimentos e bebidas'],
     'indústrias de salgados': ['fábrica de salgados', 'salgaderia'],
     'salgadeiros': ['salgaderia', 'fábrica de salgados', 'salgados'],
     'empresas de gulla': ['gulla', 'guloseimas', 'doces industriais'],
@@ -1245,6 +1246,12 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
   'empresas de locação de materiais para eventos': {
     include: ['locação', 'aluguel', 'mesas', 'cadeiras', 'toalhas', 'louças', 'tendas', 'festas', 'eventos', 'mobiliário', 'som', 'iluminação', 'decoração'],
     exclude: ['supermercado', 'mercado', 'farmácia', 'autopeças', 'pet', 'restaurante', 'lanchonete']
+  },
+  // Indústrias de Alimentos
+  'indústrias de alimentos': {
+    include: ['indústria', 'fábrica', 'industrial', 'alimentos', 'alimentícia', 'alimentar', 'processamento', 'produção', 'manufatura', 'frigorífico', 'laticínio', 'embutidos', 'conservas', 'congelados', 'enlatados'],
+    mustMatch: [],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'mercado', 'padaria', 'confeitaria', 'pizzaria', 'hamburgueria', 'sorveteria', 'cafeteria', 'hotel', 'farmácia', 'escola', 'academia', 'pet shop']
   },
   // Indústrias de Mineração
   'indústrias de mineração': {
