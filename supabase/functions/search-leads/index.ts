@@ -2109,8 +2109,8 @@ serve(async (req) => {
     const pagesPerSegment = isStateOnlySearch ? 3 : 12;
     
     if (isStateOnlySearch && citiesForState.length > 0) {
-      // STATE SEARCH: Limit cities to avoid timeout (max 8 cities for large states)
-      const maxCities = 8;
+      // STATE SEARCH: Limit cities to avoid CPU timeout (max 5 cities)
+      const maxCities = 5;
       const citiesToSearch = citiesForState.slice(0, maxCities);
       console.log(`🏙️ STATE SEARCH: Searching across ${citiesToSearch.length} cities in ${stateAbbrev.toUpperCase()} (of ${citiesForState.length} total)`);
       
@@ -2150,7 +2150,7 @@ serve(async (req) => {
           console.log(`📊 Cities batch ${Math.floor(i/batchSize)+1}: +${placesFromBatch.length} places (total: ${allPlacesWithSegment.length})`);
           
           // Early exit if we have enough raw results
-          if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 3) {
+          if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 1.5) {
             console.log(`⚡ Enough raw places (${allPlacesWithSegment.length}), stopping city search`);
             break;
           }
@@ -2158,7 +2158,7 @@ serve(async (req) => {
         
         console.log(`📊 Segment "${seg}": ${allPlacesWithSegment.length} raw places after city search`);
         
-        if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 3) break;
+        if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 1.5) break;
       }
     } else {
       // CITY/REGION SEARCH: Original behavior
@@ -2249,14 +2249,18 @@ serve(async (req) => {
     let leads = processResultsWithCategories(activePlaces, segment, cleanRegion, MAX_TOTAL_LEADS, bizType, digPresence, digActivity);
     console.log(`✅ FINAL: ${leads.length} leads ready (target: ${MIN_LEADS_TARGET}-${MAX_TOTAL_LEADS})`);
     
-    // Extract emails from websites for all leads
-    const emailMap = await batchExtractEmails(leads);
-    if (emailMap.size > 0) {
-      leads = leads.map((lead: any) => ({
-        ...lead,
-        email: lead.email || emailMap.get(lead.placeId) || emailMap.get(lead.id) || ''
-      }));
-      console.log(`📧 Enriched ${emailMap.size} leads with emails`);
+    // Extract emails from websites (skip for state searches to save CPU time)
+    if (!isStateOnlySearch) {
+      const emailMap = await batchExtractEmails(leads);
+      if (emailMap.size > 0) {
+        leads = leads.map((lead: any) => ({
+          ...lead,
+          email: lead.email || emailMap.get(lead.placeId) || emailMap.get(lead.id) || ''
+        }));
+        console.log(`📧 Enriched ${emailMap.size} leads with emails`);
+      }
+    } else {
+      console.log(`⏩ Skipping email extraction for state search to save CPU time`);
     }
     
     // Apply WhatsApp filter if requested
