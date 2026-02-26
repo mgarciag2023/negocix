@@ -93,6 +93,8 @@ const Configuration = () => {
     // Outros segmentos solicitados
     "Indústrias de Alimentos",
     "Granjas",
+    "Lojas de Pneus",
+    "Lojas de Rodas Esportivas",
     "Cozinhas Industriais",
     "Indústrias de Biscoitos",
     "Distribuidoras de Doces",

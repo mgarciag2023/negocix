@@ -126,6 +126,8 @@ function generateSearchTerms(segment: string): string[] {
     'confeitarias': ['confeitaria', 'doceria', 'bolos'],
     'docerias': ['doceria', 'confeitaria', 'doces'],
     'indústrias de alimentos': ['indústria de alimentos', 'fábrica de alimentos', 'indústria alimentícia', 'alimentos industrializados', 'processamento de alimentos', 'indústria alimentar', 'fábrica de produtos alimentícios', 'indústria de alimentos e bebidas'],
+    'lojas de pneus': ['loja de pneus', 'pneus', 'borracharia', 'centro automotivo pneus', 'pneu', 'recapagem', 'recauchutagem', 'pneus novos e usados', 'pneus para caminhão', 'pneus para carro', 'pneus para moto', 'comercial de pneus', 'casa de pneus', 'distribuidora de pneus', 'revenda de pneus'],
+    'lojas de rodas esportivas': ['rodas esportivas', 'loja de rodas', 'rodas e pneus', 'rodas automotivas', 'rodas liga leve', 'rodas aro', 'rodas personalizadas', 'rodas importadas', 'rodas tsw', 'rodas krmai', 'roda esportiva', 'loja de rodas e acessórios', 'customização automotiva rodas', 'revenda de rodas'],
     'granjas': ['granja', 'granja avícola', 'avicultura', 'granja de ovos', 'granja de frangos', 'produção de ovos', 'avícola', 'granja de postura', 'granja de corte', 'avicultura de postura', 'avicultura de corte', 'granja de galinhas'],
     'indústrias de salgados': ['fábrica de salgados', 'salgaderia'],
     'salgadeiros': ['salgaderia', 'fábrica de salgados', 'salgados'],
@@ -910,6 +912,14 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
   'adestramento de animais': {
     include: ['adestramento', 'adestrador', 'treinamento', 'canino', 'comportamento', 'pet', 'cão', 'cachorro'],
     exclude: ['restaurante', 'lanchonete', 'supermercado', 'construção', 'academia fitness']
+  },
+  'lojas de pneus': {
+    include: ['pneu', 'pneus', 'borracharia', 'recapagem', 'recauchutagem', 'calibragem', 'balanceamento', 'alinhamento', 'vulcanização', 'aro', 'roda', 'automotivo', 'veicular'],
+    exclude: ['restaurante', 'lanchonete', 'supermercado', 'padaria', 'farmácia', 'salão', 'academia', 'loja de roupas', 'pet shop', 'bicicleta']
+  },
+  'lojas de rodas esportivas': {
+    include: ['roda', 'rodas', 'esportiva', 'liga leve', 'aro', 'customização', 'personalização', 'automotivo', 'pneu', 'offset', 'step lip', 'furação'],
+    exclude: ['restaurante', 'lanchonete', 'supermercado', 'padaria', 'farmácia', 'salão', 'academia', 'loja de roupas', 'pet shop', 'bicicleta', 'skate']
   },
   'granjas': {
     include: ['granja', 'avícola', 'avicola', 'avicultura', 'ovos', 'frango', 'postura', 'corte', 'galinha', 'pintinho', 'aves', 'poedeira', 'matrizes', 'incubatório'],
