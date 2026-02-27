@@ -283,9 +283,9 @@ serve(async (req) => {
         seenPhones.add(phoneValidation.normalized);
       }
 
-      // Only include representatives with confirmed WhatsApp numbers
-      if (!phoneValidation.isWhatsApp) {
-        console.log(`⏭️ Skipping "${place.name}" - no WhatsApp number`);
+      // Only include representatives that have a phone number (treat any phone as WhatsApp)
+      if (!phoneValidation.valid) {
+        console.log(`⏭️ Skipping "${place.name}" - no valid phone number`);
         continue;
       }
 
