@@ -204,7 +204,7 @@ serve(async (req) => {
     }
 
     // Fetch user-specific limit
-    let MAX_RESULTS = 30;
+    let MAX_RESULTS = 80;
     try {
       const supabaseUrl = Deno.env.get("SUPABASE_URL");
       const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -237,6 +237,21 @@ serve(async (req) => {
       `representação comercial de alimentos ${location}`,
       `representação comercial vendas ${location}`,
       `rep comercial ${location}`,
+      `representação comercial de bebidas ${location}`,
+      `representação comercial de cosméticos ${location}`,
+      `representação comercial de materiais ${location}`,
+      `representação comercial de produtos ${location}`,
+      `representação comercial atacado ${location}`,
+      `representação comercial industrial ${location}`,
+      `representação comercial autônomo ${location}`,
+      `escritório de vendas ${location}`,
+      `promotor de vendas ${location}`,
+      `consultor comercial ${location}`,
+      `intermediação comercial ${location}`,
+      `agenciamento comercial ${location}`,
+      `representação comercial de limpeza ${location}`,
+      `representação comercial de embalagens ${location}`,
+      `representação comercial de ferramentas ${location}`,
     ];
 
     const allPlaces: any[] = [];
