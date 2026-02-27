@@ -78,43 +78,40 @@ function formatPhoneDisplay(phone: string): string {
 }
 
 // ============================================
-// STRICT FILTERING - ONLY REPRESENTATION COMPANIES
+// RELAXED FILTERING - REPRESENTATION COMPANIES
 // ============================================
 
-const REQUIRED_TERMS = [
+const ACCEPTED_TERMS = [
   'representaç', 'representac', 'representante', 'representacao', 'representação',
-  'rep comercial', 'rep. comercial'
+  'rep comercial', 'rep. comercial',
+  'agente comercial', 'agenciamento', 'intermediação comercial',
+  'vendas externas', 'promotor de vendas', 'consultor comercial',
+  'assessoria comercial', 'escritório comercial'
 ];
 
 const EXCLUSION_TERMS = [
-  'distribuidora', 'distribuidor', 'atacado', 'atacadista', 
-  'loja', 'store', 'varejo', 'variedades',
   'supermercado', 'mercado', 'mercearia',
-  'restaurante', 'bar', 'lanchonete', 'padaria', 'pizzaria',
-  'oficina', 'mecânica', 'mecanica', 'auto peças', 'autopeças',
-  'posto', 'combustível', 'combustivel',
+  'restaurante', 'lanchonete', 'padaria', 'pizzaria',
+  'oficina', 'mecânica', 'mecanica',
+  'posto de combustível', 'posto de combustivel',
   'farmácia', 'farmacia', 'drogaria',
   'hotel', 'pousada', 'hostel',
   'escola', 'colégio', 'colegio', 'faculdade', 'universidade',
   'hospital', 'clínica', 'clinica', 'laboratório', 'laboratorio',
   'academia', 'gym', 'fitness',
-  'banco', 'financeira', 'crédito', 'credito',
-  'imobiliária', 'imobiliaria', 'construtora',
+  'banco', 'financeira',
   'despachante', 'cartório', 'cartorio',
   'igreja', 'templo', 'paróquia', 'paroquia',
-  'salão', 'salao', 'barbearia', 'beleza',
+  'salão de beleza', 'barbearia',
   'pet shop', 'veterinária', 'veterinario',
-  'lavanderia', 'lava', 'tinturaria',
-  'eletrônica', 'eletronica', 'celular', 'assistência técnica',
-  'serralheria', 'marcenaria', 'vidraçaria', 'vidracaria',
-  'transportadora', 'transporte', 'frete', 'mudança', 'mudanca',
-  'gráfica', 'grafica', 'impressão', 'impressao',
-  'escritório contábil', 'contabilidade', 'contador'
+  'lavanderia', 'tinturaria',
+  'gráfica', 'grafica'
 ];
 
 function isRepresentationCompany(name: string): boolean {
   const lowerName = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   
+  // Exclude obvious non-representation businesses
   for (const term of EXCLUSION_TERMS) {
     const normalizedTerm = term.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     if (lowerName.includes(normalizedTerm)) {
@@ -123,16 +120,10 @@ function isRepresentationCompany(name: string): boolean {
     }
   }
   
-  for (const term of REQUIRED_TERMS) {
-    const normalizedTerm = term.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    if (lowerName.includes(normalizedTerm)) {
-      console.log(`✅ Accepted "${name}" - contains "${term}"`);
-      return true;
-    }
-  }
-  
-  console.log(`❌ Rejected "${name}" - no required terms found`);
-  return false;
+  // RELAXED: Accept any result that wasn't excluded
+  // Google already filters for relevance based on our search queries
+  console.log(`✅ Accepted "${name}" - not excluded (relaxed mode)`);
+  return true;
 }
 
 // ============================================
@@ -241,6 +232,11 @@ serve(async (req) => {
       `empresa de representação ${location}`,
       `representante comercial ${location}`,
       `escritório de representação ${location}`,
+      `agente comercial ${location}`,
+      `assessoria comercial ${location}`,
+      `representação comercial de alimentos ${location}`,
+      `representação comercial vendas ${location}`,
+      `rep comercial ${location}`,
     ];
 
     const allPlaces: any[] = [];
