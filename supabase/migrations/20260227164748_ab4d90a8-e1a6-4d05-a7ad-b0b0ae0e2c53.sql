@@ -1,0 +1,1 @@
+UPDATE user_lead_limits SET representatives_per_search = 150, updated_at = now() WHERE user_id = 'a57dfbc7-0587-4cbe-95f4-4bae1acf1338';

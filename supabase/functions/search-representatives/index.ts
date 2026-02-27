@@ -287,11 +287,17 @@ serve(async (req) => {
         seenPhones.add(phoneValidation.normalized);
       }
 
+      // Only include representatives with confirmed WhatsApp numbers
+      if (!phoneValidation.isWhatsApp) {
+        console.log(`⏭️ Skipping "${place.name}" - no WhatsApp number`);
+        continue;
+      }
+
       representatives.push({
         id: place.business_id || place.place_id || `rep-${Date.now()}`,
         name: place.name || 'Empresa de Representação',
-        phone: phoneValidation.valid ? formatPhoneDisplay(phoneValidation.normalized) : undefined,
-        whatsapp: phoneValidation.isWhatsApp ? phoneValidation.normalized : undefined,
+        phone: formatPhoneDisplay(phoneValidation.normalized),
+        whatsapp: phoneValidation.normalized,
         address: place.full_address || location,
         website: place.website || undefined,
         rating: place.rating || undefined
