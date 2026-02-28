@@ -5,8 +5,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Using Google Places API (New)
-
 interface SearchConfig {
   city?: string;
   state: string;
@@ -31,6 +29,37 @@ const stateNames: { [key: string]: string } = {
   'PE': 'Pernambuco', 'PI': 'Piauí', 'RJ': 'Rio de Janeiro', 'RN': 'Rio Grande do Norte',
   'RS': 'Rio Grande do Sul', 'RO': 'Rondônia', 'RR': 'Roraima', 'SC': 'Santa Catarina',
   'SP': 'São Paulo', 'SE': 'Sergipe', 'TO': 'Tocantins'
+};
+
+// Major cities per state for state-wide searches
+const stateCities: { [key: string]: string[] } = {
+  'AC': ['Rio Branco', 'Cruzeiro do Sul', 'Sena Madureira'],
+  'AL': ['Maceió', 'Arapiraca', 'Rio Largo', 'Palmeira dos Índios'],
+  'AP': ['Macapá', 'Santana', 'Laranjal do Jari'],
+  'AM': ['Manaus', 'Parintins', 'Itacoatiara', 'Manacapuru'],
+  'BA': ['Salvador', 'Feira de Santana', 'Vitória da Conquista', 'Camaçari', 'Itabuna', 'Lauro de Freitas', 'Ilhéus'],
+  'CE': ['Fortaleza', 'Caucaia', 'Juazeiro do Norte', 'Maracanaú', 'Sobral', 'Crato'],
+  'DF': ['Brasília', 'Taguatinga', 'Ceilândia', 'Águas Claras'],
+  'ES': ['Vitória', 'Vila Velha', 'Serra', 'Cariacica', 'Cachoeiro de Itapemirim', 'Linhares', 'Colatina', 'Guarapari', 'São Mateus', 'Aracruz'],
+  'GO': ['Goiânia', 'Aparecida de Goiânia', 'Anápolis', 'Rio Verde', 'Luziânia', 'Catalão'],
+  'MA': ['São Luís', 'Imperatriz', 'Timon', 'Caxias', 'Codó'],
+  'MT': ['Cuiabá', 'Várzea Grande', 'Rondonópolis', 'Sinop', 'Tangará da Serra'],
+  'MS': ['Campo Grande', 'Dourados', 'Três Lagoas', 'Corumbá', 'Ponta Porã'],
+  'MG': ['Belo Horizonte', 'Uberlândia', 'Contagem', 'Juiz de Fora', 'Betim', 'Montes Claros', 'Uberaba', 'Governador Valadares'],
+  'PA': ['Belém', 'Ananindeua', 'Santarém', 'Marabá', 'Castanhal'],
+  'PB': ['João Pessoa', 'Campina Grande', 'Santa Rita', 'Patos'],
+  'PR': ['Curitiba', 'Londrina', 'Maringá', 'Ponta Grossa', 'Cascavel', 'São José dos Pinhais', 'Foz do Iguaçu'],
+  'PE': ['Recife', 'Jaboatão dos Guararapes', 'Olinda', 'Caruaru', 'Petrolina', 'Paulista'],
+  'PI': ['Teresina', 'Parnaíba', 'Picos', 'Piripiri'],
+  'RJ': ['Rio de Janeiro', 'São Gonçalo', 'Duque de Caxias', 'Nova Iguaçu', 'Niterói', 'Campos dos Goytacazes', 'Petrópolis'],
+  'RN': ['Natal', 'Mossoró', 'Parnamirim', 'São Gonçalo do Amarante'],
+  'RS': ['Porto Alegre', 'Caxias do Sul', 'Pelotas', 'Canoas', 'Santa Maria', 'Gravataí', 'Novo Hamburgo'],
+  'RO': ['Porto Velho', 'Ji-Paraná', 'Ariquemes', 'Vilhena'],
+  'RR': ['Boa Vista', 'Rorainópolis', 'Caracaraí'],
+  'SC': ['Florianópolis', 'Joinville', 'Blumenau', 'São José', 'Chapecó', 'Criciúma', 'Itajaí'],
+  'SP': ['São Paulo', 'Guarulhos', 'Campinas', 'São Bernardo do Campo', 'Santo André', 'Osasco', 'Ribeirão Preto', 'Sorocaba'],
+  'SE': ['Aracaju', 'Nossa Senhora do Socorro', 'Lagarto', 'Itabaiana'],
+  'TO': ['Palmas', 'Araguaína', 'Gurupi', 'Porto Nacional'],
 };
 
 // ============================================
@@ -78,16 +107,8 @@ function formatPhoneDisplay(phone: string): string {
 }
 
 // ============================================
-// RELAXED FILTERING - REPRESENTATION COMPANIES
+// EXCLUSION FILTER
 // ============================================
-
-const ACCEPTED_TERMS = [
-  'representaç', 'representac', 'representante', 'representacao', 'representação',
-  'rep comercial', 'rep. comercial',
-  'agente comercial', 'agenciamento', 'intermediação comercial',
-  'vendas externas', 'promotor de vendas', 'consultor comercial',
-  'assessoria comercial', 'escritório comercial'
-];
 
 const EXCLUSION_TERMS = [
   'supermercado', 'mercado', 'mercearia',
@@ -111,18 +132,13 @@ const EXCLUSION_TERMS = [
 function isRepresentationCompany(name: string): boolean {
   const lowerName = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   
-  // Exclude obvious non-representation businesses
   for (const term of EXCLUSION_TERMS) {
     const normalizedTerm = term.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     if (lowerName.includes(normalizedTerm)) {
-      console.log(`❌ Excluded "${name}" - contains "${term}"`);
       return false;
     }
   }
   
-  // RELAXED: Accept any result that wasn't excluded
-  // Google already filters for relevance based on our search queries
-  console.log(`✅ Accepted "${name}" - not excluded (relaxed mode)`);
   return true;
 }
 
@@ -131,7 +147,7 @@ function isRepresentationCompany(name: string): boolean {
 // ============================================
 
 async function searchGooglePlaces(query: string, apiKey: string, limit: number = 20): Promise<any[]> {
-  const fieldMask = 'places.id,places.displayName,places.formattedAddress,places.internationalPhoneNumber,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.types,places.businessStatus';
+  const fieldMask = 'places.id,places.displayName,places.formattedAddress,places.internationalPhoneNumber,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.businessStatus';
 
   try {
     const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
@@ -158,7 +174,6 @@ async function searchGooglePlaces(query: string, apiKey: string, limit: number =
     const data = await response.json();
     const places = data.places || [];
     
-    // Map to compatible format
     return places.map((place: any) => ({
       business_id: place.id || '',
       place_id: place.id || '',
@@ -174,6 +189,50 @@ async function searchGooglePlaces(query: string, apiKey: string, limit: number =
     console.error('❌ Google Places search error:', error);
     return [];
   }
+}
+
+// ============================================
+// SEARCH QUERY BUILDER
+// ============================================
+
+function buildSearchQueries(location: string): string[] {
+  return [
+    `representação comercial ${location}`,
+    `representações comerciais ${location}`,
+    `empresa de representação ${location}`,
+    `representante comercial ${location}`,
+    `escritório de representação ${location}`,
+    `agente comercial ${location}`,
+    `assessoria comercial ${location}`,
+    `representação comercial de alimentos ${location}`,
+    `representação comercial vendas ${location}`,
+    `rep comercial ${location}`,
+    `representação comercial de bebidas ${location}`,
+    `representação comercial de cosméticos ${location}`,
+    `representação comercial de materiais ${location}`,
+    `representação comercial de produtos ${location}`,
+    `representação comercial atacado ${location}`,
+    `representação comercial industrial ${location}`,
+    `representação comercial autônomo ${location}`,
+    `escritório de vendas ${location}`,
+    `promotor de vendas ${location}`,
+    `consultor comercial ${location}`,
+    `intermediação comercial ${location}`,
+    `agenciamento comercial ${location}`,
+    `representação comercial de limpeza ${location}`,
+    `representação comercial de embalagens ${location}`,
+    `representação comercial de ferramentas ${location}`,
+    `representação comercial de eletrônicos ${location}`,
+    `representação comercial de construção ${location}`,
+    `representação comercial de medicamentos ${location}`,
+    `representação comercial de peças ${location}`,
+    `representação comercial de equipamentos ${location}`,
+    `representação comercial de máquinas ${location}`,
+    `representação comercial de têxtil ${location}`,
+    `representação comercial de papelaria ${location}`,
+    `representação comercial de informática ${location}`,
+    `representação comercial de plásticos ${location}`,
+  ];
 }
 
 // ============================================
@@ -204,7 +263,7 @@ serve(async (req) => {
     }
 
     // Fetch user-specific limit
-    let MAX_RESULTS = 80;
+    let MAX_RESULTS = 150;
     try {
       const supabaseUrl = Deno.env.get("SUPABASE_URL");
       const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -222,64 +281,87 @@ serve(async (req) => {
     }
 
     const stateName = stateNames[state] || state;
-    const location = city ? `${city}, ${stateName}` : stateName;
+    const isStateSearch = !city;
     
-    console.log(`📍 Searching representatives in: ${location} (limit: ${MAX_RESULTS})`);
-
-    const searchQueries = [
-      `representação comercial ${location}`,
-      `representações comerciais ${location}`,
-      `empresa de representação ${location}`,
-      `representante comercial ${location}`,
-      `escritório de representação ${location}`,
-      `agente comercial ${location}`,
-      `assessoria comercial ${location}`,
-      `representação comercial de alimentos ${location}`,
-      `representação comercial vendas ${location}`,
-      `rep comercial ${location}`,
-      `representação comercial de bebidas ${location}`,
-      `representação comercial de cosméticos ${location}`,
-      `representação comercial de materiais ${location}`,
-      `representação comercial de produtos ${location}`,
-      `representação comercial atacado ${location}`,
-      `representação comercial industrial ${location}`,
-      `representação comercial autônomo ${location}`,
-      `escritório de vendas ${location}`,
-      `promotor de vendas ${location}`,
-      `consultor comercial ${location}`,
-      `intermediação comercial ${location}`,
-      `agenciamento comercial ${location}`,
-      `representação comercial de limpeza ${location}`,
-      `representação comercial de embalagens ${location}`,
-      `representação comercial de ferramentas ${location}`,
-    ];
+    console.log(`📍 Searching representatives - State: ${state}, City: ${city || 'ALL'}, Limit: ${MAX_RESULTS}`);
 
     const allPlaces: any[] = [];
     const seenIds = new Set<string>();
 
-    // Execute searches in parallel
-    const searchPromises = searchQueries.map(query => searchGooglePlaces(query, GOOGLE_PLACES_API_KEY, 20));
-    const results = await Promise.all(searchPromises);
-    
-    for (const resultList of results) {
-      for (const place of resultList) {
+    const addPlaces = (places: any[]) => {
+      for (const place of places) {
         const id = place.business_id || place.place_id;
         if (id && !seenIds.has(id)) {
           seenIds.add(id);
           allPlaces.push(place);
         }
       }
+    };
+
+    if (isStateSearch) {
+      // STATE-WIDE SEARCH: search across major cities
+      const cities = stateCities[state] || [stateName];
+      console.log(`🏙️ State search: querying ${cities.length} cities for ${state}`);
+
+      // For each city, use a subset of queries to avoid timeout
+      const coreQueries = [
+        'representação comercial',
+        'representante comercial',
+        'representações comerciais',
+        'empresa de representação',
+        'agente comercial',
+        'assessoria comercial',
+        'escritório de representação',
+        'rep comercial',
+        'representação comercial de alimentos',
+        'representação comercial atacado',
+        'representação comercial industrial',
+        'representação comercial de bebidas',
+        'representação comercial de produtos',
+        'representação comercial vendas',
+        'consultor comercial',
+      ];
+
+      const allSearchPromises: Promise<any[]>[] = [];
+      
+      for (const cityName of cities) {
+        const location = `${cityName}, ${stateName}`;
+        for (const q of coreQueries) {
+          allSearchPromises.push(searchGooglePlaces(`${q} ${location}`, GOOGLE_PLACES_API_KEY, 20));
+        }
+      }
+
+      // Also search with just the state name
+      const stateQueries = buildSearchQueries(stateName);
+      for (const q of stateQueries) {
+        allSearchPromises.push(searchGooglePlaces(q, GOOGLE_PLACES_API_KEY, 20));
+      }
+
+      console.log(`🔍 Total search requests: ${allSearchPromises.length}`);
+      
+      const results = await Promise.all(allSearchPromises);
+      for (const resultList of results) {
+        addPlaces(resultList);
+      }
+    } else {
+      // CITY SEARCH: use all query variations
+      const location = `${city}, ${stateName}`;
+      const searchQueries = buildSearchQueries(location);
+      
+      const searchPromises = searchQueries.map(query => searchGooglePlaces(query, GOOGLE_PLACES_API_KEY, 20));
+      const results = await Promise.all(searchPromises);
+      
+      for (const resultList of results) {
+        addPlaces(resultList);
+      }
     }
 
-    console.log(`📊 Found ${allPlaces.length} places from searches`);
+    console.log(`📊 Found ${allPlaces.length} unique places from searches`);
 
-    // Filter strictly to only active representation companies
-    const validPlaces = allPlaces.filter(place => {
-      const name = place.name || '';
-      return isRepresentationCompany(name);
-    });
+    // Filter to only valid representation companies
+    const validPlaces = allPlaces.filter(place => isRepresentationCompany(place.name || ''));
 
-    console.log(`✅ After strict filtering: ${validPlaces.length} representation companies`);
+    console.log(`✅ After filtering: ${validPlaces.length} representation companies`);
 
     // Build final representatives list
     const representatives: Representative[] = [];
@@ -289,27 +371,22 @@ serve(async (req) => {
       const phone = place.phone_number || '';
       const phoneValidation = validateBrazilianPhone(phone);
       
-      // Skip duplicates by phone
-      if (phoneValidation.valid && seenPhones.has(phoneValidation.normalized)) {
+      if (!phoneValidation.valid) {
+        continue;
+      }
+
+      if (seenPhones.has(phoneValidation.normalized)) {
         continue;
       }
       
-      if (phoneValidation.valid) {
-        seenPhones.add(phoneValidation.normalized);
-      }
-
-      // Only include representatives that have a phone number (treat any phone as WhatsApp)
-      if (!phoneValidation.valid) {
-        console.log(`⏭️ Skipping "${place.name}" - no valid phone number`);
-        continue;
-      }
+      seenPhones.add(phoneValidation.normalized);
 
       representatives.push({
         id: place.business_id || place.place_id || `rep-${Date.now()}`,
         name: place.name || 'Empresa de Representação',
         phone: formatPhoneDisplay(phoneValidation.normalized),
         whatsapp: phoneValidation.normalized,
-        address: place.full_address || location,
+        address: place.full_address || '',
         website: place.website || undefined,
         rating: place.rating || undefined
       });
@@ -317,12 +394,8 @@ serve(async (req) => {
       if (representatives.length >= MAX_RESULTS) break;
     }
 
-    // Sort: those with phones first, then by rating
-    representatives.sort((a, b) => {
-      if (a.phone && !b.phone) return -1;
-      if (!a.phone && b.phone) return 1;
-      return (b.rating || 0) - (a.rating || 0);
-    });
+    // Sort by rating
+    representatives.sort((a, b) => (b.rating || 0) - (a.rating || 0));
 
     const withPhone = representatives.filter(r => r.phone).length;
     const withWhatsapp = representatives.filter(r => r.whatsapp).length;
@@ -333,7 +406,7 @@ serve(async (req) => {
       JSON.stringify({ 
         representatives,
         searchInfo: {
-          location,
+          location: city ? `${city}, ${stateName}` : stateName,
           totalFound: representatives.length,
           withPhone,
           withWhatsapp
