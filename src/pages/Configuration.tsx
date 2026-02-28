@@ -187,7 +187,6 @@ const Configuration = () => {
     "Indústrias de Automação",
     "Indústrias de Iluminação e LED",
     // Setor Elétrico e Energia
-    "Lojas de Materiais Elétricos",
     "Montadores de Painel Elétrico",
     "Empresas de Automação Industrial",
     "Instaladores Elétricos",
@@ -247,10 +246,11 @@ const Configuration = () => {
     "Artigos de Caça, Pesca e Camping",
     // Cartonagem
     "Cartonagem",
-    // Comida Japonesa / Oriental / Sushi
+    // Comida Japonesa / Oriental / Sushi / Chinesa
     "Restaurantes Japoneses",
     "Sushi Bars",
     "Restaurantes Orientais",
+    "Restaurantes Chineses",
     "Temakerias",
     // Presentes, Perfumaria e Casa
     "Lojas de Presentes de Alto Padrão",

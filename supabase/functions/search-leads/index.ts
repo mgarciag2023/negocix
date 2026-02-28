@@ -263,10 +263,11 @@ function generateSearchTerms(segment: string): string[] {
     'serralherias': ['serralheria', 'serralheiro', 'portões', 'grades', 'esquadrias metálicas', 'estruturas metálicas', 'portão de ferro', 'grade de ferro', 'corrimão', 'escada de ferro', 'serralheria artística', 'serralheria industrial', 'portão automático', 'gradil', 'portão basculante'],
     // Cartonagem
     'cartonagem': ['cartonagem', 'caixas de papelão', 'embalagens de papelão', 'fábrica de caixas', 'indústria de caixas', 'caixas cartonadas', 'papelão ondulado', 'cartonaria', 'embalagem cartonada', 'caixa de papelão', 'embalagem de papel cartão', 'papel cartão'],
-    // Comida Japonesa / Oriental / Sushi
+    // Comida Japonesa / Oriental / Sushi / Chinesa
     'restaurantes japoneses': ['restaurante japonês', 'comida japonesa', 'culinária japonesa', 'sushi', 'sashimi', 'temaki', 'yakisoba', 'teppanyaki', 'izakaya', 'ramen', 'udon', 'japanese restaurant', 'japa'],
     'sushi bars': ['sushi bar', 'sushi', 'sushiman', 'sushi delivery', 'sushi express', 'sushi house', 'sushi place', 'rodízio de sushi', 'sushi rotativo', 'japa'],
     'restaurantes orientais': ['restaurante oriental', 'comida oriental', 'culinária oriental', 'comida chinesa', 'restaurante chinês', 'comida tailandesa', 'comida coreana', 'restaurante asiático', 'wok', 'dim sum', 'yakisoba'],
+    'restaurantes chineses': ['restaurante chinês', 'comida chinesa', 'culinária chinesa', 'chinese restaurant', 'china in box', 'china box', 'wok', 'dim sum', 'chop suey', 'chow mein', 'yakisoba chinês', 'rolinho primavera', 'comida asiática'],
     'temakerias': ['temakeria', 'temaki', 'temaki delivery', 'hand roll', 'sushi temaki', 'temaki bar'],
     // Presentes de alto padrão
     'lojas de presentes de alto padrão': ['loja de presentes', 'presentes finos', 'presentes de luxo', 'gift shop', 'loja de presentes importados', 'presentes corporativos', 'artigos de luxo', 'loja de decoração', 'cristais', 'porcelana fina', 'presentes sofisticados', 'loja de presentes premium'],
@@ -1248,6 +1249,27 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     include: ['perfumaria', 'perfume', 'fragrância', 'cosmético', 'beleza', 'importados', 'essência', 'aromatizador', 'beauty', 'make up', 'maquiagem'],
     exclude: ['supermercado', 'restaurante', 'lanchonete', 'farmácia', 'construção', 'autopeças', 'pet']
   },
+  // Restaurantes Japoneses / Orientais / Chineses
+  'restaurantes japoneses': {
+    include: ['japonês', 'japones', 'japonesa', 'sushi', 'sashimi', 'temaki', 'yakisoba', 'ramen', 'udon', 'teppanyaki', 'izakaya', 'japa', 'nippon', 'oriental', 'asiático'],
+    exclude: ['supermercado', 'mercado', 'fábrica', 'indústria', 'construção', 'autopeças', 'pet']
+  },
+  'sushi bars': {
+    include: ['sushi', 'sashimi', 'temaki', 'japonês', 'japones', 'japonesa', 'japa', 'rodízio de sushi', 'oriental', 'asiático'],
+    exclude: ['supermercado', 'mercado', 'fábrica', 'indústria', 'construção', 'autopeças', 'pet']
+  },
+  'restaurantes orientais': {
+    include: ['oriental', 'chinês', 'chines', 'chinesa', 'japonês', 'japones', 'japonesa', 'asiático', 'coreano', 'tailandês', 'wok', 'dim sum', 'yakisoba', 'sushi', 'ramen'],
+    exclude: ['supermercado', 'mercado', 'fábrica', 'indústria', 'construção', 'autopeças', 'pet']
+  },
+  'restaurantes chineses': {
+    include: ['chinês', 'chines', 'chinesa', 'china', 'wok', 'dim sum', 'chop suey', 'chow mein', 'oriental', 'asiático', 'yakisoba'],
+    exclude: ['supermercado', 'mercado', 'fábrica', 'indústria', 'construção', 'autopeças', 'pet']
+  },
+  'temakerias': {
+    include: ['temakeria', 'temaki', 'hand roll', 'sushi', 'japonês', 'japones', 'japa'],
+    exclude: ['supermercado', 'mercado', 'fábrica', 'indústria', 'construção', 'autopeças', 'pet']
+  },
   // Restaurantes Premium
   'restaurantes premium': {
     include: ['restaurante', 'gastronomia', 'gourmet', 'fine dining', 'bistrô', 'chef', 'haute cuisine', 'premium', 'sofisticado', 'executivo', 'alta gastronomia'],
@@ -1357,6 +1379,11 @@ const universalExclusionsByCategory: { [key: string]: string[] } = {
   'churrascarias': ['mercado', 'supermercado', 'fábrica', 'indústria'],
   'catering': ['mercado', 'supermercado', 'fábrica', 'indústria'],
   'casas de massas': ['mercado', 'supermercado', 'fábrica', 'indústria'],
+  'restaurantes japoneses': ['mercado', 'supermercado', 'fábrica', 'indústria'],
+  'sushi bars': ['mercado', 'supermercado', 'fábrica', 'indústria'],
+  'restaurantes orientais': ['mercado', 'supermercado', 'fábrica', 'indústria'],
+  'restaurantes chineses': ['mercado', 'supermercado', 'fábrica', 'indústria'],
+  'temakerias': ['mercado', 'supermercado', 'fábrica', 'indústria'],
   'sorveterias': ['mercado', 'supermercado', 'fábrica', 'indústria'],
   'açaí': ['mercado', 'supermercado', 'fábrica', 'indústria'],
   
