@@ -332,8 +332,8 @@ function generateSearchTerms(segment: string): string[] {
     searchTerms = [term];
   }
   
-  // Return up to 4 terms for better coverage
-  return searchTerms.slice(0, 4);
+  // Return up to 10 terms for maximum coverage
+  return searchTerms.slice(0, 10);
 }
 
 // Estimate revenue based on reviews, rating, and category - MORE PRECISE
@@ -2225,22 +2225,60 @@ serve(async (req) => {
           console.log(`🛒 E-commerce específico: ${ecomType}`);
         } else {
           searchTerms = generateSearchTerms(seg);
-          searchTerms = searchTerms.slice(0, 6);
+          searchTerms = searchTerms.slice(0, 10);
         }
         
-        console.log(`📤 Searching segment "${seg}" with terms:`, searchTerms);
+        console.log(`📤 Searching segment "${seg}" with ${searchTerms.length} terms:`, searchTerms);
         
+        // Search all terms in parallel
         const searchPromises = searchTerms.map(term => searchPlaces(term, locationQuery, adjustedPages));
         const searchResults = await Promise.all(searchPromises);
         
-        const placesFromSegment = searchResults.flat().map(place => ({
+        // Additionally, search major neighborhoods/zones for large cities to get MORE unique results
+        const cityNeighborhoods: { [key: string]: string[] } = {
+          'porto alegre': ['Centro Porto Alegre', 'Zona Norte Porto Alegre', 'Zona Sul Porto Alegre', 'Moinhos de Vento', 'Cidade Baixa', 'Bom Fim'],
+          'são paulo': ['Centro São Paulo', 'Zona Norte SP', 'Zona Sul SP', 'Zona Leste SP', 'Zona Oeste SP', 'Vila Mariana', 'Pinheiros', 'Moema'],
+          'rio de janeiro': ['Centro Rio', 'Zona Norte RJ', 'Zona Sul RJ', 'Zona Oeste RJ', 'Barra da Tijuca', 'Copacabana', 'Tijuca'],
+          'belo horizonte': ['Centro BH', 'Savassi', 'Pampulha', 'Barreiro', 'Venda Nova', 'Região Nordeste BH'],
+          'curitiba': ['Centro Curitiba', 'Batel', 'Santa Felicidade', 'Boqueirão', 'Portão', 'CIC'],
+          'salvador': ['Centro Salvador', 'Barra', 'Pituba', 'Itapuã', 'Lauro de Freitas', 'Paralela'],
+          'fortaleza': ['Centro Fortaleza', 'Aldeota', 'Meireles', 'Messejana', 'Maraponga', 'Parangaba'],
+          'recife': ['Centro Recife', 'Boa Viagem', 'Casa Forte', 'Espinheiro', 'Imbiribeira', 'Aflitos'],
+          'brasília': ['Asa Sul', 'Asa Norte', 'Taguatinga', 'Ceilândia', 'Águas Claras', 'Samambaia'],
+          'goiânia': ['Centro Goiânia', 'Setor Bueno', 'Setor Marista', 'Jardim Goiás', 'Campinas'],
+          'manaus': ['Centro Manaus', 'Adrianópolis', 'Cidade Nova', 'Aleixo', 'Flores'],
+          'belém': ['Centro Belém', 'Nazaré', 'Umarizal', 'Marco', 'Pedreira'],
+          'florianópolis': ['Centro Florianópolis', 'Norte da Ilha', 'Sul da Ilha', 'Trindade', 'Estreito'],
+          'vitória': ['Centro Vitória', 'Praia do Canto', 'Jardim da Penha', 'Vila Velha Centro'],
+        };
+        
+        // Find matching city for neighborhood search
+        const regionLower = cleanRegion.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        let neighborhoodQueries: Promise<any[]>[] = [];
+        for (const [city, neighborhoods] of Object.entries(cityNeighborhoods)) {
+          const cityNorm = city.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          if (regionLower.includes(cityNorm)) {
+            // Use first 2 search terms across neighborhoods
+            const topTerms = searchTerms.slice(0, 2);
+            neighborhoodQueries = neighborhoods.flatMap(neighborhood => 
+              topTerms.map(term => searchPlaces(term, `${neighborhood}, ${countryCode === 'BR' ? 'Brazil' : countryCode}`, 1))
+            );
+            console.log(`🏘️ Adding ${neighborhoodQueries.length} neighborhood searches for ${city}`);
+            break;
+          }
+        }
+        
+        const neighborhoodResults = neighborhoodQueries.length > 0 ? await Promise.all(neighborhoodQueries) : [];
+        
+        const allSegmentResults = [...searchResults.flat(), ...neighborhoodResults.flat()];
+        const placesFromSegment = allSegmentResults.map(place => ({
           ...place,
           _searchSegment: seg.toLowerCase(),
           _displayCategory: segmentDisplayNames[seg.toLowerCase()] || seg
         }));
         
         allPlacesWithSegment.push(...placesFromSegment);
-        console.log(`📊 Segment "${seg}": ${placesFromSegment.length} raw places`);
+        console.log(`📊 Segment "${seg}": ${placesFromSegment.length} raw places (${searchResults.flat().length} from main + ${neighborhoodResults.flat().length} from neighborhoods)`);
         
         if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 8) {
           console.log(`⚡ Enough raw places (${allPlacesWithSegment.length}), skipping remaining segments`);
