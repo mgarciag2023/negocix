@@ -77,7 +77,6 @@ const Configuration = () => {
     "Distribuidores de Alimentos",
     "Distribuidores de Food Service",
     "Cestas Básicas",
-    // Segmentos alimentícios específicos
     "Confeitarias",
     "Docerias",
     "Salgadeiros",
@@ -90,7 +89,6 @@ const Configuration = () => {
     "Churrascarias",
     "Catering",
     "Casas de Massas",
-    // Outros segmentos solicitados
     "Indústrias de Alimentos",
     "Granjas",
     "Lojas de Pneus",
@@ -119,7 +117,6 @@ const Configuration = () => {
     "Arenas de Beach Tennis",
     "Quadras de Tênis",
     "Clubes Esportivos",
-    // Setor Têxtil
     "Confecções",
     "Lojas de Tecidos",
     "Lojas de Tecidos para Decoração",
@@ -130,7 +127,6 @@ const Configuration = () => {
     "Malharias",
     "Fábricas de Uniformes",
     "Lojas de Tapeçaria, Cortinas e Persianas",
-    // Transporte e Logística
     "Transportadoras",
     "Frotistas",
     "Empresas com Frota Própria",
@@ -140,7 +136,6 @@ const Configuration = () => {
     "Empresas de Logística",
     "Locadoras de Veículos",
     "Empresas de Turismo",
-    // Setor Saúde
     "Clínicas Médicas",
     "Clínicas Odontológicas",
     "Hospitais",
@@ -153,7 +148,6 @@ const Configuration = () => {
     "Clínicas de Psicologia",
     "Nutricionistas",
     "Fonoaudiólogos",
-    // Indústria Gráfica & Comunicação Visual
     "Gráficas",
     "Comunicação Visual",
     "Impressão Digital",
@@ -166,7 +160,6 @@ const Configuration = () => {
     "Fábricas de Embalagens",
     "Distribuidoras de Embalagens",
     "Editoras",
-    // Setor Construção Civil
     "Construtoras",
     "Empreiteiras",
     "Incorporadoras",
@@ -181,19 +174,16 @@ const Configuration = () => {
     "Fabricantes de Esquadrias de Madeira",
     "Lojas de Revestimentos",
     "Lojas de Portas",
-    // Setor Industrial / Eletrônica
     "Indústrias de Eletrônica",
     "Indústrias Automotivas",
     "Indústrias de Automação",
     "Indústrias de Iluminação e LED",
-    // Setor Elétrico e Energia
     "Montadores de Painel Elétrico",
     "Empresas de Automação Industrial",
     "Instaladores Elétricos",
     "Empresas de Manutenção Elétrica",
     "Empresas de Energia Solar",
     "Indústrias que Montam ou Reformam Painéis",
-    // Metal e Siderurgia
     "Metalúrgicas",
     "Siderúrgicas",
     "Empresas de Solda",
@@ -202,7 +192,6 @@ const Configuration = () => {
     "Estruturas Metálicas",
     "Fabricantes de Máquinas e Equipamentos",
     "Distribuidores de Aço e Ferro",
-    // Setor Produtos Naturais / Orgânicos
     "Lojas de Produtos Naturais",
     "Empórios Naturais",
     "Lojas de Suplementos",
@@ -211,7 +200,6 @@ const Configuration = () => {
     "Academias",
     "Clínicas de Estética",
     "Spas",
-    // Novos segmentos de alta demanda
     "Pet Shops",
     "Loja de Ração Pet",
     "Fabricantes de Ração Pet",
@@ -220,7 +208,6 @@ const Configuration = () => {
     "Creches Pet",
     "Adestramento de Animais",
     "Clínicas Veterinárias",
-    // Abatedouros
     "Abatedouros de Aves",
     "Abatedouros de Bovinos",
     "Abatedouros de Suínos",
@@ -234,43 +221,31 @@ const Configuration = () => {
     "Papelarias",
     "Óticas",
     "Joalherias",
-    // Segmentos domésticos e utilidades
     "Lojas de Cama, Mesa e Banho",
     "Lojas de Utilidades Domésticas",
-    "Lojas de Utilidades",
-    // Distribuidores de bebidas específicos
     "Distribuidores de Água",
     "Distribuidores de Refrigerantes",
     "Distribuidores de Cervejas",
-    // Caça, pesca e camping
     "Artigos de Caça, Pesca e Camping",
-    // Cartonagem
     "Cartonagem",
-    // Comida Japonesa / Oriental / Sushi / Chinesa
     "Restaurantes Japoneses",
     "Sushi Bars",
     "Restaurantes Orientais",
     "Restaurantes Chineses",
     "Temakerias",
-    // Presentes, Perfumaria e Casa
     "Lojas de Presentes de Alto Padrão",
     "Perfumarias",
-    // Restaurantes e Eventos Premium
     "Restaurantes Premium",
     "Buffets de Festas",
     "Empresas de Locação de Materiais para Eventos",
-    // Industrial e Mineração
     "Indústrias de Mineração",
     "Indústrias Sucroalcooleiras",
-    // Autopeças especializadas
     "Autopeças de Vans e Utilitários",
     "E-commerces de Peças Automotivas",
-    // E-commerces especializados
     "E-commerces de Utilidades Domésticas",
     "E-commerces de Perfumaria e Casa",
     "E-commerces de Sabonetes",
     "E-commerces de Presentes Finos",
-    // Moda e Vestuário Especializado
     "Lojas de Moda Infantil",
     "Lojas de Móveis",
     "Lojas de Variedades",
@@ -289,6 +264,37 @@ const Configuration = () => {
     "Lojas de Colchões",
     "Lojas de Eletrodomésticos",
     "Lojas de Cosméticos",
+    // 30 novos segmentos
+    "Floriculturas",
+    "Livrarias",
+    "Lavanderias",
+    "Açougues",
+    "Peixarias",
+    "Barbearias",
+    "Estúdios de Tatuagem",
+    "Sorveterias",
+    "Cafeterias",
+    "Cervejarias Artesanais",
+    "Tabacarias",
+    "Lojas de Artigos para Festas",
+    "Corretoras de Seguros",
+    "Escritórios de Contabilidade",
+    "Escritórios de Advocacia",
+    "Escolas de Idiomas",
+    "Escolas de Música",
+    "Autoescolas",
+    "Lava-Rápidos",
+    "Funilarias e Pinturas",
+    "Auto Elétricas",
+    "Borracharias",
+    "Empresas de Segurança",
+    "Empresas de Limpeza",
+    "Dedetizadoras",
+    "Coworkings",
+    "Casas de Festas",
+    "Lojas de Artigos para Piscina",
+    "Lojas de Artigos Religiosos",
+    "Adegas e Distribuidoras de Vinhos",
   ].sort(); // Ordenação alfabética
 
   const handleCustomerToggle = (customer: string) => {
