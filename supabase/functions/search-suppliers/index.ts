@@ -67,9 +67,9 @@ const NON_SUPPLIER_EXCLUDES = [
 
 // Context-aware exclusions: some terms should NOT be excluded when searching for related products
 const CONTEXT_ALLOWED: { [key: string]: string[] } = {
-  'pet shop': ['produtos para pet shop'],
-  'petshop': ['produtos para pet shop'],
-  'banho e tosa': ['produtos para pet shop'],
+  'pet shop': ['produtos para pet shop', 'produtos pet'],
+  'petshop': ['produtos para pet shop', 'produtos pet'],
+  'banho e tosa': ['produtos para pet shop', 'produtos pet'],
 };
 
 function isLikelySupplier(place: any, searchedProducts: string[]): boolean {
@@ -175,6 +175,7 @@ const productSearchTerms: { [key: string]: string[] } = {
   "Bijuterias e Acessórios": ["distribuidora bijuterias", "atacado acessórios bijuterias"],
   "Utilidades Domésticas": ["distribuidora utilidades domésticas", "atacado utilidades"],
   "Produtos para Pet Shop": ["distribuidora pet shop", "atacado produtos pet", "distribuidora ração animal", "atacado acessórios pet", "fornecedor pet shop", "distribuidora produtos veterinários", "atacado ração cães gatos", "distribuidora acessórios animais"],
+  "Produtos pet": ["distribuidora pet shop", "atacado produtos pet", "distribuidora ração animal", "atacado acessórios pet", "fornecedor pet shop", "distribuidora produtos veterinários", "atacado ração cães gatos", "distribuidora acessórios animais"],
   "Tintas e Materiais para Pintura": ["distribuidora tintas", "atacado tintas vernizes", "fábrica tintas", "distribuidora materiais pintura"],
 };
 
