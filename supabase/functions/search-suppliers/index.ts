@@ -161,6 +161,8 @@ const productSearchTerms: { [key: string]: string[] } = {
   "Produtos Farmacêuticos": ["distribuidora farmacêutica", "atacado medicamentos"],
   "Bijuterias e Acessórios": ["distribuidora bijuterias", "atacado acessórios bijuterias"],
   "Utilidades Domésticas": ["distribuidora utilidades domésticas", "atacado utilidades"],
+  "Produtos para Pet Shop": ["distribuidora pet shop", "atacado produtos pet", "distribuidora ração animal", "atacado acessórios pet"],
+  "Tintas e Materiais para Pintura": ["distribuidora tintas", "atacado tintas vernizes", "fábrica tintas", "distribuidora materiais pintura"],
 };
 
 // ====== GOOGLE PLACES API SEARCH ======
