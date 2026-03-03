@@ -65,14 +65,27 @@ const NON_SUPPLIER_EXCLUDES = [
   'lotérica', 'loterica',
 ];
 
+// Context-aware exclusions: some terms should NOT be excluded when searching for related products
+const CONTEXT_ALLOWED: { [key: string]: string[] } = {
+  'pet shop': ['produtos para pet shop'],
+  'petshop': ['produtos para pet shop'],
+  'banho e tosa': ['produtos para pet shop'],
+};
+
 function isLikelySupplier(place: any, searchedProducts: string[]): boolean {
   const title = normalizeStr(place.name || "");
   const category = normalizeStr(place.type || "");
   const allCategories = (place.subtypes || []).map((c: string) => normalizeStr(c));
   const fullText = `${title} ${category} ${allCategories.join(" ")}`;
+  const normalizedProducts = searchedProducts.map(p => normalizeStr(p));
 
   for (const exclude of NON_SUPPLIER_EXCLUDES) {
     if (title.includes(normalizeStr(exclude))) {
+      // Check if this exclusion should be bypassed for the current search context
+      const allowedFor = CONTEXT_ALLOWED[exclude];
+      if (allowedFor && allowedFor.some(ctx => normalizedProducts.includes(normalizeStr(ctx)))) {
+        continue; // Skip this exclusion - it's relevant to what we're searching
+      }
       const hasSupplierWord = SUPPLIER_INDICATORS.some(ind => title.includes(normalizeStr(ind)));
       if (!hasSupplierWord) {
         console.log(`❌ Excluded (non-supplier name): "${place.name}"`);
@@ -161,7 +174,7 @@ const productSearchTerms: { [key: string]: string[] } = {
   "Produtos Farmacêuticos": ["distribuidora farmacêutica", "atacado medicamentos"],
   "Bijuterias e Acessórios": ["distribuidora bijuterias", "atacado acessórios bijuterias"],
   "Utilidades Domésticas": ["distribuidora utilidades domésticas", "atacado utilidades"],
-  "Produtos para Pet Shop": ["distribuidora pet shop", "atacado produtos pet", "distribuidora ração animal", "atacado acessórios pet"],
+  "Produtos para Pet Shop": ["distribuidora pet shop", "atacado produtos pet", "distribuidora ração animal", "atacado acessórios pet", "fornecedor pet shop", "distribuidora produtos veterinários", "atacado ração cães gatos", "distribuidora acessórios animais"],
   "Tintas e Materiais para Pintura": ["distribuidora tintas", "atacado tintas vernizes", "fábrica tintas", "distribuidora materiais pintura"],
 };
 
