@@ -64,6 +64,7 @@ const SearchSuppliers = () => {
     "Sementes",
     "Rações Animais",
     "Medicamentos Veterinários",
+    "Produtos pet",
     // Embalagens
     "Embalagens Plásticas",
     "Embalagens de Papelão",
