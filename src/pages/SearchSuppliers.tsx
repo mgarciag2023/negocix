@@ -44,6 +44,8 @@ const SearchSuppliers = () => {
     "Pisos e Revestimentos",
     "Materiais Elétricos",
     "Materiais Hidráulicos",
+    "Pré-Moldados",
+    "Steel Frame",
     // Têxtil e Vestuário
     "Tecidos",
     "Aviamentos",

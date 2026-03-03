@@ -177,6 +177,8 @@ const productSearchTerms: { [key: string]: string[] } = {
   "Produtos para Pet Shop": ["distribuidora pet shop", "atacado produtos pet", "distribuidora ração animal", "atacado acessórios pet", "fornecedor pet shop", "distribuidora produtos veterinários", "atacado ração cães gatos", "distribuidora acessórios animais"],
   "Produtos pet": ["distribuidora pet shop", "atacado produtos pet", "distribuidora ração animal", "atacado acessórios pet", "fornecedor pet shop", "distribuidora produtos veterinários", "atacado ração cães gatos", "distribuidora acessórios animais"],
   "Tintas e Materiais para Pintura": ["distribuidora tintas", "atacado tintas vernizes", "fábrica tintas", "distribuidora materiais pintura"],
+  "Pré-Moldados": ["fábrica pré-moldados", "distribuidora pré-moldados", "fornecedor pré-moldados", "construtora pré-moldado", "artefatos de concreto", "fábrica artefatos concreto", "lajes pré-moldadas", "postes pré-moldados", "blocos de concreto"],
+  "Steel Frame": ["steel frame", "fornecedor steel frame", "distribuidora steel frame", "construtora steel frame", "estrutura metálica", "fábrica estrutura metálica", "perfil de aço", "construção a seco", "drywall steel frame"],
 };
 
 // ====== GOOGLE PLACES API SEARCH ======
