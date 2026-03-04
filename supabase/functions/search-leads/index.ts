@@ -1845,7 +1845,7 @@ async function extractEmailFromWebsite(websiteUrl: string): Promise<string> {
     if (!url.startsWith('http')) url = `https://${url}`;
     
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout
+    const timeout = setTimeout(() => controller.abort(), 3000); // 3s timeout to save CPU
     
     const response = await fetch(url, { 
       signal: controller.signal,
@@ -1885,17 +1885,19 @@ async function extractEmailFromWebsite(websiteUrl: string): Promise<string> {
 }
 
 // Batch extract emails from websites (parallel with concurrency limit)
-async function batchExtractEmails(places: any[], concurrency = 10): Promise<Map<string, string>> {
+async function batchExtractEmails(places: any[], concurrency = 5): Promise<Map<string, string>> {
   const emailMap = new Map<string, string>();
   const placesWithWebsite = places.filter(p => p.website && p.website !== 'Não disponível' && p.website.trim().length > 5);
   
   if (placesWithWebsite.length === 0) return emailMap;
   
-  console.log(`📧 Extracting emails from ${placesWithWebsite.length} websites...`);
+  // Limit to max 15 websites to avoid CPU timeout
+  const limitedPlaces = placesWithWebsite.slice(0, 15);
+  console.log(`📧 Extracting emails from ${limitedPlaces.length} websites (of ${placesWithWebsite.length} available)...`);
   
   // Process in batches
-  for (let i = 0; i < placesWithWebsite.length; i += concurrency) {
-    const batch = placesWithWebsite.slice(i, i + concurrency);
+  for (let i = 0; i < limitedPlaces.length; i += concurrency) {
+    const batch = limitedPlaces.slice(i, i + concurrency);
     const results = await Promise.all(
       batch.map(async (place) => {
         const email = await extractEmailFromWebsite(place.website || place._website);
