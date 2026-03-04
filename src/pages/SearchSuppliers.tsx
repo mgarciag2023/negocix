@@ -85,6 +85,9 @@ const SearchSuppliers = () => {
     "Pneus",
     "Óleos e Lubrificantes",
     "Acessórios Automotivos",
+    // Festas e Eventos
+    "Artigos para Festas",
+    "Balões e Decoração",
     // Outros
     "Móveis",
     "Eletrodomésticos",
@@ -93,6 +96,20 @@ const SearchSuppliers = () => {
     "Produtos Farmacêuticos",
     "Bijuterias e Acessórios",
     "Utilidades Domésticas",
+    "Materiais para Artesanato",
+    "Produtos Naturais e Suplementos",
+    "Produtos de Beleza e Cabelo",
+    "Material Fotográfico",
+    "Instrumentos Musicais",
+    "Equipamentos para Restaurantes",
+    "Produtos para Confeitaria e Panificação",
+    "Materiais para Serigrafia e Estamparia",
+    "Produtos de Jardinagem e Paisagismo",
+    "Equipamentos para Academia",
+    "Materiais Odontológicos",
+    "Suprimentos para Impressão",
+    "Equipamentos de Segurança Eletrônica",
+    "Produtos para Piscinas",
   ];
 
   const brazilianStates = [

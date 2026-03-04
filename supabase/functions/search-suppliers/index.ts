@@ -179,6 +179,22 @@ const productSearchTerms: { [key: string]: string[] } = {
   "Tintas e Materiais para Pintura": ["distribuidora tintas", "atacado tintas vernizes", "fábrica tintas", "distribuidora materiais pintura"],
   "Pré-Moldados": ["fábrica pré-moldados", "distribuidora pré-moldados", "fornecedor pré-moldados", "construtora pré-moldado", "artefatos de concreto", "fábrica artefatos concreto", "lajes pré-moldadas", "postes pré-moldados", "blocos de concreto"],
   "Steel Frame": ["steel frame", "fornecedor steel frame", "distribuidora steel frame", "construtora steel frame", "estrutura metálica", "fábrica estrutura metálica", "perfil de aço", "construção a seco", "drywall steel frame"],
+  "Artigos para Festas": ["distribuidora artigos para festas", "atacado festas", "loja de festas atacado", "fornecedor descartáveis festas", "distribuidora balões", "atacado decoração festas"],
+  "Balões e Decoração": ["distribuidora balões", "atacado balões", "fábrica balões", "fornecedor decoração festas", "distribuidora decoração eventos"],
+  "Materiais para Artesanato": ["distribuidora artesanato", "atacado artesanato", "fornecedor materiais artesanato", "atacado aviamentos artesanato"],
+  "Produtos Naturais e Suplementos": ["distribuidora produtos naturais", "atacado suplementos", "distribuidora suplementos alimentares", "atacado produtos naturais"],
+  "Produtos de Beleza e Cabelo": ["distribuidora produtos beleza", "atacado cabelo", "distribuidora profissional cabelo", "fornecedor cosméticos profissionais"],
+  "Material Fotográfico": ["distribuidora material fotográfico", "atacado equipamentos fotografia", "fornecedor câmeras acessórios"],
+  "Instrumentos Musicais": ["distribuidora instrumentos musicais", "atacado instrumentos musicais", "fornecedor equipamentos áudio"],
+  "Equipamentos para Restaurantes": ["distribuidora equipamentos restaurantes", "atacado equipamentos cozinha industrial", "fornecedor inox cozinha"],
+  "Produtos para Confeitaria e Panificação": ["distribuidora confeitaria", "atacado panificação", "fornecedor insumos padaria", "distribuidora ingredientes confeitaria"],
+  "Materiais para Serigrafia e Estamparia": ["distribuidora serigrafia", "atacado estamparia", "fornecedor tintas serigrafia", "distribuidora sublimação"],
+  "Produtos de Jardinagem e Paisagismo": ["distribuidora jardinagem", "atacado paisagismo", "fornecedor plantas vasos", "distribuidora ferramentas jardinagem"],
+  "Equipamentos para Academia": ["distribuidora equipamentos academia", "atacado fitness", "fornecedor aparelhos musculação", "distribuidora equipamentos esportivos"],
+  "Materiais Odontológicos": ["distribuidora odontológica", "atacado materiais dentários", "fornecedor equipamentos odontológicos"],
+  "Suprimentos para Impressão": ["distribuidora suprimentos impressão", "atacado toner cartucho", "fornecedor papel impressora"],
+  "Equipamentos de Segurança Eletrônica": ["distribuidora câmeras segurança", "atacado CFTV", "fornecedor alarmes segurança", "distribuidora equipamentos monitoramento"],
+  "Produtos para Piscinas": ["distribuidora produtos piscina", "atacado cloro piscina", "fornecedor equipamentos piscina", "distribuidora tratamento água"],
 };
 
 // ====== GOOGLE PLACES API SEARCH ======
