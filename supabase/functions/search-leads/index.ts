@@ -2339,8 +2339,9 @@ serve(async (req) => {
     let leads = processResultsWithCategories(activePlaces, segment, cleanRegion, MAX_TOTAL_LEADS, bizType, digPresence, digActivity);
     console.log(`✅ FINAL: ${leads.length} leads ready (target: ${MIN_LEADS_TARGET}-${MAX_TOTAL_LEADS})`);
     
-    // Extract emails from websites (skip for state searches to save CPU time)
-    if (!isStateOnlySearch) {
+    // Extract emails from websites (skip for state searches or large result sets to avoid CPU timeout)
+    const placesWithWebsiteCount = leads.filter((l: any) => l.website && l.website !== 'Não disponível' && l.website.trim().length > 5).length;
+    if (!isStateOnlySearch && placesWithWebsiteCount <= 20) {
       const emailMap = await batchExtractEmails(leads);
       if (emailMap.size > 0) {
         leads = leads.map((lead: any) => ({
@@ -2350,7 +2351,7 @@ serve(async (req) => {
         console.log(`📧 Enriched ${emailMap.size} leads with emails`);
       }
     } else {
-      console.log(`⏩ Skipping email extraction for state search to save CPU time`);
+      console.log(`⏩ Skipping email extraction (state=${isStateOnlySearch}, websites=${placesWithWebsiteCount}) to avoid CPU timeout`);
     }
     
     // Apply WhatsApp filter if requested
