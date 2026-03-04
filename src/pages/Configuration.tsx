@@ -587,24 +587,6 @@ const Configuration = () => {
                 </div>
 
                 {/* WhatsApp Filter */}
-                <div>
-                  <Label className="text-base font-semibold mb-4 block" translate="no">
-                    Filtro de WhatsApp:
-                  </Label>
-                  <div className="flex items-center space-x-3">
-                    <Checkbox 
-                      id="whatsapp-only" 
-                      checked={whatsappOnly}
-                      onCheckedChange={(checked) => setWhatsappOnly(checked === true)}
-                    />
-                    <Label htmlFor="whatsapp-only" className="font-normal cursor-pointer" translate="no">
-                      Apenas leads com WhatsApp confirmado
-                    </Label>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Quando ativado, mostra apenas leads que possuem número de WhatsApp verificado
-                  </p>
-                </div>
 
 
                 {/* Country */}
