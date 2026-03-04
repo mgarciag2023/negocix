@@ -29,7 +29,7 @@ const Configuration = () => {
   const [digitalPresence, setDigitalPresence] = useState("all"); // all, no-site, basic-site, structured-site
   const [digitalActivity, setDigitalActivity] = useState("all"); // all, low, basic, active
   const [customerSearch, setCustomerSearch] = useState(""); // Search filter for customer types
-  const [whatsappOnly, setWhatsappOnly] = useState(false); // Filter for leads with WhatsApp only
+  // whatsappOnly removed - was filtering out too many leads
   // receitaFederalOnly removed
 
   const countries = [
@@ -381,7 +381,7 @@ const Configuration = () => {
       digitalPresence,
       digitalActivity,
       ecommerceType: selectedCustomers.includes("E-commerce") ? ecommerceType : "",
-      whatsappOnly,
+      whatsappOnly: false,
       receitaFederalOnly: false,
     };
     
