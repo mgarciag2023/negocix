@@ -1896,8 +1896,8 @@ async function batchExtractEmails(places: any[], concurrency = 5): Promise<Map<s
   console.log(`📧 Extracting emails from ${limitedPlaces.length} websites (of ${placesWithWebsite.length} available)...`);
   
   // Process in batches
-  for (let i = 0; i < placesWithWebsite.length; i += concurrency) {
-    const batch = placesWithWebsite.slice(i, i + concurrency);
+  for (let i = 0; i < limitedPlaces.length; i += concurrency) {
+    const batch = limitedPlaces.slice(i, i + concurrency);
     const results = await Promise.all(
       batch.map(async (place) => {
         const email = await extractEmailFromWebsite(place.website || place._website);
