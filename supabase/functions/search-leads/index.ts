@@ -1845,7 +1845,7 @@ async function extractEmailFromWebsite(websiteUrl: string): Promise<string> {
     if (!url.startsWith('http')) url = `https://${url}`;
     
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout
+    const timeout = setTimeout(() => controller.abort(), 3000); // 3s timeout to save CPU
     
     const response = await fetch(url, { 
       signal: controller.signal,
