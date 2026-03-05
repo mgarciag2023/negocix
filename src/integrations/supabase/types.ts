@@ -242,6 +242,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_seen_leads: {
+        Row: {
+          id: string
+          place_id: string
+          search_type: string
+          seen_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          place_id: string
+          search_type?: string
+          seen_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          place_id?: string
+          search_type?: string
+          seen_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

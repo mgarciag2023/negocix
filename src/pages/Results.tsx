@@ -274,9 +274,9 @@ const Results = () => {
           }
         } else if (data?.error) {
           toast({
-            title: "Erro ao buscar leads",
+            title: data.allSeen ? "Leads já exibidos" : "Erro ao buscar leads",
             description: data.error + (data.details ? ` ${data.details}` : ''),
-            variant: "destructive",
+            variant: data.allSeen ? "default" : "destructive",
           });
         } else {
           toast({

@@ -2378,11 +2378,88 @@ serve(async (req) => {
       console.log(`🏛️ Receita Federal filter applied: ${leads.length} formal businesses (removed ${beforeRF - leads.length})`);
     }
 
+    // ===== FILTER OUT PREVIOUSLY SEEN LEADS =====
+    let userId: string | null = null;
+    let allFilteredBySeen = false;
+    try {
+      const authHeader = req.headers.get('authorization');
+      if (authHeader) {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+        const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+        const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+        
+        // Extract user from auth header
+        const supabaseAuth = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || "", {
+          global: { headers: { Authorization: authHeader } }
+        });
+        const { data: { user } } = await supabaseAuth.auth.getUser();
+        
+        if (user) {
+          userId = user.id;
+          const leadPlaceIds = leads.map((l: any) => l.placeId).filter(Boolean);
+          
+          if (leadPlaceIds.length > 0) {
+            // Fetch already seen place_ids for this user
+            const { data: seenData } = await adminClient
+              .from("user_seen_leads")
+              .select("place_id")
+              .eq("user_id", user.id)
+              .in("place_id", leadPlaceIds);
+            
+            const seenSet = new Set((seenData || []).map((s: any) => s.place_id));
+            const beforeFilter = leads.length;
+            
+            if (seenSet.size > 0) {
+              leads = leads.filter((lead: any) => !lead.placeId || !seenSet.has(lead.placeId));
+              console.log(`👁️ Seen leads filter: removed ${beforeFilter - leads.length} already seen, ${leads.length} remaining`);
+              if (leads.length === 0 && beforeFilter > 0) {
+                allFilteredBySeen = true;
+              }
+            }
+            
+            // Record newly shown leads
+            if (leads.length > 0) {
+              const newPlaceIds = leads
+                .map((l: any) => l.placeId)
+                .filter(Boolean)
+                .map((placeId: string) => ({
+                  user_id: user.id,
+                  place_id: placeId,
+                  search_type: 'leads',
+                }));
+              
+              if (newPlaceIds.length > 0) {
+                const { error: insertError } = await adminClient
+                  .from("user_seen_leads")
+                  .upsert(newPlaceIds, { onConflict: 'user_id,place_id', ignoreDuplicates: true });
+                
+                if (insertError) {
+                  console.error("⚠️ Error recording seen leads:", insertError);
+                } else {
+                  console.log(`💾 Recorded ${newPlaceIds.length} new seen leads for user ${user.email}`);
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error("⚠️ Error in seen leads filter:", e);
+    }
+
     if (leads.length === 0) {
-      const whatsappMsg = filterWhatsappOnly ? ' com WhatsApp' : '';
+      if (allFilteredBySeen) {
+        return new Response(JSON.stringify({ 
+          error: `Todos os leads desta pesquisa já foram exibidos anteriormente. Tente buscar em outra região ou com outros filtros.`,
+          allSeen: true
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const rfMsg = filterReceitaFederal ? ' ligadas à Receita Federal' : '';
       return new Response(JSON.stringify({ 
-        error: `Nenhum estabelecimento${whatsappMsg}${rfMsg} encontrado em ${cleanRegion}. Tente outra região ou desative os filtros.` 
+        error: `Nenhum estabelecimento${rfMsg} encontrado em ${cleanRegion}. Tente outra região ou desative os filtros.` 
       }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
