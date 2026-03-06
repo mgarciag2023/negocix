@@ -326,6 +326,8 @@ const Configuration = () => {
     "Empresas de Impermeabilização",
     "Empresas de Desentupimento",
     "Empresas de Paisagismo e Jardinagem",
+    "Empresas de Steel Frame",
+    "Construtoras de Pré-Moldado",
   ].sort(); // Ordenação alfabética
 
   const handleCustomerToggle = (customer: string) => {
