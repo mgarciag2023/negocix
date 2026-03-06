@@ -1207,7 +1207,17 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
   },
   'estruturas metálicas': {
     include: ['estruturas metálicas', 'estrutura metálica', 'galpão metálico', 'cobertura metálica', 'montagem estrutural', 'serralheria industrial', 'steel frame', 'mezanino metálico', 'escadas metálicas', 'passarelas metálicas', 'portões industriais', 'grades metálicas', 'gradis', 'estrutura de aço', 'construção metálica', 'montagem de galpão', 'barracão metálico', 'serralheria de obras', 'serralheria', 'metalon'],
-    mustMatch: [], // Removido para aumentar volume
+    mustMatch: [],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'escola']
+  },
+  'empresas de steel frame': {
+    include: ['steel frame', 'light steel frame', 'steel framing', 'construção a seco', 'construção industrializada', 'construção modular', 'perfil de aço', 'drywall', 'casa steel frame'],
+    mustMatch: [],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'escola']
+  },
+  'construtoras de pré-moldado': {
+    include: ['pré-moldado', 'pré moldado', 'pré-fabricado', 'pré fabricado', 'artefatos de concreto', 'lajes pré-moldadas', 'concreto pré-moldado', 'galpão pré-moldado', 'blocos de concreto', 'muros pré-moldados', 'postes pré-moldados', 'pilares pré-moldados', 'vigas pré-moldadas', 'barracão pré-moldado'],
+    mustMatch: [],
     exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'escola']
   },
   'fabricantes de máquinas e equipamentos': {
