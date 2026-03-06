@@ -167,6 +167,8 @@ function generateSearchTerms(segment: string): string[] {
     'caldeirarias': ['caldeiraria', 'caldeireiro', 'caldeiras', 'vasos de pressão', 'tubulação industrial', 'montagem industrial', 'estruturas metálicas', 'fabricação de tanques', 'reservatórios metálicos', 'silos metálicos', 'dutos industriais', 'caldeiraria pesada', 'caldeiraria leve', 'fabricação de equipamentos', 'montagem mecânica', 'tubulações', 'tanques de aço'],
     'usinagens': ['usinagem', 'tornearia', 'fresadora', 'torno cnc', 'usinagem cnc', 'retífica', 'ferramentaria', 'peças usinadas', 'centro de usinagem', 'torno mecânico', 'fresagem', 'usinagem de precisão', 'peças sob encomenda', 'usinagem em geral', 'serviços de usinagem', 'tornearia mecânica', 'mandrilhamento', 'brunimento', 'balanceamento', 'torno automático', 'torno convencional'],
     'estruturas metálicas': ['estruturas metálicas', 'estrutura metálica', 'galpão metálico', 'cobertura metálica', 'montagem estrutural', 'serralheria industrial', 'steel frame', 'mezanino metálico', 'escadas metálicas', 'passarelas metálicas', 'portões industriais', 'grades metálicas', 'gradis', 'estrutura de aço', 'construção metálica', 'montagem de galpão', 'barracão metálico', 'serralheria de obras'],
+    'empresas de steel frame': ['steel frame', 'construtora steel frame', 'construção steel frame', 'montagem steel frame', 'casa steel frame', 'estrutura steel frame', 'construção a seco', 'light steel frame', 'steel framing', 'casa em steel frame', 'obra steel frame', 'empresa steel frame', 'fabricante steel frame', 'perfil steel frame', 'construção industrializada', 'construção modular'],
+    'construtoras de pré-moldado': ['pré-moldado', 'pré moldado', 'construtora pré-moldado', 'empresa pré-moldado', 'galpão pré-moldado', 'estrutura pré-moldada', 'construção pré-moldada', 'fábrica pré-moldado', 'artefatos de concreto', 'lajes pré-moldadas', 'pilares pré-moldados', 'vigas pré-moldadas', 'concreto pré-moldado', 'pré-fabricado', 'construção pré-fabricada', 'galpão pré-fabricado', 'barracão pré-moldado', 'muros pré-moldados', 'postes pré-moldados', 'blocos de concreto'],
     'fabricantes de máquinas e equipamentos': ['fábrica de máquinas', 'fabricante de equipamentos', 'máquinas industriais', 'equipamentos industriais', 'indústria de máquinas', 'máquinas e equipamentos', 'fabricante de máquinas', 'equipamentos sob medida', 'máquinas especiais', 'automação industrial', 'linha de produção', 'equipamentos para indústria', 'máquinas para alimentos', 'máquinas para embalagem', 'equipamentos metalúrgicos', 'máquinas agrícolas', 'implementos', 'fabricação de equipamentos'],
     'lojas de roupas': ['loja de roupas', 'vestuário', 'boutique', 'moda'],
     'autopeças': ['autopeças', 'auto peças', 'loja de autopeças', 'casa de autopeças', 'peças automotivas', 'peças para carros', 'peças para veículos', 'auto center', 'retífica de motores', 'peças de reposição', 'rolamentos', 'auto elétrica', 'peças para caminhão', 'peças para moto', 'acessórios automotivos', 'peças e acessórios', 'peças para carro', 'freios', 'suspensão automotiva', 'amortecedores', 'filtros automotivos', 'escapamentos', 'radiadores', 'embreagem', 'correias', 'velas de ignição', 'baterias automotivas', 'pneus e rodas', 'motor de arranque', 'alternador'],
@@ -1205,7 +1207,17 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
   },
   'estruturas metálicas': {
     include: ['estruturas metálicas', 'estrutura metálica', 'galpão metálico', 'cobertura metálica', 'montagem estrutural', 'serralheria industrial', 'steel frame', 'mezanino metálico', 'escadas metálicas', 'passarelas metálicas', 'portões industriais', 'grades metálicas', 'gradis', 'estrutura de aço', 'construção metálica', 'montagem de galpão', 'barracão metálico', 'serralheria de obras', 'serralheria', 'metalon'],
-    mustMatch: [], // Removido para aumentar volume
+    mustMatch: [],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'escola']
+  },
+  'empresas de steel frame': {
+    include: ['steel frame', 'light steel frame', 'steel framing', 'construção a seco', 'construção industrializada', 'construção modular', 'perfil de aço', 'drywall', 'casa steel frame'],
+    mustMatch: [],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'escola']
+  },
+  'construtoras de pré-moldado': {
+    include: ['pré-moldado', 'pré moldado', 'pré-fabricado', 'pré fabricado', 'artefatos de concreto', 'lajes pré-moldadas', 'concreto pré-moldado', 'galpão pré-moldado', 'blocos de concreto', 'muros pré-moldados', 'postes pré-moldados', 'pilares pré-moldados', 'vigas pré-moldadas', 'barracão pré-moldado'],
+    mustMatch: [],
     exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'escola']
   },
   'fabricantes de máquinas e equipamentos': {
