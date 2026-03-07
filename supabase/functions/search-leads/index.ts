@@ -316,6 +316,8 @@ function generateSearchTerms(segment: string): string[] {
     'lojas de colchões': ['loja de colchões', 'colchões e estofados', 'colchoaria', 'loja de camas e colchões', 'colchões ortopédicos'],
     'lojas de eletrodomésticos': ['loja de eletrodomésticos', 'eletrodomésticos', 'loja de eletrônicos', 'magazine', 'loja de eletro', 'casa de eletro'],
     'lojas de cosméticos': ['loja de cosméticos', 'perfumaria', 'beleza', 'maquiagem', 'produtos de beleza', 'loja de maquiagem', 'cosméticos e perfumaria'],
+    'sistemas de incêndio': ['sistema de incêndio', 'combate a incêndio', 'prevenção de incêndio', 'proteção contra incêndio', 'extintor', 'hidrante', 'sprinkler', 'alarme de incêndio', 'detector de fumaça', 'empresa de incêndio', 'projeto de incêndio', 'AVCB', 'CLCB', 'brigada de incêndio', 'mangueira de incêndio', 'central de alarme de incêndio', 'porta corta fogo'],
+    'engenharias': ['escritório de engenharia', 'engenharia civil', 'engenharia elétrica', 'engenharia mecânica', 'empresa de engenharia', 'consultoria de engenharia', 'projetos de engenharia', 'engenharia ambiental', 'engenharia de produção', 'engenharia estrutural', 'cálculo estrutural', 'laudo técnico', 'perícia de engenharia', 'engenheiro', 'ART', 'engenharia e construção'],
   };
   
   let searchTerms = categoryTerms[term] || null;

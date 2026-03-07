@@ -328,6 +328,8 @@ const Configuration = () => {
     "Empresas de Paisagismo e Jardinagem",
     "Empresas de Steel Frame",
     "Construtoras de Pré-Moldado",
+    "Sistemas de Incêndio",
+    "Engenharias",
   ].sort(); // Ordenação alfabética
 
   const handleCustomerToggle = (customer: string) => {
