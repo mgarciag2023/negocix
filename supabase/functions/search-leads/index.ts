@@ -1313,9 +1313,10 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     mustMatch: [],
     exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'escola']
   },
-  'distribuidores de material': {
-    include: ['distribuidora', 'distribuidor', 'atacado', 'atacadista', 'depósito', 'materiais', 'material', 'insumos', 'produtos', 'embalagens', 'ferramentas', 'construção', 'industrial', 'hospitalar', 'escolar', 'esportivo', 'papelaria', 'descartáveis', 'limpeza', 'higiene', 'utilidades', 'cimento', 'tintas', 'tubos', 'pisos', 'revestimentos', 'ferragens', 'telhas', 'madeira'],
+  'distribuidores de material médico hospitalar': {
+    include: ['distribuidora', 'distribuidor', 'hospitalar', 'hospital', 'médico', 'material médico', 'insumos hospitalares', 'equipamentos médicos', 'cirúrgico', 'ortopédico', 'prótese', 'órtese', 'descartáveis hospitalares', 'laboratório', 'reagentes', 'medicamentos', 'suprimentos', 'OPME', 'gases medicinais', 'oxigênio medicinal', 'curativos', 'seringas', 'luvas', 'sondas', 'cateteres', 'enfermagem', 'saúde'],
     mustMatch: [],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'padaria', 'escola', 'academia', 'salão', 'pet shop', 'veterinário']
     exclude: ['restaurante', 'lanchonete', 'bar', 'hotel', 'padaria', 'escola', 'academia', 'salão']
   },
   'serralherias': {
