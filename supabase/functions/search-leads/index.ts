@@ -2228,11 +2228,13 @@ serve(async (req) => {
     // State-only searches get higher limits (up to 347)
     // Distribuidores de Material gets maximum volume
     const isDistribuidorMaterialSearch = segment.toLowerCase().includes('distribuidores de material');
-    const MAX_TOTAL_LEADS = userMaxLeads || (isDistribuidorMaterialSearch ? 500 : (isStateOnlySearch ? 347 : 187));
-    const MIN_LEADS_TARGET = isDistribuidorMaterialSearch ? 150 : (isStateOnlySearch ? 100 : 70);
-    const TARGET_LEADS = isDistribuidorMaterialSearch ? 350 : (isStateOnlySearch ? 200 : 80);
-    const MAX_TARGET_LEADS = isDistribuidorMaterialSearch ? 450 : (isStateOnlySearch ? 300 : 90);
-    const MIN_LEADS_EARLY_EXIT = isDistribuidorMaterialSearch ? 480 : (isStateOnlySearch ? 340 : 95);
+    const isIndustriaMecanicaSearch = segment.toLowerCase().includes('indústrias mecânicas') || segment.toLowerCase().includes('industrias mecanicas');
+    const isBoostSearch = isDistribuidorMaterialSearch || isIndustriaMecanicaSearch;
+    const MAX_TOTAL_LEADS = userMaxLeads || (isBoostSearch ? 500 : (isStateOnlySearch ? 347 : 187));
+    const MIN_LEADS_TARGET = isBoostSearch ? 150 : (isStateOnlySearch ? 100 : 70);
+    const TARGET_LEADS = isBoostSearch ? 350 : (isStateOnlySearch ? 200 : 80);
+    const MAX_TARGET_LEADS = isBoostSearch ? 450 : (isStateOnlySearch ? 300 : 90);
+    const MIN_LEADS_EARLY_EXIT = isBoostSearch ? 480 : (isStateOnlySearch ? 340 : 95);
     
     console.log(`📊 Lead limits: max=${MAX_TOTAL_LEADS}, target=${TARGET_LEADS}, stateSearch=${isStateOnlySearch}`);
 
