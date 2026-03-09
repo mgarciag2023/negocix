@@ -1313,6 +1313,11 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     mustMatch: [],
     exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'escola']
   },
+  'distribuidores de material': {
+    include: ['distribuidora', 'distribuidor', 'atacado', 'atacadista', 'depósito', 'materiais', 'material', 'insumos', 'produtos', 'embalagens', 'ferramentas', 'construção', 'industrial', 'hospitalar', 'escolar', 'esportivo', 'papelaria', 'descartáveis', 'limpeza', 'higiene', 'utilidades', 'cimento', 'tintas', 'tubos', 'pisos', 'revestimentos', 'ferragens', 'telhas', 'madeira'],
+    mustMatch: [],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'hotel', 'padaria', 'escola', 'academia', 'salão']
+  },
   'serralherias': {
     include: ['serralheria', 'serralheiro', 'portões', 'grades', 'esquadrias metálicas', 'estruturas metálicas', 'portão de ferro', 'grade de ferro', 'corrimão', 'escada de ferro', 'serralheria artística', 'serralheria industrial', 'portão automático', 'gradil', 'portão basculante', 'metalon', 'ferro e aço'],
     mustMatch: [],
