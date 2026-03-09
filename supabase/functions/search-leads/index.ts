@@ -2454,16 +2454,20 @@ serve(async (req) => {
       }
     } else {
       // CITY/REGION SEARCH: Original behavior
-      const isDistribuidorMaterial = segments.some(s => s.toLowerCase().includes('distribuidores de material'));
-      const maxPagesPerSegment = isDistribuidorMaterial ? 40 : 20;
-      const adjustedPages = isDistribuidorMaterial 
+      const isBoostSegmentSearch = segments.some(s => {
+        const sl = s.toLowerCase();
+        return sl.includes('distribuidores de material') || sl.includes('indústrias mecânicas') || sl.includes('industrias mecanicas');
+      });
+      const maxPagesPerSegment = isBoostSegmentSearch ? 40 : 20;
+      const adjustedPages = isBoostSegmentSearch 
         ? 40 
         : Math.max(12, Math.min(maxPagesPerSegment, Math.floor(60 / segments.length)));
-      console.log(`⚡ MAXIMUM VOLUME: ${adjustedPages} pages per segment (${segments.length} segments)${isDistribuidorMaterial ? ' [BOOSTED: Distribuidores de Material]' : ''}`);
+      console.log(`⚡ MAXIMUM VOLUME: ${adjustedPages} pages per segment (${segments.length} segments)${isBoostSegmentSearch ? ' [BOOSTED]' : ''}`);
       
       for (const seg of segments) {
         let searchTerms: string[];
-        const isDistribSeg = seg.toLowerCase().includes('distribuidores de material');
+        const segLower = seg.toLowerCase();
+        const isBoostSeg = segLower.includes('distribuidores de material') || segLower.includes('indústrias mecânicas') || segLower.includes('industrias mecanicas');
         
         if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
           const ecomType = ecommerceType.trim().toLowerCase();
@@ -2471,12 +2475,12 @@ serve(async (req) => {
           console.log(`🛒 E-commerce específico: ${ecomType}`);
         } else {
           searchTerms = generateSearchTerms(seg);
-          // For distribuidores de material, use ALL terms for maximum volume
-          searchTerms = isDistribSeg ? searchTerms : searchTerms.slice(0, 10);
+          // For boost segments, use ALL terms for maximum volume
+          searchTerms = isBoostSeg ? searchTerms : searchTerms.slice(0, 10);
         }
         
-        if (isDistribSeg) {
-          console.log(`🚀 BOOST MODE: Distribuidores de Material - using ${searchTerms.length} terms with ${adjustedPages} pages`);
+        if (isBoostSeg) {
+          console.log(`🚀 BOOST MODE: ${seg} - using ${searchTerms.length} terms with ${adjustedPages} pages`);
         }
         
         console.log(`📤 Searching segment "${seg}" with ${searchTerms.length} terms:`, searchTerms);
