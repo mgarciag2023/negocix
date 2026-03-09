@@ -1317,7 +1317,6 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     include: ['distribuidora', 'distribuidor', 'hospitalar', 'hospital', 'médico', 'material médico', 'insumos hospitalares', 'equipamentos médicos', 'cirúrgico', 'ortopédico', 'prótese', 'órtese', 'descartáveis hospitalares', 'laboratório', 'reagentes', 'medicamentos', 'suprimentos', 'OPME', 'gases medicinais', 'oxigênio medicinal', 'curativos', 'seringas', 'luvas', 'sondas', 'cateteres', 'enfermagem', 'saúde'],
     mustMatch: [],
     exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'padaria', 'escola', 'academia', 'salão', 'pet shop', 'veterinário']
-    exclude: ['restaurante', 'lanchonete', 'bar', 'hotel', 'padaria', 'escola', 'academia', 'salão']
   },
   'serralherias': {
     include: ['serralheria', 'serralheiro', 'portões', 'grades', 'esquadrias metálicas', 'estruturas metálicas', 'portão de ferro', 'grade de ferro', 'corrimão', 'escada de ferro', 'serralheria artística', 'serralheria industrial', 'portão automático', 'gradil', 'portão basculante', 'metalon', 'ferro e aço'],
