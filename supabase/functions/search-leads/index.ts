@@ -2093,11 +2093,13 @@ serve(async (req) => {
     }
 
     // State-only searches get higher limits (up to 347)
-    const MAX_TOTAL_LEADS = userMaxLeads || (isStateOnlySearch ? 347 : 187);
-    const MIN_LEADS_TARGET = isStateOnlySearch ? 100 : 70;
-    const TARGET_LEADS = isStateOnlySearch ? 200 : 80;
-    const MAX_TARGET_LEADS = isStateOnlySearch ? 300 : 90;
-    const MIN_LEADS_EARLY_EXIT = isStateOnlySearch ? 340 : 95;
+    // Distribuidores de Material gets maximum volume
+    const isDistribuidorMaterialSearch = segments.some((s: string) => s.toLowerCase().includes('distribuidores de material'));
+    const MAX_TOTAL_LEADS = userMaxLeads || (isDistribuidorMaterialSearch ? 500 : (isStateOnlySearch ? 347 : 187));
+    const MIN_LEADS_TARGET = isDistribuidorMaterialSearch ? 150 : (isStateOnlySearch ? 100 : 70);
+    const TARGET_LEADS = isDistribuidorMaterialSearch ? 350 : (isStateOnlySearch ? 200 : 80);
+    const MAX_TARGET_LEADS = isDistribuidorMaterialSearch ? 450 : (isStateOnlySearch ? 300 : 90);
+    const MIN_LEADS_EARLY_EXIT = isDistribuidorMaterialSearch ? 480 : (isStateOnlySearch ? 340 : 95);
     
     console.log(`📊 Lead limits: max=${MAX_TOTAL_LEADS}, target=${TARGET_LEADS}, stateSearch=${isStateOnlySearch}`);
 
