@@ -2309,12 +2309,16 @@ serve(async (req) => {
       }
     } else {
       // CITY/REGION SEARCH: Original behavior
-      const maxPagesPerSegment = 20;
-      const adjustedPages = Math.max(12, Math.min(maxPagesPerSegment, Math.floor(60 / segments.length)));
-      console.log(`⚡ MAXIMUM VOLUME: ${adjustedPages} pages per segment (${segments.length} segments)`);
+      const isDistribuidorMaterial = segments.some(s => s.toLowerCase().includes('distribuidores de material'));
+      const maxPagesPerSegment = isDistribuidorMaterial ? 40 : 20;
+      const adjustedPages = isDistribuidorMaterial 
+        ? 40 
+        : Math.max(12, Math.min(maxPagesPerSegment, Math.floor(60 / segments.length)));
+      console.log(`⚡ MAXIMUM VOLUME: ${adjustedPages} pages per segment (${segments.length} segments)${isDistribuidorMaterial ? ' [BOOSTED: Distribuidores de Material]' : ''}`);
       
       for (const seg of segments) {
         let searchTerms: string[];
+        const isDistribSeg = seg.toLowerCase().includes('distribuidores de material');
         
         if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
           const ecomType = ecommerceType.trim().toLowerCase();
@@ -2322,7 +2326,12 @@ serve(async (req) => {
           console.log(`🛒 E-commerce específico: ${ecomType}`);
         } else {
           searchTerms = generateSearchTerms(seg);
-          searchTerms = searchTerms.slice(0, 10);
+          // For distribuidores de material, use ALL terms for maximum volume
+          searchTerms = isDistribSeg ? searchTerms : searchTerms.slice(0, 10);
+        }
+        
+        if (isDistribSeg) {
+          console.log(`🚀 BOOST MODE: Distribuidores de Material - using ${searchTerms.length} terms with ${adjustedPages} pages`);
         }
         
         console.log(`📤 Searching segment "${seg}" with ${searchTerms.length} terms:`, searchTerms);
