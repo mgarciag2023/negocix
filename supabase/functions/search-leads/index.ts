@@ -2405,15 +2405,16 @@ serve(async (req) => {
       
       for (const seg of segments) {
         let searchTerms: string[];
-        const isDistribSeg = seg.toLowerCase().includes('distribuidores de material');
+        const segLower = seg.toLowerCase();
+        const isBoostSeg = segLower.includes('distribuidores de material') || segLower.includes('indústrias mecânicas') || segLower.includes('industrias mecanicas');
         
         if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
           const ecomType = ecommerceType.trim().toLowerCase();
           searchTerms = [`loja ${ecomType}`, `${ecomType}`];
         } else {
           searchTerms = generateSearchTerms(seg);
-          // For distribuidores de material, use more terms even in state search
-          searchTerms = isDistribSeg ? searchTerms.slice(0, 8) : searchTerms.slice(0, 2);
+          // For boost segments, use more terms even in state search
+          searchTerms = isBoostSeg ? searchTerms.slice(0, 8) : searchTerms.slice(0, 2);
         }
         
         console.log(`📤 Searching segment "${seg}" with terms:`, searchTerms);
