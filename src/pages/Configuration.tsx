@@ -192,7 +192,7 @@ const Configuration = () => {
     "Estruturas Metálicas",
     "Fabricantes de Máquinas e Equipamentos",
     "Distribuidores de Aço e Ferro",
-    "Distribuidores de Material",
+    "Distribuidores de Material Médico Hospitalar",
     "Lojas de Produtos Naturais",
     "Empórios Naturais",
     "Lojas de Suplementos",
