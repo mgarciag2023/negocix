@@ -550,8 +550,9 @@ function generateSearchTerms(segment: string): string[] {
     searchTerms = [term];
   }
   
-  // Return up to 10 terms for maximum coverage
-  return searchTerms.slice(0, 10);
+  // For boost segments (indústrias mecânicas, etc.), return all terms; otherwise max 10
+  const isBoostTerm = term.includes('indústrias mecânicas') || term.includes('industrias mecanicas') || term.includes('distribuidores de material');
+  return isBoostTerm ? searchTerms : searchTerms.slice(0, 10);
 }
 
 // Estimate revenue based on reviews, rating, and category - MORE PRECISE
