@@ -2094,7 +2094,7 @@ serve(async (req) => {
 
     // State-only searches get higher limits (up to 347)
     // Distribuidores de Material gets maximum volume
-    const isDistribuidorMaterialSearch = segments.some((s: string) => s.toLowerCase().includes('distribuidores de material'));
+    const isDistribuidorMaterialSearch = segment.toLowerCase().includes('distribuidores de material');
     const MAX_TOTAL_LEADS = userMaxLeads || (isDistribuidorMaterialSearch ? 500 : (isStateOnlySearch ? 347 : 187));
     const MIN_LEADS_TARGET = isDistribuidorMaterialSearch ? 150 : (isStateOnlySearch ? 100 : 70);
     const TARGET_LEADS = isDistribuidorMaterialSearch ? 350 : (isStateOnlySearch ? 200 : 80);
