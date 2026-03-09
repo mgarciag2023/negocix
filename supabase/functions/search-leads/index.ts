@@ -399,7 +399,140 @@ function generateSearchTerms(segment: string): string[] {
     'empresas de blindagem': ['blindagem', 'blindagem automotiva', 'blindadora', 'empresa de blindagem', 'veículo blindado', 'blindagem de veículos'],
     'retíficas de motores': ['retífica de motores', 'retífica', 'recondicionamento de motores', 'retífica de cabeçotes', 'retífica automotiva', 'motor retificado'],
     'autovidros': ['autovidros', 'vidro automotivo', 'para-brisa', 'troca de vidro', 'instalação de vidros', 'vidraceiro automotivo'],
+    // ===== NOVOS SEGMENTOS INDUSTRIAIS =====
+    'indústrias mecânicas': [
+      'indústria mecânica', 'metalúrgica mecânica', 'usinagem mecânica', 'tornearia mecânica', 'ferramentaria',
+      'peças mecânicas', 'fábrica de peças', 'indústria de precisão', 'usinagem de precisão', 'usinagem cnc',
+      'torno cnc', 'centro de usinagem', 'fresadora cnc', 'retífica cnc', 'peças sob encomenda',
+      'componentes mecânicos', 'engrenagens', 'rolamentos industriais', 'mancais', 'eixos',
+      'acoplamentos', 'redutores', 'transmissão mecânica', 'bombas industriais', 'válvulas industriais',
+      'cilindros hidráulicos', 'cilindros pneumáticos', 'pistões', 'buchas', 'polias',
+      'correntes industriais', 'molas industriais', 'parafusos industriais', 'fixadores industriais',
+      'estamparia de metais', 'conformação mecânica', 'repuxo de metais', 'forjaria',
+      'tratamento térmico', 'têmpera', 'cementação', 'nitretação'
+    ],
+    'indústrias de plásticos': [
+      'indústria de plásticos', 'fábrica de plásticos', 'injeção de plásticos', 'injetora de plástico',
+      'extrusão de plásticos', 'sopro de plásticos', 'termoformagem', 'rotomoldagem',
+      'fábrica de embalagens plásticas', 'plásticos industriais', 'produtos plásticos', 'moldes para injeção',
+      'fábrica de sacolas', 'fábrica de garrafas pet', 'fábrica de tubos plásticos', 'fábrica de baldes',
+      'plástico reciclado', 'reciclagem de plástico', 'polímeros', 'resinas plásticas'
+    ],
+    'indústrias químicas': [
+      'indústria química', 'fábrica de produtos químicos', 'química industrial', 'produtos químicos',
+      'reagentes químicos', 'solventes', 'ácidos industriais', 'indústria petroquímica',
+      'adesivos industriais', 'resinas químicas', 'tintas industriais', 'vernizes',
+      'detergentes industriais', 'tratamento de superfície', 'galvanoplastia', 'anodização',
+      'laboratório químico', 'fábrica de tintas', 'fábrica de verniz', 'fábrica de cola'
+    ],
+    'indústrias de papel e celulose': [
+      'indústria de papel', 'fábrica de papel', 'celulose', 'papel e celulose', 'papeleira',
+      'fábrica de papelão', 'fábrica de celulose', 'reciclagem de papel', 'aparas de papel',
+      'papel kraft', 'papel ondulado', 'papel cartão', 'indústria de papel reciclado'
+    ],
+    'indústrias de borracha': [
+      'indústria de borracha', 'fábrica de borracha', 'artefatos de borracha', 'peças de borracha',
+      'vulcanização', 'vulcanizadora', 'fábrica de mangueiras', 'correias de borracha',
+      'juntas de borracha', 'vedações de borracha', 'borracha industrial', 'elastômeros',
+      'fábrica de pneus', 'recapagem de pneus', 'borrachas técnicas'
+    ],
+    'indústrias de vidro': [
+      'indústria de vidro', 'fábrica de vidro', 'vidraçaria industrial', 'vidro temperado',
+      'vidro laminado', 'beneficiamento de vidro', 'espelhos', 'fábrica de espelhos',
+      'vidros industriais', 'vidros automotivos', 'vidros para construção', 'box de vidro',
+      'fábrica de garrafas de vidro', 'embalagens de vidro'
+    ],
+    'indústrias de cerâmica': [
+      'indústria cerâmica', 'fábrica de cerâmica', 'cerâmica industrial', 'porcelana',
+      'fábrica de pisos', 'fábrica de azulejos', 'fábrica de telhas', 'olaria',
+      'cerâmica de revestimento', 'louça sanitária', 'isoladores cerâmicos', 'refratários',
+      'cerâmica técnica', 'cerâmica artística'
+    ],
+    'indústrias de cosméticos': [
+      'indústria de cosméticos', 'fábrica de cosméticos', 'fabricante de cosméticos',
+      'fábrica de maquiagem', 'fábrica de cremes', 'cosméticos industriais',
+      'fábrica de shampoo', 'fábrica de sabonetes', 'fábrica de perfumes',
+      'indústria de higiene pessoal', 'fábrica de produtos de beleza', 'terceirização de cosméticos'
+    ],
+    'indústrias farmacêuticas': [
+      'indústria farmacêutica', 'laboratório farmacêutico', 'fábrica de medicamentos',
+      'fabricante de medicamentos', 'farmacêutica', 'indústria de medicamentos',
+      'fábrica de suplementos', 'manipulação industrial', 'farmoquímica',
+      'indústria de genéricos', 'laboratório de medicamentos', 'fábrica de vitaminas'
+    ],
+    'indústrias de bebidas': [
+      'indústria de bebidas', 'fábrica de bebidas', 'engarrafadora', 'fábrica de refrigerantes',
+      'fábrica de sucos', 'fábrica de água mineral', 'cervejaria industrial', 'destilaria',
+      'fábrica de energéticos', 'indústria de sucos', 'fábrica de isotônicos', 'vinícola industrial'
+    ],
+    'indústrias de embalagens': [
+      'indústria de embalagens', 'fábrica de embalagens', 'embalagens industriais',
+      'fábrica de caixas', 'embalagens plásticas', 'embalagens de papelão', 'embalagens metálicas',
+      'embalagens flexíveis', 'embalagens descartáveis', 'fábrica de sacolas',
+      'embalagens para alimentos', 'embalagens pet', 'fábrica de potes', 'fábrica de frascos'
+    ],
+    'indústrias de móveis': [
+      'indústria de móveis', 'fábrica de móveis', 'marcenaria industrial', 'móveis industriais',
+      'fábrica de estofados', 'fábrica de colchões', 'fábrica de sofás',
+      'fábrica de cadeiras', 'fábrica de mesas', 'móveis sob medida industrial',
+      'indústria moveleira', 'fábrica de armários', 'fábrica de cozinhas planejadas'
+    ],
+    'indústrias de calçados': [
+      'indústria de calçados', 'fábrica de calçados', 'fábrica de sapatos', 'fábrica de tênis',
+      'fábrica de sandálias', 'indústria calçadista', 'fábrica de botas',
+      'fábrica de chinelos', 'calçados industriais', 'componentes para calçados',
+      'solados', 'fábrica de palmilhas', 'curtume'
+    ],
+    'indústrias de tintas': [
+      'indústria de tintas', 'fábrica de tintas', 'fabricante de tintas', 'tintas industriais',
+      'fábrica de verniz', 'fábrica de resinas', 'tintas automotivas',
+      'tintas para construção', 'tintas epóxi', 'tintas em pó', 'pintura eletrostática',
+      'fábrica de solventes', 'pigmentos industriais'
+    ],
+    'indústrias de fertilizantes': [
+      'indústria de fertilizantes', 'fábrica de fertilizantes', 'fábrica de adubo',
+      'fertilizantes agrícolas', 'adubo químico', 'adubo orgânico', 'fábrica de NPK',
+      'insumos agrícolas', 'defensivos agrícolas', 'agroquímicos', 'fábrica de calcário',
+      'corretivos de solo', 'fertirrigação'
+    ],
+    'indústrias de ração animal': [
+      'indústria de ração', 'fábrica de ração', 'fábrica de ração animal', 'ração bovina',
+      'ração para gado', 'ração para aves', 'ração para suínos', 'ração para peixes',
+      'ração para equinos', 'suplemento animal', 'núcleo mineral', 'premix',
+      'fábrica de sal mineral', 'nutrição animal'
+    ],
+    'indústrias de produtos de limpeza': [
+      'indústria de produtos de limpeza', 'fábrica de produtos de limpeza', 'fábrica de detergente',
+      'fábrica de desinfetante', 'fábrica de sabão', 'fábrica de água sanitária',
+      'fábrica de alvejante', 'produtos de limpeza industrial', 'fábrica de amaciante',
+      'fábrica de multiuso', 'químicos de limpeza', 'higiene e limpeza industrial'
+    ],
+    'indústrias de papel higiênico e descartáveis': [
+      'fábrica de papel higiênico', 'indústria de descartáveis', 'fábrica de guardanapos',
+      'fábrica de toalhas de papel', 'fábrica de fraldas', 'fábrica de absorventes',
+      'descartáveis industriais', 'fábrica de copos descartáveis', 'fábrica de pratos descartáveis',
+      'tissue', 'converting', 'fábrica de lenços'
+    ],
+    'indústrias gráficas': [
+      'indústria gráfica', 'gráfica industrial', 'impressão offset', 'impressão digital industrial',
+      'gráfica de embalagens', 'rótulos e etiquetas', 'fábrica de etiquetas',
+      'gráfica de grande formato', 'impressão flexográfica', 'rotogravura',
+      'pré-impressão', 'acabamento gráfico', 'encadernação industrial'
+    ],
+    'indústrias de componentes eletrônicos': [
+      'indústria de componentes eletrônicos', 'fábrica de componentes eletrônicos', 'montagem de placas',
+      'montagem SMD', 'circuito impresso', 'PCB', 'fábrica de transformadores',
+      'fábrica de capacitores', 'fábrica de conectores', 'eletrônica industrial',
+      'montagem eletrônica', 'componentes semicondutores', 'placas eletrônicas'
+    ],
+    'indústrias de fios e cabos': [
+      'indústria de fios e cabos', 'fábrica de cabos', 'fábrica de fios elétricos',
+      'cabos elétricos', 'fios elétricos', 'cabos de energia', 'cabos de comunicação',
+      'fábrica de chicotes elétricos', 'trefilação de cobre', 'cabos flexíveis',
+      'cabos industriais', 'fábrica de cordoalha', 'fios esmaltados'
+    ],
   };
+
   
   let searchTerms = categoryTerms[term] || null;
   
@@ -417,8 +550,9 @@ function generateSearchTerms(segment: string): string[] {
     searchTerms = [term];
   }
   
-  // Return up to 10 terms for maximum coverage
-  return searchTerms.slice(0, 10);
+  // For boost segments (indústrias mecânicas, etc.), return all terms; otherwise max 10
+  const isBoostTerm = term.includes('indústrias mecânicas') || term.includes('industrias mecanicas') || term.includes('distribuidores de material');
+  return isBoostTerm ? searchTerms : searchTerms.slice(0, 10);
 }
 
 // Estimate revenue based on reviews, rating, and category - MORE PRECISE
@@ -2095,11 +2229,13 @@ serve(async (req) => {
     // State-only searches get higher limits (up to 347)
     // Distribuidores de Material gets maximum volume
     const isDistribuidorMaterialSearch = segment.toLowerCase().includes('distribuidores de material');
-    const MAX_TOTAL_LEADS = userMaxLeads || (isDistribuidorMaterialSearch ? 500 : (isStateOnlySearch ? 347 : 187));
-    const MIN_LEADS_TARGET = isDistribuidorMaterialSearch ? 150 : (isStateOnlySearch ? 100 : 70);
-    const TARGET_LEADS = isDistribuidorMaterialSearch ? 350 : (isStateOnlySearch ? 200 : 80);
-    const MAX_TARGET_LEADS = isDistribuidorMaterialSearch ? 450 : (isStateOnlySearch ? 300 : 90);
-    const MIN_LEADS_EARLY_EXIT = isDistribuidorMaterialSearch ? 480 : (isStateOnlySearch ? 340 : 95);
+    const isIndustriaMecanicaSearch = segment.toLowerCase().includes('indústrias mecânicas') || segment.toLowerCase().includes('industrias mecanicas');
+    const isBoostSearch = isDistribuidorMaterialSearch || isIndustriaMecanicaSearch;
+    const MAX_TOTAL_LEADS = userMaxLeads || (isBoostSearch ? 500 : (isStateOnlySearch ? 347 : 187));
+    const MIN_LEADS_TARGET = isBoostSearch ? 150 : (isStateOnlySearch ? 100 : 70);
+    const TARGET_LEADS = isBoostSearch ? 350 : (isStateOnlySearch ? 200 : 80);
+    const MAX_TARGET_LEADS = isBoostSearch ? 450 : (isStateOnlySearch ? 300 : 90);
+    const MIN_LEADS_EARLY_EXIT = isBoostSearch ? 480 : (isStateOnlySearch ? 340 : 95);
     
     console.log(`📊 Lead limits: max=${MAX_TOTAL_LEADS}, target=${TARGET_LEADS}, stateSearch=${isStateOnlySearch}`);
 
@@ -2270,15 +2406,16 @@ serve(async (req) => {
       
       for (const seg of segments) {
         let searchTerms: string[];
-        const isDistribSeg = seg.toLowerCase().includes('distribuidores de material');
+        const segLower = seg.toLowerCase();
+        const isBoostSeg = segLower.includes('distribuidores de material') || segLower.includes('indústrias mecânicas') || segLower.includes('industrias mecanicas');
         
         if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
           const ecomType = ecommerceType.trim().toLowerCase();
           searchTerms = [`loja ${ecomType}`, `${ecomType}`];
         } else {
           searchTerms = generateSearchTerms(seg);
-          // For distribuidores de material, use more terms even in state search
-          searchTerms = isDistribSeg ? searchTerms.slice(0, 8) : searchTerms.slice(0, 2);
+          // For boost segments, use more terms even in state search
+          searchTerms = isBoostSeg ? searchTerms.slice(0, 8) : searchTerms.slice(0, 2);
         }
         
         console.log(`📤 Searching segment "${seg}" with terms:`, searchTerms);
@@ -2318,16 +2455,20 @@ serve(async (req) => {
       }
     } else {
       // CITY/REGION SEARCH: Original behavior
-      const isDistribuidorMaterial = segments.some(s => s.toLowerCase().includes('distribuidores de material'));
-      const maxPagesPerSegment = isDistribuidorMaterial ? 40 : 20;
-      const adjustedPages = isDistribuidorMaterial 
+      const isBoostSegmentSearch = segments.some(s => {
+        const sl = s.toLowerCase();
+        return sl.includes('distribuidores de material') || sl.includes('indústrias mecânicas') || sl.includes('industrias mecanicas');
+      });
+      const maxPagesPerSegment = isBoostSegmentSearch ? 40 : 20;
+      const adjustedPages = isBoostSegmentSearch 
         ? 40 
         : Math.max(12, Math.min(maxPagesPerSegment, Math.floor(60 / segments.length)));
-      console.log(`⚡ MAXIMUM VOLUME: ${adjustedPages} pages per segment (${segments.length} segments)${isDistribuidorMaterial ? ' [BOOSTED: Distribuidores de Material]' : ''}`);
+      console.log(`⚡ MAXIMUM VOLUME: ${adjustedPages} pages per segment (${segments.length} segments)${isBoostSegmentSearch ? ' [BOOSTED]' : ''}`);
       
       for (const seg of segments) {
         let searchTerms: string[];
-        const isDistribSeg = seg.toLowerCase().includes('distribuidores de material');
+        const segLower = seg.toLowerCase();
+        const isBoostSeg = segLower.includes('distribuidores de material') || segLower.includes('indústrias mecânicas') || segLower.includes('industrias mecanicas');
         
         if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
           const ecomType = ecommerceType.trim().toLowerCase();
@@ -2335,12 +2476,12 @@ serve(async (req) => {
           console.log(`🛒 E-commerce específico: ${ecomType}`);
         } else {
           searchTerms = generateSearchTerms(seg);
-          // For distribuidores de material, use ALL terms for maximum volume
-          searchTerms = isDistribSeg ? searchTerms : searchTerms.slice(0, 10);
+          // For boost segments, use ALL terms for maximum volume
+          searchTerms = isBoostSeg ? searchTerms : searchTerms.slice(0, 10);
         }
         
-        if (isDistribSeg) {
-          console.log(`🚀 BOOST MODE: Distribuidores de Material - using ${searchTerms.length} terms with ${adjustedPages} pages`);
+        if (isBoostSeg) {
+          console.log(`🚀 BOOST MODE: ${seg} - using ${searchTerms.length} terms with ${adjustedPages} pages`);
         }
         
         console.log(`📤 Searching segment "${seg}" with ${searchTerms.length} terms:`, searchTerms);
