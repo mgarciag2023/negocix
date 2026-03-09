@@ -262,6 +262,7 @@ function generateSearchTerms(segment: string): string[] {
     'lojas de materiais elétricos': ['loja de materiais elétricos', 'material elétrico', 'casa de elétrica', 'distribuidora elétrica', 'componentes elétricos'],
     'empresas de energia solar': ['energia solar', 'solar fotovoltaica', 'instalação solar', 'empresa de energia solar', 'painel solar'],
     'distribuidores de aço e ferro': ['distribuidora de aço', 'distribuidor de ferro', 'ferro e aço', 'depósito de ferro', 'comércio de aço', 'distribuidora de ferro', 'aço e ferro', 'distribuidora de metais', 'ferro para construção', 'vergalhão', 'chapas de aço', 'metalon', 'tubo de aço', 'perfilados', 'cantoneira', 'viga de aço', 'barra de ferro'],
+    'distribuidores de material': ['distribuidora de materiais', 'distribuidor de materiais', 'distribuidora de material de construção', 'distribuidor de material de construção', 'distribuidora de materiais de construção', 'atacado de materiais de construção', 'atacado material de construção', 'distribuidora de cimento', 'distribuidora de argamassa', 'distribuidora de tintas', 'distribuidora de tubos', 'distribuidora de materiais elétricos', 'distribuidora de materiais hidráulicos', 'distribuidora de acabamentos', 'distribuidora de pisos', 'distribuidora de revestimentos', 'distribuidora de ferragens', 'distribuidora de telhas', 'distribuidora de madeira', 'atacadista de materiais', 'depósito de materiais de construção', 'distribuidora de EPIs', 'distribuidora de materiais industriais', 'distribuidora de materiais hospitalares', 'distribuidora de materiais escolares', 'distribuidora de materiais esportivos', 'distribuidora de embalagens', 'distribuidora de produtos químicos', 'distribuidora de insumos', 'distribuidora de papelaria', 'distribuidora de descartáveis', 'distribuidora de produtos de limpeza', 'distribuidora de produtos de higiene', 'distribuidora de utilidades domésticas', 'distribuidora de ferramentas'],
     'serralherias': ['serralheria', 'serralheiro', 'portões', 'grades', 'esquadrias metálicas', 'estruturas metálicas', 'portão de ferro', 'grade de ferro', 'corrimão', 'escada de ferro', 'serralheria artística', 'serralheria industrial', 'portão automático', 'gradil', 'portão basculante'],
     // Cartonagem
     'cartonagem': ['cartonagem', 'caixas de papelão', 'embalagens de papelão', 'fábrica de caixas', 'indústria de caixas', 'caixas cartonadas', 'papelão ondulado', 'cartonaria', 'embalagem cartonada', 'caixa de papelão', 'embalagem de papel cartão', 'papel cartão'],
@@ -1312,6 +1313,11 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     mustMatch: [],
     exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'escola']
   },
+  'distribuidores de material': {
+    include: ['distribuidora', 'distribuidor', 'atacado', 'atacadista', 'depósito', 'materiais', 'material', 'insumos', 'produtos', 'embalagens', 'ferramentas', 'construção', 'industrial', 'hospitalar', 'escolar', 'esportivo', 'papelaria', 'descartáveis', 'limpeza', 'higiene', 'utilidades', 'cimento', 'tintas', 'tubos', 'pisos', 'revestimentos', 'ferragens', 'telhas', 'madeira'],
+    mustMatch: [],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'hotel', 'padaria', 'escola', 'academia', 'salão']
+  },
   'serralherias': {
     include: ['serralheria', 'serralheiro', 'portões', 'grades', 'esquadrias metálicas', 'estruturas metálicas', 'portão de ferro', 'grade de ferro', 'corrimão', 'escada de ferro', 'serralheria artística', 'serralheria industrial', 'portão automático', 'gradil', 'portão basculante', 'metalon', 'ferro e aço'],
     mustMatch: [],
@@ -2087,11 +2093,13 @@ serve(async (req) => {
     }
 
     // State-only searches get higher limits (up to 347)
-    const MAX_TOTAL_LEADS = userMaxLeads || (isStateOnlySearch ? 347 : 187);
-    const MIN_LEADS_TARGET = isStateOnlySearch ? 100 : 70;
-    const TARGET_LEADS = isStateOnlySearch ? 200 : 80;
-    const MAX_TARGET_LEADS = isStateOnlySearch ? 300 : 90;
-    const MIN_LEADS_EARLY_EXIT = isStateOnlySearch ? 340 : 95;
+    // Distribuidores de Material gets maximum volume
+    const isDistribuidorMaterialSearch = segments.some((s: string) => s.toLowerCase().includes('distribuidores de material'));
+    const MAX_TOTAL_LEADS = userMaxLeads || (isDistribuidorMaterialSearch ? 500 : (isStateOnlySearch ? 347 : 187));
+    const MIN_LEADS_TARGET = isDistribuidorMaterialSearch ? 150 : (isStateOnlySearch ? 100 : 70);
+    const TARGET_LEADS = isDistribuidorMaterialSearch ? 350 : (isStateOnlySearch ? 200 : 80);
+    const MAX_TARGET_LEADS = isDistribuidorMaterialSearch ? 450 : (isStateOnlySearch ? 300 : 90);
+    const MIN_LEADS_EARLY_EXIT = isDistribuidorMaterialSearch ? 480 : (isStateOnlySearch ? 340 : 95);
     
     console.log(`📊 Lead limits: max=${MAX_TOTAL_LEADS}, target=${TARGET_LEADS}, stateSearch=${isStateOnlySearch}`);
 
@@ -2262,13 +2270,15 @@ serve(async (req) => {
       
       for (const seg of segments) {
         let searchTerms: string[];
+        const isDistribSeg = seg.toLowerCase().includes('distribuidores de material');
         
         if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
           const ecomType = ecommerceType.trim().toLowerCase();
           searchTerms = [`loja ${ecomType}`, `${ecomType}`];
         } else {
           searchTerms = generateSearchTerms(seg);
-          searchTerms = searchTerms.slice(0, 2); // Use only top 2 terms to avoid timeout
+          // For distribuidores de material, use more terms even in state search
+          searchTerms = isDistribSeg ? searchTerms.slice(0, 8) : searchTerms.slice(0, 2);
         }
         
         console.log(`📤 Searching segment "${seg}" with terms:`, searchTerms);
@@ -2308,12 +2318,16 @@ serve(async (req) => {
       }
     } else {
       // CITY/REGION SEARCH: Original behavior
-      const maxPagesPerSegment = 20;
-      const adjustedPages = Math.max(12, Math.min(maxPagesPerSegment, Math.floor(60 / segments.length)));
-      console.log(`⚡ MAXIMUM VOLUME: ${adjustedPages} pages per segment (${segments.length} segments)`);
+      const isDistribuidorMaterial = segments.some(s => s.toLowerCase().includes('distribuidores de material'));
+      const maxPagesPerSegment = isDistribuidorMaterial ? 40 : 20;
+      const adjustedPages = isDistribuidorMaterial 
+        ? 40 
+        : Math.max(12, Math.min(maxPagesPerSegment, Math.floor(60 / segments.length)));
+      console.log(`⚡ MAXIMUM VOLUME: ${adjustedPages} pages per segment (${segments.length} segments)${isDistribuidorMaterial ? ' [BOOSTED: Distribuidores de Material]' : ''}`);
       
       for (const seg of segments) {
         let searchTerms: string[];
+        const isDistribSeg = seg.toLowerCase().includes('distribuidores de material');
         
         if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
           const ecomType = ecommerceType.trim().toLowerCase();
@@ -2321,7 +2335,12 @@ serve(async (req) => {
           console.log(`🛒 E-commerce específico: ${ecomType}`);
         } else {
           searchTerms = generateSearchTerms(seg);
-          searchTerms = searchTerms.slice(0, 10);
+          // For distribuidores de material, use ALL terms for maximum volume
+          searchTerms = isDistribSeg ? searchTerms : searchTerms.slice(0, 10);
+        }
+        
+        if (isDistribSeg) {
+          console.log(`🚀 BOOST MODE: Distribuidores de Material - using ${searchTerms.length} terms with ${adjustedPages} pages`);
         }
         
         console.log(`📤 Searching segment "${seg}" with ${searchTerms.length} terms:`, searchTerms);
