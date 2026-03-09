@@ -2263,13 +2263,15 @@ serve(async (req) => {
       
       for (const seg of segments) {
         let searchTerms: string[];
+        const isDistribSeg = seg.toLowerCase().includes('distribuidores de material');
         
         if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
           const ecomType = ecommerceType.trim().toLowerCase();
           searchTerms = [`loja ${ecomType}`, `${ecomType}`];
         } else {
           searchTerms = generateSearchTerms(seg);
-          searchTerms = searchTerms.slice(0, 2); // Use only top 2 terms to avoid timeout
+          // For distribuidores de material, use more terms even in state search
+          searchTerms = isDistribSeg ? searchTerms.slice(0, 8) : searchTerms.slice(0, 2);
         }
         
         console.log(`📤 Searching segment "${seg}" with terms:`, searchTerms);
