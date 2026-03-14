@@ -1713,9 +1713,9 @@ function isRelevantToNiche(place: any, segment: string): boolean {
     }
   }
   
-  // If no specific niche config, accept if search term appears OR has include keywords
+  // If no specific niche config, REQUIRE search term match
   if (!nicheConfig) {
-    // Very minimal exclusions for undefined categories
+    // Generic exclusions
     const genericExclusions = ['magazine luiza', 'americanas', 'casas bahia'];
     for (const exclude of genericExclusions) {
       if (combinedText.includes(exclude)) {
@@ -1724,7 +1724,7 @@ function isRelevantToNiche(place: any, segment: string): boolean {
       }
     }
     
-    // For undefined categories, check if any search term word appears
+    // For undefined categories, REQUIRE at least one search term word in the place data
     const searchTermWords = segmentLower.split(/\s+/).filter(w => w.length > 3);
     let foundSearchTermInPlace = false;
     for (const word of searchTermWords) {
@@ -1734,33 +1734,23 @@ function isRelevantToNiche(place: any, segment: string): boolean {
       }
     }
     
-    // RELAXED: Accept if no specific search term words, just pass through
     if (!foundSearchTermInPlace && searchTermWords.length > 0) {
-      // Only log, don't reject - be more permissive
-      console.log(`⚠️ Weak match: "${place.title}" - accepting anyway for volume`);
+      console.log(`❌ No search term match: "${place.title}" - none of [${searchTermWords.join(', ')}] found`);
+      return false;
     }
     
     return true;
   }
   
-  // ===== STEP 5: Check exclusions from niche config =====
-  // For segments with mustMatch (strict), check ALL exclusions; otherwise only first 5
-  const hasStrictFilter = nicheConfig.mustMatch && nicheConfig.mustMatch.length > 0;
-  const exclusionsToCheck = hasStrictFilter ? nicheConfig.exclude : nicheConfig.exclude.slice(0, 5);
-  for (const exclude of exclusionsToCheck) {
+  // ===== STEP 5: Check ALL exclusions from niche config =====
+  for (const exclude of nicheConfig.exclude) {
     if (combinedText.includes(exclude)) {
       console.log(`❌ Niche exclusion: "${place.title}" - matches: ${exclude}`);
       return false;
     }
   }
   
-  // ===== STEP 6: mustMatch DISABLED =====
-  // mustMatch was removed per user request: all leads returned by the Google Places
-  // search for the segment are accepted as long as they pass exclusion filters.
-  // This ensures businesses with the correct CNAE but without specific keywords
-  // in their name/category are not incorrectly filtered out.
-  
-  // Check if at least one include keyword matches
+  // ===== STEP 6: REQUIRE at least one include keyword match =====
   let hasIncludeMatch = false;
   for (const incl of nicheConfig.include) {
     if (combinedText.includes(incl)) {
@@ -1769,15 +1759,9 @@ function isRelevantToNiche(place: any, segment: string): boolean {
     }
   }
   
-  // If strictInclude is set, REJECT leads that don't match any include keyword
-  if (!hasIncludeMatch && (nicheConfig as any).strictInclude) {
-    console.log(`❌ Strict include rejection: "${place.title}" in ${segmentLower} - no include keyword found`);
-    return false;
-  }
-  
-  // If no include match but not strict, still accept but log it
   if (!hasIncludeMatch) {
-    console.log(`⚠️ No include match for "${place.title}" in ${segmentLower}, but accepting for volume`);
+    console.log(`❌ No include match: "${place.title}" in ${segmentLower} - rejected (no relevant keyword found)`);
+    return false;
   }
   
   return true;
