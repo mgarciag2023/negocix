@@ -639,23 +639,103 @@ function generateSearchTerms(segment: string): string[] {
   }
   
   if (!searchTerms) {
-    // Smart fallback: use the term + generate basic variations
-    const baseTerms = [term];
+    // ===== ENHANCED SMART FALLBACK =====
+    // Handles 5600+ segments by intelligently generating search terms
+    const baseTerms: string[] = [term];
+    
+    // Normalize for accent-insensitive matching
+    const normalizedTerm = term.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (normalizedTerm !== term) baseTerms.push(normalizedTerm);
+    
     // Add singular/plural variations
-    if (term.endsWith('s')) {
-      baseTerms.push(term.slice(0, -1)); // Remove 's'
+    if (term.endsWith('s') && term.length > 4) {
+      baseTerms.push(term.slice(0, -1));
     }
-    if (term.endsWith('es')) {
-      baseTerms.push(term.slice(0, -2)); // Remove 'es'
+    if (term.endsWith('es') && term.length > 5) {
+      baseTerms.push(term.slice(0, -2));
     }
-    // Add "loja de" prefix for retail segments
-    if (term.startsWith('lojas de ')) {
-      baseTerms.push(term.replace('lojas de ', ''));
+    if (term.endsWith('ões') || term.endsWith('oes')) {
+      baseTerms.push(term.replace(/ões$|oes$/, 'ão'));
     }
-    searchTerms = baseTerms;
+    if (term.endsWith('ais') && term.length > 5) {
+      baseTerms.push(term.replace(/ais$/, 'al'));
+    }
+    
+    // Smart prefix extraction - generate core term + variations
+    const prefixPatterns: { prefix: RegExp; variations: (core: string) => string[] } = {
+      // This object maps regex prefixes to variation generators
+    } as any;
+    
+    const prefixMappings: [RegExp, (core: string) => string[]][] = [
+      [/^lojas?\s+de\s+/, (core) => [core, `loja de ${core}`, `casa de ${core}`, `comércio de ${core}`]],
+      [/^distribuidoras?\s+de\s+/, (core) => [core, `distribuidora de ${core}`, `distribuidor de ${core}`, `atacado de ${core}`, `atacadista de ${core}`]],
+      [/^indústrias?\s+de\s+|^industrias?\s+de\s+/, (core) => [core, `indústria de ${core}`, `fábrica de ${core}`, `fabricante de ${core}`, `industrial de ${core}`]],
+      [/^fábricas?\s+de\s+|^fabricas?\s+de\s+/, (core) => [core, `fábrica de ${core}`, `indústria de ${core}`, `fabricante de ${core}`]],
+      [/^empresas?\s+de\s+/, (core) => [core, `empresa de ${core}`, `serviço de ${core}`, `serviços de ${core}`]],
+      [/^clínicas?\s+de\s+|^clinicas?\s+de\s+/, (core) => [core, `clínica de ${core}`, `centro de ${core}`, `consultório de ${core}`]],
+      [/^centros?\s+de\s+/, (core) => [core, `centro de ${core}`, `clínica de ${core}`, `espaço de ${core}`]],
+      [/^agências?\s+de\s+|^agencias?\s+de\s+/, (core) => [core, `agência de ${core}`, `empresa de ${core}`]],
+      [/^escritórios?\s+de\s+|^escritorios?\s+de\s+/, (core) => [core, `escritório de ${core}`, `empresa de ${core}`]],
+      [/^casas?\s+de\s+/, (core) => [core, `casa de ${core}`, `loja de ${core}`]],
+      [/^ateliês?\s+de\s+|^atelies?\s+de\s+/, (core) => [core, `ateliê de ${core}`, `estúdio de ${core}`]],
+      [/^estúdios?\s+de\s+|^estudios?\s+de\s+/, (core) => [core, `estúdio de ${core}`, `ateliê de ${core}`]],
+      [/^academias?\s+de\s+/, (core) => [core, `academia de ${core}`, `escola de ${core}`, `aula de ${core}`]],
+      [/^escolas?\s+de\s+/, (core) => [core, `escola de ${core}`, `curso de ${core}`, `aula de ${core}`]],
+      [/^cursos?\s+de\s+/, (core) => [core, `curso de ${core}`, `escola de ${core}`, `treinamento de ${core}`]],
+      [/^instaladores?\s+de\s+|^instaladoras?\s+de\s+/, (core) => [core, `instalação de ${core}`, `instalador de ${core}`, `empresa de instalação de ${core}`]],
+      [/^construtoras?\s+de\s+/, (core) => [core, `construtora de ${core}`, `construção de ${core}`, `empresa de construção de ${core}`]],
+      [/^cooperativas?\s+de\s+/, (core) => [core, `cooperativa de ${core}`, `associação de ${core}`]],
+      [/^criadores?\s+de\s+/, (core) => [core, `criador de ${core}`, `criadouro de ${core}`, `criação de ${core}`]],
+      [/^produtores?\s+de\s+/, (core) => [core, `produtor de ${core}`, `produção de ${core}`, `fabricante de ${core}`]],
+      [/^fornecedores?\s+de\s+/, (core) => [core, `fornecedor de ${core}`, `distribuidora de ${core}`, `atacado de ${core}`]],
+      [/^atacadistas?\s+de\s+/, (core) => [core, `atacadista de ${core}`, `atacado de ${core}`, `distribuidora de ${core}`]],
+      [/^oficinas?\s+de\s+|^oficinas?\s+especializadas?\s+em\s+/, (core) => [core, `oficina de ${core}`, `oficina especializada ${core}`, `mecânica ${core}`]],
+      [/^startups?\s+de\s+/, (core) => [core, `startup de ${core}`, `empresa de ${core}`, `${core} tech`]],
+      [/^franquias?\s+de\s+/, (core) => [core, `franquia de ${core}`, `rede de ${core}`, `${core}`]],
+      [/^redes?\s+de\s+/, (core) => [core, `rede de ${core}`, `cadeia de ${core}`, `${core}`]],
+      [/^e-commerces?\s+de\s+|^ecommerces?\s+de\s+/, (core) => [core, `loja de ${core}`, `loja online ${core}`, `${core} online`]],
+      [/^laboratórios?\s+de\s+|^laboratorios?\s+de\s+/, (core) => [core, `laboratório de ${core}`, `lab de ${core}`]],
+      [/^usinas?\s+de\s+/, (core) => [core, `usina de ${core}`, `planta de ${core}`]],
+      [/^serviços?\s+de\s+|^servicos?\s+de\s+/, (core) => [core, `serviço de ${core}`, `empresa de ${core}`]],
+      [/^provedores?\s+de\s+/, (core) => [core, `provedor de ${core}`, `empresa de ${core}`]],
+      [/^consultorias?\s+de\s+/, (core) => [core, `consultoria de ${core}`, `empresa de ${core}`, `assessoria de ${core}`]],
+      [/^beneficiadoras?\s+de\s+/, (core) => [core, `beneficiadora de ${core}`, `beneficiamento de ${core}`]],
+      [/^fazendas?\s+de\s+/, (core) => [core, `fazenda de ${core}`, `propriedade rural ${core}`]],
+      [/^aluguel\s+de\s+/, (core) => [core, `aluguel de ${core}`, `locação de ${core}`, `aluga ${core}`]],
+    ];
+    
+    let matched = false;
+    for (const [regex, variationFn] of prefixMappings) {
+      if (regex.test(term)) {
+        const core = term.replace(regex, '').trim();
+        if (core.length >= 3) {
+          const variations = variationFn(core);
+          baseTerms.push(...variations.filter(v => !baseTerms.includes(v)));
+          matched = true;
+        }
+        break;
+      }
+    }
+    
+    // If no prefix matched, try suffix patterns
+    if (!matched) {
+      // Handle compound terms like "Barbearias Vintage", "Barbearias Premium"
+      const words = term.split(/\s+/);
+      if (words.length >= 2) {
+        baseTerms.push(words[0]); // Add first word alone
+        baseTerms.push(words.join(' ')); // Full term
+        // Add reversed for qualifiers: "vintage barbearia"
+        if (words.length === 2) {
+          baseTerms.push(`${words[1]} ${words[0]}`);
+        }
+      }
+    }
+    
+    // Deduplicate
+    searchTerms = [...new Set(baseTerms)].filter(t => t.length >= 3);
   }
   
-  // For boost segments (indústrias mecânicas, etc.), return all terms; otherwise max 10
+  // For boost segments, return all terms; otherwise max 10
   const isBoostTerm = term.includes('indústrias mecânicas') || term.includes('industrias mecanicas') || term.includes('distribuidores de material') || term.includes('distribuidores de pêssegos') || term.includes('distribuidores de pessegos');
   return isBoostTerm ? searchTerms : searchTerms.slice(0, 10);
 }
