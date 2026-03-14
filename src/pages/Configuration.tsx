@@ -4373,8 +4373,7 @@ const Configuration = () => {
                     ))}
                     
                     {customerTypes.filter(customer => 
-                      customerSearch === "" || 
-                      customer.toLowerCase().includes(customerSearch.toLowerCase())
+                      matchesSearch(customer, customerSearch)
                     ).length === 0 && (
                       <p className="text-muted-foreground text-sm col-span-full py-4 text-center">
                         Nenhum tipo de estabelecimento encontrado para "{customerSearch}"
