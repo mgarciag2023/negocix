@@ -532,6 +532,98 @@ function generateSearchTerms(segment: string): string[] {
       'fábrica de chicotes elétricos', 'trefilação de cobre', 'cabos flexíveis',
       'cabos industriais', 'fábrica de cordoalha', 'fios esmaltados'
     ],
+    // ===== LOTE 1: Novos segmentos =====
+    // Alimentação e Gastronomia
+    'açaiterias': ['açaiteria', 'açaí', 'casa de açaí', 'açaí bowl'],
+    'casas de açaí': ['casa de açaí', 'açaí', 'açaiteria'],
+    'creperies': ['creperie', 'crepe', 'casa de crepes'],
+    'tapiocarias': ['tapiocaria', 'tapioca', 'casa de tapioca'],
+    'casas de sucos': ['casa de sucos', 'sucos naturais', 'suco'],
+    'restaurantes veganos': ['restaurante vegano', 'comida vegana', 'vegan'],
+    'restaurantes vegetarianos': ['restaurante vegetariano', 'comida vegetariana'],
+    'restaurantes fit': ['restaurante fit', 'comida fit', 'alimentação saudável'],
+    'restaurantes self-service': ['restaurante self service', 'self service', 'por quilo'],
+    'restaurantes italianos': ['restaurante italiano', 'cantina italiana', 'trattoria', 'osteria'],
+    'restaurantes mexicanos': ['restaurante mexicano', 'comida mexicana', 'taqueria', 'burrito'],
+    'restaurantes árabes': ['restaurante árabe', 'comida árabe', 'esfiha', 'quibe', 'shawarma'],
+    'restaurantes de frutos do mar': ['frutos do mar', 'marisqueria', 'peixaria restaurante'],
+    'marisquerias': ['marisqueria', 'frutos do mar', 'camarão', 'marisco'],
+    'espetarias': ['espetaria', 'espeto', 'espetinho'],
+    'marmitarias': ['marmitaria', 'marmita', 'marmitex', 'quentinha'],
+    'padarias artesanais': ['padaria artesanal', 'pão artesanal', 'fermentação natural', 'sourdough'],
+    'chocolaterias': ['chocolateria', 'chocolate artesanal', 'chocolate', 'bombons'],
+    'gelatarias': ['gelataria', 'gelato', 'sorvete artesanal'],
+    'açougues gourmet': ['açougue gourmet', 'boutique de carnes', 'carnes nobres'],
+    'empórios gourmet': ['empório gourmet', 'empório', 'delicatessen', 'produtos gourmet'],
+    'delicatessens': ['delicatessen', 'deli', 'empório', 'frios importados'],
+    'rotisseries': ['rotisserie', 'rotisseria', 'frango assado', 'assados'],
+    'casas de carnes': ['casa de carnes', 'açougue', 'boutique de carnes'],
+    'distribuidoras de carnes': ['distribuidora de carnes', 'atacado de carnes', 'frigorífico distribuidor'],
+    'distribuidoras de peixes': ['distribuidora de peixes', 'atacado de peixes', 'pescados atacado'],
+    'distribuidoras de congelados': ['distribuidora de congelados', 'congelados atacado', 'alimentos congelados'],
+    'distribuidoras de sorvetes': ['distribuidora de sorvetes', 'atacado de sorvetes', 'distribuidor de sorvetes'],
+    'distribuidoras de açaí': ['distribuidora de açaí', 'açaí atacado', 'polpa de açaí atacado'],
+    'distribuidoras de polpas de frutas': ['distribuidora de polpas', 'polpa de fruta atacado', 'polpas atacado'],
+    'distribuidoras de ovos': ['distribuidora de ovos', 'ovos atacado', 'granja distribuidora'],
+    'distribuidoras de queijos': ['distribuidora de queijos', 'queijos atacado', 'laticínios distribuidor'],
+    'distribuidoras de embutidos': ['distribuidora de embutidos', 'embutidos atacado', 'frios distribuidor'],
+    // Indústria
+    'indústrias de alimentos congelados': ['indústria de congelados', 'fábrica de congelados', 'alimentos congelados industrial'],
+    'indústrias de conservas': ['indústria de conservas', 'fábrica de conservas', 'conservas industrial'],
+    'indústrias de massas': ['indústria de massas', 'fábrica de massas', 'massa industrial'],
+    'indústrias de temperos e condimentos': ['indústria de temperos', 'fábrica de temperos', 'condimentos industrial'],
+    'indústrias de laticínios': ['indústria de laticínios', 'fábrica de laticínios', 'laticínio', 'usina de leite'],
+    'indústrias de sorvetes': ['indústria de sorvetes', 'fábrica de sorvetes', 'sorvete industrial'],
+    'indústrias de chocolates': ['indústria de chocolates', 'fábrica de chocolates', 'chocolate industrial'],
+    'indústrias de café': ['indústria de café', 'torrefação de café', 'fábrica de café'],
+    'indústrias de sucos e polpas': ['indústria de sucos', 'fábrica de polpas', 'sucos industrial'],
+    'indústrias de água mineral': ['indústria de água mineral', 'envasadora de água', 'fonte de água mineral'],
+    'indústrias de colchões': ['indústria de colchões', 'fábrica de colchões', 'colchões industrial'],
+    'indústrias de estofados': ['indústria de estofados', 'fábrica de estofados', 'sofás industrial'],
+    'indústrias de tubos e conexões': ['indústria de tubos', 'fábrica de tubos', 'conexões industriais', 'tubos PVC'],
+    'indústrias de caixas de papelão': ['indústria de caixas', 'fábrica de caixas de papelão', 'cartonagem industrial'],
+    'indústrias de mdf e mdp': ['indústria de MDF', 'fábrica de MDF', 'painéis de madeira'],
+    'indústrias de motores elétricos': ['indústria de motores elétricos', 'fábrica de motores', 'motores industriais'],
+    'indústrias de implementos agrícolas': ['indústria de implementos agrícolas', 'fábrica de implementos', 'máquinas agrícolas'],
+    // Saúde
+    'clínicas de endocrinologia': ['clínica de endocrinologia', 'endocrinologista', 'endócrino'],
+    'clínicas de gastroenterologia': ['clínica de gastroenterologia', 'gastroenterologista', 'gastro'],
+    'clínicas de oncologia': ['clínica de oncologia', 'oncologista', 'centro oncológico'],
+    'clínicas de otorrinolaringologia': ['otorrinolaringologista', 'otorrino', 'clínica de otorrino'],
+    'clínicas de medicina do trabalho': ['medicina do trabalho', 'clínica ocupacional', 'saúde ocupacional'],
+    'clínicas de acupuntura': ['acupuntura', 'acupunturista', 'medicina chinesa'],
+    'clínicas de quiropraxia': ['quiropraxia', 'quiroprático', 'quiropraxista'],
+    'clínicas de cirurgia plástica': ['cirurgia plástica', 'cirurgião plástico', 'plástica'],
+    'clínicas de implantes dentários': ['implante dentário', 'implantes', 'implantodontia'],
+    'clínicas de ortodontia': ['ortodontia', 'ortodontista', 'aparelho dental'],
+    'farmácias de manipulação': ['farmácia de manipulação', 'manipulação', 'farmácia magistral'],
+    'centros de diagnóstico por imagem': ['diagnóstico por imagem', 'radiologia', 'ressonância', 'tomografia'],
+    // Serviços
+    'agências de marketing digital': ['agência de marketing digital', 'marketing digital', 'agência digital'],
+    'agências de seo': ['agência de SEO', 'SEO', 'otimização de sites'],
+    'empresas de rh e terceirização': ['RH', 'recursos humanos', 'terceirização', 'trabalho temporário'],
+    'empresas de desenvolvimento de software': ['desenvolvimento de software', 'software house', 'fábrica de software'],
+    'provedores de internet': ['provedor de internet', 'internet', 'ISP', 'fibra óptica'],
+    'empresas de cibersegurança': ['cibersegurança', 'segurança da informação', 'cybersecurity'],
+    'empresas de cftv': ['CFTV', 'câmeras de segurança', 'vigilância', 'circuito fechado'],
+    'empresas de engenharia elétrica': ['engenharia elétrica', 'projeto elétrico', 'instalações elétricas'],
+    'empresas de engenharia ambiental': ['engenharia ambiental', 'meio ambiente', 'licenciamento ambiental'],
+    'empresas de topografia': ['topografia', 'topógrafo', 'levantamento topográfico'],
+    'empresas de perfuração de poços': ['perfuração de poços', 'poço artesiano', 'poço semi-artesiano'],
+    'importadoras': ['importadora', 'importação', 'produtos importados', 'trading'],
+    'exportadoras': ['exportadora', 'exportação', 'comércio exterior'],
+    'empresas de auditoria': ['auditoria', 'empresa de auditoria', 'auditoria contábil'],
+    'empresas de motoboy': ['motoboy', 'motofrete', 'entrega moto', 'moto entrega'],
+    'empresas de transporte refrigerado': ['transporte refrigerado', 'câmara fria', 'frigorífico transporte'],
+    'guincho e reboque': ['guincho', 'reboque', 'auto socorro', 'socorro mecânico'],
+    // Comércio
+    'lojas de bebidas': ['loja de bebidas', 'adega', 'distribuidora de bebidas', 'casa de bebidas'],
+    'lojas de vinhos': ['loja de vinhos', 'wine shop', 'adega', 'enoteca'],
+    'lojas de conveniência': ['loja de conveniência', 'conveniência', 'am pm', 'select'],
+    'lojas de games e videogames': ['loja de games', 'videogames', 'games', 'gamer'],
+    'lojas de artigos para bebê': ['artigos para bebê', 'loja de bebê', 'enxoval de bebê'],
+    'lojas de material de escritório': ['material de escritório', 'papelaria corporativa', 'suprimentos de escritório'],
+    'lojas de móveis para escritório': ['móveis para escritório', 'mobiliário corporativo', 'estações de trabalho'],
   };
 
   
@@ -547,8 +639,20 @@ function generateSearchTerms(segment: string): string[] {
   }
   
   if (!searchTerms) {
-    // Fallback: just use the term as-is
-    searchTerms = [term];
+    // Smart fallback: use the term + generate basic variations
+    const baseTerms = [term];
+    // Add singular/plural variations
+    if (term.endsWith('s')) {
+      baseTerms.push(term.slice(0, -1)); // Remove 's'
+    }
+    if (term.endsWith('es')) {
+      baseTerms.push(term.slice(0, -2)); // Remove 'es'
+    }
+    // Add "loja de" prefix for retail segments
+    if (term.startsWith('lojas de ')) {
+      baseTerms.push(term.replace('lojas de ', ''));
+    }
+    searchTerms = baseTerms;
   }
   
   // For boost segments (indústrias mecânicas, etc.), return all terms; otherwise max 10
@@ -1573,6 +1677,268 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
   'e-commerces de presentes finos': {
     include: ['presentes', 'gift', 'luxo', 'finos', 'importados', 'corporativos', 'online', 'loja virtual', 'e-commerce', 'presentes premium', 'decoração'],
     exclude: ['restaurante', 'lanchonete', 'bar', 'autopeças', 'pet', 'farmácia', 'construção', 'supermercado']
+  },
+  // ===== LOTE 1: Novos nicheKeywords =====
+  // Alimentação
+  'açaiterias': {
+    include: ['açaí', 'acai', 'açaiteria', 'bowl', 'creme de açaí'],
+    exclude: ['supermercado', 'mercado', 'fábrica', 'indústria', 'farmácia']
+  },
+  'casas de açaí': {
+    include: ['açaí', 'acai', 'açaiteria', 'bowl'],
+    exclude: ['supermercado', 'mercado', 'fábrica', 'indústria', 'farmácia']
+  },
+  'creperies': {
+    include: ['crepe', 'creperie', 'crêpe', 'panqueca'],
+    exclude: ['supermercado', 'mercado', 'fábrica', 'indústria', 'farmácia']
+  },
+  'tapiocarias': {
+    include: ['tapioca', 'tapiocaria', 'goma', 'beiju'],
+    exclude: ['supermercado', 'mercado', 'fábrica', 'indústria', 'farmácia']
+  },
+  'restaurantes veganos': {
+    include: ['vegano', 'vegan', 'plant based', 'vegetariano', 'restaurante'],
+    exclude: ['supermercado', 'mercado', 'fábrica', 'indústria', 'pet', 'farmácia']
+  },
+  'restaurantes vegetarianos': {
+    include: ['vegetariano', 'vegano', 'natural', 'restaurante'],
+    exclude: ['supermercado', 'mercado', 'fábrica', 'indústria', 'pet', 'farmácia']
+  },
+  'restaurantes fit': {
+    include: ['fit', 'saudável', 'low carb', 'funcional', 'healthy', 'restaurante'],
+    exclude: ['supermercado', 'mercado', 'fábrica', 'indústria', 'pet', 'farmácia']
+  },
+  'restaurantes self-service': {
+    include: ['self service', 'self-service', 'por quilo', 'buffet', 'restaurante'],
+    exclude: ['supermercado', 'mercado', 'fábrica', 'indústria', 'pet', 'farmácia']
+  },
+  'restaurantes italianos': {
+    include: ['italiano', 'italiana', 'trattoria', 'osteria', 'cantina', 'pizza', 'massa', 'risoto'],
+    exclude: ['supermercado', 'mercado', 'fábrica', 'indústria', 'pet', 'farmácia']
+  },
+  'restaurantes mexicanos': {
+    include: ['mexicano', 'mexicana', 'taco', 'burrito', 'nachos', 'guacamole', 'taqueria'],
+    exclude: ['supermercado', 'mercado', 'fábrica', 'indústria', 'pet', 'farmácia']
+  },
+  'restaurantes árabes': {
+    include: ['árabe', 'arabe', 'esfiha', 'quibe', 'shawarma', 'kebab', 'falafel', 'hummus'],
+    exclude: ['supermercado', 'mercado', 'fábrica', 'indústria', 'pet', 'farmácia']
+  },
+  'restaurantes de frutos do mar': {
+    include: ['frutos do mar', 'peixe', 'camarão', 'lagosta', 'marisco', 'seafood', 'pescados'],
+    exclude: ['supermercado', 'mercado', 'fábrica', 'indústria', 'pet', 'farmácia']
+  },
+  'marisquerias': {
+    include: ['marisqueria', 'marisco', 'frutos do mar', 'camarão', 'ostra', 'caranguejo'],
+    exclude: ['supermercado', 'mercado', 'fábrica', 'indústria', 'pet', 'farmácia']
+  },
+  'espetarias': {
+    include: ['espetaria', 'espeto', 'espetinho', 'churrasco'],
+    exclude: ['supermercado', 'mercado', 'fábrica', 'indústria']
+  },
+  'marmitarias': {
+    include: ['marmitaria', 'marmita', 'marmitex', 'quentinha', 'refeição'],
+    exclude: ['supermercado', 'mercado', 'fábrica', 'indústria']
+  },
+  'chocolaterias': {
+    include: ['chocolate', 'chocolateria', 'bombom', 'trufa', 'cacau'],
+    exclude: ['supermercado', 'mercado', 'fábrica', 'indústria']
+  },
+  'gelatarias': {
+    include: ['gelato', 'gelataria', 'sorvete artesanal', 'sorvete'],
+    exclude: ['supermercado', 'mercado', 'fábrica', 'indústria']
+  },
+  'empórios gourmet': {
+    include: ['empório', 'gourmet', 'delicatessen', 'deli', 'importados', 'produtos finos'],
+    exclude: ['fábrica', 'indústria', 'farmácia', 'pet']
+  },
+  'delicatessens': {
+    include: ['delicatessen', 'deli', 'empório', 'finos', 'importados'],
+    exclude: ['fábrica', 'indústria', 'farmácia', 'pet']
+  },
+  'rotisseries': {
+    include: ['rotisserie', 'rotisseria', 'frango assado', 'assados', 'grelhados'],
+    exclude: ['supermercado', 'fábrica', 'indústria']
+  },
+  'casas de carnes': {
+    include: ['casa de carnes', 'açougue', 'carnes', 'boutique de carnes', 'churrasco'],
+    exclude: ['fábrica', 'indústria', 'farmácia', 'pet']
+  },
+  'distribuidoras de carnes': {
+    include: ['distribuidora de carnes', 'atacado de carnes', 'frigorífico', 'carnes atacado', 'distribuidor'],
+    exclude: ['restaurante', 'lanchonete', 'pet', 'farmácia']
+  },
+  'distribuidoras de peixes': {
+    include: ['distribuidora de peixes', 'pescados', 'peixes atacado', 'frutos do mar atacado'],
+    exclude: ['restaurante', 'lanchonete', 'pet', 'farmácia']
+  },
+  'distribuidoras de congelados': {
+    include: ['distribuidora de congelados', 'congelados atacado', 'alimentos congelados', 'distribuidor congelados'],
+    exclude: ['restaurante', 'lanchonete', 'pet', 'farmácia']
+  },
+  'distribuidoras de sorvetes': {
+    include: ['distribuidora de sorvetes', 'sorvetes atacado', 'picolés atacado'],
+    exclude: ['restaurante', 'lanchonete', 'pet', 'farmácia']
+  },
+  'distribuidoras de açaí': {
+    include: ['distribuidora de açaí', 'açaí atacado', 'polpa de açaí', 'açaí distribuidor'],
+    exclude: ['restaurante', 'lanchonete', 'pet', 'farmácia']
+  },
+  'distribuidoras de polpas de frutas': {
+    include: ['distribuidora de polpas', 'polpa de fruta', 'polpas atacado', 'frutas polpa'],
+    exclude: ['restaurante', 'lanchonete', 'pet', 'farmácia']
+  },
+  'distribuidoras de ovos': {
+    include: ['distribuidora de ovos', 'ovos atacado', 'granja', 'ovos distribuidor'],
+    exclude: ['restaurante', 'lanchonete', 'pet', 'farmácia']
+  },
+  'distribuidoras de queijos': {
+    include: ['distribuidora de queijos', 'queijos atacado', 'laticínios', 'queijo distribuidor'],
+    exclude: ['restaurante', 'lanchonete', 'pet', 'farmácia']
+  },
+  'distribuidoras de embutidos': {
+    include: ['distribuidora de embutidos', 'embutidos atacado', 'frios', 'salame', 'presunto', 'linguiça'],
+    exclude: ['restaurante', 'lanchonete', 'pet', 'farmácia']
+  },
+  // Indústrias novas
+  'indústrias de alimentos congelados': {
+    include: ['indústria', 'fábrica', 'congelados', 'alimentos congelados', 'industrial'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'mercado', 'pet', 'farmácia']
+  },
+  'indústrias de conservas': {
+    include: ['indústria', 'fábrica', 'conservas', 'enlatados', 'palmito', 'industrial'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'mercado', 'pet', 'farmácia']
+  },
+  'indústrias de massas': {
+    include: ['indústria', 'fábrica', 'massas', 'macarrão', 'massa industrial'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'mercado', 'pet', 'farmácia']
+  },
+  'indústrias de temperos e condimentos': {
+    include: ['indústria', 'fábrica', 'temperos', 'condimentos', 'especiarias', 'industrial'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'mercado', 'pet', 'farmácia']
+  },
+  'indústrias de laticínios': {
+    include: ['indústria', 'fábrica', 'laticínio', 'laticínios', 'leite', 'queijo', 'iogurte', 'usina de leite'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'mercado', 'pet', 'farmácia']
+  },
+  'indústrias de sorvetes': {
+    include: ['indústria', 'fábrica', 'sorvetes', 'picolés', 'gelados', 'industrial'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'mercado', 'pet', 'farmácia']
+  },
+  'indústrias de chocolates': {
+    include: ['indústria', 'fábrica', 'chocolates', 'cacau', 'bombons', 'industrial'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'mercado', 'pet', 'farmácia']
+  },
+  'indústrias de café': {
+    include: ['indústria', 'fábrica', 'café', 'torrefação', 'torrefadora', 'industrial'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'mercado', 'pet', 'farmácia', 'cafeteria']
+  },
+  'indústrias de colchões': {
+    include: ['indústria', 'fábrica', 'colchões', 'colchão', 'espuma', 'industrial'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'mercado', 'pet', 'farmácia', 'loja']
+  },
+  'indústrias de estofados': {
+    include: ['indústria', 'fábrica', 'estofados', 'sofá', 'sofás', 'poltrona', 'industrial'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'mercado', 'pet', 'farmácia', 'loja']
+  },
+  'indústrias de motores elétricos': {
+    include: ['indústria', 'fábrica', 'motores elétricos', 'motor elétrico', 'motores industriais', 'WEG'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'mercado', 'pet', 'farmácia']
+  },
+  // Saúde
+  'clínicas de endocrinologia': {
+    include: ['endocrinologia', 'endocrinologista', 'endócrino', 'diabetes', 'tireoide', 'clínica'],
+    exclude: ['supermercado', 'restaurante', 'pet', 'construção', 'autopeças']
+  },
+  'clínicas de gastroenterologia': {
+    include: ['gastroenterologia', 'gastroenterologista', 'gastro', 'digestivo', 'clínica'],
+    exclude: ['supermercado', 'restaurante', 'pet', 'construção', 'autopeças']
+  },
+  'clínicas de oncologia': {
+    include: ['oncologia', 'oncologista', 'câncer', 'quimioterapia', 'centro oncológico', 'clínica'],
+    exclude: ['supermercado', 'restaurante', 'pet', 'construção', 'autopeças']
+  },
+  'clínicas de medicina do trabalho': {
+    include: ['medicina do trabalho', 'ocupacional', 'saúde ocupacional', 'exame admissional', 'PCMSO', 'clínica'],
+    exclude: ['supermercado', 'restaurante', 'pet', 'construção', 'autopeças']
+  },
+  'clínicas de acupuntura': {
+    include: ['acupuntura', 'acupunturista', 'medicina chinesa', 'medicina oriental', 'clínica'],
+    exclude: ['supermercado', 'restaurante', 'pet', 'construção', 'autopeças']
+  },
+  'clínicas de cirurgia plástica': {
+    include: ['cirurgia plástica', 'cirurgião plástico', 'estética', 'lipoaspiração', 'rinoplastia', 'clínica'],
+    exclude: ['supermercado', 'restaurante', 'pet', 'construção', 'autopeças']
+  },
+  'clínicas de implantes dentários': {
+    include: ['implante dentário', 'implantes', 'implantodontia', 'implante', 'dental', 'clínica'],
+    exclude: ['supermercado', 'restaurante', 'pet', 'construção', 'autopeças']
+  },
+  'clínicas de ortodontia': {
+    include: ['ortodontia', 'ortodontista', 'aparelho', 'invisalign', 'dental', 'clínica'],
+    exclude: ['supermercado', 'restaurante', 'pet', 'construção', 'autopeças']
+  },
+  'farmácias de manipulação': {
+    include: ['manipulação', 'farmácia de manipulação', 'magistral', 'fórmulas', 'farmácia'],
+    exclude: ['supermercado', 'restaurante', 'pet', 'construção', 'autopeças']
+  },
+  'centros de diagnóstico por imagem': {
+    include: ['diagnóstico por imagem', 'radiologia', 'ressonância', 'tomografia', 'ultrassom', 'raio-x', 'centro de diagnóstico'],
+    exclude: ['supermercado', 'restaurante', 'pet', 'construção', 'autopeças']
+  },
+  // Serviços e B2B
+  'agências de marketing digital': {
+    include: ['marketing digital', 'agência digital', 'marketing', 'publicidade digital', 'social media'],
+    exclude: ['supermercado', 'restaurante', 'pet', 'construção', 'farmácia']
+  },
+  'empresas de desenvolvimento de software': {
+    include: ['desenvolvimento de software', 'software', 'software house', 'sistemas', 'aplicativos', 'TI'],
+    exclude: ['supermercado', 'restaurante', 'pet', 'construção', 'farmácia']
+  },
+  'provedores de internet': {
+    include: ['provedor de internet', 'internet', 'fibra óptica', 'banda larga', 'ISP', 'telecomunicações'],
+    exclude: ['supermercado', 'restaurante', 'pet', 'construção', 'farmácia']
+  },
+  'empresas de cftv': {
+    include: ['CFTV', 'câmeras', 'vigilância', 'monitoramento', 'segurança eletrônica', 'circuito fechado'],
+    exclude: ['supermercado', 'restaurante', 'pet', 'construção', 'farmácia']
+  },
+  'importadoras': {
+    include: ['importadora', 'importação', 'comércio exterior', 'produtos importados', 'trading'],
+    exclude: ['supermercado', 'restaurante', 'pet', 'farmácia']
+  },
+  'exportadoras': {
+    include: ['exportadora', 'exportação', 'comércio exterior', 'trading'],
+    exclude: ['supermercado', 'restaurante', 'pet', 'farmácia']
+  },
+  'empresas de motoboy': {
+    include: ['motoboy', 'motofrete', 'moto entrega', 'entrega rápida', 'courier moto'],
+    exclude: ['supermercado', 'restaurante', 'pet', 'farmácia', 'construção']
+  },
+  'guincho e reboque': {
+    include: ['guincho', 'reboque', 'auto socorro', 'socorro mecânico', 'resgate veicular'],
+    exclude: ['supermercado', 'restaurante', 'pet', 'farmácia', 'construção']
+  },
+  // Comércio
+  'lojas de bebidas': {
+    include: ['bebidas', 'adega', 'distribuidora de bebidas', 'casa de bebidas', 'drink'],
+    exclude: ['fábrica', 'indústria', 'farmácia', 'pet', 'construção']
+  },
+  'lojas de vinhos': {
+    include: ['vinhos', 'wine', 'adega', 'enoteca', 'vinho'],
+    exclude: ['fábrica', 'indústria', 'farmácia', 'pet', 'construção']
+  },
+  'lojas de conveniência': {
+    include: ['conveniência', 'am pm', 'select', 'loja 24h'],
+    exclude: ['fábrica', 'indústria', 'farmácia', 'pet', 'construção']
+  },
+  'lojas de games e videogames': {
+    include: ['games', 'videogames', 'gamer', 'playstation', 'xbox', 'nintendo', 'jogos'],
+    exclude: ['fábrica', 'indústria', 'farmácia', 'pet', 'construção', 'restaurante']
+  },
+  'lojas de artigos para bebê': {
+    include: ['bebê', 'baby', 'enxoval', 'infantil', 'gestante', 'maternidade'],
+    exclude: ['fábrica', 'indústria', 'farmácia', 'pet', 'construção', 'restaurante']
   }
 };
 
