@@ -1454,9 +1454,10 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'padaria', 'escola', 'academia', 'salão', 'pet shop', 'veterinário']
   },
   'distribuidores de pêssegos': {
-    include: ['distribuidora', 'distribuidor', 'atacado', 'ceasa', 'pêssego', 'pessego', 'frutas', 'fruticultura', 'packing house', 'beneficiadora', 'exportadora', 'produtor', 'polpa', 'processadora', 'conserva', 'indústria', 'fábrica', 'cooperativa', 'pomar', 'cultivo', 'frutas de caroço', 'in natura', 'hortifrutigranjeiro', 'hortifruti'],
+    include: ['pêssego', 'pessego', 'pêssegos', 'pessegos', 'peach', 'frutas de caroço', 'polpa de pêssego', 'conserva de pêssego', 'pêssego em calda', 'beneficiadora de pêssego', 'packing house', 'fruticultura', 'pomar de pêssego', 'cultivo de pêssego', 'cooperativa de pêssego', 'ceasa', 'exportadora de frutas', 'processadora de frutas', 'distribuidor de frutas', 'distribuidora de frutas', 'atacado de frutas', 'atacadista de frutas'],
     mustMatch: [],
-    exclude: ['restaurante', 'lanchonete', 'bar', 'hotel', 'farmácia', 'padaria', 'escola', 'academia', 'salão', 'pet shop', 'veterinário', 'açougue', 'pizzaria']
+    strictInclude: true,
+    exclude: ['restaurante', 'lanchonete', 'bar', 'hotel', 'farmácia', 'padaria', 'escola', 'academia', 'salão', 'pet shop', 'veterinário', 'açougue', 'pizzaria', 'supermercado', 'hortifruti', 'mercado', 'empório', 'loja de', 'armazém', 'varejo', 'varejão', 'mercearia', 'quitanda', 'bomboniere', 'conveniência', 'delivery', 'bebidas', 'descartáveis', 'cesta básica', 'kit churrasco', 'açaí', 'sorvete']
   },
   'serralherias': {
     include: ['serralheria', 'serralheiro', 'portões', 'grades', 'esquadrias metálicas', 'estruturas metálicas', 'portão de ferro', 'grade de ferro', 'corrimão', 'escada de ferro', 'serralheria artística', 'serralheria industrial', 'portão automático', 'gradil', 'portão basculante', 'metalon', 'ferro e aço'],
@@ -1759,7 +1760,7 @@ function isRelevantToNiche(place: any, segment: string): boolean {
   // This ensures businesses with the correct CNAE but without specific keywords
   // in their name/category are not incorrectly filtered out.
   
-  // Check if at least one include keyword matches (SOFT check)
+  // Check if at least one include keyword matches
   let hasIncludeMatch = false;
   for (const incl of nicheConfig.include) {
     if (combinedText.includes(incl)) {
@@ -1768,7 +1769,13 @@ function isRelevantToNiche(place: any, segment: string): boolean {
     }
   }
   
-  // If no include match, still accept but log it
+  // If strictInclude is set, REJECT leads that don't match any include keyword
+  if (!hasIncludeMatch && (nicheConfig as any).strictInclude) {
+    console.log(`❌ Strict include rejection: "${place.title}" in ${segmentLower} - no include keyword found`);
+    return false;
+  }
+  
+  // If no include match but not strict, still accept but log it
   if (!hasIncludeMatch) {
     console.log(`⚠️ No include match for "${place.title}" in ${segmentLower}, but accepting for volume`);
   }
