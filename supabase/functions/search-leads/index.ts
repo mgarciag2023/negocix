@@ -2593,10 +2593,13 @@ serve(async (req) => {
     let leads = processResultsWithCategories(activePlaces, segment, cleanRegion, MAX_TOTAL_LEADS, bizType, digPresence, digActivity);
     console.log(`✅ FINAL: ${leads.length} leads ready (target: ${MIN_LEADS_TARGET}-${MAX_TOTAL_LEADS})`);
     
-    // Extract emails from websites (skip for state searches or large result sets to avoid CPU timeout)
-    const placesWithWebsiteCount = leads.filter((l: any) => l.website && l.website !== 'Não disponível' && l.website.trim().length > 5).length;
-    if (!isStateOnlySearch && placesWithWebsiteCount <= 20) {
-      const emailMap = await batchExtractEmails(leads);
+    // Extract emails from websites - ALWAYS attempt, limit batch size to avoid CPU timeout
+    const placesWithWebsite = leads.filter((l: any) => l.website && l.website !== 'Não disponível' && l.website.trim().length > 5);
+    console.log(`📧 Places with website: ${placesWithWebsite.length} of ${leads.length}`);
+    if (placesWithWebsite.length > 0) {
+      // For large sets, extract from first 30; for state searches first 20
+      const maxToExtract = isStateOnlySearch ? 20 : 30;
+      const emailMap = await batchExtractEmails(leads.slice(0, maxToExtract * 2), 5);
       if (emailMap.size > 0) {
         leads = leads.map((lead: any) => ({
           ...lead,
@@ -2605,7 +2608,7 @@ serve(async (req) => {
         console.log(`📧 Enriched ${emailMap.size} leads with emails`);
       }
     } else {
-      console.log(`⏩ Skipping email extraction (state=${isStateOnlySearch}, websites=${placesWithWebsiteCount}) to avoid CPU timeout`);
+      console.log(`⏩ No websites found for email extraction`);
     }
     
     // Apply WhatsApp filter if requested
