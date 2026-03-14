@@ -2278,7 +2278,8 @@ serve(async (req) => {
     // Distribuidores de Material gets maximum volume
     const isDistribuidorMaterialSearch = segment.toLowerCase().includes('distribuidores de material');
     const isIndustriaMecanicaSearch = segment.toLowerCase().includes('indústrias mecânicas') || segment.toLowerCase().includes('industrias mecanicas');
-    const isBoostSearch = isDistribuidorMaterialSearch || isIndustriaMecanicaSearch;
+    const isDistribuidorPessegosSearch = segment.toLowerCase().includes('distribuidores de pêssegos') || segment.toLowerCase().includes('distribuidores de pessegos');
+    const isBoostSearch = isDistribuidorMaterialSearch || isIndustriaMecanicaSearch || isDistribuidorPessegosSearch;
     const MAX_TOTAL_LEADS = userMaxLeads || (isBoostSearch ? 500 : (isStateOnlySearch ? 347 : 187));
     const MIN_LEADS_TARGET = isBoostSearch ? 150 : (isStateOnlySearch ? 100 : 70);
     const TARGET_LEADS = isBoostSearch ? 350 : (isStateOnlySearch ? 200 : 80);
