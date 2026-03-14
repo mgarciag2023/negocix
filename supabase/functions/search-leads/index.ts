@@ -2157,23 +2157,27 @@ async function extractEmailFromWebsite(websiteUrl: string): Promise<string> {
 }
 
 // Batch extract emails from websites (parallel with concurrency limit)
-async function batchExtractEmails(places: any[], concurrency = 5): Promise<Map<string, string>> {
+async function batchExtractEmails(places: any[], concurrency = 3): Promise<Map<string, string>> {
   const emailMap = new Map<string, string>();
-  const placesWithWebsite = places.filter(p => p.website && p.website !== 'Não disponível' && p.website.trim().length > 5);
+  const placesWithWebsite = places.filter(p => {
+    const w = p.website || p._website;
+    return w && w !== 'Não disponível' && typeof w === 'string' && w.trim().length > 5;
+  });
   
   if (placesWithWebsite.length === 0) return emailMap;
   
-  // Limit to max 30 websites to extract emails from
-  const limitedPlaces = placesWithWebsite.slice(0, 30);
+  // Limit to max 25 websites to extract emails from (with contact page fallback, each takes longer)
+  const limitedPlaces = placesWithWebsite.slice(0, 25);
   console.log(`📧 Extracting emails from ${limitedPlaces.length} websites (of ${placesWithWebsite.length} available)...`);
   
-  // Process in batches
+  // Process in batches of 3 (lower concurrency since we now try contact pages too)
   for (let i = 0; i < limitedPlaces.length; i += concurrency) {
     const batch = limitedPlaces.slice(i, i + concurrency);
     const results = await Promise.all(
       batch.map(async (place) => {
-        const email = await extractEmailFromWebsite(place.website || place._website);
-        return { id: place.placeId || place.place_id, email };
+        const websiteUrl = place.website || place._website;
+        const email = await extractEmailFromWebsite(websiteUrl);
+        return { id: place.placeId || place.place_id || place.id, email };
       })
     );
     results.forEach(r => {
@@ -2181,7 +2185,7 @@ async function batchExtractEmails(places: any[], concurrency = 5): Promise<Map<s
     });
   }
   
-  console.log(`📧 Found ${emailMap.size} emails from ${placesWithWebsite.length} websites`);
+  console.log(`📧 Found ${emailMap.size} emails from ${limitedPlaces.length} websites`);
   return emailMap;
 }
 
