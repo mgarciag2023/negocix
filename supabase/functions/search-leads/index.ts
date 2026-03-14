@@ -2070,7 +2070,7 @@ function processResults(apifyResults: any[], segment: string, cleanRegion: strin
   });
 }
 
-// Email extraction from website
+// Email extraction from website - tries main page + contact page
 async function extractEmailFromWebsite(websiteUrl: string): Promise<string> {
   if (!websiteUrl || websiteUrl === 'Não disponível') return '';
   
@@ -2078,41 +2078,79 @@ async function extractEmailFromWebsite(websiteUrl: string): Promise<string> {
     let url = websiteUrl.trim();
     if (!url.startsWith('http')) url = `https://${url}`;
     
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3000); // 3s timeout to save CPU
-    
-    const response = await fetch(url, { 
-      signal: controller.signal,
-      headers: { 
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'text/html'
+    const fetchPage = async (pageUrl: string): Promise<string[]> => {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout
+        
+        const response = await fetch(pageUrl, { 
+          signal: controller.signal,
+          headers: { 
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml',
+            'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8'
+          },
+          redirect: 'follow'
+        });
+        clearTimeout(timeout);
+        
+        if (!response.ok) return [];
+        
+        const html = await response.text();
+        
+        // Extract emails from mailto: links and text content
+        const emailRegex = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
+        const emails = html.match(emailRegex) || [];
+        
+        // Also extract from mailto: links specifically
+        const mailtoRegex = /mailto:([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/gi;
+        const mailtoMatches = [...html.matchAll(mailtoRegex)].map(m => m[1]);
+        
+        return [...new Set([...mailtoMatches, ...emails])];
+      } catch {
+        return [];
       }
-    });
-    clearTimeout(timeout);
-    
-    if (!response.ok) return '';
-    
-    const html = await response.text();
-    
-    // Extract emails from mailto: links and text content
-    const emailRegex = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
-    const emails = html.match(emailRegex) || [];
+    };
     
     // Filter out common false positives
-    const blacklist = ['example.com', 'email.com', 'domain.com', 'yoursite.com', 'sentry.io', 'wixpress.com', 'google.com', 'facebook.com', 'wordpress.com', 'w3.org', 'schema.org', 'gravatar.com', 'jquery.com', 'googleapis.com', 'cloudflare.com'];
+    const blacklist = ['example.com', 'email.com', 'domain.com', 'yoursite.com', 'sentry.io', 'wixpress.com', 'google.com', 'facebook.com', 'wordpress.com', 'w3.org', 'schema.org', 'gravatar.com', 'jquery.com', 'googleapis.com', 'cloudflare.com', 'gstatic.com', 'bootstrapcdn.com', 'jsdelivr.net', 'unpkg.com', 'cdnjs.cloudflare.com', 'fontawesome.com'];
     
-    const validEmails = emails.filter(email => {
-      const domain = email.split('@')[1]?.toLowerCase() || '';
-      return !blacklist.some(bl => domain.includes(bl)) && 
-             !email.includes('..') && 
-             email.length < 60;
-    });
+    const filterEmails = (emails: string[]) => {
+      return emails.filter(email => {
+        const domain = email.split('@')[1]?.toLowerCase() || '';
+        return !blacklist.some(bl => domain.includes(bl)) && 
+               !email.includes('..') && 
+               !email.startsWith('.') &&
+               !email.endsWith('.') &&
+               email.length < 60 &&
+               email.length > 5;
+      });
+    };
+    
+    // Try main page first
+    let allEmails = filterEmails(await fetchPage(url));
+    
+    // If no emails found, try common contact pages
+    if (allEmails.length === 0) {
+      const baseUrl = url.replace(/\/+$/, '');
+      const contactPaths = ['/contato', '/contact', '/fale-conosco', '/sobre', '/about'];
+      
+      for (const path of contactPaths) {
+        const contactEmails = filterEmails(await fetchPage(`${baseUrl}${path}`));
+        if (contactEmails.length > 0) {
+          allEmails = contactEmails;
+          break;
+        }
+      }
+    }
+    
+    if (allEmails.length === 0) return '';
     
     // Prefer contact/commercial emails
-    const priorityKeywords = ['contato', 'comercial', 'vendas', 'sac', 'atendimento', 'info', 'contact', 'sales'];
-    const priorityEmail = validEmails.find(e => priorityKeywords.some(k => e.toLowerCase().includes(k)));
+    const priorityKeywords = ['contato', 'comercial', 'vendas', 'sac', 'atendimento', 'info', 'contact', 'sales', 'financeiro', 'adm', 'compras'];
+    const priorityEmail = allEmails.find(e => priorityKeywords.some(k => e.toLowerCase().includes(k)));
     
-    return priorityEmail || validEmails[0] || '';
+    return priorityEmail || allEmails[0] || '';
   } catch {
     return '';
   }
