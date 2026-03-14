@@ -1453,6 +1453,11 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     mustMatch: [],
     exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'padaria', 'escola', 'academia', 'salão', 'pet shop', 'veterinário']
   },
+  'distribuidores de pêssegos': {
+    include: ['distribuidora', 'distribuidor', 'atacado', 'ceasa', 'pêssego', 'pessego', 'frutas', 'fruticultura', 'packing house', 'beneficiadora', 'exportadora', 'produtor', 'polpa', 'processadora', 'conserva', 'indústria', 'fábrica', 'cooperativa', 'pomar', 'cultivo', 'frutas de caroço', 'in natura', 'hortifrutigranjeiro', 'hortifruti'],
+    mustMatch: [],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'hotel', 'farmácia', 'padaria', 'escola', 'academia', 'salão', 'pet shop', 'veterinário', 'açougue', 'pizzaria']
+  },
   'serralherias': {
     include: ['serralheria', 'serralheiro', 'portões', 'grades', 'esquadrias metálicas', 'estruturas metálicas', 'portão de ferro', 'grade de ferro', 'corrimão', 'escada de ferro', 'serralheria artística', 'serralheria industrial', 'portão automático', 'gradil', 'portão basculante', 'metalon', 'ferro e aço'],
     mustMatch: [],

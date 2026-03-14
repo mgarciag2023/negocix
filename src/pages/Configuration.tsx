@@ -193,6 +193,7 @@ const Configuration = () => {
     "Fabricantes de Máquinas e Equipamentos",
     "Distribuidores de Aço e Ferro",
     "Distribuidores de Material Médico Hospitalar",
+    "Distribuidores de Pêssegos",
     "Indústrias Mecânicas",
     "Indústrias de Plásticos",
     "Indústrias Químicas",
