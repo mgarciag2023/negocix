@@ -263,6 +263,7 @@ function generateSearchTerms(segment: string): string[] {
     'empresas de energia solar': ['energia solar', 'solar fotovoltaica', 'instalação solar', 'empresa de energia solar', 'painel solar'],
     'distribuidores de aço e ferro': ['distribuidora de aço', 'distribuidor de ferro', 'ferro e aço', 'depósito de ferro', 'comércio de aço', 'distribuidora de ferro', 'aço e ferro', 'distribuidora de metais', 'ferro para construção', 'vergalhão', 'chapas de aço', 'metalon', 'tubo de aço', 'perfilados', 'cantoneira', 'viga de aço', 'barra de ferro'],
     'distribuidores de material médico hospitalar': ['distribuidora de material hospitalar', 'distribuidor de material hospitalar', 'distribuidora de material médico', 'distribuidor de material médico', 'distribuidora hospitalar', 'material médico hospitalar', 'produtos médicos hospitalares', 'distribuidora de equipamentos hospitalares', 'distribuidora de insumos hospitalares', 'distribuidora de descartáveis hospitalares', 'distribuidora de medicamentos', 'atacado hospitalar', 'distribuidora de produtos cirúrgicos', 'material cirúrgico', 'distribuidora de ortopédicos', 'equipamentos médicos', 'distribuidora de EPIs hospitalares', 'distribuidora de luvas', 'distribuidora de seringas', 'distribuidora de curativos', 'distribuidora de sondas', 'distribuidora de cateteres', 'distribuidora de próteses', 'distribuidora de órteses', 'distribuidora de materiais de laboratório', 'distribuidora de reagentes', 'distribuidora de produtos para saúde', 'fornecedor hospitalar', 'suprimentos hospitalares', 'insumos médicos', 'materiais de enfermagem', 'distribuidora de oxigênio medicinal', 'gases medicinais', 'distribuidora de produtos odontológicos médicos', 'distribuidora OPME'],
+    'distribuidores de pêssegos': ['distribuidora de pêssegos', 'distribuidor de pêssegos', 'distribuidora de frutas', 'distribuidor de frutas', 'atacado de pêssegos', 'atacado de frutas', 'ceasa pêssego', 'pêssego atacado', 'frutas atacado', 'distribuidora de frutas frescas', 'distribuidora de pêssego', 'atacadista de frutas', 'comércio de frutas', 'packing house pêssego', 'beneficiadora de pêssegos', 'exportadora de pêssegos', 'produtor de pêssegos', 'pêssego in natura', 'frutas de caroço', 'pêssego para indústria', 'polpa de pêssego', 'processadora de pêssego', 'conserva de pêssego', 'fábrica de conserva de pêssego', 'indústria de pêssego', 'pêssego em calda', 'pessegueiro', 'cultivo de pêssego', 'pomar de pêssego', 'fruticultura pêssego', 'cooperativa de frutas', 'cooperativa de pêssegos'],
     'serralherias': ['serralheria', 'serralheiro', 'portões', 'grades', 'esquadrias metálicas', 'estruturas metálicas', 'portão de ferro', 'grade de ferro', 'corrimão', 'escada de ferro', 'serralheria artística', 'serralheria industrial', 'portão automático', 'gradil', 'portão basculante'],
     // Cartonagem
     'cartonagem': ['cartonagem', 'caixas de papelão', 'embalagens de papelão', 'fábrica de caixas', 'indústria de caixas', 'caixas cartonadas', 'papelão ondulado', 'cartonaria', 'embalagem cartonada', 'caixa de papelão', 'embalagem de papel cartão', 'papel cartão'],
@@ -551,7 +552,7 @@ function generateSearchTerms(segment: string): string[] {
   }
   
   // For boost segments (indústrias mecânicas, etc.), return all terms; otherwise max 10
-  const isBoostTerm = term.includes('indústrias mecânicas') || term.includes('industrias mecanicas') || term.includes('distribuidores de material');
+  const isBoostTerm = term.includes('indústrias mecânicas') || term.includes('industrias mecanicas') || term.includes('distribuidores de material') || term.includes('distribuidores de pêssegos') || term.includes('distribuidores de pessegos');
   return isBoostTerm ? searchTerms : searchTerms.slice(0, 10);
 }
 
@@ -1452,6 +1453,11 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     mustMatch: [],
     exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'padaria', 'escola', 'academia', 'salão', 'pet shop', 'veterinário']
   },
+  'distribuidores de pêssegos': {
+    include: ['distribuidora', 'distribuidor', 'atacado', 'ceasa', 'pêssego', 'pessego', 'frutas', 'fruticultura', 'packing house', 'beneficiadora', 'exportadora', 'produtor', 'polpa', 'processadora', 'conserva', 'indústria', 'fábrica', 'cooperativa', 'pomar', 'cultivo', 'frutas de caroço', 'in natura', 'hortifrutigranjeiro', 'hortifruti'],
+    mustMatch: [],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'hotel', 'farmácia', 'padaria', 'escola', 'academia', 'salão', 'pet shop', 'veterinário', 'açougue', 'pizzaria']
+  },
   'serralherias': {
     include: ['serralheria', 'serralheiro', 'portões', 'grades', 'esquadrias metálicas', 'estruturas metálicas', 'portão de ferro', 'grade de ferro', 'corrimão', 'escada de ferro', 'serralheria artística', 'serralheria industrial', 'portão automático', 'gradil', 'portão basculante', 'metalon', 'ferro e aço'],
     mustMatch: [],
@@ -2272,7 +2278,8 @@ serve(async (req) => {
     // Distribuidores de Material gets maximum volume
     const isDistribuidorMaterialSearch = segment.toLowerCase().includes('distribuidores de material');
     const isIndustriaMecanicaSearch = segment.toLowerCase().includes('indústrias mecânicas') || segment.toLowerCase().includes('industrias mecanicas');
-    const isBoostSearch = isDistribuidorMaterialSearch || isIndustriaMecanicaSearch;
+    const isDistribuidorPessegosSearch = segment.toLowerCase().includes('distribuidores de pêssegos') || segment.toLowerCase().includes('distribuidores de pessegos');
+    const isBoostSearch = isDistribuidorMaterialSearch || isIndustriaMecanicaSearch || isDistribuidorPessegosSearch;
     const MAX_TOTAL_LEADS = userMaxLeads || (isBoostSearch ? 500 : (isStateOnlySearch ? 347 : 187));
     const MIN_LEADS_TARGET = isBoostSearch ? 150 : (isStateOnlySearch ? 100 : 70);
     const TARGET_LEADS = isBoostSearch ? 350 : (isStateOnlySearch ? 200 : 80);
@@ -2449,7 +2456,7 @@ serve(async (req) => {
       for (const seg of segments) {
         let searchTerms: string[];
         const segLower = seg.toLowerCase();
-        const isBoostSeg = segLower.includes('distribuidores de material') || segLower.includes('indústrias mecânicas') || segLower.includes('industrias mecanicas');
+        const isBoostSeg = segLower.includes('distribuidores de material') || segLower.includes('indústrias mecânicas') || segLower.includes('industrias mecanicas') || segLower.includes('distribuidores de pêssegos') || segLower.includes('distribuidores de pessegos');
         
         if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
           const ecomType = ecommerceType.trim().toLowerCase();
@@ -2499,7 +2506,7 @@ serve(async (req) => {
       // CITY/REGION SEARCH: Original behavior
       const isBoostSegmentSearch = segments.some(s => {
         const sl = s.toLowerCase();
-        return sl.includes('distribuidores de material') || sl.includes('indústrias mecânicas') || sl.includes('industrias mecanicas');
+        return sl.includes('distribuidores de material') || sl.includes('indústrias mecânicas') || sl.includes('industrias mecanicas') || sl.includes('distribuidores de pêssegos') || sl.includes('distribuidores de pessegos');
       });
       const maxPagesPerSegment = isBoostSegmentSearch ? 40 : 20;
       const adjustedPages = isBoostSegmentSearch 
@@ -2510,7 +2517,7 @@ serve(async (req) => {
       for (const seg of segments) {
         let searchTerms: string[];
         const segLower = seg.toLowerCase();
-        const isBoostSeg = segLower.includes('distribuidores de material') || segLower.includes('indústrias mecânicas') || segLower.includes('industrias mecanicas');
+        const isBoostSeg = segLower.includes('distribuidores de material') || segLower.includes('indústrias mecânicas') || segLower.includes('industrias mecanicas') || segLower.includes('distribuidores de pêssegos') || segLower.includes('distribuidores de pessegos');
         
         if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
           const ecomType = ecommerceType.trim().toLowerCase();
