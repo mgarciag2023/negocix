@@ -1454,9 +1454,10 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'padaria', 'escola', 'academia', 'salão', 'pet shop', 'veterinário']
   },
   'distribuidores de pêssegos': {
-    include: ['distribuidora', 'distribuidor', 'atacado', 'ceasa', 'pêssego', 'pessego', 'frutas', 'fruticultura', 'packing house', 'beneficiadora', 'exportadora', 'produtor', 'polpa', 'processadora', 'conserva', 'indústria', 'fábrica', 'cooperativa', 'pomar', 'cultivo', 'frutas de caroço', 'in natura', 'hortifrutigranjeiro', 'hortifruti'],
+    include: ['pêssego', 'pessego', 'pêssegos', 'pessegos', 'peach', 'frutas de caroço', 'polpa de pêssego', 'conserva de pêssego', 'pêssego em calda', 'beneficiadora de pêssego', 'packing house', 'fruticultura', 'pomar de pêssego', 'cultivo de pêssego', 'cooperativa de pêssego', 'ceasa', 'exportadora de frutas', 'processadora de frutas', 'distribuidor de frutas', 'distribuidora de frutas', 'atacado de frutas', 'atacadista de frutas'],
     mustMatch: [],
-    exclude: ['restaurante', 'lanchonete', 'bar', 'hotel', 'farmácia', 'padaria', 'escola', 'academia', 'salão', 'pet shop', 'veterinário', 'açougue', 'pizzaria']
+    strictInclude: true,
+    exclude: ['restaurante', 'lanchonete', 'bar', 'hotel', 'farmácia', 'padaria', 'escola', 'academia', 'salão', 'pet shop', 'veterinário', 'açougue', 'pizzaria', 'supermercado', 'hortifruti', 'mercado', 'empório', 'loja de', 'armazém', 'varejo', 'varejão', 'mercearia', 'quitanda', 'bomboniere', 'conveniência', 'delivery', 'bebidas', 'descartáveis', 'cesta básica', 'kit churrasco', 'açaí', 'sorvete']
   },
   'serralherias': {
     include: ['serralheria', 'serralheiro', 'portões', 'grades', 'esquadrias metálicas', 'estruturas metálicas', 'portão de ferro', 'grade de ferro', 'corrimão', 'escada de ferro', 'serralheria artística', 'serralheria industrial', 'portão automático', 'gradil', 'portão basculante', 'metalon', 'ferro e aço'],
