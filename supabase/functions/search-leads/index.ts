@@ -2125,8 +2125,8 @@ async function batchExtractEmails(places: any[], concurrency = 5): Promise<Map<s
   
   if (placesWithWebsite.length === 0) return emailMap;
   
-  // Limit to max 15 websites to avoid CPU timeout
-  const limitedPlaces = placesWithWebsite.slice(0, 15);
+  // Limit to max 30 websites to extract emails from
+  const limitedPlaces = placesWithWebsite.slice(0, 30);
   console.log(`📧 Extracting emails from ${limitedPlaces.length} websites (of ${placesWithWebsite.length} available)...`);
   
   // Process in batches
