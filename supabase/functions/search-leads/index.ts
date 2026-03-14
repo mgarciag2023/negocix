@@ -2456,7 +2456,7 @@ serve(async (req) => {
       for (const seg of segments) {
         let searchTerms: string[];
         const segLower = seg.toLowerCase();
-        const isBoostSeg = segLower.includes('distribuidores de material') || segLower.includes('indústrias mecânicas') || segLower.includes('industrias mecanicas');
+        const isBoostSeg = segLower.includes('distribuidores de material') || segLower.includes('indústrias mecânicas') || segLower.includes('industrias mecanicas') || segLower.includes('distribuidores de pêssegos') || segLower.includes('distribuidores de pessegos');
         
         if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
           const ecomType = ecommerceType.trim().toLowerCase();
