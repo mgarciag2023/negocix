@@ -552,7 +552,7 @@ function generateSearchTerms(segment: string): string[] {
   }
   
   // For boost segments (indústrias mecânicas, etc.), return all terms; otherwise max 10
-  const isBoostTerm = term.includes('indústrias mecânicas') || term.includes('industrias mecanicas') || term.includes('distribuidores de material');
+  const isBoostTerm = term.includes('indústrias mecânicas') || term.includes('industrias mecanicas') || term.includes('distribuidores de material') || term.includes('distribuidores de pêssegos') || term.includes('distribuidores de pessegos');
   return isBoostTerm ? searchTerms : searchTerms.slice(0, 10);
 }
 
