@@ -2159,7 +2159,7 @@ function isRelevantToNiche(place: any, segment: string): boolean {
     }
   }
   
-  // If no specific niche config, REQUIRE search term match
+  // If no specific niche config, use SMART AUTO-MATCHING
   if (!nicheConfig) {
     // Generic exclusions
     const genericExclusions = ['magazine luiza', 'americanas', 'casas bahia'];
@@ -2170,19 +2170,122 @@ function isRelevantToNiche(place: any, segment: string): boolean {
       }
     }
     
-    // For undefined categories, REQUIRE at least one search term word in the place data
-    const searchTermWords = segmentLower.split(/\s+/).filter(w => w.length > 3);
-    let foundSearchTermInPlace = false;
+    // Normalize text for accent-insensitive matching
+    const normalizeForMatch = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const normalizedCombined = normalizeForMatch(combinedText);
+    const normalizedSegment = normalizeForMatch(segmentLower);
+    
+    // Extract meaningful keywords from segment (skip common prefixes/articles)
+    const stopWords = new Set(['de', 'da', 'do', 'das', 'dos', 'em', 'para', 'por', 'com', 'sem', 'e', 'ou', 'a', 'o', 'as', 'os', 'um', 'uma', 'uns', 'umas', 'lojas', 'loja', 'empresas', 'empresa', 'servicos', 'servico', 'centro', 'centros']);
+    const searchTermWords = normalizedSegment.split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
+    
+    // Also extract the core concept (after removing common prefixes)
+    const prefixRemoval = normalizedSegment
+      .replace(/^(lojas?|distribuidoras?|industrias?|fabricas?|empresas?|clinicas?|centros?|agencias?|escritorios?|casas?|atelies?|estudios?|academias?|escolas?|cursos?|instalador(as|es)?|construtoras?|cooperativas?|criador(as|es)?|produtor(as|es)?|fornecedor(as|es)?|atacadistas?|oficinas?|startups?|franquias?|redes?|e-commerces?|laboratorios?|usinas?|provedores?|consultorias?|beneficiadoras?|fazendas?)\s+(de|do|da|dos|das|em|para|)\s*/i, '')
+      .trim();
+    
+    let foundMatch = false;
+    
+    // Strategy 1: Check if any meaningful word from segment appears in place data
     for (const word of searchTermWords) {
-      if (combinedText.includes(word)) {
-        foundSearchTermInPlace = true;
+      if (normalizedCombined.includes(word)) {
+        foundMatch = true;
         break;
       }
     }
     
-    if (!foundSearchTermInPlace && searchTermWords.length > 0) {
-      console.log(`❌ No search term match: "${place.title}" - none of [${searchTermWords.join(', ')}] found`);
+    // Strategy 2: Check core concept (without prefix)
+    if (!foundMatch && prefixRemoval.length >= 3) {
+      const coreWords = prefixRemoval.split(/\s+/).filter(w => w.length >= 3);
+      for (const coreWord of coreWords) {
+        if (normalizedCombined.includes(coreWord)) {
+          foundMatch = true;
+          break;
+        }
+      }
+    }
+    
+    // Strategy 3: Check if segment root (singular form) appears
+    if (!foundMatch) {
+      const roots = [normalizedSegment];
+      if (normalizedSegment.endsWith('s')) roots.push(normalizedSegment.slice(0, -1));
+      if (normalizedSegment.endsWith('es')) roots.push(normalizedSegment.slice(0, -2));
+      if (normalizedSegment.endsWith('oes')) roots.push(normalizedSegment.replace(/oes$/, 'ao'));
+      if (normalizedSegment.endsWith('ais')) roots.push(normalizedSegment.replace(/ais$/, 'al'));
+      
+      for (const root of roots) {
+        if (root.length >= 4 && normalizedCombined.includes(root)) {
+          foundMatch = true;
+          break;
+        }
+      }
+    }
+    
+    // Strategy 4: For very specific segments, accept if the Google Places category 
+    // is semantically related (e.g. types contain relevant Google categories)
+    if (!foundMatch) {
+      const googleTypes = (place.types || place.categories || []).map((t: string) => normalizeForMatch(t));
+      const categoryHints: { [key: string]: string[] } = {
+        'restaurant': ['restaurante', 'bistr', 'cantina', 'churrascaria', 'pizzaria', 'hamburgueria', 'lanchonete', 'espetaria', 'marmitaria', 'rotisserie', 'buffet', 'casas de'],
+        'cafe': ['cafe', 'cafeteria', 'coffee', 'cha'],
+        'bakery': ['padaria', 'panificadora', 'confeitaria', 'doceria', 'patisserie'],
+        'bar': ['bar', 'pub', 'cervejaria', 'choperia'],
+        'store': ['loja', 'comercio', 'varejo'],
+        'gym': ['academia', 'fitness', 'crossfit', 'musculacao', 'pilates', 'yoga'],
+        'beauty_salon': ['salao', 'beleza', 'cabeleireiro', 'barbearia', 'estetica'],
+        'health': ['clinica', 'consultorio', 'medico', 'saude', 'fisioterapia', 'odontologia'],
+        'hospital': ['hospital', 'pronto', 'upa'],
+        'school': ['escola', 'colegio', 'curso', 'ensino', 'educacao'],
+        'lodging': ['hotel', 'pousada', 'hospedagem', 'hostel'],
+        'car_repair': ['oficina', 'mecanica', 'funilaria', 'auto'],
+        'pet_store': ['pet', 'animal', 'veterinar', 'racao'],
+        'pharmacy': ['farmacia', 'drogaria', 'manipulacao'],
+      };
+      
+      for (const gType of googleTypes) {
+        const hints = categoryHints[gType];
+        if (hints) {
+          for (const hint of hints) {
+            if (normalizedSegment.includes(hint)) {
+              foundMatch = true;
+              break;
+            }
+          }
+          if (foundMatch) break;
+        }
+      }
+    }
+    
+    if (!foundMatch && searchTermWords.length > 0) {
+      console.log(`❌ No search term match: "${place.title}" - none of [${searchTermWords.join(', ')}] found in "${combinedText.substring(0, 100)}"`);
       return false;
+    }
+    
+    // Auto-generate category-aware exclusions for unmapped segments
+    const autoExclusions: { [key: string]: string[] } = {
+      'restaurante': ['supermercado', 'mercado', 'fabrica', 'industria', 'loja de roupa'],
+      'loja': ['restaurante', 'lanchonete', 'bar ', 'fabrica', 'industria'],
+      'industria': ['restaurante', 'lanchonete', 'bar ', 'supermercado', 'loja'],
+      'fabrica': ['restaurante', 'lanchonete', 'bar ', 'supermercado', 'loja'],
+      'distribuidora': ['restaurante', 'lanchonete', 'bar '],
+      'clinica': ['restaurante', 'lanchonete', 'supermercado', 'loja de roupa', 'pet shop'],
+      'escola': ['restaurante', 'lanchonete', 'supermercado', 'fabrica'],
+      'academia': ['restaurante', 'lanchonete', 'supermercado', 'fabrica'],
+      'hotel': ['restaurante', 'lanchonete', 'supermercado', 'fabrica', 'loja'],
+      'escritorio': ['restaurante', 'lanchonete', 'supermercado', 'fabrica'],
+      'agencia': ['restaurante', 'lanchonete', 'supermercado', 'fabrica'],
+    };
+    
+    for (const [categoryKey, exclusions] of Object.entries(autoExclusions)) {
+      if (normalizedSegment.includes(categoryKey)) {
+        for (const excl of exclusions) {
+          if (normalizeForMatch(title).includes(excl) && !normalizedSegment.includes(excl.trim())) {
+            console.log(`❌ Auto-exclusion: "${place.title}" excluded for "${segmentLower}" - title matches: ${excl}`);
+            return false;
+          }
+        }
+        break;
+      }
     }
     
     return true;
