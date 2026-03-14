@@ -29,6 +29,17 @@ const Configuration = () => {
   const [digitalPresence, setDigitalPresence] = useState("all"); // all, no-site, basic-site, structured-site
   const [digitalActivity, setDigitalActivity] = useState("all"); // all, low, basic, active
   const [customerSearch, setCustomerSearch] = useState(""); // Search filter for customer types
+
+  // Fuzzy search: remove accents, match all words independently
+  const normalizeText = (text: string) =>
+    text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  const matchesSearch = (customer: string, search: string) => {
+    if (!search) return true;
+    const normalized = normalizeText(customer);
+    const words = normalizeText(search).split(/\s+/).filter(Boolean);
+    return words.every(word => normalized.includes(word));
+  };
   // whatsappOnly removed - was filtering out too many leads
   // receitaFederalOnly removed
 
@@ -4331,10 +4342,7 @@ const Configuration = () => {
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 max-h-[400px] overflow-y-auto pr-2" translate="no">
                     {customerTypes
-                      .filter(customer => 
-                        customerSearch === "" || 
-                        customer.toLowerCase().includes(customerSearch.toLowerCase())
-                      )
+                      .filter(customer => matchesSearch(customer, customerSearch))
                       .map((customer) => (
                       <div key={customer} className="flex flex-col" translate="no">
                         <div className="flex items-center space-x-2">
@@ -4365,8 +4373,7 @@ const Configuration = () => {
                     ))}
                     
                     {customerTypes.filter(customer => 
-                      customerSearch === "" || 
-                      customer.toLowerCase().includes(customerSearch.toLowerCase())
+                      matchesSearch(customer, customerSearch)
                     ).length === 0 && (
                       <p className="text-muted-foreground text-sm col-span-full py-4 text-center">
                         Nenhum tipo de estabelecimento encontrado para "{customerSearch}"
