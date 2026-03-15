@@ -266,9 +266,7 @@ const Configuration = () => {
                   )}
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 max-h-[400px] overflow-y-auto pr-2" translate="no">
-                    {customerTypes
-                      .filter(customer => matchesSearch(customer, customerSearch))
-                      .map((customer) => (
+                    {visibleCustomers.map((customer) => (
                       <div key={customer} className="flex flex-col" translate="no">
                         <div className="flex items-center space-x-2">
                           <Checkbox
@@ -297,12 +295,20 @@ const Configuration = () => {
                       </div>
                     ))}
                     
-                    {customerTypes.filter(customer => 
-                      matchesSearch(customer, customerSearch)
-                    ).length === 0 && (
+                    {filteredCustomers.length === 0 && (
                       <p className="text-muted-foreground text-sm col-span-full py-4 text-center">
                         Nenhum tipo de estabelecimento encontrado para "{customerSearch}"
                       </p>
+                    )}
+
+                    {hasMore && (
+                      <button
+                        type="button"
+                        onClick={() => setVisibleCount(prev => prev + 60)}
+                        className="col-span-full text-center py-2 text-sm text-primary hover:underline font-medium"
+                      >
+                        Mostrar mais ({filteredCustomers.length - visibleCount} restantes)
+                      </button>
                     )}
                   </div>
                 </div>
