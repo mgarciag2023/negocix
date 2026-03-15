@@ -257,13 +257,14 @@ const Configuration = () => {
                     />
                   </div>
                   
-                  {/* Selected count */}
-                  {selectedCustomers.length > 0 && (
-                    <p className="text-sm text-muted-foreground mb-3">
-                      {selectedCustomers.length} selecionado{selectedCustomers.length > 1 ? 's' : ''}
-                      {customerSearch && ` (mostrando resultados para "${customerSearch}")`}
-                    </p>
-                  )}
+                  {/* Selected count & total */}
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {selectedCustomers.length > 0 && `${selectedCustomers.length} selecionado${selectedCustomers.length > 1 ? 's' : ''} · `}
+                    {customerSearch 
+                      ? `${filteredCustomers.length} resultado${filteredCustomers.length !== 1 ? 's' : ''} para "${customerSearch}"`
+                      : `${customerTypes.length} tipos disponíveis`
+                    }
+                  </p>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 max-h-[400px] overflow-y-auto pr-2" translate="no">
                     {visibleCustomers.map((customer) => (
