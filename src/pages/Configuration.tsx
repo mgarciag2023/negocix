@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -29,6 +29,7 @@ const Configuration = () => {
   const [digitalPresence, setDigitalPresence] = useState("all"); // all, no-site, basic-site, structured-site
   const [digitalActivity, setDigitalActivity] = useState("all"); // all, low, basic, active
   const [customerSearch, setCustomerSearch] = useState(""); // Search filter for customer types
+  const [visibleCount, setVisibleCount] = useState(100); // Limit rendered items for performance
 
   // Fuzzy search: remove accents, match all words independently
   const normalizeText = (text: string) =>
@@ -6957,7 +6958,10 @@ const Configuration = () => {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       value={customerSearch}
-                      onChange={(e) => setCustomerSearch(e.target.value)}
+                      onChange={(e) => {
+                        setCustomerSearch(e.target.value);
+                        setVisibleCount(100);
+                      }}
                       placeholder="Pesquisar tipo de estabelecimento..."
                       className="pl-10"
                       translate="no"
@@ -6972,46 +6976,65 @@ const Configuration = () => {
                     </p>
                   )}
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 max-h-[400px] overflow-y-auto pr-2" translate="no">
-                    {customerTypes
-                      .filter(customer => matchesSearch(customer, customerSearch))
-                      .map((customer) => (
-                      <div key={customer} className="flex flex-col" translate="no">
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id={customer}
-                            checked={selectedCustomers.includes(customer)}
-                            onCheckedChange={() => handleCustomerToggle(customer)}
-                            translate="no"
-                          />
-                          <label
-                            htmlFor={customer}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                            translate="no"
-                          >
-                            {customer}
-                          </label>
+                  {(() => {
+                    const filtered = customerTypes.filter(customer => matchesSearch(customer, customerSearch));
+                    const displayItems = filtered.slice(0, customerSearch ? 200 : visibleCount);
+                    const hasMore = filtered.length > displayItems.length;
+                    return (
+                      <>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 max-h-[400px] overflow-y-auto pr-2" translate="no">
+                          {displayItems.map((customer) => (
+                            <div key={customer} className="flex flex-col" translate="no">
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={customer}
+                                  checked={selectedCustomers.includes(customer)}
+                                  onCheckedChange={() => handleCustomerToggle(customer)}
+                                  translate="no"
+                                />
+                                <label
+                                  htmlFor={customer}
+                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                  translate="no"
+                                >
+                                  {customer}
+                                </label>
+                              </div>
+                              {customer === "E-commerce" && selectedCustomers.includes("E-commerce") && (
+                                <Input
+                                  value={ecommerceType}
+                                  onChange={(e) => setEcommerceType(e.target.value)}
+                                  placeholder="Especifique o tipo (ex: Moda, Eletrônicos...)"
+                                  className="mt-2 ml-6 max-w-[200px]"
+                                  translate="no"
+                                />
+                              )}
+                            </div>
+                          ))}
+                          {filtered.length === 0 && (
+                            <p className="text-muted-foreground text-sm col-span-full py-4 text-center">
+                              Nenhum tipo de estabelecimento encontrado para "{customerSearch}"
+                            </p>
+                          )}
                         </div>
-                        {customer === "E-commerce" && selectedCustomers.includes("E-commerce") && (
-                          <Input
-                            value={ecommerceType}
-                            onChange={(e) => setEcommerceType(e.target.value)}
-                            placeholder="Especifique o tipo (ex: Moda, Eletrônicos...)"
-                            className="mt-2 ml-6 max-w-[200px]"
-                            translate="no"
-                          />
+                        {hasMore && !customerSearch && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="mt-3 w-full"
+                            onClick={() => setVisibleCount(prev => prev + 200)}
+                          >
+                            Mostrar mais ({filtered.length - displayItems.length} restantes)
+                          </Button>
                         )}
-                      </div>
-                    ))}
-                    
-                    {customerTypes.filter(customer => 
-                      matchesSearch(customer, customerSearch)
-                    ).length === 0 && (
-                      <p className="text-muted-foreground text-sm col-span-full py-4 text-center">
-                        Nenhum tipo de estabelecimento encontrado para "{customerSearch}"
-                      </p>
-                    )}
-                  </div>
+                        {hasMore && customerSearch && (
+                          <p className="text-xs text-muted-foreground mt-2 text-center">
+                            Mostrando {displayItems.length} de {filtered.length} resultados. Refine sua busca para ver mais.
+                          </p>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
 
                 {/* Tipo de Empresa (Matriz/Filial) */}
