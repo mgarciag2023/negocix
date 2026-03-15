@@ -2820,11 +2820,29 @@ serve(async (req) => {
     const isIndustriaMecanicaSearch = segment.toLowerCase().includes('indústrias mecânicas') || segment.toLowerCase().includes('industrias mecanicas');
     const isDistribuidorPessegosSearch = segment.toLowerCase().includes('distribuidores de pêssegos') || segment.toLowerCase().includes('distribuidores de pessegos');
     const isBoostSearch = isDistribuidorMaterialSearch || isIndustriaMecanicaSearch || isDistribuidorPessegosSearch;
-    const MAX_TOTAL_LEADS = userMaxLeads || (isBoostSearch ? 500 : (isStateOnlySearch ? 347 : 187));
-    const MIN_LEADS_TARGET = isBoostSearch ? 150 : (isStateOnlySearch ? 100 : 70);
-    const TARGET_LEADS = isBoostSearch ? 350 : (isStateOnlySearch ? 200 : 80);
-    const MAX_TARGET_LEADS = isBoostSearch ? 450 : (isStateOnlySearch ? 300 : 90);
-    const MIN_LEADS_EARLY_EXIT = isBoostSearch ? 480 : (isStateOnlySearch ? 340 : 95);
+    
+    // Count selected segments to adjust limits (segments are comma-separated)
+    const selectedSegments = segment.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0);
+    const segmentCount = selectedSegments.length;
+    console.log(`📋 Number of selected segments: ${segmentCount}`);
+    
+    // Dynamic limits based on number of selected segments
+    let defaultMaxLeads: number;
+    if (isBoostSearch) {
+      defaultMaxLeads = 500;
+    } else if (segmentCount >= 3) {
+      defaultMaxLeads = 691;
+    } else if (segmentCount === 2) {
+      defaultMaxLeads = 597;
+    } else {
+      defaultMaxLeads = isStateOnlySearch ? 347 : 187;
+    }
+    
+    const MAX_TOTAL_LEADS = userMaxLeads || defaultMaxLeads;
+    const MIN_LEADS_TARGET = isBoostSearch ? 150 : (segmentCount >= 3 ? 200 : (segmentCount === 2 ? 150 : (isStateOnlySearch ? 100 : 70)));
+    const TARGET_LEADS = isBoostSearch ? 350 : (segmentCount >= 3 ? 500 : (segmentCount === 2 ? 400 : (isStateOnlySearch ? 200 : 80)));
+    const MAX_TARGET_LEADS = isBoostSearch ? 450 : (segmentCount >= 3 ? 650 : (segmentCount === 2 ? 550 : (isStateOnlySearch ? 300 : 90)));
+    const MIN_LEADS_EARLY_EXIT = isBoostSearch ? 480 : (segmentCount >= 3 ? 680 : (segmentCount === 2 ? 580 : (isStateOnlySearch ? 340 : 95)));
     
     console.log(`📊 Lead limits: max=${MAX_TOTAL_LEADS}, target=${TARGET_LEADS}, stateSearch=${isStateOnlySearch}`);
 
