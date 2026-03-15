@@ -6973,46 +6973,65 @@ const Configuration = () => {
                     </p>
                   )}
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 max-h-[400px] overflow-y-auto pr-2" translate="no">
-                    {customerTypes
-                      .filter(customer => matchesSearch(customer, customerSearch))
-                      .map((customer) => (
-                      <div key={customer} className="flex flex-col" translate="no">
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id={customer}
-                            checked={selectedCustomers.includes(customer)}
-                            onCheckedChange={() => handleCustomerToggle(customer)}
-                            translate="no"
-                          />
-                          <label
-                            htmlFor={customer}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                            translate="no"
-                          >
-                            {customer}
-                          </label>
+                  {(() => {
+                    const filtered = customerTypes.filter(customer => matchesSearch(customer, customerSearch));
+                    const displayItems = filtered.slice(0, customerSearch ? 200 : visibleCount);
+                    const hasMore = filtered.length > displayItems.length;
+                    return (
+                      <>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 max-h-[400px] overflow-y-auto pr-2" translate="no">
+                          {displayItems.map((customer) => (
+                            <div key={customer} className="flex flex-col" translate="no">
+                              <div className="flex items-center space-x-2">
+                                <Checkbox
+                                  id={customer}
+                                  checked={selectedCustomers.includes(customer)}
+                                  onCheckedChange={() => handleCustomerToggle(customer)}
+                                  translate="no"
+                                />
+                                <label
+                                  htmlFor={customer}
+                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                  translate="no"
+                                >
+                                  {customer}
+                                </label>
+                              </div>
+                              {customer === "E-commerce" && selectedCustomers.includes("E-commerce") && (
+                                <Input
+                                  value={ecommerceType}
+                                  onChange={(e) => setEcommerceType(e.target.value)}
+                                  placeholder="Especifique o tipo (ex: Moda, Eletrônicos...)"
+                                  className="mt-2 ml-6 max-w-[200px]"
+                                  translate="no"
+                                />
+                              )}
+                            </div>
+                          ))}
+                          {filtered.length === 0 && (
+                            <p className="text-muted-foreground text-sm col-span-full py-4 text-center">
+                              Nenhum tipo de estabelecimento encontrado para "{customerSearch}"
+                            </p>
+                          )}
                         </div>
-                        {customer === "E-commerce" && selectedCustomers.includes("E-commerce") && (
-                          <Input
-                            value={ecommerceType}
-                            onChange={(e) => setEcommerceType(e.target.value)}
-                            placeholder="Especifique o tipo (ex: Moda, Eletrônicos...)"
-                            className="mt-2 ml-6 max-w-[200px]"
-                            translate="no"
-                          />
+                        {hasMore && !customerSearch && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="mt-3 w-full"
+                            onClick={() => setVisibleCount(prev => prev + 200)}
+                          >
+                            Mostrar mais ({filtered.length - displayItems.length} restantes)
+                          </Button>
                         )}
-                      </div>
-                    ))}
-                    
-                    {customerTypes.filter(customer => 
-                      matchesSearch(customer, customerSearch)
-                    ).length === 0 && (
-                      <p className="text-muted-foreground text-sm col-span-full py-4 text-center">
-                        Nenhum tipo de estabelecimento encontrado para "{customerSearch}"
-                      </p>
-                    )}
-                  </div>
+                        {hasMore && customerSearch && (
+                          <p className="text-xs text-muted-foreground mt-2 text-center">
+                            Mostrando {displayItems.length} de {filtered.length} resultados. Refine sua busca para ver mais.
+                          </p>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
 
                 {/* Tipo de Empresa (Matriz/Filial) */}
