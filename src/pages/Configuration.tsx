@@ -29,6 +29,7 @@ const Configuration = () => {
   const [digitalPresence, setDigitalPresence] = useState("all"); // all, no-site, basic-site, structured-site
   const [digitalActivity, setDigitalActivity] = useState("all"); // all, low, basic, active
   const [customerSearch, setCustomerSearch] = useState(""); // Search filter for customer types
+  const [visibleCount, setVisibleCount] = useState(100); // Limit rendered items for performance
 
   // Fuzzy search: remove accents, match all words independently
   const normalizeText = (text: string) =>
