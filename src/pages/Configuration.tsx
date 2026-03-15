@@ -9,6 +9,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Building, Building2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import { CUSTOMER_TYPES } from "@/constants/customerTypes";
 
 import { useToast } from "@/hooks/use-toast";
 
@@ -25,21 +26,37 @@ const Configuration = () => {
   const [revenueRange, setRevenueRange] = useState("all");
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [ecommerceType, setEcommerceType] = useState("");
-  const [businessType, setBusinessType] = useState("all"); // all, matriz, filial
-  const [digitalPresence, setDigitalPresence] = useState("all"); // all, no-site, basic-site, structured-site
-  const [digitalActivity, setDigitalActivity] = useState("all"); // all, low, basic, active
-  const [customerSearch, setCustomerSearch] = useState(""); // Search filter for customer types
+  const [businessType, setBusinessType] = useState("all");
+  const [digitalPresence, setDigitalPresence] = useState("all");
+  const [digitalActivity, setDigitalActivity] = useState("all");
+  const [customerSearch, setCustomerSearch] = useState("");
 
   // Fuzzy search: remove accents, match all words independently
-  const normalizeText = (text: string) =>
-    text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const normalizeText = useCallback((text: string) =>
+    text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""), []);
 
-  const matchesSearch = (customer: string, search: string) => {
+  const matchesSearch = useCallback((customer: string, search: string) => {
     if (!search) return true;
     const normalized = normalizeText(customer);
     const words = normalizeText(search).split(/\s+/).filter(Boolean);
     return words.every(word => normalized.includes(word));
-  };
+  }, [normalizeText]);
+
+  // Memoize filtered results and limit to 150 items for DOM performance
+  const filteredCustomerTypes = useMemo(() => {
+    const filtered = CUSTOMER_TYPES.filter(customer => matchesSearch(customer, customerSearch));
+    // Always show selected items first, then limit unselected to prevent DOM overload
+    const selected = filtered.filter(c => selectedCustomers.includes(c));
+    const unselected = filtered.filter(c => !selectedCustomers.includes(c));
+    const MAX_VISIBLE = 150;
+    const remaining = MAX_VISIBLE - selected.length;
+    return [...selected, ...unselected.slice(0, Math.max(0, remaining))];
+  }, [customerSearch, matchesSearch, selectedCustomers]);
+
+  const totalFilteredCount = useMemo(() => {
+    return CUSTOMER_TYPES.filter(customer => matchesSearch(customer, customerSearch)).length;
+  }, [customerSearch, matchesSearch]);
+
   // whatsappOnly removed - was filtering out too many leads
   // receitaFederalOnly removed
 
@@ -73,8 +90,6 @@ const Configuration = () => {
     "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
     "RS", "RO", "RR", "SC", "SP", "SE", "TO"
   ];
-
-  // customerTypes is imported from external constants file for performance
 
   const handleCustomerToggle = (customer: string) => {
     setSelectedCustomers(prev =>
