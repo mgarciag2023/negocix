@@ -30,17 +30,32 @@ const Configuration = () => {
   const [digitalPresence, setDigitalPresence] = useState("all"); // all, no-site, basic-site, structured-site
   const [digitalActivity, setDigitalActivity] = useState("all"); // all, low, basic, active
   const [customerSearch, setCustomerSearch] = useState(""); // Search filter for customer types
+  const [visibleCount, setVisibleCount] = useState(60); // Limit rendered items for performance
 
   // Fuzzy search: remove accents, match all words independently
-  const normalizeText = (text: string) =>
-    text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const normalizeText = useCallback((text: string) =>
+    text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""), []);
 
-  const matchesSearch = (customer: string, search: string) => {
-    if (!search) return true;
-    const normalized = normalizeText(customer);
-    const words = normalizeText(search).split(/\s+/).filter(Boolean);
-    return words.every(word => normalized.includes(word));
-  };
+  const filteredCustomers = useMemo(() => {
+    if (!customerSearch) {
+      // When no search, show selected items first, then the rest
+      const selected = customerTypes.filter(c => selectedCustomers.includes(c));
+      const unselected = customerTypes.filter(c => !selectedCustomers.includes(c));
+      return [...selected, ...unselected];
+    }
+    const words = normalizeText(customerSearch).split(/\s+/).filter(Boolean);
+    return customerTypes.filter(customer => {
+      const normalized = normalizeText(customer);
+      return words.every(word => normalized.includes(word));
+    });
+  }, [customerSearch, selectedCustomers, normalizeText]);
+
+  const visibleCustomers = useMemo(() => 
+    filteredCustomers.slice(0, visibleCount), 
+    [filteredCustomers, visibleCount]
+  );
+
+  const hasMore = filteredCustomers.length > visibleCount;
   // whatsappOnly removed - was filtering out too many leads
   // receitaFederalOnly removed
 
