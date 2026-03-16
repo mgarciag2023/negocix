@@ -248,30 +248,29 @@ const Results = () => {
 
       console.log('✅ API returned leads:', data?.leads?.length || 0);
         
+        // Always log the search, regardless of result count
+        const resultsCount = data?.leads?.length || 0;
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            await supabase.from("search_logs").insert({
+              user_id: user.id,
+              user_email: user.email || "",
+              search_type: "leads",
+              search_config: searchConfig,
+              results_count: resultsCount,
+            });
+          }
+        } catch (logErr) {
+          console.error("Error logging search:", logErr);
+        }
+
         if (data?.leads && data.leads.length > 0) {
-          // Ordenar alfabeticamente por padrão
           const sortedLeads = sortLeadsAlphabetically(data.leads);
           setLeads(sortedLeads);
-          // Cache the leads with the config used
           localStorage.setItem('cachedLeads', JSON.stringify(data.leads));
           localStorage.setItem('cachedSearchConfig', searchConfigStr || '');
           console.log('💾 Leads cached successfully:', data.leads.length);
-
-          // Log the search
-          try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-              await supabase.from("search_logs").insert({
-                user_id: user.id,
-                user_email: user.email || "",
-                search_type: "leads",
-                search_config: searchConfig,
-                results_count: data.leads.length,
-              });
-            }
-          } catch (logErr) {
-            console.error("Error logging search:", logErr);
-          }
         } else if (data?.error) {
           toast({
             title: data.allSeen ? "Leads já exibidos" : "Erro ao buscar leads",
