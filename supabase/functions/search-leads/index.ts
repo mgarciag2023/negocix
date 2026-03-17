@@ -2247,7 +2247,9 @@ function isRelevantToNiche(place: any, segment: string): boolean {
         'hospital': ['hospital', 'pronto', 'upa'],
         'school': ['escola', 'colegio', 'curso', 'ensino', 'educacao'],
         'lodging': ['hotel', 'pousada', 'hospedagem', 'hostel'],
-        'car_repair': ['oficina', 'mecanica', 'funilaria', 'auto'],
+        'car_repair': ['oficina', 'mecanica', 'funilaria', 'auto', 'autopeca', 'auto peca', 'peca', 'pneu'],
+        'car_parts_store': ['autopeca', 'auto peca', 'peca', 'auto', 'automotiv'],
+        'auto_parts_store': ['autopeca', 'auto peca', 'peca', 'auto', 'automotiv'],
         'pet_store': ['pet', 'animal', 'veterinar', 'racao'],
         'pharmacy': ['farmacia', 'drogaria', 'manipulacao'],
       };
@@ -3024,7 +3026,7 @@ serve(async (req) => {
       for (const seg of segments) {
         let searchTerms: string[];
         const segLower = seg.toLowerCase();
-        const isBoostSeg = segLower.includes('distribuidores de material') || segLower.includes('indústrias mecânicas') || segLower.includes('industrias mecanicas') || segLower.includes('distribuidores de pêssegos') || segLower.includes('distribuidores de pessegos');
+        const isBoostSeg = segLower.includes('distribuidores de material') || segLower.includes('indústrias mecânicas') || segLower.includes('industrias mecanicas') || segLower.includes('distribuidores de pêssegos') || segLower.includes('distribuidores de pessegos') || segLower.includes('autopeças') || segLower.includes('autopecas') || segLower.includes('auto peças') || segLower.includes('distribuidores de autopeças');
         
         if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
           const ecomType = ecommerceType.trim().toLowerCase();
@@ -3074,7 +3076,7 @@ serve(async (req) => {
       // CITY/REGION SEARCH: Original behavior
       const isBoostSegmentSearch = segments.some(s => {
         const sl = s.toLowerCase();
-        return sl.includes('distribuidores de material') || sl.includes('indústrias mecânicas') || sl.includes('industrias mecanicas') || sl.includes('distribuidores de pêssegos') || sl.includes('distribuidores de pessegos');
+        return sl.includes('distribuidores de material') || sl.includes('indústrias mecânicas') || sl.includes('industrias mecanicas') || sl.includes('distribuidores de pêssegos') || sl.includes('distribuidores de pessegos') || sl.includes('autopeças') || sl.includes('autopecas') || sl.includes('auto peças') || sl.includes('distribuidores de autopeças');
       });
       const maxPagesPerSegment = isBoostSegmentSearch ? 40 : 30;
       const adjustedPages = isBoostSegmentSearch 
@@ -3085,7 +3087,7 @@ serve(async (req) => {
       for (const seg of segments) {
         let searchTerms: string[];
         const segLower = seg.toLowerCase();
-        const isBoostSeg = segLower.includes('distribuidores de material') || segLower.includes('indústrias mecânicas') || segLower.includes('industrias mecanicas') || segLower.includes('distribuidores de pêssegos') || segLower.includes('distribuidores de pessegos');
+        const isBoostSeg = segLower.includes('distribuidores de material') || segLower.includes('indústrias mecânicas') || segLower.includes('industrias mecanicas') || segLower.includes('distribuidores de pêssegos') || segLower.includes('distribuidores de pessegos') || segLower.includes('autopeças') || segLower.includes('autopecas') || segLower.includes('auto peças') || segLower.includes('distribuidores de autopeças');
         
         if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
           const ecomType = ecommerceType.trim().toLowerCase();
@@ -3109,20 +3111,23 @@ serve(async (req) => {
         
         // Additionally, search major neighborhoods/zones for large cities to get MORE unique results
         const cityNeighborhoods: { [key: string]: string[] } = {
-          'porto alegre': ['Centro Porto Alegre', 'Zona Norte Porto Alegre', 'Zona Sul Porto Alegre', 'Moinhos de Vento', 'Cidade Baixa', 'Bom Fim'],
-          'são paulo': ['Centro São Paulo', 'Zona Norte SP', 'Zona Sul SP', 'Zona Leste SP', 'Zona Oeste SP', 'Vila Mariana', 'Pinheiros', 'Moema'],
-          'rio de janeiro': ['Centro Rio', 'Zona Norte RJ', 'Zona Sul RJ', 'Zona Oeste RJ', 'Barra da Tijuca', 'Copacabana', 'Tijuca'],
-          'belo horizonte': ['Centro BH', 'Savassi', 'Pampulha', 'Barreiro', 'Venda Nova', 'Região Nordeste BH'],
-          'curitiba': ['Centro Curitiba', 'Batel', 'Santa Felicidade', 'Boqueirão', 'Portão', 'CIC'],
-          'salvador': ['Centro Salvador', 'Barra', 'Pituba', 'Itapuã', 'Lauro de Freitas', 'Paralela'],
-          'fortaleza': ['Centro Fortaleza', 'Aldeota', 'Meireles', 'Messejana', 'Maraponga', 'Parangaba'],
-          'recife': ['Centro Recife', 'Boa Viagem', 'Casa Forte', 'Espinheiro', 'Imbiribeira', 'Aflitos'],
-          'brasília': ['Asa Sul', 'Asa Norte', 'Taguatinga', 'Ceilândia', 'Águas Claras', 'Samambaia'],
-          'goiânia': ['Centro Goiânia', 'Setor Bueno', 'Setor Marista', 'Jardim Goiás', 'Campinas'],
-          'manaus': ['Centro Manaus', 'Adrianópolis', 'Cidade Nova', 'Aleixo', 'Flores'],
-          'belém': ['Centro Belém', 'Nazaré', 'Umarizal', 'Marco', 'Pedreira'],
-          'florianópolis': ['Centro Florianópolis', 'Norte da Ilha', 'Sul da Ilha', 'Trindade', 'Estreito'],
-          'vitória': ['Centro Vitória', 'Praia do Canto', 'Jardim da Penha', 'Vila Velha Centro'],
+          'porto alegre': ['Centro Porto Alegre', 'Zona Norte Porto Alegre', 'Zona Sul Porto Alegre', 'Moinhos de Vento', 'Cidade Baixa', 'Bom Fim', 'Restinga', 'Lomba do Pinheiro', 'Partenon', 'Sarandi', 'Rubem Berta', 'Cavalhada'],
+          'são paulo': ['Centro São Paulo', 'Zona Norte SP', 'Zona Sul SP', 'Zona Leste SP', 'Zona Oeste SP', 'Vila Mariana', 'Pinheiros', 'Moema', 'Santo Amaro SP', 'Penha SP', 'São Miguel Paulista', 'Itaquera SP', 'Lapa SP', 'Santana SP', 'Ipiranga SP', 'Vila Prudente SP'],
+          'rio de janeiro': ['Centro Rio de Janeiro', 'Zona Norte Rio de Janeiro', 'Zona Sul Rio de Janeiro', 'Zona Oeste Rio de Janeiro', 'Barra da Tijuca RJ', 'Tijuca RJ', 'Méier RJ', 'Madureira RJ', 'Campo Grande RJ', 'Bangu RJ', 'Santa Cruz RJ', 'Jacarepaguá RJ', 'Penha RJ', 'Ilha do Governador RJ', 'São Cristóvão RJ', 'Realengo RJ', 'Pavuna RJ', 'Irajá RJ', 'Vila da Penha RJ', 'Cascadura RJ', 'Ramos RJ', 'Olaria RJ', 'Del Castilho RJ', 'Abolição RJ'],
+          'belo horizonte': ['Centro BH', 'Savassi', 'Pampulha', 'Barreiro', 'Venda Nova', 'Região Nordeste BH', 'Contagem MG', 'Betim MG', 'Santa Luzia MG', 'Lagoinha BH', 'Carlos Prates BH', 'Padre Eustáquio BH'],
+          'curitiba': ['Centro Curitiba', 'Batel', 'Santa Felicidade', 'Boqueirão', 'Portão', 'CIC', 'Cajuru', 'Pinheirinho', 'Xaxim', 'Fazendinha'],
+          'salvador': ['Centro Salvador', 'Barra', 'Pituba', 'Itapuã', 'Lauro de Freitas', 'Paralela', 'Cajazeiras Salvador', 'Pau da Lima', 'Brotas Salvador', 'Subúrbio Salvador'],
+          'fortaleza': ['Centro Fortaleza', 'Aldeota', 'Meireles', 'Messejana', 'Maraponga', 'Parangaba', 'Montese Fortaleza', 'Barra do Ceará', 'Mondubim', 'José Walter'],
+          'recife': ['Centro Recife', 'Boa Viagem', 'Casa Forte', 'Espinheiro', 'Imbiribeira', 'Aflitos', 'Boa Vista Recife', 'Pina Recife', 'Areias Recife'],
+          'brasília': ['Asa Sul', 'Asa Norte', 'Taguatinga', 'Ceilândia', 'Águas Claras', 'Samambaia', 'Gama DF', 'Sobradinho DF', 'Planaltina DF'],
+          'goiânia': ['Centro Goiânia', 'Setor Bueno', 'Setor Marista', 'Jardim Goiás', 'Campinas', 'Setor Pedro Ludovico', 'Setor Aeroporto Goiânia'],
+          'manaus': ['Centro Manaus', 'Adrianópolis', 'Cidade Nova', 'Aleixo', 'Flores', 'Compensa', 'São José Manaus'],
+          'belém': ['Centro Belém', 'Nazaré', 'Umarizal', 'Marco', 'Pedreira', 'Marituba', 'Ananindeua'],
+          'florianópolis': ['Centro Florianópolis', 'Norte da Ilha', 'Sul da Ilha', 'Trindade', 'Estreito', 'Palhoça SC', 'São José SC'],
+          'vitória': ['Centro Vitória', 'Praia do Canto', 'Jardim da Penha', 'Vila Velha Centro', 'Serra ES', 'Cariacica ES'],
+          'niterói': ['Centro Niterói', 'Icaraí', 'São Gonçalo Centro', 'Alcântara São Gonçalo', 'Itaboraí Centro'],
+          'duque de caxias': ['Centro Duque de Caxias', 'Jardim Primavera Caxias', 'São João de Meriti Centro', 'Belford Roxo Centro'],
+          'nova iguaçu': ['Centro Nova Iguaçu', 'Mesquita Centro', 'Nilópolis Centro', 'Queimados Centro'],
         };
         
         // Find matching city for neighborhood search
@@ -3132,11 +3137,13 @@ serve(async (req) => {
           const cityNorm = city.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
           if (regionLower.includes(cityNorm)) {
             // Use first 2 search terms across neighborhoods
-            const topTerms = searchTerms.slice(0, 2);
+            const topTermsCount = isBoostSeg ? 4 : 2;
+            const topTerms = searchTerms.slice(0, topTermsCount);
+            const pagesPerNeighborhood = isBoostSeg ? 2 : 1;
             neighborhoodQueries = neighborhoods.flatMap(neighborhood => 
-              topTerms.map(term => searchPlaces(term, `${neighborhood}, ${countryCode === 'BR' ? 'Brazil' : countryCode}`, 1))
+              topTerms.map(term => searchPlaces(term, `${neighborhood}, ${countryCode === 'BR' ? 'Brazil' : countryCode}`, pagesPerNeighborhood))
             );
-            console.log(`🏘️ Adding ${neighborhoodQueries.length} neighborhood searches for ${city}`);
+            console.log(`🏘️ Adding ${neighborhoodQueries.length} neighborhood searches for ${city} (${topTermsCount} terms, ${pagesPerNeighborhood} pages each)`);
             break;
           }
         }
