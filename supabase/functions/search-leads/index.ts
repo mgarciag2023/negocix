@@ -3074,7 +3074,7 @@ serve(async (req) => {
       // CITY/REGION SEARCH: Original behavior
       const isBoostSegmentSearch = segments.some(s => {
         const sl = s.toLowerCase();
-        return sl.includes('distribuidores de material') || sl.includes('indústrias mecânicas') || sl.includes('industrias mecanicas') || sl.includes('distribuidores de pêssegos') || sl.includes('distribuidores de pessegos');
+        return sl.includes('distribuidores de material') || sl.includes('indústrias mecânicas') || sl.includes('industrias mecanicas') || sl.includes('distribuidores de pêssegos') || sl.includes('distribuidores de pessegos') || sl.includes('autopeças') || sl.includes('autopecas') || sl.includes('auto peças') || sl.includes('distribuidores de autopeças');
       });
       const maxPagesPerSegment = isBoostSegmentSearch ? 40 : 30;
       const adjustedPages = isBoostSegmentSearch 
