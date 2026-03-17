@@ -3066,7 +3066,7 @@ serve(async (req) => {
           console.log(`📊 Cities batch ${Math.floor(i/batchSize)+1}: +${placesFromBatch.length} places (total: ${allPlacesWithSegment.length})`);
           
           // Early exit if we have enough raw results
-          if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 1.5) {
+          if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 3) {
             console.log(`⚡ Enough raw places (${allPlacesWithSegment.length}), stopping city search`);
             break;
           }
