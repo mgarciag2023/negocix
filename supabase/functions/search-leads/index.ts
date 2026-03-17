@@ -2247,7 +2247,9 @@ function isRelevantToNiche(place: any, segment: string): boolean {
         'hospital': ['hospital', 'pronto', 'upa'],
         'school': ['escola', 'colegio', 'curso', 'ensino', 'educacao'],
         'lodging': ['hotel', 'pousada', 'hospedagem', 'hostel'],
-        'car_repair': ['oficina', 'mecanica', 'funilaria', 'auto'],
+        'car_repair': ['oficina', 'mecanica', 'funilaria', 'auto', 'autopeca', 'auto peca', 'peca', 'pneu'],
+        'car_parts_store': ['autopeca', 'auto peca', 'peca', 'auto', 'automotiv'],
+        'auto_parts_store': ['autopeca', 'auto peca', 'peca', 'auto', 'automotiv'],
         'pet_store': ['pet', 'animal', 'veterinar', 'racao'],
         'pharmacy': ['farmacia', 'drogaria', 'manipulacao'],
       };
