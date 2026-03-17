@@ -3013,7 +3013,7 @@ serve(async (req) => {
     
     // Search each segment separately and tag results with their segment
     let allPlacesWithSegment: any[] = [];
-    const pagesPerSegment = isStateOnlySearch ? 3 : 12;
+    const pagesPerSegment = isStateOnlySearch ? 5 : 15;
     
     if (isStateOnlySearch && citiesForState.length > 0) {
       // STATE SEARCH: Limit cities to avoid CPU timeout (max 5 cities)
