@@ -1381,6 +1381,7 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     include: ['laboratório', 'laboratorio', 'análises clínicas', 'analises clinicas', 'exames', 'hemograma', 'patologia', 'coleta', 'exames laboratoriais', 'bioquímica', 'microbiologia', 'diagnóstico laboratorial'],
     exclude: ['veterinár', 'pet', 'supermercado', 'restaurante', 'lanchonete', 'hotel', 'academia', 'prótese dentária', 'dental']
   },
+  'clínicas de fisioterapia e reabilitação': {
     include: ['fisioterapia', 'fisioterapeuta', 'reabilitação', 'reabilitacao', 'terapia manual', 'ortopédica', 'ortopedica'],
     exclude: ['academia', 'fitness', 'supermercado', 'restaurante', 'lanchonete', 'hotel', 'veterinár']
   },
