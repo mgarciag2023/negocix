@@ -2878,7 +2878,7 @@ serve(async (req) => {
       'pr': ['Curitiba', 'Londrina', 'Maringá', 'Ponta Grossa', 'Cascavel', 'São José dos Pinhais', 'Foz do Iguaçu', 'Colombo', 'Guarapuava', 'Paranaguá'],
       'pe': ['Recife', 'Jaboatão dos Guararapes', 'Olinda', 'Caruaru', 'Petrolina', 'Paulista'],
       'pi': ['Teresina', 'Parnaíba'],
-      'rj': ['Rio de Janeiro', 'São Gonçalo', 'Duque de Caxias', 'Nova Iguaçu', 'Niterói', 'Belford Roxo', 'Campos dos Goytacazes', 'Petrópolis', 'Volta Redonda', 'Macaé'],
+      'rj': ['Rio de Janeiro', 'São Gonçalo', 'Duque de Caxias', 'Nova Iguaçu', 'Niterói', 'Belford Roxo', 'Campos dos Goytacazes', 'Petrópolis', 'Volta Redonda', 'Macaé', 'São João de Meriti', 'Mesquita', 'Nilópolis', 'Itaboraí', 'Magé', 'Maricá', 'Cabo Frio', 'Angra dos Reis', 'Resende', 'Teresópolis'],
       'rn': ['Natal', 'Mossoró', 'Parnamirim'],
       'rs': ['Porto Alegre', 'Caxias do Sul', 'Pelotas', 'Canoas', 'Santa Maria', 'Gravataí', 'Viamão', 'Novo Hamburgo', 'São Leopoldo', 'Rio Grande', 'Alvorada', 'Passo Fundo', 'Sapucaia do Sul', 'Uruguaiana', 'Santa Cruz do Sul', 'Cachoeirinha', 'Bagé', 'Bento Gonçalves', 'Erechim', 'Lajeado'],
       'ro': ['Porto Velho', 'Ji-Paraná'],
@@ -3018,10 +3018,14 @@ serve(async (req) => {
     const pagesPerSegment = isStateOnlySearch ? 5 : 15;
     
     if (isStateOnlySearch && citiesForState.length > 0) {
-      // STATE SEARCH: Limit cities to avoid CPU timeout (max 5 cities)
-      const maxCities = 8;
+      // STATE SEARCH: For boost segments, search more cities
+      const isBoostStateSearch = segments.some(s => {
+        const sl = s.toLowerCase();
+        return sl.includes('autopeças') || sl.includes('autopecas') || sl.includes('auto peças') || sl.includes('distribuidores de autopeças') || sl.includes('distribuidores de material') || sl.includes('indústrias mecânicas') || sl.includes('industrias mecanicas');
+      });
+      const maxCities = isBoostStateSearch ? 15 : 8;
       const citiesToSearch = citiesForState.slice(0, maxCities);
-      console.log(`🏙️ STATE SEARCH: Searching across ${citiesToSearch.length} cities in ${stateAbbrev.toUpperCase()} (of ${citiesForState.length} total)`);
+      console.log(`🏙️ STATE SEARCH: Searching across ${citiesToSearch.length} cities in ${stateAbbrev.toUpperCase()} (of ${citiesForState.length} total)${isBoostStateSearch ? ' [BOOSTED]' : ''}`);
       
       for (const seg of segments) {
         let searchTerms: string[];
@@ -3034,7 +3038,7 @@ serve(async (req) => {
         } else {
           searchTerms = generateSearchTerms(seg);
           // For boost segments, use more terms even in state search
-          searchTerms = isBoostSeg ? searchTerms.slice(0, 8) : searchTerms.slice(0, 4);
+          searchTerms = isBoostSeg ? searchTerms.slice(0, 15) : searchTerms.slice(0, 4);
         }
         
         console.log(`📤 Searching segment "${seg}" with terms:`, searchTerms);
@@ -3046,7 +3050,7 @@ serve(async (req) => {
           
           const cityPromises = cityBatch.flatMap(city => {
             const cityLocation = `${city}, ${stateAbbrev.toUpperCase()}, Brazil`;
-            return searchTerms.map(term => searchPlaces(term, cityLocation, 2)); // 2 pages per search
+            return searchTerms.map(term => searchPlaces(term, cityLocation, isBoostSeg ? 3 : 2));
           });
           
           const cityResults = await Promise.all(cityPromises);
@@ -3062,15 +3066,42 @@ serve(async (req) => {
           console.log(`📊 Cities batch ${Math.floor(i/batchSize)+1}: +${placesFromBatch.length} places (total: ${allPlacesWithSegment.length})`);
           
           // Early exit if we have enough raw results
-          if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 1.5) {
+          if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 3) {
             console.log(`⚡ Enough raw places (${allPlacesWithSegment.length}), stopping city search`);
             break;
           }
         }
         
+        // For boost segments in state search, also search neighborhoods of the capital
+        if (isBoostSeg && allPlacesWithSegment.length < MAX_TOTAL_LEADS * 3) {
+          const stateCapitalNeighborhoods: { [key: string]: string[] } = {
+            'rj': ['Centro Rio de Janeiro', 'Zona Norte Rio de Janeiro', 'Zona Oeste Rio de Janeiro', 'Méier RJ', 'Madureira RJ', 'Campo Grande RJ', 'Bangu RJ', 'Jacarepaguá RJ', 'Penha RJ', 'Realengo RJ', 'Pavuna RJ', 'Irajá RJ', 'Cascadura RJ', 'Del Castilho RJ', 'Barra da Tijuca RJ', 'Santa Cruz RJ'],
+            'sp': ['Centro São Paulo', 'Zona Norte SP', 'Zona Sul SP', 'Zona Leste SP', 'Zona Oeste SP', 'Santo Amaro SP', 'Penha SP', 'São Miguel Paulista', 'Itaquera SP', 'Lapa SP', 'Santana SP', 'Ipiranga SP'],
+            'mg': ['Centro BH', 'Barreiro BH', 'Venda Nova BH', 'Pampulha BH', 'Lagoinha BH', 'Padre Eustáquio BH'],
+            'rs': ['Centro Porto Alegre', 'Zona Norte Porto Alegre', 'Zona Sul Porto Alegre', 'Restinga', 'Sarandi', 'Rubem Berta'],
+          };
+          
+          const capitalNeighborhoods = stateCapitalNeighborhoods[stateAbbrev.toLowerCase()];
+          if (capitalNeighborhoods) {
+            const topTerms = searchTerms.slice(0, 4);
+            const neighborhoodPromises = capitalNeighborhoods.flatMap(neighborhood =>
+              topTerms.map(term => searchPlaces(term, `${neighborhood}, Brazil`, 2))
+            );
+            console.log(`🏘️ STATE BOOST: Adding ${neighborhoodPromises.length} neighborhood searches for capital`);
+            const neighborhoodResults = await Promise.all(neighborhoodPromises);
+            const neighborhoodPlaces = neighborhoodResults.flat().map(place => ({
+              ...place,
+              _searchSegment: seg.toLowerCase(),
+              _displayCategory: segmentDisplayNames[seg.toLowerCase()] || seg
+            }));
+            allPlacesWithSegment.push(...neighborhoodPlaces);
+            console.log(`🏘️ Neighborhoods added ${neighborhoodPlaces.length} places (total: ${allPlacesWithSegment.length})`);
+          }
+        }
+        
         console.log(`📊 Segment "${seg}": ${allPlacesWithSegment.length} raw places after city search`);
         
-        if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 1.5) break;
+        if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 3) break;
       }
     } else {
       // CITY/REGION SEARCH: Original behavior
