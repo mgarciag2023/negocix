@@ -3044,7 +3044,7 @@ serve(async (req) => {
           
           const cityPromises = cityBatch.flatMap(city => {
             const cityLocation = `${city}, ${stateAbbrev.toUpperCase()}, Brazil`;
-            return searchTerms.map(term => searchPlaces(term, cityLocation, 1)); // Only 1 page per search
+            return searchTerms.map(term => searchPlaces(term, cityLocation, 2)); // 2 pages per search
           });
           
           const cityResults = await Promise.all(cityPromises);
