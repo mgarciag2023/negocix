@@ -3038,7 +3038,7 @@ serve(async (req) => {
         } else {
           searchTerms = generateSearchTerms(seg);
           // For boost segments, use more terms even in state search
-          searchTerms = isBoostSeg ? searchTerms.slice(0, 8) : searchTerms.slice(0, 4);
+          searchTerms = isBoostSeg ? searchTerms.slice(0, 15) : searchTerms.slice(0, 4);
         }
         
         console.log(`📤 Searching segment "${seg}" with terms:`, searchTerms);
