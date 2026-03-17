@@ -3018,10 +3018,14 @@ serve(async (req) => {
     const pagesPerSegment = isStateOnlySearch ? 5 : 15;
     
     if (isStateOnlySearch && citiesForState.length > 0) {
-      // STATE SEARCH: Limit cities to avoid CPU timeout (max 5 cities)
-      const maxCities = 8;
+      // STATE SEARCH: For boost segments, search more cities
+      const isBoostStateSearch = segments.some(s => {
+        const sl = s.toLowerCase();
+        return sl.includes('autopeças') || sl.includes('autopecas') || sl.includes('auto peças') || sl.includes('distribuidores de autopeças') || sl.includes('distribuidores de material') || sl.includes('indústrias mecânicas') || sl.includes('industrias mecanicas');
+      });
+      const maxCities = isBoostStateSearch ? 15 : 8;
       const citiesToSearch = citiesForState.slice(0, maxCities);
-      console.log(`🏙️ STATE SEARCH: Searching across ${citiesToSearch.length} cities in ${stateAbbrev.toUpperCase()} (of ${citiesForState.length} total)`);
+      console.log(`🏙️ STATE SEARCH: Searching across ${citiesToSearch.length} cities in ${stateAbbrev.toUpperCase()} (of ${citiesForState.length} total)${isBoostStateSearch ? ' [BOOSTED]' : ''}`);
       
       for (const seg of segments) {
         let searchTerms: string[];
