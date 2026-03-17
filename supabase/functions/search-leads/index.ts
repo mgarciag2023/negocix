@@ -3135,11 +3135,13 @@ serve(async (req) => {
           const cityNorm = city.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
           if (regionLower.includes(cityNorm)) {
             // Use first 2 search terms across neighborhoods
-            const topTerms = searchTerms.slice(0, 2);
+            const topTermsCount = isBoostSeg ? 4 : 2;
+            const topTerms = searchTerms.slice(0, topTermsCount);
+            const pagesPerNeighborhood = isBoostSeg ? 2 : 1;
             neighborhoodQueries = neighborhoods.flatMap(neighborhood => 
-              topTerms.map(term => searchPlaces(term, `${neighborhood}, ${countryCode === 'BR' ? 'Brazil' : countryCode}`, 1))
+              topTerms.map(term => searchPlaces(term, `${neighborhood}, ${countryCode === 'BR' ? 'Brazil' : countryCode}`, pagesPerNeighborhood))
             );
-            console.log(`🏘️ Adding ${neighborhoodQueries.length} neighborhood searches for ${city}`);
+            console.log(`🏘️ Adding ${neighborhoodQueries.length} neighborhood searches for ${city} (${topTermsCount} terms, ${pagesPerNeighborhood} pages each)`);
             break;
           }
         }
