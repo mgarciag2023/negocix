@@ -2878,7 +2878,7 @@ serve(async (req) => {
       'pr': ['Curitiba', 'Londrina', 'Maringá', 'Ponta Grossa', 'Cascavel', 'São José dos Pinhais', 'Foz do Iguaçu', 'Colombo', 'Guarapuava', 'Paranaguá'],
       'pe': ['Recife', 'Jaboatão dos Guararapes', 'Olinda', 'Caruaru', 'Petrolina', 'Paulista'],
       'pi': ['Teresina', 'Parnaíba'],
-      'rj': ['Rio de Janeiro', 'São Gonçalo', 'Duque de Caxias', 'Nova Iguaçu', 'Niterói', 'Belford Roxo', 'Campos dos Goytacazes', 'Petrópolis', 'Volta Redonda', 'Macaé'],
+      'rj': ['Rio de Janeiro', 'São Gonçalo', 'Duque de Caxias', 'Nova Iguaçu', 'Niterói', 'Belford Roxo', 'Campos dos Goytacazes', 'Petrópolis', 'Volta Redonda', 'Macaé', 'São João de Meriti', 'Mesquita', 'Nilópolis', 'Itaboraí', 'Magé', 'Maricá', 'Cabo Frio', 'Angra dos Reis', 'Resende', 'Teresópolis'],
       'rn': ['Natal', 'Mossoró', 'Parnamirim'],
       'rs': ['Porto Alegre', 'Caxias do Sul', 'Pelotas', 'Canoas', 'Santa Maria', 'Gravataí', 'Viamão', 'Novo Hamburgo', 'São Leopoldo', 'Rio Grande', 'Alvorada', 'Passo Fundo', 'Sapucaia do Sul', 'Uruguaiana', 'Santa Cruz do Sul', 'Cachoeirinha', 'Bagé', 'Bento Gonçalves', 'Erechim', 'Lajeado'],
       'ro': ['Porto Velho', 'Ji-Paraná'],
