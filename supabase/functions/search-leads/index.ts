@@ -2836,23 +2836,23 @@ serve(async (req) => {
     const segmentCount = selectedSegments.length;
     console.log(`📋 Number of selected segments: ${segmentCount}`);
     
-    // Dynamic limits based on number of selected segments
+    // Dynamic limits based on number of selected segments — maximized for all users
     let defaultMaxLeads: number;
     if (isBoostSearch) {
-      defaultMaxLeads = 500;
+      defaultMaxLeads = 1500;
     } else if (segmentCount >= 3) {
-      defaultMaxLeads = 691;
+      defaultMaxLeads = 1200;
     } else if (segmentCount === 2) {
-      defaultMaxLeads = 597;
+      defaultMaxLeads = 1000;
     } else {
-      defaultMaxLeads = isStateOnlySearch ? 347 : 187;
+      defaultMaxLeads = isStateOnlySearch ? 800 : 500;
     }
     
     const MAX_TOTAL_LEADS = userMaxLeads || defaultMaxLeads;
-    const MIN_LEADS_TARGET = isBoostSearch ? 150 : (segmentCount >= 3 ? 200 : (segmentCount === 2 ? 150 : (isStateOnlySearch ? 100 : 70)));
-    const TARGET_LEADS = isBoostSearch ? 350 : (segmentCount >= 3 ? 500 : (segmentCount === 2 ? 400 : (isStateOnlySearch ? 200 : 80)));
-    const MAX_TARGET_LEADS = isBoostSearch ? 450 : (segmentCount >= 3 ? 650 : (segmentCount === 2 ? 550 : (isStateOnlySearch ? 300 : 90)));
-    const MIN_LEADS_EARLY_EXIT = isBoostSearch ? 480 : (segmentCount >= 3 ? 680 : (segmentCount === 2 ? 580 : (isStateOnlySearch ? 340 : 95)));
+    const MIN_LEADS_TARGET = isBoostSearch ? 300 : (segmentCount >= 3 ? 350 : (segmentCount === 2 ? 250 : (isStateOnlySearch ? 200 : 150)));
+    const TARGET_LEADS = isBoostSearch ? 800 : (segmentCount >= 3 ? 900 : (segmentCount === 2 ? 700 : (isStateOnlySearch ? 500 : 300)));
+    const MAX_TARGET_LEADS = isBoostSearch ? 1200 : (segmentCount >= 3 ? 1100 : (segmentCount === 2 ? 900 : (isStateOnlySearch ? 700 : 450)));
+    const MIN_LEADS_EARLY_EXIT = isBoostSearch ? 1400 : (segmentCount >= 3 ? 1150 : (segmentCount === 2 ? 950 : (isStateOnlySearch ? 750 : 480)));
     
     console.log(`📊 Lead limits: max=${MAX_TOTAL_LEADS}, target=${TARGET_LEADS}, stateSearch=${isStateOnlySearch}`);
 
