@@ -1373,7 +1373,14 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     include: ['laboratório', 'laboratorio', 'análises clínicas', 'analises clinicas', 'diagnóstico', 'diagnostico', 'centro de diagnóstico', 'imagem', 'radiologia', 'ultrassom', 'tomografia', 'ressonância', 'raio-x', 'exames'],
     exclude: ['veterinár', 'pet', 'supermercado', 'restaurante', 'lanchonete', 'hotel', 'academia']
   },
-  'clínicas de fisioterapia e reabilitação': {
+  'clínicas de radiologia': {
+    include: ['radiologia', 'raio-x', 'raio x', 'tomografia', 'ressonância', 'ressonancia', 'ultrassom', 'ultrassonografia', 'mamografia', 'densitometria', 'diagnóstico por imagem', 'centro de imagem', 'imagem', 'ecografia', 'clínica de imagem', 'radiológica', 'radiologica'],
+    exclude: ['veterinár', 'pet', 'supermercado', 'restaurante', 'lanchonete', 'hotel', 'academia', 'odontológica']
+  },
+  'laboratórios de análises clínicas': {
+    include: ['laboratório', 'laboratorio', 'análises clínicas', 'analises clinicas', 'exames', 'hemograma', 'patologia', 'coleta', 'exames laboratoriais', 'bioquímica', 'microbiologia', 'diagnóstico laboratorial'],
+    exclude: ['veterinár', 'pet', 'supermercado', 'restaurante', 'lanchonete', 'hotel', 'academia', 'prótese dentária', 'dental']
+  },
     include: ['fisioterapia', 'fisioterapeuta', 'reabilitação', 'reabilitacao', 'terapia manual', 'ortopédica', 'ortopedica'],
     exclude: ['academia', 'fitness', 'supermercado', 'restaurante', 'lanchonete', 'hotel', 'veterinár']
   },
