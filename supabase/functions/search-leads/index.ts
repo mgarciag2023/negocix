@@ -329,6 +329,8 @@ function generateSearchTerms(segment: string): string[] {
     'clínicas de urologia': ['urologista', 'clínica de urologia', 'urologia', 'consultório urológico', 'cirurgia urológica'],
     'clínicas de ortopedia': ['ortopedista', 'clínica de ortopedia', 'ortopedia', 'traumatologia', 'consultório ortopédico', 'fisioterapia ortopédica'],
     'clínicas de neurologia': ['neurologista', 'clínica de neurologia', 'neurologia', 'consultório neurológico', 'neurocirurgia', 'eletroencefalograma'],
+    'clínicas de radiologia': ['clínica de radiologia', 'radiologia', 'centro de imagem', 'diagnóstico por imagem', 'raio-x', 'raio x', 'tomografia', 'ressonância magnética', 'ultrassonografia', 'mamografia', 'densitometria', 'clínica de imagem', 'radiologista', 'exames de imagem', 'ecografia', 'angiotomografia', 'clínica radiológica'],
+    'laboratórios de análises clínicas': ['laboratório de análises clínicas', 'laboratório clínico', 'análises clínicas', 'exames laboratoriais', 'exames de sangue', 'hemograma', 'laboratório de patologia', 'laboratório de exames', 'coleta de exames', 'exames clínicos', 'laboratório médico', 'diagnóstico laboratorial', 'bioquímica clínica', 'microbiologia clínica', 'laboratório de análises'],
     'dentistas e consultórios odontológicos': ['dentista', 'consultório odontológico', 'clínica odontológica', 'odontologia', 'cirurgião dentista', 'implante dentário', 'ortodontia'],
     'próteses dentárias': ['prótese dentária', 'laboratório de prótese', 'prótese dental', 'dentadura', 'prótese fixa', 'prótese removível', 'implante dental'],
     'laboratórios de prótese dentária': ['laboratório de prótese dentária', 'protético', 'protético dental', 'laboratório dental', 'prótese dentária laboratório'],
