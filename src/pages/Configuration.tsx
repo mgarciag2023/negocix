@@ -6927,6 +6927,7 @@ const Configuration = () => {
                       <SelectItem value="telemedicina">Telemedicina / Saúde</SelectItem>
                       <SelectItem value="grafica">Gráfica / Comunicação Visual</SelectItem>
                       <SelectItem value="produtos-naturais">Produtos Naturais / Orgânicos</SelectItem>
+                      <SelectItem value="autopecas">Autopeças</SelectItem>
                       <SelectItem value="outros">Outros</SelectItem>
                     </SelectContent>
                   </Select>
