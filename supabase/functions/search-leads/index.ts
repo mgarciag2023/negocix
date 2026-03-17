@@ -3076,10 +3076,10 @@ serve(async (req) => {
         const sl = s.toLowerCase();
         return sl.includes('distribuidores de material') || sl.includes('indústrias mecânicas') || sl.includes('industrias mecanicas') || sl.includes('distribuidores de pêssegos') || sl.includes('distribuidores de pessegos');
       });
-      const maxPagesPerSegment = isBoostSegmentSearch ? 40 : 20;
+      const maxPagesPerSegment = isBoostSegmentSearch ? 40 : 30;
       const adjustedPages = isBoostSegmentSearch 
         ? 40 
-        : Math.max(12, Math.min(maxPagesPerSegment, Math.floor(60 / segments.length)));
+        : Math.max(15, Math.min(maxPagesPerSegment, Math.floor(90 / segments.length)));
       console.log(`⚡ MAXIMUM VOLUME: ${adjustedPages} pages per segment (${segments.length} segments)${isBoostSegmentSearch ? ' [BOOSTED]' : ''}`);
       
       for (const seg of segments) {
