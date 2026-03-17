@@ -3017,7 +3017,7 @@ serve(async (req) => {
     
     if (isStateOnlySearch && citiesForState.length > 0) {
       // STATE SEARCH: Limit cities to avoid CPU timeout (max 5 cities)
-      const maxCities = 5;
+      const maxCities = 8;
       const citiesToSearch = citiesForState.slice(0, maxCities);
       console.log(`🏙️ STATE SEARCH: Searching across ${citiesToSearch.length} cities in ${stateAbbrev.toUpperCase()} (of ${citiesForState.length} total)`);
       
