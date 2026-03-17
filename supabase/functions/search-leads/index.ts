@@ -3072,6 +3072,33 @@ serve(async (req) => {
           }
         }
         
+        // For boost segments in state search, also search neighborhoods of the capital
+        if (isBoostSeg && allPlacesWithSegment.length < MAX_TOTAL_LEADS * 3) {
+          const stateCapitalNeighborhoods: { [key: string]: string[] } = {
+            'rj': ['Centro Rio de Janeiro', 'Zona Norte Rio de Janeiro', 'Zona Oeste Rio de Janeiro', 'Méier RJ', 'Madureira RJ', 'Campo Grande RJ', 'Bangu RJ', 'Jacarepaguá RJ', 'Penha RJ', 'Realengo RJ', 'Pavuna RJ', 'Irajá RJ', 'Cascadura RJ', 'Del Castilho RJ', 'Barra da Tijuca RJ', 'Santa Cruz RJ'],
+            'sp': ['Centro São Paulo', 'Zona Norte SP', 'Zona Sul SP', 'Zona Leste SP', 'Zona Oeste SP', 'Santo Amaro SP', 'Penha SP', 'São Miguel Paulista', 'Itaquera SP', 'Lapa SP', 'Santana SP', 'Ipiranga SP'],
+            'mg': ['Centro BH', 'Barreiro BH', 'Venda Nova BH', 'Pampulha BH', 'Lagoinha BH', 'Padre Eustáquio BH'],
+            'rs': ['Centro Porto Alegre', 'Zona Norte Porto Alegre', 'Zona Sul Porto Alegre', 'Restinga', 'Sarandi', 'Rubem Berta'],
+          };
+          
+          const capitalNeighborhoods = stateCapitalNeighborhoods[stateAbbrev.toLowerCase()];
+          if (capitalNeighborhoods) {
+            const topTerms = searchTerms.slice(0, 4);
+            const neighborhoodPromises = capitalNeighborhoods.flatMap(neighborhood =>
+              topTerms.map(term => searchPlaces(term, `${neighborhood}, Brazil`, 2))
+            );
+            console.log(`🏘️ STATE BOOST: Adding ${neighborhoodPromises.length} neighborhood searches for capital`);
+            const neighborhoodResults = await Promise.all(neighborhoodPromises);
+            const neighborhoodPlaces = neighborhoodResults.flat().map(place => ({
+              ...place,
+              _searchSegment: seg.toLowerCase(),
+              _displayCategory: segmentDisplayNames[seg.toLowerCase()] || seg
+            }));
+            allPlacesWithSegment.push(...neighborhoodPlaces);
+            console.log(`🏘️ Neighborhoods added ${neighborhoodPlaces.length} places (total: ${allPlacesWithSegment.length})`);
+          }
+        }
+        
         console.log(`📊 Segment "${seg}": ${allPlacesWithSegment.length} raw places after city search`);
         
         if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 3) break;
