@@ -3074,7 +3074,7 @@ serve(async (req) => {
         
         console.log(`📊 Segment "${seg}": ${allPlacesWithSegment.length} raw places after city search`);
         
-        if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 1.5) break;
+        if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 3) break;
       }
     } else {
       // CITY/REGION SEARCH: Original behavior
