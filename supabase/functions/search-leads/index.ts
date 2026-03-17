@@ -2836,23 +2836,23 @@ serve(async (req) => {
     const segmentCount = selectedSegments.length;
     console.log(`📋 Number of selected segments: ${segmentCount}`);
     
-    // Dynamic limits based on number of selected segments
+    // Dynamic limits based on number of selected segments — maximized for all users
     let defaultMaxLeads: number;
     if (isBoostSearch) {
-      defaultMaxLeads = 500;
+      defaultMaxLeads = 1500;
     } else if (segmentCount >= 3) {
-      defaultMaxLeads = 691;
+      defaultMaxLeads = 1200;
     } else if (segmentCount === 2) {
-      defaultMaxLeads = 597;
+      defaultMaxLeads = 1000;
     } else {
-      defaultMaxLeads = isStateOnlySearch ? 347 : 187;
+      defaultMaxLeads = isStateOnlySearch ? 800 : 500;
     }
     
     const MAX_TOTAL_LEADS = userMaxLeads || defaultMaxLeads;
-    const MIN_LEADS_TARGET = isBoostSearch ? 150 : (segmentCount >= 3 ? 200 : (segmentCount === 2 ? 150 : (isStateOnlySearch ? 100 : 70)));
-    const TARGET_LEADS = isBoostSearch ? 350 : (segmentCount >= 3 ? 500 : (segmentCount === 2 ? 400 : (isStateOnlySearch ? 200 : 80)));
-    const MAX_TARGET_LEADS = isBoostSearch ? 450 : (segmentCount >= 3 ? 650 : (segmentCount === 2 ? 550 : (isStateOnlySearch ? 300 : 90)));
-    const MIN_LEADS_EARLY_EXIT = isBoostSearch ? 480 : (segmentCount >= 3 ? 680 : (segmentCount === 2 ? 580 : (isStateOnlySearch ? 340 : 95)));
+    const MIN_LEADS_TARGET = isBoostSearch ? 300 : (segmentCount >= 3 ? 350 : (segmentCount === 2 ? 250 : (isStateOnlySearch ? 200 : 150)));
+    const TARGET_LEADS = isBoostSearch ? 800 : (segmentCount >= 3 ? 900 : (segmentCount === 2 ? 700 : (isStateOnlySearch ? 500 : 300)));
+    const MAX_TARGET_LEADS = isBoostSearch ? 1200 : (segmentCount >= 3 ? 1100 : (segmentCount === 2 ? 900 : (isStateOnlySearch ? 700 : 450)));
+    const MIN_LEADS_EARLY_EXIT = isBoostSearch ? 1400 : (segmentCount >= 3 ? 1150 : (segmentCount === 2 ? 950 : (isStateOnlySearch ? 750 : 480)));
     
     console.log(`📊 Lead limits: max=${MAX_TOTAL_LEADS}, target=${TARGET_LEADS}, stateSearch=${isStateOnlySearch}`);
 
@@ -3013,11 +3013,11 @@ serve(async (req) => {
     
     // Search each segment separately and tag results with their segment
     let allPlacesWithSegment: any[] = [];
-    const pagesPerSegment = isStateOnlySearch ? 3 : 12;
+    const pagesPerSegment = isStateOnlySearch ? 5 : 15;
     
     if (isStateOnlySearch && citiesForState.length > 0) {
       // STATE SEARCH: Limit cities to avoid CPU timeout (max 5 cities)
-      const maxCities = 5;
+      const maxCities = 8;
       const citiesToSearch = citiesForState.slice(0, maxCities);
       console.log(`🏙️ STATE SEARCH: Searching across ${citiesToSearch.length} cities in ${stateAbbrev.toUpperCase()} (of ${citiesForState.length} total)`);
       
@@ -3032,7 +3032,7 @@ serve(async (req) => {
         } else {
           searchTerms = generateSearchTerms(seg);
           // For boost segments, use more terms even in state search
-          searchTerms = isBoostSeg ? searchTerms.slice(0, 8) : searchTerms.slice(0, 2);
+          searchTerms = isBoostSeg ? searchTerms.slice(0, 8) : searchTerms.slice(0, 4);
         }
         
         console.log(`📤 Searching segment "${seg}" with terms:`, searchTerms);
@@ -3044,7 +3044,7 @@ serve(async (req) => {
           
           const cityPromises = cityBatch.flatMap(city => {
             const cityLocation = `${city}, ${stateAbbrev.toUpperCase()}, Brazil`;
-            return searchTerms.map(term => searchPlaces(term, cityLocation, 1)); // Only 1 page per search
+            return searchTerms.map(term => searchPlaces(term, cityLocation, 2)); // 2 pages per search
           });
           
           const cityResults = await Promise.all(cityPromises);
@@ -3076,10 +3076,10 @@ serve(async (req) => {
         const sl = s.toLowerCase();
         return sl.includes('distribuidores de material') || sl.includes('indústrias mecânicas') || sl.includes('industrias mecanicas') || sl.includes('distribuidores de pêssegos') || sl.includes('distribuidores de pessegos');
       });
-      const maxPagesPerSegment = isBoostSegmentSearch ? 40 : 20;
+      const maxPagesPerSegment = isBoostSegmentSearch ? 40 : 30;
       const adjustedPages = isBoostSegmentSearch 
         ? 40 
-        : Math.max(12, Math.min(maxPagesPerSegment, Math.floor(60 / segments.length)));
+        : Math.max(15, Math.min(maxPagesPerSegment, Math.floor(90 / segments.length)));
       console.log(`⚡ MAXIMUM VOLUME: ${adjustedPages} pages per segment (${segments.length} segments)${isBoostSegmentSearch ? ' [BOOSTED]' : ''}`);
       
       for (const seg of segments) {
