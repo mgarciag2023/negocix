@@ -3035,6 +3035,33 @@ serve(async (req) => {
     const citiesForState = isStateOnlySearch && stateAbbrev ? (stateCities[stateAbbrev] || []) : [];
 
     // Function to search places using Google Places API (New)
+    // Geocode a location string to get lat/lng for locationBias
+    const geocodeCache = new Map<string, { lat: number; lng: number } | null>();
+    async function geocodeLocation(location: string): Promise<{ lat: number; lng: number } | null> {
+      if (geocodeCache.has(location)) return geocodeCache.get(location) || null;
+      try {
+        const resp = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${GOOGLE_PLACES_API_KEY}`);
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.results && data.results.length > 0) {
+            const loc = data.results[0].geometry.location;
+            geocodeCache.set(location, loc);
+            return loc;
+          }
+        }
+      } catch (e) {
+        console.error('⚠️ Geocode error:', e);
+      }
+      geocodeCache.set(location, null);
+      return null;
+    }
+
+    // Pre-geocode the main location for locationBias
+    const mainGeocode = await geocodeLocation(locationQuery);
+    if (mainGeocode) {
+      console.log(`📍 Geocoded ${locationQuery} → ${mainGeocode.lat}, ${mainGeocode.lng}`);
+    }
+
     async function searchPlaces(query: string, location: string, _maxPages: number = 3): Promise<any[]> {
       const searchCache = searchCacheGlobal;
       const cacheKey = `${query}|${location}`;
@@ -3048,6 +3075,9 @@ serve(async (req) => {
 
       console.log(`📍 Google Places search: ${query} em ${location}`);
 
+      // Get coordinates for this specific location (may differ from main for neighborhood searches)
+      let searchGeocode = location === locationQuery ? mainGeocode : await geocodeLocation(location);
+
       try {
         let nextPageToken: string | undefined;
         let pagesSearched = 0;
@@ -3060,6 +3090,18 @@ serve(async (req) => {
             regionCode: 'BR',
             maxResultCount: 20,
           };
+
+          // Add locationBias to prioritize results near the target location
+          if (searchGeocode && !nextPageToken) {
+            // Use a radius of 30km for city searches, 100km for state searches
+            const radiusMeters = isStateOnlySearch ? 100000 : 30000;
+            body.locationBias = {
+              circle: {
+                center: { latitude: searchGeocode.lat, longitude: searchGeocode.lng },
+                radius: radiusMeters
+              }
+            };
+          }
 
           if (nextPageToken) {
             body.pageToken = nextPageToken;
