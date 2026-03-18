@@ -1653,10 +1653,9 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'padaria', 'escola', 'academia', 'salão', 'pet shop', 'veterinário']
   },
   'distribuidores de pêssegos': {
-    include: ['pêssego', 'pessego', 'pêssegos', 'pessegos', 'peach', 'frutas de caroço', 'polpa de pêssego', 'conserva de pêssego', 'pêssego em calda', 'beneficiadora de pêssego', 'packing house', 'fruticultura', 'pomar de pêssego', 'cultivo de pêssego', 'cooperativa de pêssego', 'ceasa', 'exportadora de frutas', 'processadora de frutas', 'distribuidor de frutas', 'distribuidora de frutas', 'atacado de frutas', 'atacadista de frutas'],
-    mustMatch: [],
-    strictInclude: true,
-    exclude: ['restaurante', 'lanchonete', 'bar', 'hotel', 'farmácia', 'padaria', 'escola', 'academia', 'salão', 'pet shop', 'veterinário', 'açougue', 'pizzaria', 'supermercado', 'hortifruti', 'mercado', 'empório', 'loja de', 'armazém', 'varejo', 'varejão', 'mercearia', 'quitanda', 'bomboniere', 'conveniência', 'delivery', 'bebidas', 'descartáveis', 'cesta básica', 'kit churrasco', 'açaí', 'sorvete']
+    include: ['pêssego', 'pessego', 'pêssegos', 'pessegos', 'peach', 'polpa de pêssego', 'conserva de pêssego', 'pêssego em calda', 'beneficiadora de pêssego', 'packing house pêssego', 'pomar de pêssego', 'cultivo de pêssego', 'cooperativa de pêssego', 'processadora de pêssego', 'fruticultura pêssego', 'durazno'],
+    mustMatch: ['pêssego', 'pessego', 'pêssegos', 'pessegos', 'peach', 'durazno'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'hotel', 'farmácia', 'padaria', 'escola', 'academia', 'salão', 'pet shop', 'veterinário', 'açougue', 'pizzaria', 'supermercado', 'hortifruti', 'mercado', 'empório', 'loja de', 'armazém', 'varejo', 'varejão', 'mercearia', 'quitanda', 'bomboniere', 'conveniência', 'delivery', 'bebidas', 'descartáveis', 'cesta básica', 'kit churrasco', 'açaí', 'sorvete', 'sacolão', 'feira', 'hortifruit', 'frutas e verduras', 'verdurão', 'frutaria', 'banana', 'maçã', 'laranja', 'manga', 'abacaxi', 'morango', 'uva', 'melancia', 'mamão', 'goiaba', 'limão']
   },
   'serralherias': {
     include: ['serralheria', 'serralheiro', 'portões', 'grades', 'esquadrias metálicas', 'estruturas metálicas', 'portão de ferro', 'grade de ferro', 'corrimão', 'escada de ferro', 'serralheria artística', 'serralheria industrial', 'portão automático', 'gradil', 'portão basculante', 'metalon', 'ferro e aço'],
