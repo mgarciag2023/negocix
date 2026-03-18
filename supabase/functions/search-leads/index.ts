@@ -793,10 +793,46 @@ function generateSearchTerms(segment: string): string[] {
     // Deduplicate
     searchTerms = [...new Set(baseTerms)].filter(t => t.length >= 3);
   }
-  
-  // For boost segments, return all terms; otherwise max 10
-  const isBoostTerm = term.includes('indústrias mecânicas') || term.includes('industrias mecanicas') || term.includes('distribuidores de material') || term.includes('distribuidores de pêssegos') || term.includes('distribuidores de pessegos') || term.includes('autopeças') || term.includes('auto peças') || term.includes('floricultura') || term.includes('floriculturas') || term.includes('garden center') || term.includes('garden centers') || term.includes('casa de utilidades') || term.includes('casas de utilidades') || term.includes('food service');
-  return isBoostTerm ? searchTerms : searchTerms.slice(0, 10);
+
+  const normalizedSegment = normalizeSegmentText(term);
+  const isIndustrialSegment = /(industr|fabrica|metalurg|mecanic|usinag|quimic|plast)/.test(normalizedSegment);
+  const isDistributionSegment = /(distrib|atacad|fornecedor|revenda)/.test(normalizedSegment);
+  const isRetailSegment = /(loja|comerc|bazar|shop|mercado|emporio|casa)/.test(normalizedSegment);
+
+  const expandedTerms: string[] = [];
+  for (const rawTerm of searchTerms) {
+    const cleaned = rawTerm.trim().toLowerCase();
+    if (!cleaned || cleaned.length < 3) continue;
+
+    const normalized = normalizeSegmentText(cleaned);
+    const hasPrefix = /^(loja|distribuidora|distribuidor|atacado|atacadista|empresa|industria|fabrica|fornecedor|casa)\s+de\s+/.test(normalized);
+
+    expandedTerms.push(cleaned, normalized);
+
+    if (cleaned.endsWith('s') && cleaned.length > 4) {
+      expandedTerms.push(cleaned.slice(0, -1));
+    }
+
+    if (!hasPrefix) {
+      if (isDistributionSegment) {
+        expandedTerms.push(`distribuidora de ${cleaned}`, `atacado de ${cleaned}`, `fornecedor de ${cleaned}`);
+      }
+
+      if (isIndustrialSegment) {
+        expandedTerms.push(`fábrica de ${cleaned}`, `indústria de ${cleaned}`, `fabricante de ${cleaned}`);
+      }
+
+      if (isRetailSegment) {
+        expandedTerms.push(`loja de ${cleaned}`, `casa de ${cleaned}`, `comércio de ${cleaned}`);
+      }
+    }
+  }
+
+  const dedupedExpandedTerms = [...new Set(expandedTerms.map(t => t.trim()).filter(t => t.length >= 3))];
+  const shouldBoost = isBoostSegment(term);
+
+  // Boost usa cap maior; padrão também sobe para evitar buscas sem resultado em nichos long-tail
+  return shouldBoost ? dedupedExpandedTerms.slice(0, 40) : dedupedExpandedTerms.slice(0, 14);
 }
 
 // Estimate revenue based on reviews, rating, and category - MORE PRECISE
