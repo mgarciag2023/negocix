@@ -3154,26 +3154,22 @@ serve(async (req) => {
     
     if (isStateOnlySearch && citiesForState.length > 0) {
       // STATE SEARCH: For boost segments, search more cities
-      const isBoostStateSearch = segments.some(s => {
-        const sl = s.toLowerCase();
-        return sl.includes('autopeças') || sl.includes('autopecas') || sl.includes('auto peças') || sl.includes('distribuidores de autopeças') || sl.includes('distribuidores de material') || sl.includes('indústrias mecânicas') || sl.includes('industrias mecanicas');
-      });
-      const maxCities = isBoostStateSearch ? 15 : 8;
+      const isBoostStateSearch = segments.some((s) => isBoostSegment(s));
+      const maxCities = isBoostStateSearch ? 18 : 10;
       const citiesToSearch = citiesForState.slice(0, maxCities);
       console.log(`🏙️ STATE SEARCH: Searching across ${citiesToSearch.length} cities in ${stateAbbrev.toUpperCase()} (of ${citiesForState.length} total)${isBoostStateSearch ? ' [BOOSTED]' : ''}`);
       
       for (const seg of segments) {
         let searchTerms: string[];
-        const segLower = seg.toLowerCase();
-        const isBoostSeg = segLower.includes('distribuidores de material') || segLower.includes('indústrias mecânicas') || segLower.includes('industrias mecanicas') || segLower.includes('distribuidores de pêssegos') || segLower.includes('distribuidores de pessegos') || segLower.includes('autopeças') || segLower.includes('autopecas') || segLower.includes('auto peças') || segLower.includes('distribuidores de autopeças');
+        const isBoostSeg = isBoostSegment(seg);
         
         if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
           const ecomType = ecommerceType.trim().toLowerCase();
-          searchTerms = [`loja ${ecomType}`, `${ecomType}`];
+          searchTerms = [`loja ${ecomType}`, `${ecomType}`, `e-commerce ${ecomType}`];
         } else {
           searchTerms = generateSearchTerms(seg);
-          // For boost segments, use more terms even in state search
-          searchTerms = isBoostSeg ? searchTerms.slice(0, 15) : searchTerms.slice(0, 4);
+          // Estado multiplica por cidades; aumenta sem explodir custo
+          searchTerms = isBoostSeg ? searchTerms.slice(0, 18) : searchTerms.slice(0, 6);
         }
         
         console.log(`📤 Searching segment "${seg}" with terms:`, searchTerms);
