@@ -1606,9 +1606,8 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel']
   },
   'distribuidoras': {
-    include: ['distribuidora', 'distribuidor', 'distribuição'],
-    mustMatch: ['distribuidora', 'distribuidor', 'distribuição'],
-    exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel', 'padaria', 'loja']
+    include: ['distribuidora', 'distribuidor', 'distribuição', 'atacado', 'atacadista', 'fornecedor', 'revenda', 'wholesale'],
+    exclude: ['restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel', 'padaria']
   },
   // Novos segmentos alimentícios
   'panificadoras': {
