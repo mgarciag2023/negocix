@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 // Simple phone validation
@@ -963,6 +963,25 @@ function extractLocationParts(address: string): { city: string | null; state: st
   return { city, state, neighborhood: null };
 }
 
+// Metropolitan area mappings - cities that should be accepted when searching for a nearby city
+const metropolitanAreas: { [key: string]: string[] } = {
+  'sao paulo': ['guarulhos', 'osasco', 'santo andre', 'sao bernardo', 'diadema', 'maua', 'carapicuiba', 'barueri', 'cotia', 'taboao da serra', 'itaquaquecetuba', 'embu das artes', 'suzano', 'ferraz de vasconcelos', 'mogi das cruzes', 'itapecerica da serra', 'francisco morato', 'franco da rocha', 'caieiras', 'aruja', 'santana de parnaiba', 'jandira', 'poa', 'itapevi'],
+  'rio de janeiro': ['niteroi', 'sao goncalo', 'duque de caxias', 'nova iguacu', 'belford roxo', 'sao joao de meriti', 'mesquita', 'nilopolis', 'queimados', 'itaborai', 'mage', 'marica', 'guapimirim'],
+  'belo horizonte': ['contagem', 'betim', 'ribeiro das neves', 'santa luzia', 'ibirite', 'sabara', 'vespasiano', 'nova lima', 'lagoa santa', 'pedro leopoldo'],
+  'porto alegre': ['canoas', 'gravatai', 'viamao', 'novo hamburgo', 'sao leopoldo', 'alvorada', 'cachoeirinha', 'sapucaia do sul', 'esteio', 'guaiba', 'eldorado do sul'],
+  'curitiba': ['sao jose dos pinhais', 'colombo', 'araucaria', 'pinhais', 'campo largo', 'almirante tamandare', 'piraquara', 'fazenda rio grande', 'quatro barras'],
+  'salvador': ['lauro de freitas', 'camacari', 'simoes filho', 'candeias', 'dias davila', 'itaparica'],
+  'recife': ['jaboatao dos guararapes', 'olinda', 'paulista', 'camaragibe', 'cabo de santo agostinho', 'abreu e lima'],
+  'fortaleza': ['caucaia', 'maracanau', 'maranguape', 'pacatuba', 'eusebio', 'aquiraz'],
+  'goiania': ['aparecida de goiania', 'trindade', 'senador canedo', 'goianira'],
+  'brasilia': ['taguatinga', 'ceilandia', 'samambaia', 'aguas claras', 'gama', 'sobradinho', 'planaltina'],
+  'vitoria': ['vila velha', 'serra', 'cariacica', 'viana', 'guarapari', 'fundao'],
+  'florianopolis': ['sao jose', 'palhoca', 'biguacu'],
+  'manaus': ['iranduba', 'manacapuru'],
+  'belem': ['ananindeua', 'marituba', 'benevides'],
+  'campinas': ['sumare', 'hortolandia', 'indaiatuba', 'valinhos', 'vinhedo', 'paulinia', 'americana'],
+};
+
 // Check if an address matches the requested location
 function isAddressInLocation(address: string, requestedRegion: string, countryCode: string): boolean {
   if (!address || !requestedRegion) return false;
@@ -992,24 +1011,20 @@ function isAddressInLocation(address: string, requestedRegion: string, countryCo
                               Object.values(brazilianStates).includes(cleanRegion);
     
     if (isStateOnlySearch) {
-      // STATE-ONLY SEARCH: Accept any address that contains this state
       const stateAbbrev = brazilianStates[cleanRegion] ? cleanRegion : 
                           Object.keys(brazilianStates).find(k => brazilianStates[k] === cleanRegion);
       
       if (stateAbbrev) {
-        // Check if address contains " - XX," or " - XX " or ", XX," pattern (state abbreviation position)
         const statePattern = new RegExp(`[,\\s\\-]\\s*${stateAbbrev}\\s*[,\\s\\-]|[,\\s\\-]\\s*${stateAbbrev}\\s*$`, 'i');
         if (statePattern.test(address.toLowerCase())) {
           return true;
         }
-        // Also check for full state name
         const stateName = brazilianStates[stateAbbrev];
         if (stateName && normalizedAddress.includes(stateName)) {
           return true;
         }
       }
       
-      // If search is state name, check for abbreviation in address
       const searchedStateAbbrev = Object.keys(brazilianStates).find(k => brazilianStates[k] === cleanRegion);
       if (searchedStateAbbrev) {
         const statePattern = new RegExp(`[,\\s\\-]\\s*${searchedStateAbbrev}\\s*[,\\s\\-]|[,\\s\\-]\\s*${searchedStateAbbrev}\\s*$`, 'i');
@@ -1022,13 +1037,11 @@ function isAddressInLocation(address: string, requestedRegion: string, countryCo
       return false;
     }
     
-    // CITY + STATE or CITY-ONLY SEARCH: Original logic but more flexible
-    // Extract location from address
+    // CITY + STATE or CITY-ONLY SEARCH
     const addressParts = extractLocationParts(address);
     
-    // Filter region words - include state abbreviations (2 chars) too!
+    // Filter region words
     let regionCityWords = regionParts.filter(p => {
-      // Accept words > 2 chars, OR state abbreviations
       return (p.length > 2 || brazilianStates[p.toLowerCase()] !== undefined) && 
              !['brasil', 'brazil', 'br'].includes(p.toLowerCase());
     });
@@ -1042,16 +1055,50 @@ function isAddressInLocation(address: string, requestedRegion: string, countryCo
       }
     }
     
+    // If no direct match, check metropolitan area
     if (!cityMatch) {
-      console.log(`❌ Location mismatch: "${address}" does not contain city from "${requestedRegion}"`);
+      // Extract the main city name from region (first meaningful words)
+      const mainCityWords = regionCityWords.filter(w => w.length > 2 && !brazilianStates[w.toLowerCase()]);
+      const mainCity = mainCityWords.join(' ');
+      
+      // Check if the address is in a metropolitan area city
+      for (const [metroCityKey, metroCities] of Object.entries(metropolitanAreas)) {
+        // Check if the searched city matches this metro area
+        if (metroCityKey.includes(mainCity) || mainCity.includes(metroCityKey) || 
+            metroCities.some(mc => mainCity.includes(mc))) {
+          // Now check if the address is in any city of this metro area
+          const allMetroCities = [metroCityKey, ...metroCities];
+          for (const metroCity of allMetroCities) {
+            if (normalizedAddress.includes(metroCity)) {
+              cityMatch = true;
+              break;
+            }
+          }
+          if (cityMatch) break;
+        }
+      }
+    }
+    
+    if (!cityMatch) {
+      // Silently skip logging for non-matching locations to reduce noise
       return false;
     }
     
-    // Additional check: the matched word should appear in the city position
+    // Verify the matched word appears in city position (not street name)
     let foundInCityPosition = false;
-    for (const word of regionCityWords) {
+    const allWordsToCheck = [...regionCityWords];
+    
+    // Also add metropolitan area cities to check
+    const mainCityWords = regionCityWords.filter(w => w.length > 2 && !brazilianStates[w.toLowerCase()]);
+    const mainCity = mainCityWords.join(' ');
+    for (const [metroCityKey, metroCities] of Object.entries(metropolitanAreas)) {
+      if (metroCityKey.includes(mainCity) || mainCity.includes(metroCityKey)) {
+        allWordsToCheck.push(...[metroCityKey, ...metroCities].filter(mc => normalizedAddress.includes(mc)));
+      }
+    }
+    
+    for (const word of allWordsToCheck) {
       const wordLower = word.toLowerCase();
-      // Check if word appears after a comma or dash (city position in Brazilian addresses)
       const cityPositionPattern = new RegExp(`[,\\-]\\s*[^,\\-]*${wordLower}[^,\\-]*\\s*[,\\-]`, 'i');
       const endPositionPattern = new RegExp(`[,\\-]\\s*[^,\\-]*${wordLower}[^,\\-]*$`, 'i');
       
@@ -1062,9 +1109,8 @@ function isAddressInLocation(address: string, requestedRegion: string, countryCo
     }
     
     if (!foundInCityPosition) {
-      // Check if the word appears standalone (not as part of a street name)
       const addressWords = normalizedAddress.split(/[\s,\-]+/);
-      for (const word of regionCityWords) {
+      for (const word of allWordsToCheck) {
         if (addressWords.includes(word.toLowerCase())) {
           foundInCityPosition = true;
           break;
@@ -1230,36 +1276,34 @@ function isIndustrySearch(segment: string): boolean {
 // Strict exclusions for industry searches - these are NEVER real industries
 const industryExclusions = [
   // Food service establishments
-  'bar', 'bares', 'boteco', 'botequim', 'pub', 'cervejaria artesanal',
+  'bar ', 'bares', 'boteco', 'botequim', 'pub ', 'cervejaria artesanal',
   'restaurante', 'restaurantes', 'self-service', 'self service', 'buffet', 'bistrô', 'bistro',
   'lanchonete', 'lanchonetes', 'lanches', 'fast food', 'fast-food',
   'pizzaria', 'pizzarias', 'pizza', 'rodízio',
   'padaria', 'padarias', 'panificadora', 'confeitaria', 'confeitarias', 'bakery',
-  'cafeteria', 'cafeterias', 'café', 'coffee', 'expresso',
+  'cafeteria', 'cafeterias', 'coffee shop',
   'hamburgueria', 'hamburguerias', 'burger', 'hot dog', 'cachorro quente',
   'churrascaria', 'churrascarias', 'rodízio de carnes',
-  'sushi', 'sushis', 'japonês', 'japones', 'temaki',
+  'sushi', 'sushis', 'temaki',
   'pastelaria', 'pastel', 'pastéis',
   'sorveteria', 'sorvete', 'açaí', 'acai', 'gelato',
   'food truck', 'food-truck', 'trailer de comida',
   'cantina', 'refeitório', 'refeição coletiva',
-  'doceria', 'doces', 'brigadeiro', 'chocolate artesanal',
+  'doceria', 'brigadeiro', 'chocolate artesanal',
   
-  // Retail and commerce
-  'loja', 'lojas', 'comércio', 'comercio', 'varejo', 'varejista',
-  'atacado', 'atacadista', 'atacadão', 'distribuidora', 'distribuidor',
-  'supermercado', 'mercado', 'mercearia', 'minimercado', 'hortifruti',
+  // Retail ONLY (removed distribuidora/atacado - many real industries also distribute)
+  'varejo', 'varejista',
+  'supermercado', 'minimercado', 'hortifruti',
   'magazine', 'americanas', 'casas bahia', 'ponto frio',
   
   // Food-related services that use "industrial" but aren't industries
   'cozinha industrial', 'cozinhas industriais', 'catering',
-  'fornecedor', 'fornecimento', 'fornecedora',
   'linha industrial', 'produtos industriais',
-  'equipamentos para cozinha', 'equipamento industrial',
+  'equipamentos para cozinha',
   
   // Other services
   'açougue', 'casa de carnes', 'frios e embutidos',
-  'empório', 'armazém', 'conveniência'
+  'conveniência'
 ];
 
 // Keywords that indicate REAL industries
@@ -1608,9 +1652,8 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel']
   },
   'distribuidoras': {
-    include: ['distribuidora', 'distribuidor', 'distribuição'],
-    mustMatch: ['distribuidora', 'distribuidor', 'distribuição'],
-    exclude: ['supermercado', 'restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel', 'padaria', 'loja']
+    include: ['distribuidora', 'distribuidor', 'distribuição', 'atacado', 'atacadista', 'fornecedor', 'revenda', 'wholesale'],
+    exclude: ['restaurante', 'lanchonete', 'pet', 'salão', 'academia', 'hotel', 'padaria']
   },
   // Novos segmentos alimentícios
   'panificadoras': {
@@ -2376,23 +2419,25 @@ function isRelevantToNiche(place: any, segment: string): boolean {
     }
     
     // Auto-generate category-aware exclusions for unmapped segments
+    // ONLY exclude from TITLE (not categories) to avoid false positives from Google types
     const autoExclusions: { [key: string]: string[] } = {
-      'restaurante': ['supermercado', 'mercado', 'fabrica', 'industria', 'loja de roupa'],
-      'loja': ['restaurante', 'lanchonete', 'bar ', 'fabrica', 'industria'],
-      'industria': ['restaurante', 'lanchonete', 'bar ', 'supermercado', 'loja'],
-      'fabrica': ['restaurante', 'lanchonete', 'bar ', 'supermercado', 'loja'],
-      'distribuidora': ['restaurante', 'lanchonete', 'bar '],
-      'clinica': ['restaurante', 'lanchonete', 'supermercado', 'loja de roupa', 'pet shop'],
-      'escola': ['restaurante', 'lanchonete', 'supermercado', 'fabrica'],
-      'academia': ['restaurante', 'lanchonete', 'supermercado', 'fabrica'],
-      'hotel': ['restaurante', 'lanchonete', 'supermercado', 'fabrica', 'loja'],
-      'escritorio': ['restaurante', 'lanchonete', 'supermercado', 'fabrica'],
-      'agencia': ['restaurante', 'lanchonete', 'supermercado', 'fabrica'],
+      'restaurante': ['supermercado', 'fabrica', 'industria'],
+      'loja': ['restaurante', 'lanchonete', 'fabrica', 'industria'],
+      'industria': ['restaurante', 'lanchonete', 'bar ', 'supermercado'],
+      'fabrica': ['restaurante', 'lanchonete', 'bar ', 'supermercado'],
+      'distribuidora': ['restaurante', 'lanchonete'],
+      'clinica': ['restaurante', 'lanchonete', 'supermercado'],
+      'escola': ['restaurante', 'lanchonete', 'supermercado'],
+      'academia': ['restaurante', 'lanchonete', 'supermercado'],
+      'hotel': ['restaurante', 'lanchonete', 'supermercado'],
+      'escritorio': ['restaurante', 'lanchonete', 'supermercado'],
+      'agencia': ['restaurante', 'lanchonete', 'supermercado'],
     };
     
     for (const [categoryKey, exclusions] of Object.entries(autoExclusions)) {
       if (normalizedSegment.includes(categoryKey)) {
         for (const excl of exclusions) {
+          // Only check against the TITLE, not combined text (Google types cause false positives)
           if (normalizeForMatch(title).includes(excl) && !normalizedSegment.includes(excl.trim())) {
             console.log(`❌ Auto-exclusion: "${place.title}" excluded for "${segmentLower}" - title matches: ${excl}`);
             return false;
@@ -3038,6 +3083,33 @@ serve(async (req) => {
     const citiesForState = isStateOnlySearch && stateAbbrev ? (stateCities[stateAbbrev] || []) : [];
 
     // Function to search places using Google Places API (New)
+    // Geocode a location string to get lat/lng for locationBias
+    const geocodeCache = new Map<string, { lat: number; lng: number } | null>();
+    async function geocodeLocation(location: string): Promise<{ lat: number; lng: number } | null> {
+      if (geocodeCache.has(location)) return geocodeCache.get(location) || null;
+      try {
+        const resp = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${GOOGLE_PLACES_API_KEY}`);
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.results && data.results.length > 0) {
+            const loc = data.results[0].geometry.location;
+            geocodeCache.set(location, loc);
+            return loc;
+          }
+        }
+      } catch (e) {
+        console.error('⚠️ Geocode error:', e);
+      }
+      geocodeCache.set(location, null);
+      return null;
+    }
+
+    // Pre-geocode the main location for locationBias
+    const mainGeocode = await geocodeLocation(locationQuery);
+    if (mainGeocode) {
+      console.log(`📍 Geocoded ${locationQuery} → ${mainGeocode.lat}, ${mainGeocode.lng}`);
+    }
+
     async function searchPlaces(query: string, location: string, _maxPages: number = 3): Promise<any[]> {
       const searchCache = searchCacheGlobal;
       const cacheKey = `${query}|${location}`;
@@ -3051,6 +3123,9 @@ serve(async (req) => {
 
       console.log(`📍 Google Places search: ${query} em ${location}`);
 
+      // Get coordinates for this specific location (may differ from main for neighborhood searches)
+      let searchGeocode = location === locationQuery ? mainGeocode : await geocodeLocation(location);
+
       try {
         let nextPageToken: string | undefined;
         let pagesSearched = 0;
@@ -3063,6 +3138,18 @@ serve(async (req) => {
             regionCode: 'BR',
             maxResultCount: 20,
           };
+
+          // Add locationBias to prioritize results near the target location
+          if (searchGeocode && !nextPageToken) {
+            // Use a radius of 30km for city searches, 100km for state searches
+            const radiusMeters = isStateOnlySearch ? 100000 : 30000;
+            body.locationBias = {
+              circle: {
+                center: { latitude: searchGeocode.lat, longitude: searchGeocode.lng },
+                radius: radiusMeters
+              }
+            };
+          }
 
           if (nextPageToken) {
             body.pageToken = nextPageToken;
