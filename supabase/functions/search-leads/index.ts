@@ -251,8 +251,25 @@ function generateSearchTerms(segment: string): string[] {
     'papelarias': ['papelaria', 'livraria', 'material escolar', 'loja de papelaria'],
     'atacadistas': ['atacadista', 'atacado', 'atacadão', 'distribuidor atacado'],
     'distribuidoras': ['distribuidora', 'distribuidor', 'distribuição', 'distribuidora de produtos'],
-    'distribuidores de food service': ['distribuidor food service', 'distribuidor restaurantes'],
-    'atacadistas de food service': ['atacadista food service', 'atacado restaurantes'],
+    'distribuidores de food service': [
+      'distribuidor food service', 'distribuidora food service', 'distribuidor de food service',
+      'atacado food service', 'atacadista food service', 'food service distribuidor',
+      'distribuidor para restaurantes', 'distribuidora para restaurantes', 'atacado para restaurantes',
+      'distribuidor para bares e restaurantes', 'distribuidora horeca', 'distribuidor horeca',
+      'fornecedor food service', 'fornecedor para restaurantes', 'fornecedor para bares',
+      'distribuidor de alimentos food service', 'atacado alimentos food service',
+      'distribuidor de insumos para restaurantes', 'distribuidor de produtos para gastronomia',
+      'distribuidora de alimentos para restaurantes', 'atacado para food service',
+      'distribuidor de descartáveis food service', 'distribuidor de embalagens food service',
+      'distribuidor de produtos para cozinha profissional', 'distribuidor de equipamentos food service',
+      'distribuidor de congelados food service', 'distribuidor de porcionados',
+      'distribuidor de alimentos congelados para restaurantes', 'atacado para pizzarias',
+      'atacado para lanchonetes', 'atacado para padarias', 'distribuidor de molhos',
+      'distribuidor de temperos', 'fornecedor de ingredientes', 'atacado de ingredientes',
+      'distribuidor de frios food service', 'distribuidor de laticínios food service',
+      'cash and carry food service', 'atacarejo food service'
+    ],
+    'atacadistas de food service': ['atacadista food service', 'atacado food service', 'atacado restaurantes', 'atacado para bares', 'atacado gastronomia', 'cash and carry', 'atacarejo food service'],
     'distribuidores de alimentos': ['distribuidora de alimentos', 'distribuidor de alimentos', 'atacado alimentos', 'alimentos atacado'],
     'distribuidores de bebidas': ['distribuidora de bebidas', 'distribuidor de bebidas', 'atacado bebidas', 'bebidas atacado', 'depósito de bebidas'],
     'distribuidores de água': ['distribuidora de água', 'distribuidor de água', 'água mineral distribuidora', 'depósito de água', 'distribuidora de água mineral'],
@@ -743,7 +760,7 @@ function generateSearchTerms(segment: string): string[] {
   }
   
   // For boost segments, return all terms; otherwise max 10
-  const isBoostTerm = term.includes('indústrias mecânicas') || term.includes('industrias mecanicas') || term.includes('distribuidores de material') || term.includes('distribuidores de pêssegos') || term.includes('distribuidores de pessegos') || term.includes('autopeças') || term.includes('auto peças') || term.includes('floricultura') || term.includes('floriculturas') || term.includes('garden center') || term.includes('garden centers') || term.includes('casa de utilidades') || term.includes('casas de utilidades');
+  const isBoostTerm = term.includes('indústrias mecânicas') || term.includes('industrias mecanicas') || term.includes('distribuidores de material') || term.includes('distribuidores de pêssegos') || term.includes('distribuidores de pessegos') || term.includes('autopeças') || term.includes('auto peças') || term.includes('floricultura') || term.includes('floriculturas') || term.includes('garden center') || term.includes('garden centers') || term.includes('casa de utilidades') || term.includes('casas de utilidades') || term.includes('food service');
   return isBoostTerm ? searchTerms : searchTerms.slice(0, 10);
 }
 
@@ -1672,6 +1689,16 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     include: ['distribuidora de frios', 'distribuidor de frios', 'laticínios', 'frios e laticínios', 'frigorífico distribuidor', 'frios atacado'],
     mustMatch: ['frios', 'laticínios', 'lacticínios', 'queijo', 'presunto', 'embutidos'],
     exclude: ['restaurante', 'lanchonete', 'bar', 'padaria', 'confeitaria', 'hotel', 'supermercado']
+  },
+  'distribuidores de food service': {
+    include: ['food service', 'distribuidor', 'distribuidora', 'atacado', 'atacadista', 'fornecedor', 'horeca', 'gastronomia', 'restaurante', 'cozinha profissional', 'cozinha industrial', 'congelados', 'porcionados', 'ingredientes', 'insumos'],
+    mustMatch: ['food service', 'foodservice', 'horeca', 'distribuidor', 'distribuidora', 'atacado', 'atacadista', 'fornecedor'],
+    exclude: ['pet shop', 'veterinário', 'escola', 'academia', 'salão', 'farmácia', 'roupas', 'calçados', 'móveis', 'eletrônicos', 'informática']
+  },
+  'atacadistas de food service': {
+    include: ['food service', 'atacado', 'atacadista', 'cash and carry', 'atacarejo', 'horeca', 'distribuidor', 'gastronomia'],
+    mustMatch: ['food service', 'foodservice', 'horeca', 'atacado', 'atacadista', 'atacarejo'],
+    exclude: ['pet shop', 'veterinário', 'escola', 'farmácia', 'roupas', 'calçados']
   },
   'distribuidores de alimentos': {
     include: ['distribuidora de alimentos', 'distribuidor de alimentos', 'atacado alimentos', 'alimentos atacado', 'alimentos distribuidor'],
