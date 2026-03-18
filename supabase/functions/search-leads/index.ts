@@ -2526,11 +2526,27 @@ function processResults(apifyResults: any[], segment: string, cleanRegion: strin
   
   // Step 3: Deduplicate by placeId first
   const seenPlaceIds = new Set<string>();
+  const beforePlaceIdDedup = results.length;
   results = results.filter((place: any) => {
     if (place.placeId && seenPlaceIds.has(place.placeId)) return false;
     if (place.placeId) seenPlaceIds.add(place.placeId);
     return true;
   });
+  if (results.length < beforePlaceIdDedup) console.log(`📊 PlaceId dedup removed ${beforePlaceIdDedup - results.length}`);
+  
+  // Step 3b: Deduplicate by phone number (same phone = same business)
+  const seenPhones = new Set<string>();
+  const beforePhoneDedup = results.length;
+  results = results.filter((place: any) => {
+    const phone = (place.phone || place.phoneUnformatted || '').replace(/\D/g, '');
+    if (phone.length >= 8) {
+      const phoneKey = phone.slice(-8); // last 8 digits to normalize
+      if (seenPhones.has(phoneKey)) return false;
+      seenPhones.add(phoneKey);
+    }
+    return true;
+  });
+  if (results.length < beforePhoneDedup) console.log(`📊 Phone dedup removed ${beforePhoneDedup - results.length}`);
   
   // Step 4: Deduplicate by normalized company name (for Matriz, only one per brand)
   if (businessType === 'matriz') {
@@ -2557,14 +2573,16 @@ function processResults(apifyResults: any[], segment: string, cleanRegion: strin
     results = Array.from(seenCompanies.values());
     console.log(`📊 After brand deduplication: ${results.length} unique companies`);
   } else {
-    // Regular deduplication by title+address
-    const seen = new Set<string>();
+    // Regular deduplication by normalized name (same name = same business, even with different address)
+    const seenNames = new Set<string>();
+    const beforeNameDedup = results.length;
     results = results.filter((place: any) => {
-      const key = `${normalizeCompanyName(place.title)}-${(place.address || '').slice(0, 30)}`;
-      if (seen.has(key)) return false;
-      seen.add(key);
+      const key = normalizeCompanyName(place.title);
+      if (key.length >= 5 && seenNames.has(key)) return false;
+      if (key.length >= 5) seenNames.add(key);
       return true;
     });
+    if (results.length < beforeNameDedup) console.log(`📊 Name dedup removed ${beforeNameDedup - results.length}`);
   }
   
   // Hard limit
