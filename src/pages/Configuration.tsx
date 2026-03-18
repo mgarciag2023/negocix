@@ -6978,7 +6978,16 @@ const Configuration = () => {
                   )}
                   
                   {(() => {
-                    const filtered = customerTypes.filter(customer => matchesSearch(customer, customerSearch));
+                    const uniqueCustomerTypes = Array.from(
+                      new Map(
+                        customerTypes.map((customer) => {
+                          const trimmedCustomer = customer.trim();
+                          const dedupKey = normalizeText(trimmedCustomer).replace(/\s+/g, " ");
+                          return [dedupKey, trimmedCustomer] as const;
+                        })
+                      ).values()
+                    );
+                    const filtered = uniqueCustomerTypes.filter((customer) => matchesSearch(customer, customerSearch));
                     const displayItems = filtered.slice(0, customerSearch ? 200 : visibleCount);
                     const hasMore = filtered.length > displayItems.length;
                     return (
