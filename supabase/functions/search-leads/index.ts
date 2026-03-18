@@ -982,6 +982,45 @@ const metropolitanAreas: { [key: string]: string[] } = {
   'campinas': ['sumare', 'hortolandia', 'indaiatuba', 'valinhos', 'vinhedo', 'paulinia', 'americana'],
 };
 
+function calculateDistanceKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const toRad = (value: number) => (value * Math.PI) / 180;
+  const earthRadiusKm = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+
+  return 2 * earthRadiusKm * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function matchesRequestedLocation(
+  place: any,
+  requestedRegion: string,
+  countryCode: string,
+  searchCenter: { lat: number; lng: number } | null = null,
+  validationRadiusKm: number = 35,
+): boolean {
+  const address = place?.address || '';
+  if (isAddressInLocation(address, requestedRegion, countryCode)) {
+    return true;
+  }
+
+  if (!searchCenter) {
+    return false;
+  }
+
+  const latitude = place?.location?.lat ?? place?.location?.latitude;
+  const longitude = place?.location?.lng ?? place?.location?.longitude;
+
+  if (typeof latitude !== 'number' || typeof longitude !== 'number') {
+    return false;
+  }
+
+  const distanceKm = calculateDistanceKm(searchCenter.lat, searchCenter.lng, latitude, longitude);
+  return distanceKm <= validationRadiusKm;
+}
+
 // Check if an address matches the requested location
 function isAddressInLocation(address: string, requestedRegion: string, countryCode: string): boolean {
   if (!address || !requestedRegion) return false;
@@ -3110,9 +3149,10 @@ serve(async (req) => {
       console.log(`📍 Geocoded ${locationQuery} → ${mainGeocode.lat}, ${mainGeocode.lng}`);
     }
 
-    async function searchPlaces(query: string, location: string, _maxPages: number = 3): Promise<any[]> {
+    async function searchPlaces(query: string, location: string, _maxPages: number = 3, radiusMetersOverride?: number): Promise<any[]> {
       const searchCache = searchCacheGlobal;
-      const cacheKey = `${query}|${location}`;
+      const radiusMeters = radiusMetersOverride ?? (isStateOnlySearch ? 100000 : 30000);
+      const cacheKey = `${query}|${location}|${radiusMeters}|${_maxPages}`;
       if (searchCache.has(cacheKey)) {
         console.log(`💾 Cache hit for: ${query}`);
         return searchCache.get(cacheKey) || [];
@@ -3124,7 +3164,7 @@ serve(async (req) => {
       console.log(`📍 Google Places search: ${query} em ${location}`);
 
       // Get coordinates for this specific location (may differ from main for neighborhood searches)
-      let searchGeocode = location === locationQuery ? mainGeocode : await geocodeLocation(location);
+      const searchGeocode = location === locationQuery ? mainGeocode : await geocodeLocation(location);
 
       try {
         let nextPageToken: string | undefined;
@@ -3141,12 +3181,10 @@ serve(async (req) => {
 
           // Add locationBias to prioritize results near the target location
           if (searchGeocode && !nextPageToken) {
-            // Use a radius of 30km for city searches, 100km for state searches
-            const radiusMeters = isStateOnlySearch ? 100000 : 30000;
             body.locationBias = {
               circle: {
                 center: { latitude: searchGeocode.lat, longitude: searchGeocode.lng },
-                radius: radiusMeters
+                radius: radiusMeters,
               }
             };
           }
@@ -3209,6 +3247,54 @@ serve(async (req) => {
 
       searchCache.set(cacheKey, allResults);
       return allResults;
+    }
+
+    async function expandCitySearchIfNeeded(currentPlaces: any[], currentLeadCount: number): Promise<{ places: any[]; validationRadiusKm: number }> {
+      const baseRadiusKm = 35;
+      if (isStateOnlySearch || !mainGeocode || currentLeadCount >= MIN_LEADS_TARGET) {
+        return { places: currentPlaces, validationRadiusKm: baseRadiusKm };
+      }
+
+      const severeShortage = currentLeadCount < Math.max(20, Math.floor(MIN_LEADS_TARGET * 0.35));
+      const expansionRadiusMeters = severeShortage ? 90000 : 60000;
+      const expansionRadiusKm = Math.round(expansionRadiusMeters / 1000);
+      const expansionPages = severeShortage ? 8 : 5;
+      const topTermsPerSegment = severeShortage ? 8 : 5;
+
+      console.log(`🛰️ LOW VOLUME: ${currentLeadCount} leads. Expanding search radius to ${expansionRadiusKm}km with ${topTermsPerSegment} top terms per segment.`);
+
+      const expansionPromises = segments.flatMap((seg) => {
+        const isBoostSeg = isBoostSegment(seg);
+
+        let expansionTerms: string[];
+        if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
+          const ecomType = ecommerceType.trim().toLowerCase();
+          expansionTerms = [`loja ${ecomType}`, `${ecomType}`, `loja de ${ecomType}`, `e-commerce ${ecomType}`];
+        } else {
+          const limit = isBoostSeg ? Math.max(topTermsPerSegment, 10) : topTermsPerSegment;
+          expansionTerms = generateSearchTerms(seg).slice(0, limit);
+        }
+
+        return expansionTerms.map(async (term) => {
+          const places = await searchPlaces(term, locationQuery, isBoostSeg ? Math.max(expansionPages, 6) : expansionPages, expansionRadiusMeters);
+          return places.map((place) => ({
+            ...place,
+            _searchSegment: seg.toLowerCase(),
+            _displayCategory: segmentDisplayNames[seg.toLowerCase()] || seg,
+          }));
+        });
+      });
+
+      const expandedTaggedPlaces = (await Promise.all(expansionPromises)).flat();
+      if (expandedTaggedPlaces.length === 0) {
+        return { places: currentPlaces, validationRadiusKm: baseRadiusKm };
+      }
+
+      console.log(`🛰️ Regional expansion added ${expandedTaggedPlaces.length} raw places`);
+      return {
+        places: [...currentPlaces, ...expandedTaggedPlaces],
+        validationRadiusKm: expansionRadiusKm,
+      };
     }
     
     // Parse segments - split by comma and clean each one
@@ -3454,13 +3540,82 @@ serve(async (req) => {
       return scoreB - scoreA;
     });
 
+    let validationRadiusKm = 35;
+
     // No detail fetching needed - RapidAPI returns phone/website directly!
     const placesWithPhone = activePlaces.filter(p => p.phone && p.phone.trim() !== '');
     console.log(`📞 ${placesWithPhone.length} places with phone out of ${activePlaces.length}`);
 
     // Compute final leads after ALL strict filters
-    let leads = processResultsWithCategories(activePlaces, segment, cleanRegion, MAX_TOTAL_LEADS, bizType, digPresence, digActivity);
+    let leads = processResultsWithCategories(
+      activePlaces,
+      segment,
+      cleanRegion,
+      MAX_TOTAL_LEADS,
+      bizType,
+      digPresence,
+      digActivity,
+      countryCode,
+      isStateOnlySearch ? null : mainGeocode,
+      validationRadiusKm,
+    );
     console.log(`✅ FINAL: ${leads.length} leads ready (target: ${MIN_LEADS_TARGET}-${MAX_TOTAL_LEADS})`);
+
+    if (!isStateOnlySearch && leads.length < MIN_LEADS_TARGET) {
+      const expandedSearch = await expandCitySearchIfNeeded(allPlacesWithSegment, leads.length);
+
+      if (expandedSearch.places.length > allPlacesWithSegment.length) {
+        allPlacesWithSegment = expandedSearch.places;
+        validationRadiusKm = expandedSearch.validationRadiusKm;
+
+        const expandedSeenIds = new Set<string>();
+        allPlacesWithSegment = allPlacesWithSegment.filter(place => {
+          if (expandedSeenIds.has(place.place_id)) return false;
+          expandedSeenIds.add(place.place_id);
+          return true;
+        });
+        console.log(`🛰️ After regional deduplication: ${allPlacesWithSegment.length} unique places`);
+
+        const expandedTransformedPlaces = allPlacesWithSegment.map(place => ({
+          placeId: place.place_id,
+          title: place.name,
+          address: place.formatted_address || place.vicinity,
+          categoryName: place.types?.[0]?.replace(/_/g, ' ') || '',
+          categories: place.types || [],
+          stars: place.rating || 0,
+          reviewsCount: place.user_ratings_total || 0,
+          phone: place._phone || '',
+          phoneUnformatted: place._phone || '',
+          website: place._website || '',
+          email: place._email || '',
+          permanentlyClosed: place.permanently_closed || place.business_status === 'CLOSED_PERMANENTLY',
+          location: place.geometry?.location,
+          _searchSegment: place._searchSegment,
+          _displayCategory: place._displayCategory
+        }));
+
+        const expandedActivePlaces = expandedTransformedPlaces.filter(p => !p.permanentlyClosed);
+        expandedActivePlaces.sort((a, b) => {
+          const scoreA = (a.stars || 0) * 10 + Math.min(a.reviewsCount || 0, 100);
+          const scoreB = (b.stars || 0) * 10 + Math.min(b.reviewsCount || 0, 100);
+          return scoreB - scoreA;
+        });
+
+        leads = processResultsWithCategories(
+          expandedActivePlaces,
+          segment,
+          cleanRegion,
+          MAX_TOTAL_LEADS,
+          bizType,
+          digPresence,
+          digActivity,
+          countryCode,
+          mainGeocode,
+          validationRadiusKm,
+        );
+        console.log(`✅ AFTER REGIONAL EXPANSION: ${leads.length} leads ready (validation radius: ${validationRadiusKm}km)`);
+      }
+    }
     
     // Extract emails from websites - ALWAYS attempt, limit batch size to avoid CPU timeout
     const placesWithWebsite = leads.filter((l: any) => l.website && l.website !== 'Não disponível' && l.website.trim().length > 5);
@@ -3769,11 +3924,19 @@ function classifyDigitalActivity(place: any): 'low' | 'basic' | 'active' {
 }
 
 // New version of processResults that uses the tagged category from search
-function processResultsWithCategories(apifyResults: any[], segment: string, cleanRegion: string, maxLeads: number, businessType: string = 'all', digitalPresence: string = 'all', digitalActivity: string = 'all'): any[] {
-  console.log(`📊 Processing ${apifyResults.length} raw results for segment: ${segment}, businessType: ${businessType}, digitalPresence: ${digitalPresence}, digitalActivity: ${digitalActivity}`);
-  
-  // Extract country code from segment context (passed via cleanRegion context)
-  const countryCode = 'BR'; // Default to Brazil, could be passed as parameter
+function processResultsWithCategories(
+  apifyResults: any[],
+  segment: string,
+  cleanRegion: string,
+  maxLeads: number,
+  businessType: string = 'all',
+  digitalPresence: string = 'all',
+  digitalActivity: string = 'all',
+  countryCode: string = 'BR',
+  searchCenter: { lat: number; lng: number } | null = null,
+  validationRadiusKm: number = 35,
+): any[] {
+  console.log(`📊 Processing ${apifyResults.length} raw results for segment: ${segment}, businessType: ${businessType}, digitalPresence: ${digitalPresence}, digitalActivity: ${digitalActivity}, validationRadiusKm: ${validationRadiusKm}`);
   
   // Step 1: Filter by basic requirements, LOCATION VALIDATION, AND niche relevance
   let results = apifyResults.filter((place: any) => {
@@ -3786,7 +3949,7 @@ function processResultsWithCategories(apifyResults: any[], segment: string, clea
     
     // CRITICAL: LOCATION VALIDATION - Ensure lead is in the requested region
     const address = place.address || '';
-    if (!isAddressInLocation(address, cleanRegion, countryCode)) {
+    if (!matchesRequestedLocation(place, cleanRegion, countryCode, searchCenter, validationRadiusKm)) {
       console.log(`❌ Location mismatch: "${place.title}" at "${address}" not in "${cleanRegion}"`);
       return false;
     }
