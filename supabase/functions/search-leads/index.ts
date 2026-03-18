@@ -1230,36 +1230,34 @@ function isIndustrySearch(segment: string): boolean {
 // Strict exclusions for industry searches - these are NEVER real industries
 const industryExclusions = [
   // Food service establishments
-  'bar', 'bares', 'boteco', 'botequim', 'pub', 'cervejaria artesanal',
+  'bar ', 'bares', 'boteco', 'botequim', 'pub ', 'cervejaria artesanal',
   'restaurante', 'restaurantes', 'self-service', 'self service', 'buffet', 'bistrô', 'bistro',
   'lanchonete', 'lanchonetes', 'lanches', 'fast food', 'fast-food',
   'pizzaria', 'pizzarias', 'pizza', 'rodízio',
   'padaria', 'padarias', 'panificadora', 'confeitaria', 'confeitarias', 'bakery',
-  'cafeteria', 'cafeterias', 'café', 'coffee', 'expresso',
+  'cafeteria', 'cafeterias', 'coffee shop',
   'hamburgueria', 'hamburguerias', 'burger', 'hot dog', 'cachorro quente',
   'churrascaria', 'churrascarias', 'rodízio de carnes',
-  'sushi', 'sushis', 'japonês', 'japones', 'temaki',
+  'sushi', 'sushis', 'temaki',
   'pastelaria', 'pastel', 'pastéis',
   'sorveteria', 'sorvete', 'açaí', 'acai', 'gelato',
   'food truck', 'food-truck', 'trailer de comida',
   'cantina', 'refeitório', 'refeição coletiva',
-  'doceria', 'doces', 'brigadeiro', 'chocolate artesanal',
+  'doceria', 'brigadeiro', 'chocolate artesanal',
   
-  // Retail and commerce
-  'loja', 'lojas', 'comércio', 'comercio', 'varejo', 'varejista',
-  'atacado', 'atacadista', 'atacadão', 'distribuidora', 'distribuidor',
-  'supermercado', 'mercado', 'mercearia', 'minimercado', 'hortifruti',
+  // Retail ONLY (removed distribuidora/atacado - many real industries also distribute)
+  'varejo', 'varejista',
+  'supermercado', 'minimercado', 'hortifruti',
   'magazine', 'americanas', 'casas bahia', 'ponto frio',
   
   // Food-related services that use "industrial" but aren't industries
   'cozinha industrial', 'cozinhas industriais', 'catering',
-  'fornecedor', 'fornecimento', 'fornecedora',
   'linha industrial', 'produtos industriais',
-  'equipamentos para cozinha', 'equipamento industrial',
+  'equipamentos para cozinha',
   
   // Other services
   'açougue', 'casa de carnes', 'frios e embutidos',
-  'empório', 'armazém', 'conveniência'
+  'conveniência'
 ];
 
 // Keywords that indicate REAL industries
