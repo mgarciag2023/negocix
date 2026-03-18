@@ -112,6 +112,41 @@ function getCleanWebsite(place: any): string | null {
   return null;
 }
 
+// Shared segment helpers for global search scaling
+function normalizeSegmentText(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function isBoostSegment(segment: string): boolean {
+  const normalized = normalizeSegmentText(segment);
+  const boostKeywords = [
+    'industrias mecanicas',
+    'distribuidores de material',
+    'distribuidores de pessegos',
+    'distribuidores de autopecas',
+    'distribuidores de food service',
+    'food service',
+    'autopecas',
+    'floriculturas',
+    'garden center',
+    'casa de utilidades',
+    'metalurg',
+    'usinag',
+    'atacad',
+    'distribuidor',
+    'fornecedor',
+    'fabrica',
+    'industria',
+  ];
+
+  return boostKeywords.some((keyword) => normalized.includes(keyword));
+}
+
 // Generate search terms - OPTIMIZED for best results with fewer API calls
 function generateSearchTerms(segment: string): string[] {
   const term = segment.split(',')[0].trim().toLowerCase();
