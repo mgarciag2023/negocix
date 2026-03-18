@@ -2373,23 +2373,25 @@ function isRelevantToNiche(place: any, segment: string): boolean {
     }
     
     // Auto-generate category-aware exclusions for unmapped segments
+    // ONLY exclude from TITLE (not categories) to avoid false positives from Google types
     const autoExclusions: { [key: string]: string[] } = {
-      'restaurante': ['supermercado', 'mercado', 'fabrica', 'industria', 'loja de roupa'],
-      'loja': ['restaurante', 'lanchonete', 'bar ', 'fabrica', 'industria'],
-      'industria': ['restaurante', 'lanchonete', 'bar ', 'supermercado', 'loja'],
-      'fabrica': ['restaurante', 'lanchonete', 'bar ', 'supermercado', 'loja'],
-      'distribuidora': ['restaurante', 'lanchonete', 'bar '],
-      'clinica': ['restaurante', 'lanchonete', 'supermercado', 'loja de roupa', 'pet shop'],
-      'escola': ['restaurante', 'lanchonete', 'supermercado', 'fabrica'],
-      'academia': ['restaurante', 'lanchonete', 'supermercado', 'fabrica'],
-      'hotel': ['restaurante', 'lanchonete', 'supermercado', 'fabrica', 'loja'],
-      'escritorio': ['restaurante', 'lanchonete', 'supermercado', 'fabrica'],
-      'agencia': ['restaurante', 'lanchonete', 'supermercado', 'fabrica'],
+      'restaurante': ['supermercado', 'fabrica', 'industria'],
+      'loja': ['restaurante', 'lanchonete', 'fabrica', 'industria'],
+      'industria': ['restaurante', 'lanchonete', 'bar ', 'supermercado'],
+      'fabrica': ['restaurante', 'lanchonete', 'bar ', 'supermercado'],
+      'distribuidora': ['restaurante', 'lanchonete'],
+      'clinica': ['restaurante', 'lanchonete', 'supermercado'],
+      'escola': ['restaurante', 'lanchonete', 'supermercado'],
+      'academia': ['restaurante', 'lanchonete', 'supermercado'],
+      'hotel': ['restaurante', 'lanchonete', 'supermercado'],
+      'escritorio': ['restaurante', 'lanchonete', 'supermercado'],
+      'agencia': ['restaurante', 'lanchonete', 'supermercado'],
     };
     
     for (const [categoryKey, exclusions] of Object.entries(autoExclusions)) {
       if (normalizedSegment.includes(categoryKey)) {
         for (const excl of exclusions) {
+          // Only check against the TITLE, not combined text (Google types cause false positives)
           if (normalizeForMatch(title).includes(excl) && !normalizedSegment.includes(excl.trim())) {
             console.log(`❌ Auto-exclusion: "${place.title}" excluded for "${segmentLower}" - title matches: ${excl}`);
             return false;
