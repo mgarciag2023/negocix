@@ -112,6 +112,41 @@ function getCleanWebsite(place: any): string | null {
   return null;
 }
 
+// Shared segment helpers for global search scaling
+function normalizeSegmentText(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function isBoostSegment(segment: string): boolean {
+  const normalized = normalizeSegmentText(segment);
+  const boostKeywords = [
+    'industrias mecanicas',
+    'distribuidores de material',
+    'distribuidores de pessegos',
+    'distribuidores de autopecas',
+    'distribuidores de food service',
+    'food service',
+    'autopecas',
+    'floriculturas',
+    'garden center',
+    'casa de utilidades',
+    'metalurg',
+    'usinag',
+    'atacad',
+    'distribuidor',
+    'fornecedor',
+    'fabrica',
+    'industria',
+  ];
+
+  return boostKeywords.some((keyword) => normalized.includes(keyword));
+}
+
 // Generate search terms - OPTIMIZED for best results with fewer API calls
 function generateSearchTerms(segment: string): string[] {
   const term = segment.split(',')[0].trim().toLowerCase();
@@ -758,10 +793,46 @@ function generateSearchTerms(segment: string): string[] {
     // Deduplicate
     searchTerms = [...new Set(baseTerms)].filter(t => t.length >= 3);
   }
-  
-  // For boost segments, return all terms; otherwise max 10
-  const isBoostTerm = term.includes('indústrias mecânicas') || term.includes('industrias mecanicas') || term.includes('distribuidores de material') || term.includes('distribuidores de pêssegos') || term.includes('distribuidores de pessegos') || term.includes('autopeças') || term.includes('auto peças') || term.includes('floricultura') || term.includes('floriculturas') || term.includes('garden center') || term.includes('garden centers') || term.includes('casa de utilidades') || term.includes('casas de utilidades') || term.includes('food service');
-  return isBoostTerm ? searchTerms : searchTerms.slice(0, 10);
+
+  const normalizedSegment = normalizeSegmentText(term);
+  const isIndustrialSegment = /(industr|fabrica|metalurg|mecanic|usinag|quimic|plast)/.test(normalizedSegment);
+  const isDistributionSegment = /(distrib|atacad|fornecedor|revenda)/.test(normalizedSegment);
+  const isRetailSegment = /(loja|comerc|bazar|shop|mercado|emporio|casa)/.test(normalizedSegment);
+
+  const expandedTerms: string[] = [];
+  for (const rawTerm of searchTerms) {
+    const cleaned = rawTerm.trim().toLowerCase();
+    if (!cleaned || cleaned.length < 3) continue;
+
+    const normalized = normalizeSegmentText(cleaned);
+    const hasPrefix = /^(loja|distribuidora|distribuidor|atacado|atacadista|empresa|industria|fabrica|fornecedor|casa)\s+de\s+/.test(normalized);
+
+    expandedTerms.push(cleaned, normalized);
+
+    if (cleaned.endsWith('s') && cleaned.length > 4) {
+      expandedTerms.push(cleaned.slice(0, -1));
+    }
+
+    if (!hasPrefix) {
+      if (isDistributionSegment) {
+        expandedTerms.push(`distribuidora de ${cleaned}`, `atacado de ${cleaned}`, `fornecedor de ${cleaned}`);
+      }
+
+      if (isIndustrialSegment) {
+        expandedTerms.push(`fábrica de ${cleaned}`, `indústria de ${cleaned}`, `fabricante de ${cleaned}`);
+      }
+
+      if (isRetailSegment) {
+        expandedTerms.push(`loja de ${cleaned}`, `casa de ${cleaned}`, `comércio de ${cleaned}`);
+      }
+    }
+  }
+
+  const dedupedExpandedTerms = [...new Set(expandedTerms.map(t => t.trim()).filter(t => t.length >= 3))];
+  const shouldBoost = isBoostSegment(term);
+
+  // Boost usa cap maior; padrão também sobe para evitar buscas sem resultado em nichos long-tail
+  return shouldBoost ? dedupedExpandedTerms.slice(0, 40) : dedupedExpandedTerms.slice(0, 14);
 }
 
 // Estimate revenue based on reviews, rating, and category - MORE PRECISE
@@ -3083,26 +3154,22 @@ serve(async (req) => {
     
     if (isStateOnlySearch && citiesForState.length > 0) {
       // STATE SEARCH: For boost segments, search more cities
-      const isBoostStateSearch = segments.some(s => {
-        const sl = s.toLowerCase();
-        return sl.includes('autopeças') || sl.includes('autopecas') || sl.includes('auto peças') || sl.includes('distribuidores de autopeças') || sl.includes('distribuidores de material') || sl.includes('indústrias mecânicas') || sl.includes('industrias mecanicas');
-      });
-      const maxCities = isBoostStateSearch ? 15 : 8;
+      const isBoostStateSearch = segments.some((s) => isBoostSegment(s));
+      const maxCities = isBoostStateSearch ? 18 : 10;
       const citiesToSearch = citiesForState.slice(0, maxCities);
       console.log(`🏙️ STATE SEARCH: Searching across ${citiesToSearch.length} cities in ${stateAbbrev.toUpperCase()} (of ${citiesForState.length} total)${isBoostStateSearch ? ' [BOOSTED]' : ''}`);
       
       for (const seg of segments) {
         let searchTerms: string[];
-        const segLower = seg.toLowerCase();
-        const isBoostSeg = segLower.includes('distribuidores de material') || segLower.includes('indústrias mecânicas') || segLower.includes('industrias mecanicas') || segLower.includes('distribuidores de pêssegos') || segLower.includes('distribuidores de pessegos') || segLower.includes('autopeças') || segLower.includes('autopecas') || segLower.includes('auto peças') || segLower.includes('distribuidores de autopeças');
+        const isBoostSeg = isBoostSegment(seg);
         
         if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
           const ecomType = ecommerceType.trim().toLowerCase();
-          searchTerms = [`loja ${ecomType}`, `${ecomType}`];
+          searchTerms = [`loja ${ecomType}`, `${ecomType}`, `e-commerce ${ecomType}`];
         } else {
           searchTerms = generateSearchTerms(seg);
-          // For boost segments, use more terms even in state search
-          searchTerms = isBoostSeg ? searchTerms.slice(0, 15) : searchTerms.slice(0, 4);
+          // Estado multiplica por cidades; aumenta sem explodir custo
+          searchTerms = isBoostSeg ? searchTerms.slice(0, 18) : searchTerms.slice(0, 6);
         }
         
         console.log(`📤 Searching segment "${seg}" with terms:`, searchTerms);
@@ -3169,29 +3236,25 @@ serve(async (req) => {
       }
     } else {
       // CITY/REGION SEARCH: Original behavior
-      const isBoostSegmentSearch = segments.some(s => {
-        const sl = s.toLowerCase();
-        return sl.includes('distribuidores de material') || sl.includes('indústrias mecânicas') || sl.includes('industrias mecanicas') || sl.includes('distribuidores de pêssegos') || sl.includes('distribuidores de pessegos') || sl.includes('autopeças') || sl.includes('autopecas') || sl.includes('auto peças') || sl.includes('distribuidores de autopeças');
-      });
-      const maxPagesPerSegment = isBoostSegmentSearch ? 40 : 30;
+      const isBoostSegmentSearch = segments.some((s) => isBoostSegment(s));
+      const maxPagesPerSegment = isBoostSegmentSearch ? 40 : 32;
       const adjustedPages = isBoostSegmentSearch 
         ? 40 
-        : Math.max(15, Math.min(maxPagesPerSegment, Math.floor(90 / segments.length)));
+        : Math.max(18, Math.min(maxPagesPerSegment, Math.floor(120 / segments.length)));
       console.log(`⚡ MAXIMUM VOLUME: ${adjustedPages} pages per segment (${segments.length} segments)${isBoostSegmentSearch ? ' [BOOSTED]' : ''}`);
       
       for (const seg of segments) {
         let searchTerms: string[];
-        const segLower = seg.toLowerCase();
-        const isBoostSeg = segLower.includes('distribuidores de material') || segLower.includes('indústrias mecânicas') || segLower.includes('industrias mecanicas') || segLower.includes('distribuidores de pêssegos') || segLower.includes('distribuidores de pessegos') || segLower.includes('autopeças') || segLower.includes('autopecas') || segLower.includes('auto peças') || segLower.includes('distribuidores de autopeças');
+        const isBoostSeg = isBoostSegment(seg);
         
         if (isEcommerceSearch && ecommerceType && ecommerceType.trim()) {
           const ecomType = ecommerceType.trim().toLowerCase();
-          searchTerms = [`loja ${ecomType}`, `${ecomType}`, `loja de ${ecomType}`];
+          searchTerms = [`loja ${ecomType}`, `${ecomType}`, `loja de ${ecomType}`, `e-commerce ${ecomType}`];
           console.log(`🛒 E-commerce específico: ${ecomType}`);
         } else {
           searchTerms = generateSearchTerms(seg);
-          // For boost segments, use ALL terms for maximum volume
-          searchTerms = isBoostSeg ? searchTerms : searchTerms.slice(0, 10);
+          // Padrão sobe para 14 termos para reduzir segmentos com zero resultado
+          searchTerms = isBoostSeg ? searchTerms : searchTerms.slice(0, 14);
         }
         
         if (isBoostSeg) {
