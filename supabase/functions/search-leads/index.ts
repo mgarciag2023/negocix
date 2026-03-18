@@ -963,6 +963,25 @@ function extractLocationParts(address: string): { city: string | null; state: st
   return { city, state, neighborhood: null };
 }
 
+// Metropolitan area mappings - cities that should be accepted when searching for a nearby city
+const metropolitanAreas: { [key: string]: string[] } = {
+  'sao paulo': ['guarulhos', 'osasco', 'santo andre', 'sao bernardo', 'diadema', 'maua', 'carapicuiba', 'barueri', 'cotia', 'taboao da serra', 'itaquaquecetuba', 'embu das artes', 'suzano', 'ferraz de vasconcelos', 'mogi das cruzes', 'itapecerica da serra', 'francisco morato', 'franco da rocha', 'caieiras', 'aruja', 'santana de parnaiba', 'jandira', 'poa', 'itapevi'],
+  'rio de janeiro': ['niteroi', 'sao goncalo', 'duque de caxias', 'nova iguacu', 'belford roxo', 'sao joao de meriti', 'mesquita', 'nilopolis', 'queimados', 'itaborai', 'mage', 'marica', 'guapimirim'],
+  'belo horizonte': ['contagem', 'betim', 'ribeiro das neves', 'santa luzia', 'ibirite', 'sabara', 'vespasiano', 'nova lima', 'lagoa santa', 'pedro leopoldo'],
+  'porto alegre': ['canoas', 'gravatai', 'viamao', 'novo hamburgo', 'sao leopoldo', 'alvorada', 'cachoeirinha', 'sapucaia do sul', 'esteio', 'guaiba', 'eldorado do sul'],
+  'curitiba': ['sao jose dos pinhais', 'colombo', 'araucaria', 'pinhais', 'campo largo', 'almirante tamandare', 'piraquara', 'fazenda rio grande', 'quatro barras'],
+  'salvador': ['lauro de freitas', 'camacari', 'simoes filho', 'candeias', 'dias davila', 'itaparica'],
+  'recife': ['jaboatao dos guararapes', 'olinda', 'paulista', 'camaragibe', 'cabo de santo agostinho', 'abreu e lima'],
+  'fortaleza': ['caucaia', 'maracanau', 'maranguape', 'pacatuba', 'eusebio', 'aquiraz'],
+  'goiania': ['aparecida de goiania', 'trindade', 'senador canedo', 'goianira'],
+  'brasilia': ['taguatinga', 'ceilandia', 'samambaia', 'aguas claras', 'gama', 'sobradinho', 'planaltina'],
+  'vitoria': ['vila velha', 'serra', 'cariacica', 'viana', 'guarapari', 'fundao'],
+  'florianopolis': ['sao jose', 'palhoca', 'biguacu'],
+  'manaus': ['iranduba', 'manacapuru'],
+  'belem': ['ananindeua', 'marituba', 'benevides'],
+  'campinas': ['sumare', 'hortolandia', 'indaiatuba', 'valinhos', 'vinhedo', 'paulinia', 'americana'],
+};
+
 // Check if an address matches the requested location
 function isAddressInLocation(address: string, requestedRegion: string, countryCode: string): boolean {
   if (!address || !requestedRegion) return false;
@@ -992,24 +1011,20 @@ function isAddressInLocation(address: string, requestedRegion: string, countryCo
                               Object.values(brazilianStates).includes(cleanRegion);
     
     if (isStateOnlySearch) {
-      // STATE-ONLY SEARCH: Accept any address that contains this state
       const stateAbbrev = brazilianStates[cleanRegion] ? cleanRegion : 
                           Object.keys(brazilianStates).find(k => brazilianStates[k] === cleanRegion);
       
       if (stateAbbrev) {
-        // Check if address contains " - XX," or " - XX " or ", XX," pattern (state abbreviation position)
         const statePattern = new RegExp(`[,\\s\\-]\\s*${stateAbbrev}\\s*[,\\s\\-]|[,\\s\\-]\\s*${stateAbbrev}\\s*$`, 'i');
         if (statePattern.test(address.toLowerCase())) {
           return true;
         }
-        // Also check for full state name
         const stateName = brazilianStates[stateAbbrev];
         if (stateName && normalizedAddress.includes(stateName)) {
           return true;
         }
       }
       
-      // If search is state name, check for abbreviation in address
       const searchedStateAbbrev = Object.keys(brazilianStates).find(k => brazilianStates[k] === cleanRegion);
       if (searchedStateAbbrev) {
         const statePattern = new RegExp(`[,\\s\\-]\\s*${searchedStateAbbrev}\\s*[,\\s\\-]|[,\\s\\-]\\s*${searchedStateAbbrev}\\s*$`, 'i');
@@ -1022,13 +1037,11 @@ function isAddressInLocation(address: string, requestedRegion: string, countryCo
       return false;
     }
     
-    // CITY + STATE or CITY-ONLY SEARCH: Original logic but more flexible
-    // Extract location from address
+    // CITY + STATE or CITY-ONLY SEARCH
     const addressParts = extractLocationParts(address);
     
-    // Filter region words - include state abbreviations (2 chars) too!
+    // Filter region words
     let regionCityWords = regionParts.filter(p => {
-      // Accept words > 2 chars, OR state abbreviations
       return (p.length > 2 || brazilianStates[p.toLowerCase()] !== undefined) && 
              !['brasil', 'brazil', 'br'].includes(p.toLowerCase());
     });
@@ -1042,16 +1055,50 @@ function isAddressInLocation(address: string, requestedRegion: string, countryCo
       }
     }
     
+    // If no direct match, check metropolitan area
     if (!cityMatch) {
-      console.log(`❌ Location mismatch: "${address}" does not contain city from "${requestedRegion}"`);
+      // Extract the main city name from region (first meaningful words)
+      const mainCityWords = regionCityWords.filter(w => w.length > 2 && !brazilianStates[w.toLowerCase()]);
+      const mainCity = mainCityWords.join(' ');
+      
+      // Check if the address is in a metropolitan area city
+      for (const [metroCityKey, metroCities] of Object.entries(metropolitanAreas)) {
+        // Check if the searched city matches this metro area
+        if (metroCityKey.includes(mainCity) || mainCity.includes(metroCityKey) || 
+            metroCities.some(mc => mainCity.includes(mc))) {
+          // Now check if the address is in any city of this metro area
+          const allMetroCities = [metroCityKey, ...metroCities];
+          for (const metroCity of allMetroCities) {
+            if (normalizedAddress.includes(metroCity)) {
+              cityMatch = true;
+              break;
+            }
+          }
+          if (cityMatch) break;
+        }
+      }
+    }
+    
+    if (!cityMatch) {
+      // Silently skip logging for non-matching locations to reduce noise
       return false;
     }
     
-    // Additional check: the matched word should appear in the city position
+    // Verify the matched word appears in city position (not street name)
     let foundInCityPosition = false;
-    for (const word of regionCityWords) {
+    const allWordsToCheck = [...regionCityWords];
+    
+    // Also add metropolitan area cities to check
+    const mainCityWords = regionCityWords.filter(w => w.length > 2 && !brazilianStates[w.toLowerCase()]);
+    const mainCity = mainCityWords.join(' ');
+    for (const [metroCityKey, metroCities] of Object.entries(metropolitanAreas)) {
+      if (metroCityKey.includes(mainCity) || mainCity.includes(metroCityKey)) {
+        allWordsToCheck.push(...[metroCityKey, ...metroCities].filter(mc => normalizedAddress.includes(mc)));
+      }
+    }
+    
+    for (const word of allWordsToCheck) {
       const wordLower = word.toLowerCase();
-      // Check if word appears after a comma or dash (city position in Brazilian addresses)
       const cityPositionPattern = new RegExp(`[,\\-]\\s*[^,\\-]*${wordLower}[^,\\-]*\\s*[,\\-]`, 'i');
       const endPositionPattern = new RegExp(`[,\\-]\\s*[^,\\-]*${wordLower}[^,\\-]*$`, 'i');
       
@@ -1062,9 +1109,8 @@ function isAddressInLocation(address: string, requestedRegion: string, countryCo
     }
     
     if (!foundInCityPosition) {
-      // Check if the word appears standalone (not as part of a street name)
       const addressWords = normalizedAddress.split(/[\s,\-]+/);
-      for (const word of regionCityWords) {
+      for (const word of allWordsToCheck) {
         if (addressWords.includes(word.toLowerCase())) {
           foundInCityPosition = true;
           break;
