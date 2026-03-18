@@ -263,7 +263,7 @@ function generateSearchTerms(segment: string): string[] {
     'empresas de energia solar': ['energia solar', 'solar fotovoltaica', 'instalação solar', 'empresa de energia solar', 'painel solar'],
     'distribuidores de aço e ferro': ['distribuidora de aço', 'distribuidor de ferro', 'ferro e aço', 'depósito de ferro', 'comércio de aço', 'distribuidora de ferro', 'aço e ferro', 'distribuidora de metais', 'ferro para construção', 'vergalhão', 'chapas de aço', 'metalon', 'tubo de aço', 'perfilados', 'cantoneira', 'viga de aço', 'barra de ferro'],
     'distribuidores de material médico hospitalar': ['distribuidora de material hospitalar', 'distribuidor de material hospitalar', 'distribuidora de material médico', 'distribuidor de material médico', 'distribuidora hospitalar', 'material médico hospitalar', 'produtos médicos hospitalares', 'distribuidora de equipamentos hospitalares', 'distribuidora de insumos hospitalares', 'distribuidora de descartáveis hospitalares', 'distribuidora de medicamentos', 'atacado hospitalar', 'distribuidora de produtos cirúrgicos', 'material cirúrgico', 'distribuidora de ortopédicos', 'equipamentos médicos', 'distribuidora de EPIs hospitalares', 'distribuidora de luvas', 'distribuidora de seringas', 'distribuidora de curativos', 'distribuidora de sondas', 'distribuidora de cateteres', 'distribuidora de próteses', 'distribuidora de órteses', 'distribuidora de materiais de laboratório', 'distribuidora de reagentes', 'distribuidora de produtos para saúde', 'fornecedor hospitalar', 'suprimentos hospitalares', 'insumos médicos', 'materiais de enfermagem', 'distribuidora de oxigênio medicinal', 'gases medicinais', 'distribuidora de produtos odontológicos médicos', 'distribuidora OPME'],
-    'distribuidores de pêssegos': ['distribuidora de pêssegos', 'distribuidor de pêssegos', 'distribuidora de frutas', 'distribuidor de frutas', 'atacado de pêssegos', 'atacado de frutas', 'ceasa pêssego', 'pêssego atacado', 'frutas atacado', 'distribuidora de frutas frescas', 'distribuidora de pêssego', 'atacadista de frutas', 'comércio de frutas', 'packing house pêssego', 'beneficiadora de pêssegos', 'exportadora de pêssegos', 'produtor de pêssegos', 'pêssego in natura', 'frutas de caroço', 'pêssego para indústria', 'polpa de pêssego', 'processadora de pêssego', 'conserva de pêssego', 'fábrica de conserva de pêssego', 'indústria de pêssego', 'pêssego em calda', 'pessegueiro', 'cultivo de pêssego', 'pomar de pêssego', 'fruticultura pêssego', 'cooperativa de frutas', 'cooperativa de pêssegos'],
+    'distribuidores de pêssegos': ['distribuidora de pêssegos', 'distribuidor de pêssegos', 'atacado de pêssegos', 'pêssego atacado', 'distribuidora de pêssego', 'packing house pêssego', 'beneficiadora de pêssegos', 'exportadora de pêssegos', 'produtor de pêssegos', 'pêssego in natura', 'pêssego para indústria', 'polpa de pêssego', 'processadora de pêssego', 'conserva de pêssego', 'fábrica de conserva de pêssego', 'indústria de pêssego', 'pêssego em calda', 'cultivo de pêssego', 'pomar de pêssego', 'fruticultura pêssego', 'cooperativa de pêssegos', 'pêssego distribuidor', 'venda de pêssego', 'comércio de pêssego'],
     'serralherias': ['serralheria', 'serralheiro', 'portões', 'grades', 'esquadrias metálicas', 'estruturas metálicas', 'portão de ferro', 'grade de ferro', 'corrimão', 'escada de ferro', 'serralheria artística', 'serralheria industrial', 'portão automático', 'gradil', 'portão basculante'],
     // Cartonagem
     'cartonagem': ['cartonagem', 'caixas de papelão', 'embalagens de papelão', 'fábrica de caixas', 'indústria de caixas', 'caixas cartonadas', 'papelão ondulado', 'cartonaria', 'embalagem cartonada', 'caixa de papelão', 'embalagem de papel cartão', 'papel cartão'],
@@ -1653,10 +1653,9 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'padaria', 'escola', 'academia', 'salão', 'pet shop', 'veterinário']
   },
   'distribuidores de pêssegos': {
-    include: ['pêssego', 'pessego', 'pêssegos', 'pessegos', 'peach', 'frutas de caroço', 'polpa de pêssego', 'conserva de pêssego', 'pêssego em calda', 'beneficiadora de pêssego', 'packing house', 'fruticultura', 'pomar de pêssego', 'cultivo de pêssego', 'cooperativa de pêssego', 'ceasa', 'exportadora de frutas', 'processadora de frutas', 'distribuidor de frutas', 'distribuidora de frutas', 'atacado de frutas', 'atacadista de frutas'],
-    mustMatch: [],
-    strictInclude: true,
-    exclude: ['restaurante', 'lanchonete', 'bar', 'hotel', 'farmácia', 'padaria', 'escola', 'academia', 'salão', 'pet shop', 'veterinário', 'açougue', 'pizzaria', 'supermercado', 'hortifruti', 'mercado', 'empório', 'loja de', 'armazém', 'varejo', 'varejão', 'mercearia', 'quitanda', 'bomboniere', 'conveniência', 'delivery', 'bebidas', 'descartáveis', 'cesta básica', 'kit churrasco', 'açaí', 'sorvete']
+    include: ['pêssego', 'pessego', 'pêssegos', 'pessegos', 'peach', 'polpa de pêssego', 'conserva de pêssego', 'pêssego em calda', 'beneficiadora de pêssego', 'packing house pêssego', 'pomar de pêssego', 'cultivo de pêssego', 'cooperativa de pêssego', 'processadora de pêssego', 'fruticultura pêssego', 'durazno'],
+    mustMatch: ['pêssego', 'pessego', 'pêssegos', 'pessegos', 'peach', 'durazno'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'hotel', 'farmácia', 'padaria', 'escola', 'academia', 'salão', 'pet shop', 'veterinário', 'açougue', 'pizzaria', 'supermercado', 'hortifruti', 'mercado', 'empório', 'loja de', 'armazém', 'varejo', 'varejão', 'mercearia', 'quitanda', 'bomboniere', 'conveniência', 'delivery', 'bebidas', 'descartáveis', 'cesta básica', 'kit churrasco', 'açaí', 'sorvete', 'sacolão', 'feira', 'hortifruit', 'frutas e verduras', 'verdurão', 'frutaria', 'banana', 'maçã', 'laranja', 'manga', 'abacaxi', 'morango', 'uva', 'melancia', 'mamão', 'goiaba', 'limão']
   },
   'serralherias': {
     include: ['serralheria', 'serralheiro', 'portões', 'grades', 'esquadrias metálicas', 'estruturas metálicas', 'portão de ferro', 'grade de ferro', 'corrimão', 'escada de ferro', 'serralheria artística', 'serralheria industrial', 'portão automático', 'gradil', 'portão basculante', 'metalon', 'ferro e aço'],
@@ -2312,6 +2311,21 @@ function isRelevantToNiche(place: any, segment: string): boolean {
   for (const exclude of nicheConfig.exclude) {
     if (combinedText.includes(exclude)) {
       console.log(`❌ Niche exclusion: "${place.title}" - matches: ${exclude}`);
+      return false;
+    }
+  }
+  
+  // ===== STEP 5.5: MUST MATCH check (strict segments like distribuidores de pêssegos) =====
+  if (nicheConfig.mustMatch && nicheConfig.mustMatch.length > 0) {
+    let hasMustMatch = false;
+    for (const must of nicheConfig.mustMatch) {
+      if (combinedText.includes(must)) {
+        hasMustMatch = true;
+        break;
+      }
+    }
+    if (!hasMustMatch) {
+      console.log(`❌ Must-match failed: "${place.title}" in ${segmentLower} - none of [${nicheConfig.mustMatch.join(', ')}] found`);
       return false;
     }
   }
