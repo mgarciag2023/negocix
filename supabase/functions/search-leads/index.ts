@@ -2315,6 +2315,21 @@ function isRelevantToNiche(place: any, segment: string): boolean {
     }
   }
   
+  // ===== STEP 5.5: MUST MATCH check (strict segments like distribuidores de pêssegos) =====
+  if (nicheConfig.mustMatch && nicheConfig.mustMatch.length > 0) {
+    let hasMustMatch = false;
+    for (const must of nicheConfig.mustMatch) {
+      if (combinedText.includes(must)) {
+        hasMustMatch = true;
+        break;
+      }
+    }
+    if (!hasMustMatch) {
+      console.log(`❌ Must-match failed: "${place.title}" in ${segmentLower} - none of [${nicheConfig.mustMatch.join(', ')}] found`);
+      return false;
+    }
+  }
+  
   // ===== STEP 6: REQUIRE at least one include keyword match =====
   let hasIncludeMatch = false;
   for (const incl of nicheConfig.include) {
