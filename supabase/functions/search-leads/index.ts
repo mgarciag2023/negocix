@@ -743,7 +743,7 @@ function generateSearchTerms(segment: string): string[] {
   }
   
   // For boost segments, return all terms; otherwise max 10
-  const isBoostTerm = term.includes('indústrias mecânicas') || term.includes('industrias mecanicas') || term.includes('distribuidores de material') || term.includes('distribuidores de pêssegos') || term.includes('distribuidores de pessegos');
+  const isBoostTerm = term.includes('indústrias mecânicas') || term.includes('industrias mecanicas') || term.includes('distribuidores de material') || term.includes('distribuidores de pêssegos') || term.includes('distribuidores de pessegos') || term.includes('autopeças') || term.includes('auto peças') || term.includes('floricultura') || term.includes('floriculturas') || term.includes('garden center') || term.includes('garden centers') || term.includes('casa de utilidades') || term.includes('casas de utilidades');
   return isBoostTerm ? searchTerms : searchTerms.slice(0, 10);
 }
 
