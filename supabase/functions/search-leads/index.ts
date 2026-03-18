@@ -1690,6 +1690,16 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     mustMatch: ['frios', 'laticínios', 'lacticínios', 'queijo', 'presunto', 'embutidos'],
     exclude: ['restaurante', 'lanchonete', 'bar', 'padaria', 'confeitaria', 'hotel', 'supermercado']
   },
+  'distribuidores de food service': {
+    include: ['food service', 'distribuidor', 'distribuidora', 'atacado', 'atacadista', 'fornecedor', 'horeca', 'gastronomia', 'restaurante', 'cozinha profissional', 'cozinha industrial', 'congelados', 'porcionados', 'ingredientes', 'insumos'],
+    mustMatch: ['food service', 'foodservice', 'horeca', 'distribuidor', 'distribuidora', 'atacado', 'atacadista', 'fornecedor'],
+    exclude: ['pet shop', 'veterinário', 'escola', 'academia', 'salão', 'farmácia', 'roupas', 'calçados', 'móveis', 'eletrônicos', 'informática']
+  },
+  'atacadistas de food service': {
+    include: ['food service', 'atacado', 'atacadista', 'cash and carry', 'atacarejo', 'horeca', 'distribuidor', 'gastronomia'],
+    mustMatch: ['food service', 'foodservice', 'horeca', 'atacado', 'atacadista', 'atacarejo'],
+    exclude: ['pet shop', 'veterinário', 'escola', 'farmácia', 'roupas', 'calçados']
+  },
   'distribuidores de alimentos': {
     include: ['distribuidora de alimentos', 'distribuidor de alimentos', 'atacado alimentos', 'alimentos atacado', 'alimentos distribuidor'],
     mustMatch: ['alimentos', 'alimentício', 'food service', 'horeca'],
