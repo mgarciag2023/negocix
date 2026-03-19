@@ -3149,6 +3149,58 @@ serve(async (req) => {
       console.log(`📍 Geocoded ${locationQuery} → ${mainGeocode.lat}, ${mainGeocode.lng}`);
     }
 
+    // Concurrency limiter to avoid exceeding 600 req/min quota
+    const MAX_CONCURRENT = 25;
+    let activeRequests = 0;
+    const requestQueue: (() => void)[] = [];
+
+    async function acquireSlot(): Promise<void> {
+      if (activeRequests < MAX_CONCURRENT) {
+        activeRequests++;
+        return;
+      }
+      return new Promise<void>((resolve) => {
+        requestQueue.push(() => {
+          activeRequests++;
+          resolve();
+        });
+      });
+    }
+
+    function releaseSlot(): void {
+      activeRequests--;
+      if (requestQueue.length > 0) {
+        const next = requestQueue.shift();
+        if (next) next();
+      }
+    }
+
+    // Fetch with retry and exponential backoff for 429 errors
+    async function fetchWithRetry(url: string, options: RequestInit, maxRetries: number = 3): Promise<Response> {
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        await acquireSlot();
+        let response: Response;
+        try {
+          response = await fetch(url, options);
+        } catch (err) {
+          releaseSlot();
+          if (attempt === maxRetries) throw err;
+          await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
+          continue;
+        }
+        releaseSlot();
+
+        if (response.status === 429 && attempt < maxRetries) {
+          const waitMs = 2000 * Math.pow(2, attempt); // 2s, 4s, 8s
+          console.log(`⏳ Rate limited (429). Waiting ${waitMs}ms before retry ${attempt + 1}/${maxRetries}`);
+          await new Promise(r => setTimeout(r, waitMs));
+          continue;
+        }
+        return response;
+      }
+      throw new Error('Max retries exceeded');
+    }
+
     async function searchPlaces(query: string, location: string, _maxPages: number = 3, radiusMetersOverride?: number): Promise<any[]> {
       const searchCache = searchCacheGlobal;
       const radiusMeters = Math.min(radiusMetersOverride ?? (isStateOnlySearch ? 50000 : 30000), 50000);
@@ -3193,7 +3245,7 @@ serve(async (req) => {
             body.pageToken = nextPageToken;
           }
 
-          const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
+          const response = await fetchWithRetry('https://places.googleapis.com/v1/places:searchText', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
