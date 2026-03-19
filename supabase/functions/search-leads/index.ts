@@ -3256,7 +3256,7 @@ serve(async (req) => {
       }
 
       const severeShortage = currentLeadCount < Math.max(20, Math.floor(MIN_LEADS_TARGET * 0.35));
-      const expansionRadiusMeters = severeShortage ? 90000 : 60000;
+      const expansionRadiusMeters = severeShortage ? 50000 : 50000;
       const expansionRadiusKm = Math.round(expansionRadiusMeters / 1000);
       const expansionPages = severeShortage ? 8 : 5;
       const topTermsPerSegment = severeShortage ? 8 : 5;
