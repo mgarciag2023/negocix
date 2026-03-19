@@ -197,13 +197,53 @@ const productSearchTerms: { [key: string]: string[] } = {
   "Produtos para Piscinas": ["distribuidora produtos piscina", "atacado cloro piscina", "fornecedor equipamentos piscina", "distribuidora tratamento água"],
 };
 
+// ====== CONCURRENCY LIMITER AND RETRY ======
+
+const MAX_CONCURRENT = 20;
+let activeRequests = 0;
+const requestQueue: (() => void)[] = [];
+
+async function acquireSlot(): Promise<void> {
+  if (activeRequests < MAX_CONCURRENT) { activeRequests++; return; }
+  return new Promise<void>((resolve) => {
+    requestQueue.push(() => { activeRequests++; resolve(); });
+  });
+}
+
+function releaseSlot(): void {
+  activeRequests--;
+  if (requestQueue.length > 0) { const next = requestQueue.shift(); if (next) next(); }
+}
+
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3): Promise<Response> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    await acquireSlot();
+    let response: Response;
+    try { response = await fetch(url, options); } catch (err) {
+      releaseSlot();
+      if (attempt === maxRetries) throw err;
+      await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
+      continue;
+    }
+    releaseSlot();
+    if (response.status === 429 && attempt < maxRetries) {
+      const waitMs = 2000 * Math.pow(2, attempt);
+      console.log(`⏳ Rate limited (429). Waiting ${waitMs}ms before retry ${attempt + 1}/${maxRetries}`);
+      await new Promise(r => setTimeout(r, waitMs));
+      continue;
+    }
+    return response;
+  }
+  throw new Error('Max retries exceeded');
+}
+
 // ====== GOOGLE PLACES API SEARCH ======
 
 async function searchGooglePlaces(query: string, apiKey: string, limit: number = 20): Promise<any[]> {
   const fieldMask = 'places.id,places.displayName,places.formattedAddress,places.internationalPhoneNumber,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.types,places.businessStatus';
 
   try {
-    const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
+    const response = await fetchWithRetry('https://places.googleapis.com/v1/places:searchText', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -227,7 +267,6 @@ async function searchGooglePlaces(query: string, apiKey: string, limit: number =
     const data = await response.json();
     const places = data.places || [];
     
-    // Map to compatible format
     return places.map((place: any) => ({
       business_id: place.id || '',
       place_id: place.id || '',
