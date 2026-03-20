@@ -2115,6 +2115,26 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     include: ['indústria', 'fábrica', 'colchões', 'colchão', 'espuma', 'industrial'],
     exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'mercado', 'pet', 'farmácia', 'loja']
   },
+  'lojas de colchões': {
+    include: ['colchão', 'colchões', 'colchoaria', 'cama', 'estofado', 'ortopédico'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'pet', 'farmácia']
+  },
+  'revendedores de colchões': {
+    include: ['colchão', 'colchões', 'revenda', 'revendedor', 'atacado', 'distribuidor', 'colchoaria'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'pet', 'farmácia']
+  },
+  'colchoarias': {
+    include: ['colchão', 'colchões', 'colchoaria', 'cama', 'travesseiro', 'estofado'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'pet', 'farmácia']
+  },
+  'lojas de colchões terapêuticos': {
+    include: ['colchão', 'terapêutico', 'magnético', 'ortopédico', 'hospitalar', 'anti-escaras'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'pet', 'farmácia']
+  },
+  'distribuidores de colchões': {
+    include: ['colchão', 'colchões', 'distribuidora', 'distribuidor', 'atacado', 'atacadista'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'pet', 'farmácia']
+  },
   'indústrias de estofados': {
     include: ['indústria', 'fábrica', 'estofados', 'sofá', 'sofás', 'poltrona', 'industrial'],
     exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'mercado', 'pet', 'farmácia', 'loja']
