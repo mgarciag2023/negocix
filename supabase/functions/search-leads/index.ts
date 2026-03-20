@@ -367,7 +367,11 @@ function generateSearchTerms(segment: string): string[] {
     'lojas de calçados': ['loja de calçados', 'sapataria', 'loja de sapatos', 'loja de tênis', 'calçados femininos', 'calçados masculinos', 'calçados infantis'],
     'lojas de bolsas e acessórios': ['loja de bolsas', 'acessórios femininos', 'bolsas e malas', 'loja de malas', 'bolsas de couro', 'acessórios de moda'],
     'lojas de brinquedos': ['loja de brinquedos', 'brinquedos educativos', 'toy store', 'loja de brinquedos infantis', 'brinquedos e jogos'],
-    'lojas de colchões': ['loja de colchões', 'colchões e estofados', 'colchoaria', 'loja de camas e colchões', 'colchões ortopédicos'],
+    'lojas de colchões': ['loja de colchões', 'colchões e estofados', 'colchoaria', 'loja de camas e colchões', 'colchões ortopédicos', 'casa de colchões', 'colchões magnéticos', 'colchões terapêuticos', 'colchões sob medida', 'colchões king size'],
+    'revendedores de colchões': ['revendedor de colchões', 'revenda de colchões', 'representante de colchões', 'distribuidor de colchões', 'atacado de colchões', 'colchões atacado', 'colchões revenda', 'colchões no atacado'],
+    'colchoarias': ['colchoaria', 'casa de colchões', 'colchões e travesseiros', 'colchões e camas', 'mundo dos colchões', 'rei dos colchões', 'center colchões', 'outlet de colchões', 'mega colchões'],
+    'lojas de colchões terapêuticos': ['colchão terapêutico', 'colchão magnético', 'colchão ortopédico', 'colchão hospitalar', 'colchão pneumático', 'colchão anti-escaras', 'produtos ortopédicos colchão'],
+    'distribuidores de colchões': ['distribuidora de colchões', 'distribuidor de colchões', 'atacadista de colchões', 'colchões atacado e varejo', 'colchões por atacado'],
     'lojas de eletrodomésticos': ['loja de eletrodomésticos', 'eletrodomésticos', 'loja de eletrônicos', 'magazine', 'loja de eletro', 'casa de eletro'],
     'lojas de cosméticos': ['loja de cosméticos', 'perfumaria', 'beleza', 'maquiagem', 'produtos de beleza', 'loja de maquiagem', 'cosméticos e perfumaria'],
     'sistemas de incêndio': ['sistema de incêndio', 'combate a incêndio', 'prevenção de incêndio', 'proteção contra incêndio', 'extintor', 'hidrante', 'sprinkler', 'alarme de incêndio', 'detector de fumaça', 'empresa de incêndio', 'projeto de incêndio', 'AVCB', 'CLCB', 'brigada de incêndio', 'mangueira de incêndio', 'central de alarme de incêndio', 'porta corta fogo'],
@@ -2110,6 +2114,26 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
   'indústrias de colchões': {
     include: ['indústria', 'fábrica', 'colchões', 'colchão', 'espuma', 'industrial'],
     exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'mercado', 'pet', 'farmácia', 'loja']
+  },
+  'lojas de colchões': {
+    include: ['colchão', 'colchões', 'colchoaria', 'cama', 'estofado', 'ortopédico'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'pet', 'farmácia']
+  },
+  'revendedores de colchões': {
+    include: ['colchão', 'colchões', 'revenda', 'revendedor', 'atacado', 'distribuidor', 'colchoaria'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'pet', 'farmácia']
+  },
+  'colchoarias': {
+    include: ['colchão', 'colchões', 'colchoaria', 'cama', 'travesseiro', 'estofado'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'pet', 'farmácia']
+  },
+  'lojas de colchões terapêuticos': {
+    include: ['colchão', 'terapêutico', 'magnético', 'ortopédico', 'hospitalar', 'anti-escaras'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'pet', 'farmácia']
+  },
+  'distribuidores de colchões': {
+    include: ['colchão', 'colchões', 'distribuidora', 'distribuidor', 'atacado', 'atacadista'],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'pet', 'farmácia']
   },
   'indústrias de estofados': {
     include: ['indústria', 'fábrica', 'estofados', 'sofá', 'sofás', 'poltrona', 'industrial'],

@@ -297,6 +297,10 @@ const Configuration = () => {
     "Lojas de Bolsas e Acessórios",
     "Lojas de Brinquedos",
     "Lojas de Colchões",
+    "Revendedores de Colchões",
+    "Colchoarias",
+    "Lojas de Colchões Terapêuticos",
+    "Distribuidores de Colchões",
     "Lojas de Eletrodomésticos",
     "Lojas de Cosméticos",
     // 30 novos segmentos
