@@ -3347,10 +3347,10 @@ serve(async (req) => {
       }
 
       const severeShortage = currentLeadCount < Math.max(20, Math.floor(MIN_LEADS_TARGET * 0.35));
-      const expansionRadiusMeters = severeShortage ? 50000 : 50000;
+      const expansionRadiusMeters = 50000;
       const expansionRadiusKm = Math.round(expansionRadiusMeters / 1000);
-      const expansionPages = severeShortage ? 8 : 5;
-      const topTermsPerSegment = severeShortage ? 8 : 5;
+      const expansionPages = severeShortage ? 12 : 8;
+      const topTermsPerSegment = severeShortage ? 15 : 10;
 
       console.log(`🛰️ LOW VOLUME: ${currentLeadCount} leads. Expanding search radius to ${expansionRadiusKm}km with ${topTermsPerSegment} top terms per segment.`);
 
@@ -3517,8 +3517,8 @@ serve(async (req) => {
           console.log(`🛒 E-commerce específico: ${ecomType}`);
         } else {
           searchTerms = generateSearchTerms(seg);
-          // Padrão sobe para 14 termos para reduzir segmentos com zero resultado
-          searchTerms = isBoostSeg ? searchTerms : searchTerms.slice(0, 14);
+          // Padrão sobe para 18 termos para melhorar volume em cidades pequenas
+          searchTerms = isBoostSeg ? searchTerms : searchTerms.slice(0, 18);
         }
         
         if (isBoostSeg) {
