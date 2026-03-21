@@ -621,11 +621,13 @@ function generateSearchTerms(segment: string): string[] {
     'padarias artesanais': ['padaria artesanal', 'pão artesanal', 'fermentação natural', 'sourdough'],
     'chocolaterias': ['chocolateria', 'chocolate artesanal', 'chocolate', 'bombons'],
     'gelatarias': ['gelataria', 'gelato', 'sorvete artesanal'],
-    'açougues gourmet': ['açougue gourmet', 'boutique de carnes', 'carnes nobres'],
+    'açougues gourmet': ['açougue gourmet', 'boutique de carnes', 'carnes nobres', 'carnes premium'],
+    'açouguerias': ['açougueria', 'açougue', 'casa de carnes', 'boutique de carnes', 'carnes e frios', 'frios e embutidos', 'açougue e mercearia', 'carne bovina', 'carne suína', 'kit churrasco', 'churrascaria e açougue'],
+    'açougues': ['açougue', 'açougueria', 'casa de carnes', 'boutique de carnes', 'carnes e frios', 'frios e embutidos', 'açougue e mercearia', 'carne bovina', 'carne suína', 'kit churrasco'],
     'empórios gourmet': ['empório gourmet', 'empório', 'delicatessen', 'produtos gourmet'],
     'delicatessens': ['delicatessen', 'deli', 'empório', 'frios importados'],
     'rotisseries': ['rotisserie', 'rotisseria', 'frango assado', 'assados'],
-    'casas de carnes': ['casa de carnes', 'açougue', 'boutique de carnes'],
+    'casas de carnes': ['casa de carnes', 'açougue', 'boutique de carnes', 'açougueria', 'carnes e frios', 'frios e embutidos', 'kit churrasco'],
     'distribuidoras de carnes': ['distribuidora de carnes', 'atacado de carnes', 'frigorífico distribuidor'],
     'distribuidoras de peixes': ['distribuidora de peixes', 'atacado de peixes', 'pescados atacado'],
     'distribuidoras de congelados': ['distribuidora de congelados', 'congelados atacado', 'alimentos congelados'],
@@ -2048,8 +2050,16 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     exclude: ['supermercado', 'fábrica', 'indústria']
   },
   'casas de carnes': {
-    include: ['casa de carnes', 'açougue', 'carnes', 'boutique de carnes', 'churrasco'],
+    include: ['casa de carnes', 'açougue', 'açougueria', 'carnes', 'boutique de carnes', 'churrasco', 'frios', 'embutidos', 'kit churrasco', 'carne bovina', 'carne suína'],
     exclude: ['fábrica', 'indústria', 'farmácia', 'pet']
+  },
+  'açouguerias': {
+    include: ['açougueria', 'açougue', 'casa de carnes', 'carnes', 'boutique de carnes', 'frios', 'embutidos', 'kit churrasco', 'carne bovina', 'carne suína', 'churrasco'],
+    exclude: ['fábrica', 'indústria', 'farmácia', 'pet', 'restaurante']
+  },
+  'açougues': {
+    include: ['açougue', 'açougueria', 'casa de carnes', 'carnes', 'boutique de carnes', 'frios', 'embutidos', 'kit churrasco', 'carne bovina', 'carne suína', 'churrasco'],
+    exclude: ['fábrica', 'indústria', 'farmácia', 'pet', 'restaurante']
   },
   'distribuidoras de carnes': {
     include: ['distribuidora de carnes', 'atacado de carnes', 'frigorífico', 'carnes atacado', 'distribuidor'],
