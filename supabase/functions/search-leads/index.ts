@@ -142,6 +142,10 @@ function isBoostSegment(segment: string): boolean {
     'fornecedor',
     'fabrica',
     'industria',
+    'ferragens',
+    'ferragem',
+    'casa de ferragens',
+    'loja de ferragens',
   ];
 
   return boostKeywords.some((keyword) => normalized.includes(keyword));
@@ -177,6 +181,7 @@ function generateSearchTerms(segment: string): string[] {
     'casas de massas': ['casa de massas', 'massa fresca', 'restaurante italiano', 'cantina italiana', 'massas artesanais'],
     'materiais de construção': ['material de construção', 'home center', 'depósito de construção', 'loja de material de construção', 'casa de material', 'madeireira'],
     'ferramentas': ['ferramentas', 'ferragem'],
+    'ferragens': ['ferragem', 'casa de ferragens', 'loja de ferragens', 'ferragens em geral', 'ferragens e ferramentas', 'parafusos', 'casa de parafusos', 'ferragens para móveis', 'ferragens para portas', 'ferragens para construção', 'dobradiças', 'fechaduras', 'cadeados', 'ferragem e material elétrico', 'ferragem e hidráulica', 'ferragem e pintura', 'ferramentaria', 'casa de ferragem', 'ferragem e material de construção', 'depósito de ferragens', 'ferragens industriais', 'distribuidor de ferragens', 'atacado de ferragens', 'ferragens residenciais', 'ferragens para vidro', 'ferragens para esquadrias', 'ferragens para marcenaria', 'ferragens para serralheria', 'loja de chaves e ferragens', 'ferragens e elétrica', 'ferragens para portão', 'ferragens para alumínio', 'parafusos e fixadores', 'ferragens para steel frame', 'ferragens para drywall', 'ferragens para estruturas metálicas', 'ferragens para chapas', 'ferragens e acessórios', 'casa de materiais e ferragens'],
     'agropecuária': ['agropecuária', 'produtos rurais'],
     'farmácias': ['farmácia', 'drogaria'],
     'farmácias e drogarias': ['farmácia', 'drogaria', 'farmácia popular'],
@@ -1466,6 +1471,10 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
   'ferramentas': {
     include: ['ferramenta', 'ferramentaria', 'ferragem', 'parafuso', 'chave', 'furadeira', 'serra', 'martelo', 'alicate', 'máquina', 'equipamento', 'tools'],
     exclude: ['roupa', 'alimento', 'supermercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel']
+  },
+  'ferragens': {
+    include: ['ferragem', 'ferragens', 'parafuso', 'dobradiça', 'fechadura', 'cadeado', 'puxador', 'trinco', 'ferramentaria', 'fixador', 'abraçadeira', 'bucha', 'prego', 'chave', 'corrente', 'gancho', 'cantoneira', 'mão francesa', 'suporte', 'roldana', 'esquadria', 'hardware store', 'ferreteria'],
+    exclude: ['roupa', 'alimento', 'supermercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'farmácia', 'cosmétic']
   },
   'pet shop': {
     include: ['pet', 'animal', 'veterinár', 'cão', 'cachorro', 'gato', 'ração', 'banho e tosa', 'petshop', 'pet center', 'agropet'],
@@ -3123,7 +3132,7 @@ serve(async (req) => {
       'pi': ['Teresina', 'Parnaíba'],
       'rj': ['Rio de Janeiro', 'São Gonçalo', 'Duque de Caxias', 'Nova Iguaçu', 'Niterói', 'Belford Roxo', 'Campos dos Goytacazes', 'Petrópolis', 'Volta Redonda', 'Macaé', 'São João de Meriti', 'Mesquita', 'Nilópolis', 'Itaboraí', 'Magé', 'Maricá', 'Cabo Frio', 'Angra dos Reis', 'Resende', 'Teresópolis'],
       'rn': ['Natal', 'Mossoró', 'Parnamirim'],
-      'rs': ['Porto Alegre', 'Caxias do Sul', 'Pelotas', 'Canoas', 'Santa Maria', 'Gravataí', 'Viamão', 'Novo Hamburgo', 'São Leopoldo', 'Rio Grande', 'Alvorada', 'Passo Fundo', 'Sapucaia do Sul', 'Uruguaiana', 'Santa Cruz do Sul', 'Cachoeirinha', 'Bagé', 'Bento Gonçalves', 'Erechim', 'Lajeado'],
+      'rs': ['Porto Alegre', 'Caxias do Sul', 'Pelotas', 'Canoas', 'Santa Maria', 'Gravataí', 'Viamão', 'Novo Hamburgo', 'São Leopoldo', 'Rio Grande', 'Alvorada', 'Passo Fundo', 'Sapucaia do Sul', 'Uruguaiana', 'Santa Cruz do Sul', 'Cachoeirinha', 'Bagé', 'Bento Gonçalves', 'Erechim', 'Lajeado', 'Ijuí', 'Cruz Alta', 'Venâncio Aires', 'Farroupilha', 'Guaíba', 'Sapiranga', 'Estância Velha', 'Campo Bom', 'Taquara', 'Montenegro', 'Camaquã', 'Santo Ângelo', 'Carazinho', 'Vacaria', 'Santiago', 'São Borja', 'Alegrete', 'Santana do Livramento', 'Rosário do Sul', 'Tramandaí', 'Torres', 'Capão da Canoa', 'Osório', 'Estrela', 'Teutônia', 'Encantado', 'Garibaldi', 'Carlos Barbosa', 'Flores da Cunha', 'Marau', 'Sarandi', 'Frederico Westphalen', 'Palmeira das Missões', 'Três de Maio', 'Santo Cristo', 'Horizontina', 'Panambi', 'Não-Me-Toque', 'Soledade', 'São Gabriel'],
       'ro': ['Porto Velho', 'Ji-Paraná'],
       'rr': ['Boa Vista'],
       'sc': ['Florianópolis', 'Joinville', 'Blumenau', 'São José', 'Chapecó', 'Criciúma', 'Itajaí', 'Jaraguá do Sul', 'Lages', 'Palhoça', 'Balneário Camboriú'],
