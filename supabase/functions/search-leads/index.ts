@@ -3517,8 +3517,8 @@ serve(async (req) => {
           console.log(`🛒 E-commerce específico: ${ecomType}`);
         } else {
           searchTerms = generateSearchTerms(seg);
-          // Padrão sobe para 14 termos para reduzir segmentos com zero resultado
-          searchTerms = isBoostSeg ? searchTerms : searchTerms.slice(0, 14);
+          // Padrão sobe para 18 termos para melhorar volume em cidades pequenas
+          searchTerms = isBoostSeg ? searchTerms : searchTerms.slice(0, 18);
         }
         
         if (isBoostSeg) {
