@@ -3347,10 +3347,10 @@ serve(async (req) => {
       }
 
       const severeShortage = currentLeadCount < Math.max(20, Math.floor(MIN_LEADS_TARGET * 0.35));
-      const expansionRadiusMeters = severeShortage ? 50000 : 50000;
+      const expansionRadiusMeters = 50000;
       const expansionRadiusKm = Math.round(expansionRadiusMeters / 1000);
-      const expansionPages = severeShortage ? 8 : 5;
-      const topTermsPerSegment = severeShortage ? 8 : 5;
+      const expansionPages = severeShortage ? 12 : 8;
+      const topTermsPerSegment = severeShortage ? 15 : 10;
 
       console.log(`🛰️ LOW VOLUME: ${currentLeadCount} leads. Expanding search radius to ${expansionRadiusKm}km with ${topTermsPerSegment} top terms per segment.`);
 
