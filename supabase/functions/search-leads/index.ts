@@ -3435,7 +3435,7 @@ serve(async (req) => {
         } else {
           searchTerms = generateSearchTerms(seg);
           // Estado multiplica por cidades; aumenta sem explodir custo
-          searchTerms = isBoostSeg ? searchTerms.slice(0, 25) : searchTerms.slice(0, 6);
+          searchTerms = isFerragens ? searchTerms.slice(0, 25) : (isBoostSeg ? searchTerms.slice(0, 18) : searchTerms.slice(0, 6));
         }
         
         console.log(`📤 Searching segment "${seg}" with terms:`, searchTerms);
