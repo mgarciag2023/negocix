@@ -3085,10 +3085,8 @@ serve(async (req) => {
     const isBoostSearch = isDistribuidorMaterialSearch || isIndustriaMecanicaSearch || isDistribuidorPessegosSearch;
     
     // Ferragens gets its own mega-boost for ~2000 leads
-    const isFerragens = segments.some((s: string) => {
-      const n = s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      return n.includes('ferragens') || n.includes('ferragem') || n.includes('casa de ferragens') || n.includes('loja de ferragens');
-    });
+    const segNorm = segment.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const isFerragens = segNorm.includes('ferragens') || segNorm.includes('ferragem') || segNorm.includes('casa de ferragens') || segNorm.includes('loja de ferragens');
     
     // Count selected segments to adjust limits (segments are comma-separated)
     const selectedSegments = segment.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0);
