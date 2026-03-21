@@ -3078,22 +3078,19 @@ serve(async (req) => {
       console.error("⚠️ Error fetching user limits:", e);
     }
 
-    // State-only searches get higher limits (up to 347)
-    // Distribuidores de Material gets maximum volume
-    const isDistribuidorMaterialSearch = segment.toLowerCase().includes('distribuidores de material');
-    const isIndustriaMecanicaSearch = segment.toLowerCase().includes('indústrias mecânicas') || segment.toLowerCase().includes('industrias mecanicas');
-    const isDistribuidorPessegosSearch = segment.toLowerCase().includes('distribuidores de pêssegos') || segment.toLowerCase().includes('distribuidores de pessegos');
-    const isBoostSearch = isDistribuidorMaterialSearch || isIndustriaMecanicaSearch || isDistribuidorPessegosSearch;
+    // State-only searches get higher limits
+    // Boost search detection — uses isBoostSegment for unified logic
+    const isBoostSearch = segments.some((s: string) => isBoostSegment(s));
     
     // Count selected segments to adjust limits (segments are comma-separated)
     const selectedSegments = segment.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0);
     const segmentCount = selectedSegments.length;
-    console.log(`📋 Number of selected segments: ${segmentCount}`);
+    console.log(`📋 Number of selected segments: ${segmentCount}, isBoostSearch: ${isBoostSearch}`);
     
     // Dynamic limits based on number of selected segments — maximized for all users
     let defaultMaxLeads: number;
     if (isBoostSearch) {
-      defaultMaxLeads = 1500;
+      defaultMaxLeads = 2500;
     } else if (segmentCount >= 3) {
       defaultMaxLeads = 1200;
     } else if (segmentCount === 2) {
@@ -3103,10 +3100,10 @@ serve(async (req) => {
     }
     
     const MAX_TOTAL_LEADS = userMaxLeads || defaultMaxLeads;
-    const MIN_LEADS_TARGET = isBoostSearch ? 300 : (segmentCount >= 3 ? 350 : (segmentCount === 2 ? 250 : (isStateOnlySearch ? 200 : 150)));
-    const TARGET_LEADS = isBoostSearch ? 800 : (segmentCount >= 3 ? 900 : (segmentCount === 2 ? 700 : (isStateOnlySearch ? 500 : 300)));
-    const MAX_TARGET_LEADS = isBoostSearch ? 1200 : (segmentCount >= 3 ? 1100 : (segmentCount === 2 ? 900 : (isStateOnlySearch ? 700 : 450)));
-    const MIN_LEADS_EARLY_EXIT = isBoostSearch ? 1400 : (segmentCount >= 3 ? 1150 : (segmentCount === 2 ? 950 : (isStateOnlySearch ? 750 : 480)));
+    const MIN_LEADS_TARGET = isBoostSearch ? 500 : (segmentCount >= 3 ? 350 : (segmentCount === 2 ? 250 : (isStateOnlySearch ? 200 : 150)));
+    const TARGET_LEADS = isBoostSearch ? 1500 : (segmentCount >= 3 ? 900 : (segmentCount === 2 ? 700 : (isStateOnlySearch ? 500 : 300)));
+    const MAX_TARGET_LEADS = isBoostSearch ? 2000 : (segmentCount >= 3 ? 1100 : (segmentCount === 2 ? 900 : (isStateOnlySearch ? 700 : 450)));
+    const MIN_LEADS_EARLY_EXIT = isBoostSearch ? 2200 : (segmentCount >= 3 ? 1150 : (segmentCount === 2 ? 950 : (isStateOnlySearch ? 750 : 480)));
     
     console.log(`📊 Lead limits: max=${MAX_TOTAL_LEADS}, target=${TARGET_LEADS}, stateSearch=${isStateOnlySearch}`);
 
