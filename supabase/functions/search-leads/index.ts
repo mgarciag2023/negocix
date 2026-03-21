@@ -3421,7 +3421,7 @@ serve(async (req) => {
     if (isStateOnlySearch && citiesForState.length > 0) {
       // STATE SEARCH: For boost segments, search more cities
       const isBoostStateSearch = segments.some((s) => isBoostSegment(s));
-      const maxCities = isBoostStateSearch ? 40 : 10;
+      const maxCities = isFerragens ? 40 : (isBoostStateSearch ? 18 : 10);
       const citiesToSearch = citiesForState.slice(0, maxCities);
       console.log(`🏙️ STATE SEARCH: Searching across ${citiesToSearch.length} cities in ${stateAbbrev.toUpperCase()} (of ${citiesForState.length} total)${isBoostStateSearch ? ' [BOOSTED]' : ''}`);
       
