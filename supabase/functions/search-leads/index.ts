@@ -3079,18 +3079,28 @@ serve(async (req) => {
     }
 
     // State-only searches get higher limits
-    // Boost search detection — uses isBoostSegment for unified logic
-    const isBoostSearch = segments.some((s: string) => isBoostSegment(s));
+    const isDistribuidorMaterialSearch = segment.toLowerCase().includes('distribuidores de material');
+    const isIndustriaMecanicaSearch = segment.toLowerCase().includes('indústrias mecânicas') || segment.toLowerCase().includes('industrias mecanicas');
+    const isDistribuidorPessegosSearch = segment.toLowerCase().includes('distribuidores de pêssegos') || segment.toLowerCase().includes('distribuidores de pessegos');
+    const isBoostSearch = isDistribuidorMaterialSearch || isIndustriaMecanicaSearch || isDistribuidorPessegosSearch;
+    
+    // Ferragens gets its own mega-boost for ~2000 leads
+    const isFerragens = segments.some((s: string) => {
+      const n = s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      return n.includes('ferragens') || n.includes('ferragem') || n.includes('casa de ferragens') || n.includes('loja de ferragens');
+    });
     
     // Count selected segments to adjust limits (segments are comma-separated)
     const selectedSegments = segment.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0);
     const segmentCount = selectedSegments.length;
-    console.log(`📋 Number of selected segments: ${segmentCount}, isBoostSearch: ${isBoostSearch}`);
+    console.log(`📋 Number of selected segments: ${segmentCount}, isBoostSearch: ${isBoostSearch}, isFerragens: ${isFerragens}`);
     
     // Dynamic limits based on number of selected segments — maximized for all users
     let defaultMaxLeads: number;
-    if (isBoostSearch) {
+    if (isFerragens) {
       defaultMaxLeads = 2500;
+    } else if (isBoostSearch) {
+      defaultMaxLeads = 1500;
     } else if (segmentCount >= 3) {
       defaultMaxLeads = 1200;
     } else if (segmentCount === 2) {
@@ -3100,10 +3110,11 @@ serve(async (req) => {
     }
     
     const MAX_TOTAL_LEADS = userMaxLeads || defaultMaxLeads;
-    const MIN_LEADS_TARGET = isBoostSearch ? 500 : (segmentCount >= 3 ? 350 : (segmentCount === 2 ? 250 : (isStateOnlySearch ? 200 : 150)));
-    const TARGET_LEADS = isBoostSearch ? 1500 : (segmentCount >= 3 ? 900 : (segmentCount === 2 ? 700 : (isStateOnlySearch ? 500 : 300)));
-    const MAX_TARGET_LEADS = isBoostSearch ? 2000 : (segmentCount >= 3 ? 1100 : (segmentCount === 2 ? 900 : (isStateOnlySearch ? 700 : 450)));
-    const MIN_LEADS_EARLY_EXIT = isBoostSearch ? 2200 : (segmentCount >= 3 ? 1150 : (segmentCount === 2 ? 950 : (isStateOnlySearch ? 750 : 480)));
+    const isMegaBoost = isFerragens;
+    const MIN_LEADS_TARGET = isMegaBoost ? 500 : (isBoostSearch ? 300 : (segmentCount >= 3 ? 350 : (segmentCount === 2 ? 250 : (isStateOnlySearch ? 200 : 150))));
+    const TARGET_LEADS = isMegaBoost ? 1500 : (isBoostSearch ? 800 : (segmentCount >= 3 ? 900 : (segmentCount === 2 ? 700 : (isStateOnlySearch ? 500 : 300))));
+    const MAX_TARGET_LEADS = isMegaBoost ? 2000 : (isBoostSearch ? 1200 : (segmentCount >= 3 ? 1100 : (segmentCount === 2 ? 900 : (isStateOnlySearch ? 700 : 450))));
+    const MIN_LEADS_EARLY_EXIT = isMegaBoost ? 2200 : (isBoostSearch ? 1400 : (segmentCount >= 3 ? 1150 : (segmentCount === 2 ? 950 : (isStateOnlySearch ? 750 : 480))));
     
     console.log(`📊 Lead limits: max=${MAX_TOTAL_LEADS}, target=${TARGET_LEADS}, stateSearch=${isStateOnlySearch}`);
 
@@ -3410,7 +3421,7 @@ serve(async (req) => {
     if (isStateOnlySearch && citiesForState.length > 0) {
       // STATE SEARCH: For boost segments, search more cities
       const isBoostStateSearch = segments.some((s) => isBoostSegment(s));
-      const maxCities = isBoostStateSearch ? 40 : 10;
+      const maxCities = isFerragens ? 40 : (isBoostStateSearch ? 18 : 10);
       const citiesToSearch = citiesForState.slice(0, maxCities);
       console.log(`🏙️ STATE SEARCH: Searching across ${citiesToSearch.length} cities in ${stateAbbrev.toUpperCase()} (of ${citiesForState.length} total)${isBoostStateSearch ? ' [BOOSTED]' : ''}`);
       
@@ -3424,7 +3435,7 @@ serve(async (req) => {
         } else {
           searchTerms = generateSearchTerms(seg);
           // Estado multiplica por cidades; aumenta sem explodir custo
-          searchTerms = isBoostSeg ? searchTerms.slice(0, 25) : searchTerms.slice(0, 6);
+          searchTerms = isFerragens ? searchTerms.slice(0, 25) : (isBoostSeg ? searchTerms.slice(0, 18) : searchTerms.slice(0, 6));
         }
         
         console.log(`📤 Searching segment "${seg}" with terms:`, searchTerms);
