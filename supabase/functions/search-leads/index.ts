@@ -1472,6 +1472,10 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     include: ['ferramenta', 'ferramentaria', 'ferragem', 'parafuso', 'chave', 'furadeira', 'serra', 'martelo', 'alicate', 'máquina', 'equipamento', 'tools'],
     exclude: ['roupa', 'alimento', 'supermercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel']
   },
+  'ferragens': {
+    include: ['ferragem', 'ferragens', 'parafuso', 'dobradiça', 'fechadura', 'cadeado', 'puxador', 'trinco', 'ferramentaria', 'fixador', 'abraçadeira', 'bucha', 'prego', 'chave', 'corrente', 'gancho', 'cantoneira', 'mão francesa', 'suporte', 'roldana', 'esquadria', 'hardware store', 'ferreteria'],
+    exclude: ['roupa', 'alimento', 'supermercado', 'restaurante', 'pet', 'ótica', 'joalheria', 'salão', 'academia', 'hotel', 'farmácia', 'cosmétic']
+  },
   'pet shop': {
     include: ['pet', 'animal', 'veterinár', 'cão', 'cachorro', 'gato', 'ração', 'banho e tosa', 'petshop', 'pet center', 'agropet'],
     exclude: ['roupa', 'supermercado', 'restaurante', 'construção', 'ótica', 'joalheria', 'academia', 'hotel']
