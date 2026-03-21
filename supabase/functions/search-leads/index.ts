@@ -181,6 +181,7 @@ function generateSearchTerms(segment: string): string[] {
     'casas de massas': ['casa de massas', 'massa fresca', 'restaurante italiano', 'cantina italiana', 'massas artesanais'],
     'materiais de construção': ['material de construção', 'home center', 'depósito de construção', 'loja de material de construção', 'casa de material', 'madeireira'],
     'ferramentas': ['ferramentas', 'ferragem'],
+    'ferragens': ['ferragem', 'casa de ferragens', 'loja de ferragens', 'ferragens em geral', 'ferragens e ferramentas', 'parafusos', 'casa de parafusos', 'ferragens para móveis', 'ferragens para portas', 'ferragens para construção', 'dobradiças', 'fechaduras', 'cadeados', 'ferragem e material elétrico', 'ferragem e hidráulica', 'ferragem e pintura', 'ferramentaria', 'casa de ferragem', 'ferragem e material de construção', 'depósito de ferragens', 'ferragens industriais', 'distribuidor de ferragens', 'atacado de ferragens', 'ferragens residenciais', 'ferragens para vidro', 'ferragens para esquadrias', 'ferragens para marcenaria', 'ferragens para serralheria', 'loja de chaves e ferragens', 'ferragens e elétrica', 'ferragens para portão', 'ferragens para alumínio', 'parafusos e fixadores', 'ferragens para steel frame', 'ferragens para drywall', 'ferragens para estruturas metálicas', 'ferragens para chapas', 'ferragens e acessórios', 'casa de materiais e ferragens'],
     'agropecuária': ['agropecuária', 'produtos rurais'],
     'farmácias': ['farmácia', 'drogaria'],
     'farmácias e drogarias': ['farmácia', 'drogaria', 'farmácia popular'],
