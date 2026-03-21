@@ -2050,8 +2050,16 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     exclude: ['supermercado', 'fábrica', 'indústria']
   },
   'casas de carnes': {
-    include: ['casa de carnes', 'açougue', 'carnes', 'boutique de carnes', 'churrasco'],
+    include: ['casa de carnes', 'açougue', 'açougueria', 'carnes', 'boutique de carnes', 'churrasco', 'frios', 'embutidos', 'kit churrasco', 'carne bovina', 'carne suína'],
     exclude: ['fábrica', 'indústria', 'farmácia', 'pet']
+  },
+  'açouguerias': {
+    include: ['açougueria', 'açougue', 'casa de carnes', 'carnes', 'boutique de carnes', 'frios', 'embutidos', 'kit churrasco', 'carne bovina', 'carne suína', 'churrasco'],
+    exclude: ['fábrica', 'indústria', 'farmácia', 'pet', 'restaurante']
+  },
+  'açougues': {
+    include: ['açougue', 'açougueria', 'casa de carnes', 'carnes', 'boutique de carnes', 'frios', 'embutidos', 'kit churrasco', 'carne bovina', 'carne suína', 'churrasco'],
+    exclude: ['fábrica', 'indústria', 'farmácia', 'pet', 'restaurante']
   },
   'distribuidoras de carnes': {
     include: ['distribuidora de carnes', 'atacado de carnes', 'frigorífico', 'carnes atacado', 'distribuidor'],
