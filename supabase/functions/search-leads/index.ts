@@ -142,6 +142,10 @@ function isBoostSegment(segment: string): boolean {
     'fornecedor',
     'fabrica',
     'industria',
+    'ferragens',
+    'ferragem',
+    'casa de ferragens',
+    'loja de ferragens',
   ];
 
   return boostKeywords.some((keyword) => normalized.includes(keyword));
