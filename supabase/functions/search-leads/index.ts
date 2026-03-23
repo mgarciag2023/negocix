@@ -843,7 +843,8 @@ function generateSearchTerms(segment: string): string[] {
   const shouldBoost = isBoostSegment(term);
 
   // Boost usa cap maior; padrão também sobe para evitar buscas sem resultado em nichos long-tail
-  return shouldBoost ? dedupedExpandedTerms.slice(0, 40) : dedupedExpandedTerms.slice(0, 14);
+  // OPTIMIZED: Fewer search terms to save API credits
+  return shouldBoost ? dedupedExpandedTerms.slice(0, 15) : dedupedExpandedTerms.slice(0, 8);
 }
 
 // Estimate revenue based on reviews, rating, and category - MORE PRECISE
@@ -3104,25 +3105,26 @@ serve(async (req) => {
     console.log(`📋 Number of selected segments: ${segmentCount}, isBoostSearch: ${isBoostSearch}, isFerragens: ${isFerragens}`);
     
     // Dynamic limits based on number of selected segments — maximized for all users
+    // OPTIMIZED: Reduced limits to save API credits
     let defaultMaxLeads: number;
     if (isFerragens) {
-      defaultMaxLeads = 2500;
+      defaultMaxLeads = 800;
     } else if (isBoostSearch) {
-      defaultMaxLeads = 1500;
+      defaultMaxLeads = 600;
     } else if (segmentCount >= 3) {
-      defaultMaxLeads = 1200;
+      defaultMaxLeads = 500;
     } else if (segmentCount === 2) {
-      defaultMaxLeads = 1000;
+      defaultMaxLeads = 400;
     } else {
-      defaultMaxLeads = isStateOnlySearch ? 800 : 500;
+      defaultMaxLeads = isStateOnlySearch ? 350 : 200;
     }
     
     const MAX_TOTAL_LEADS = userMaxLeads || defaultMaxLeads;
     const isMegaBoost = isFerragens;
-    const MIN_LEADS_TARGET = isMegaBoost ? 500 : (isBoostSearch ? 300 : (segmentCount >= 3 ? 350 : (segmentCount === 2 ? 250 : (isStateOnlySearch ? 200 : 150))));
-    const TARGET_LEADS = isMegaBoost ? 1500 : (isBoostSearch ? 800 : (segmentCount >= 3 ? 900 : (segmentCount === 2 ? 700 : (isStateOnlySearch ? 500 : 300))));
-    const MAX_TARGET_LEADS = isMegaBoost ? 2000 : (isBoostSearch ? 1200 : (segmentCount >= 3 ? 1100 : (segmentCount === 2 ? 900 : (isStateOnlySearch ? 700 : 450))));
-    const MIN_LEADS_EARLY_EXIT = isMegaBoost ? 2200 : (isBoostSearch ? 1400 : (segmentCount >= 3 ? 1150 : (segmentCount === 2 ? 950 : (isStateOnlySearch ? 750 : 480))));
+    const MIN_LEADS_TARGET = isMegaBoost ? 200 : (isBoostSearch ? 150 : (segmentCount >= 3 ? 150 : (segmentCount === 2 ? 100 : (isStateOnlySearch ? 80 : 60))));
+    const TARGET_LEADS = isMegaBoost ? 600 : (isBoostSearch ? 400 : (segmentCount >= 3 ? 400 : (segmentCount === 2 ? 300 : (isStateOnlySearch ? 250 : 150))));
+    const MAX_TARGET_LEADS = isMegaBoost ? 750 : (isBoostSearch ? 550 : (segmentCount >= 3 ? 480 : (segmentCount === 2 ? 380 : (isStateOnlySearch ? 320 : 190))));
+    const MIN_LEADS_EARLY_EXIT = isMegaBoost ? 700 : (isBoostSearch ? 500 : (segmentCount >= 3 ? 450 : (segmentCount === 2 ? 350 : (isStateOnlySearch ? 300 : 180))));
     
     console.log(`📊 Lead limits: max=${MAX_TOTAL_LEADS}, target=${TARGET_LEADS}, stateSearch=${isStateOnlySearch}`);
 
@@ -3356,11 +3358,11 @@ serve(async (req) => {
         return { places: currentPlaces, validationRadiusKm: baseRadiusKm };
       }
 
-      const severeShortage = currentLeadCount < Math.max(20, Math.floor(MIN_LEADS_TARGET * 0.35));
+      const severeShortage = currentLeadCount < Math.max(15, Math.floor(MIN_LEADS_TARGET * 0.35));
       const expansionRadiusMeters = 50000;
       const expansionRadiusKm = Math.round(expansionRadiusMeters / 1000);
-      const expansionPages = severeShortage ? 12 : 8;
-      const topTermsPerSegment = severeShortage ? 15 : 10;
+      const expansionPages = severeShortage ? 6 : 4;
+      const topTermsPerSegment = severeShortage ? 8 : 5;
 
       console.log(`🛰️ LOW VOLUME: ${currentLeadCount} leads. Expanding search radius to ${expansionRadiusKm}km with ${topTermsPerSegment} top terms per segment.`);
 
@@ -3429,7 +3431,7 @@ serve(async (req) => {
     if (isStateOnlySearch && citiesForState.length > 0) {
       // STATE SEARCH: For boost segments, search more cities
       const isBoostStateSearch = segments.some((s) => isBoostSegment(s));
-      const maxCities = isFerragens ? 40 : (isBoostStateSearch ? 18 : 10);
+      const maxCities = isFerragens ? 20 : (isBoostStateSearch ? 10 : 6);
       const citiesToSearch = citiesForState.slice(0, maxCities);
       console.log(`🏙️ STATE SEARCH: Searching across ${citiesToSearch.length} cities in ${stateAbbrev.toUpperCase()} (of ${citiesForState.length} total)${isBoostStateSearch ? ' [BOOSTED]' : ''}`);
       
@@ -3443,7 +3445,7 @@ serve(async (req) => {
         } else {
           searchTerms = generateSearchTerms(seg);
           // Estado multiplica por cidades; aumenta sem explodir custo
-          searchTerms = isFerragens ? searchTerms.slice(0, 25) : (isBoostSeg ? searchTerms.slice(0, 18) : searchTerms.slice(0, 6));
+          searchTerms = isFerragens ? searchTerms.slice(0, 10) : (isBoostSeg ? searchTerms.slice(0, 8) : searchTerms.slice(0, 4));
         }
         
         console.log(`📤 Searching segment "${seg}" with terms:`, searchTerms);
@@ -3455,7 +3457,7 @@ serve(async (req) => {
           
           const cityPromises = cityBatch.flatMap(city => {
             const cityLocation = `${city}, ${stateAbbrev.toUpperCase()}, Brazil`;
-            return searchTerms.map(term => searchPlaces(term, cityLocation, isBoostSeg ? 3 : 2));
+            return searchTerms.map(term => searchPlaces(term, cityLocation, isBoostSeg ? 2 : 1));
           });
           
           const cityResults = await Promise.all(cityPromises);
@@ -3509,13 +3511,10 @@ serve(async (req) => {
         if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 3) break;
       }
     } else {
-      // CITY/REGION SEARCH: Original behavior
+      // CITY/REGION SEARCH: OPTIMIZED - fewer pages to save API credits
       const isBoostSegmentSearch = segments.some((s) => isBoostSegment(s));
-      const maxPagesPerSegment = isBoostSegmentSearch ? 40 : 32;
-      const adjustedPages = isBoostSegmentSearch 
-        ? 40 
-        : Math.max(18, Math.min(maxPagesPerSegment, Math.floor(120 / segments.length)));
-      console.log(`⚡ MAXIMUM VOLUME: ${adjustedPages} pages per segment (${segments.length} segments)${isBoostSegmentSearch ? ' [BOOSTED]' : ''}`);
+      const adjustedPages = isBoostSegmentSearch ? 12 : 6;
+      console.log(`⚡ Search: ${adjustedPages} pages per segment (${segments.length} segments)${isBoostSegmentSearch ? ' [BOOSTED]' : ''}`);
       
       for (const seg of segments) {
         let searchTerms: string[];
@@ -3528,7 +3527,7 @@ serve(async (req) => {
         } else {
           searchTerms = generateSearchTerms(seg);
           // Padrão sobe para 18 termos para melhorar volume em cidades pequenas
-          searchTerms = isBoostSeg ? searchTerms : searchTerms.slice(0, 18);
+          searchTerms = isBoostSeg ? searchTerms : searchTerms.slice(0, 8);
         }
         
         if (isBoostSeg) {
@@ -3569,9 +3568,9 @@ serve(async (req) => {
           const cityNorm = city.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
           if (regionLower.includes(cityNorm)) {
             // Use first 2 search terms across neighborhoods
-            const topTermsCount = isBoostSeg ? 4 : 2;
+            const topTermsCount = isBoostSeg ? 2 : 1;
             const topTerms = searchTerms.slice(0, topTermsCount);
-            const pagesPerNeighborhood = isBoostSeg ? 2 : 1;
+            const pagesPerNeighborhood = 1;
             neighborhoodQueries = neighborhoods.flatMap(neighborhood => 
               topTerms.map(term => searchPlaces(term, `${neighborhood}, ${countryCode === 'BR' ? 'Brazil' : countryCode}`, pagesPerNeighborhood))
             );
@@ -3592,7 +3591,7 @@ serve(async (req) => {
         allPlacesWithSegment.push(...placesFromSegment);
         console.log(`📊 Segment "${seg}": ${placesFromSegment.length} raw places (${searchResults.flat().length} from main + ${neighborhoodResults.flat().length} from neighborhoods)`);
         
-        if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 8) {
+        if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 4) {
           console.log(`⚡ Enough raw places (${allPlacesWithSegment.length}), skipping remaining segments`);
           break;
         }

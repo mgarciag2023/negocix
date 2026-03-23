@@ -243,42 +243,18 @@ async function searchGooglePlaces(query: string, apiKey: string, limit: number =
 // ============================================
 
 function buildSearchQueries(location: string): string[] {
+  // OPTIMIZED: Reduced from 33 to 10 queries to save API credits
   return [
     `representação comercial ${location}`,
+    `representante comercial ${location}`,
     `representações comerciais ${location}`,
     `empresa de representação ${location}`,
-    `representante comercial ${location}`,
-    `escritório de representação ${location}`,
     `agente comercial ${location}`,
     `assessoria comercial ${location}`,
+    `escritório de representação ${location}`,
     `representação comercial de alimentos ${location}`,
-    `representação comercial vendas ${location}`,
-    `rep comercial ${location}`,
-    `representação comercial de bebidas ${location}`,
-    `representação comercial de cosméticos ${location}`,
-    `representação comercial de materiais ${location}`,
-    `representação comercial de produtos ${location}`,
     `representação comercial atacado ${location}`,
     `representação comercial industrial ${location}`,
-    `representação comercial autônomo ${location}`,
-    `escritório de vendas ${location}`,
-    `promotor de vendas ${location}`,
-    `consultor comercial ${location}`,
-    `intermediação comercial ${location}`,
-    `agenciamento comercial ${location}`,
-    `representação comercial de limpeza ${location}`,
-    `representação comercial de embalagens ${location}`,
-    `representação comercial de ferramentas ${location}`,
-    `representação comercial de eletrônicos ${location}`,
-    `representação comercial de construção ${location}`,
-    `representação comercial de medicamentos ${location}`,
-    `representação comercial de peças ${location}`,
-    `representação comercial de equipamentos ${location}`,
-    `representação comercial de máquinas ${location}`,
-    `representação comercial de têxtil ${location}`,
-    `representação comercial de papelaria ${location}`,
-    `representação comercial de informática ${location}`,
-    `representação comercial de plásticos ${location}`,
   ];
 }
 
@@ -350,7 +326,7 @@ serve(async (req) => {
       const cities = stateCities[state] || [stateName];
       console.log(`🏙️ State search: querying ${cities.length} cities for ${state}`);
 
-      // For each city, use a subset of queries to avoid timeout
+      // OPTIMIZED: Fewer core queries per city to save API credits
       const coreQueries = [
         'representação comercial',
         'representante comercial',
@@ -358,15 +334,6 @@ serve(async (req) => {
         'empresa de representação',
         'agente comercial',
         'assessoria comercial',
-        'escritório de representação',
-        'rep comercial',
-        'representação comercial de alimentos',
-        'representação comercial atacado',
-        'representação comercial industrial',
-        'representação comercial de bebidas',
-        'representação comercial de produtos',
-        'representação comercial vendas',
-        'consultor comercial',
       ];
 
       const allSearchPromises: Promise<any[]>[] = [];
