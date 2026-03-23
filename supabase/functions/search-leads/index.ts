@@ -3358,11 +3358,11 @@ serve(async (req) => {
         return { places: currentPlaces, validationRadiusKm: baseRadiusKm };
       }
 
-      const severeShortage = currentLeadCount < Math.max(20, Math.floor(MIN_LEADS_TARGET * 0.35));
+      const severeShortage = currentLeadCount < Math.max(15, Math.floor(MIN_LEADS_TARGET * 0.35));
       const expansionRadiusMeters = 50000;
       const expansionRadiusKm = Math.round(expansionRadiusMeters / 1000);
-      const expansionPages = severeShortage ? 12 : 8;
-      const topTermsPerSegment = severeShortage ? 15 : 10;
+      const expansionPages = severeShortage ? 6 : 4;
+      const topTermsPerSegment = severeShortage ? 8 : 5;
 
       console.log(`🛰️ LOW VOLUME: ${currentLeadCount} leads. Expanding search radius to ${expansionRadiusKm}km with ${topTermsPerSegment} top terms per segment.`);
 
