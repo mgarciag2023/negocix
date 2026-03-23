@@ -3457,7 +3457,7 @@ serve(async (req) => {
           
           const cityPromises = cityBatch.flatMap(city => {
             const cityLocation = `${city}, ${stateAbbrev.toUpperCase()}, Brazil`;
-            return searchTerms.map(term => searchPlaces(term, cityLocation, isBoostSeg ? 3 : 2));
+            return searchTerms.map(term => searchPlaces(term, cityLocation, isBoostSeg ? 2 : 1));
           });
           
           const cityResults = await Promise.all(cityPromises);
