@@ -326,7 +326,7 @@ serve(async (req) => {
       const cities = stateCities[state] || [stateName];
       console.log(`🏙️ State search: querying ${cities.length} cities for ${state}`);
 
-      // For each city, use a subset of queries to avoid timeout
+      // OPTIMIZED: Fewer core queries per city to save API credits
       const coreQueries = [
         'representação comercial',
         'representante comercial',
@@ -334,15 +334,6 @@ serve(async (req) => {
         'empresa de representação',
         'agente comercial',
         'assessoria comercial',
-        'escritório de representação',
-        'rep comercial',
-        'representação comercial de alimentos',
-        'representação comercial atacado',
-        'representação comercial industrial',
-        'representação comercial de bebidas',
-        'representação comercial de produtos',
-        'representação comercial vendas',
-        'consultor comercial',
       ];
 
       const allSearchPromises: Promise<any[]>[] = [];
