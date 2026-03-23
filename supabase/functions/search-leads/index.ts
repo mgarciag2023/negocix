@@ -3527,7 +3527,7 @@ serve(async (req) => {
         } else {
           searchTerms = generateSearchTerms(seg);
           // Padrão sobe para 18 termos para melhorar volume em cidades pequenas
-          searchTerms = isBoostSeg ? searchTerms : searchTerms.slice(0, 18);
+          searchTerms = isBoostSeg ? searchTerms : searchTerms.slice(0, 8);
         }
         
         if (isBoostSeg) {
