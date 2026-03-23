@@ -3591,7 +3591,7 @@ serve(async (req) => {
         allPlacesWithSegment.push(...placesFromSegment);
         console.log(`📊 Segment "${seg}": ${placesFromSegment.length} raw places (${searchResults.flat().length} from main + ${neighborhoodResults.flat().length} from neighborhoods)`);
         
-        if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 8) {
+        if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 4) {
           console.log(`⚡ Enough raw places (${allPlacesWithSegment.length}), skipping remaining segments`);
           break;
         }
