@@ -243,42 +243,18 @@ async function searchGooglePlaces(query: string, apiKey: string, limit: number =
 // ============================================
 
 function buildSearchQueries(location: string): string[] {
+  // OPTIMIZED: Reduced from 33 to 10 queries to save API credits
   return [
     `representação comercial ${location}`,
+    `representante comercial ${location}`,
     `representações comerciais ${location}`,
     `empresa de representação ${location}`,
-    `representante comercial ${location}`,
-    `escritório de representação ${location}`,
     `agente comercial ${location}`,
     `assessoria comercial ${location}`,
+    `escritório de representação ${location}`,
     `representação comercial de alimentos ${location}`,
-    `representação comercial vendas ${location}`,
-    `rep comercial ${location}`,
-    `representação comercial de bebidas ${location}`,
-    `representação comercial de cosméticos ${location}`,
-    `representação comercial de materiais ${location}`,
-    `representação comercial de produtos ${location}`,
     `representação comercial atacado ${location}`,
     `representação comercial industrial ${location}`,
-    `representação comercial autônomo ${location}`,
-    `escritório de vendas ${location}`,
-    `promotor de vendas ${location}`,
-    `consultor comercial ${location}`,
-    `intermediação comercial ${location}`,
-    `agenciamento comercial ${location}`,
-    `representação comercial de limpeza ${location}`,
-    `representação comercial de embalagens ${location}`,
-    `representação comercial de ferramentas ${location}`,
-    `representação comercial de eletrônicos ${location}`,
-    `representação comercial de construção ${location}`,
-    `representação comercial de medicamentos ${location}`,
-    `representação comercial de peças ${location}`,
-    `representação comercial de equipamentos ${location}`,
-    `representação comercial de máquinas ${location}`,
-    `representação comercial de têxtil ${location}`,
-    `representação comercial de papelaria ${location}`,
-    `representação comercial de informática ${location}`,
-    `representação comercial de plásticos ${location}`,
   ];
 }
 
