@@ -3511,13 +3511,10 @@ serve(async (req) => {
         if (allPlacesWithSegment.length >= MAX_TOTAL_LEADS * 3) break;
       }
     } else {
-      // CITY/REGION SEARCH: Original behavior
+      // CITY/REGION SEARCH: OPTIMIZED - fewer pages to save API credits
       const isBoostSegmentSearch = segments.some((s) => isBoostSegment(s));
-      const maxPagesPerSegment = isBoostSegmentSearch ? 40 : 32;
-      const adjustedPages = isBoostSegmentSearch 
-        ? 40 
-        : Math.max(18, Math.min(maxPagesPerSegment, Math.floor(120 / segments.length)));
-      console.log(`⚡ MAXIMUM VOLUME: ${adjustedPages} pages per segment (${segments.length} segments)${isBoostSegmentSearch ? ' [BOOSTED]' : ''}`);
+      const adjustedPages = isBoostSegmentSearch ? 12 : 6;
+      console.log(`⚡ Search: ${adjustedPages} pages per segment (${segments.length} segments)${isBoostSegmentSearch ? ' [BOOSTED]' : ''}`);
       
       for (const seg of segments) {
         let searchTerms: string[];
