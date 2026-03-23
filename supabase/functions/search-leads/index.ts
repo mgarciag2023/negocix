@@ -843,7 +843,8 @@ function generateSearchTerms(segment: string): string[] {
   const shouldBoost = isBoostSegment(term);
 
   // Boost usa cap maior; padrão também sobe para evitar buscas sem resultado em nichos long-tail
-  return shouldBoost ? dedupedExpandedTerms.slice(0, 40) : dedupedExpandedTerms.slice(0, 14);
+  // OPTIMIZED: Fewer search terms to save API credits
+  return shouldBoost ? dedupedExpandedTerms.slice(0, 15) : dedupedExpandedTerms.slice(0, 8);
 }
 
 // Estimate revenue based on reviews, rating, and category - MORE PRECISE
