@@ -3568,9 +3568,9 @@ serve(async (req) => {
           const cityNorm = city.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
           if (regionLower.includes(cityNorm)) {
             // Use first 2 search terms across neighborhoods
-            const topTermsCount = isBoostSeg ? 4 : 2;
+            const topTermsCount = isBoostSeg ? 2 : 1;
             const topTerms = searchTerms.slice(0, topTermsCount);
-            const pagesPerNeighborhood = isBoostSeg ? 2 : 1;
+            const pagesPerNeighborhood = 1;
             neighborhoodQueries = neighborhoods.flatMap(neighborhood => 
               topTerms.map(term => searchPlaces(term, `${neighborhood}, ${countryCode === 'BR' ? 'Brazil' : countryCode}`, pagesPerNeighborhood))
             );
