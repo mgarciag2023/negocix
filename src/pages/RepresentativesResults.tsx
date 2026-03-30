@@ -142,7 +142,9 @@ export default function RepresentativesResults() {
 
   const handleCallClick = (phone: string) => {
     const cleanPhone = phone.replace(/\D/g, "");
-    window.open(`tel:+55${cleanPhone}`, "_self");
+    // Avoid double country code - check if already starts with 55
+    const finalPhone = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
+    window.open(`tel:+${finalPhone}`, "_self");
   };
 
   const handleRefresh = () => {
