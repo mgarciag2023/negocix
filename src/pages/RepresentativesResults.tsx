@@ -132,15 +132,19 @@ export default function RepresentativesResults() {
 
   const handleWhatsAppClick = (phone: string, name: string) => {
     const cleanPhone = phone.replace(/\D/g, "");
+    // Phone already comes with country code 55 from backend
+    const finalPhone = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
     const message = encodeURIComponent(
       `Olá ${name}, encontrei seu contato através de uma busca por representantes comerciais. Gostaria de conversar sobre uma possível parceria.`
     );
-    window.open(`https://wa.me/55${cleanPhone}?text=${message}`, "_blank");
+    window.open(`https://wa.me/${finalPhone}?text=${message}`, "_blank");
   };
 
   const handleCallClick = (phone: string) => {
     const cleanPhone = phone.replace(/\D/g, "");
-    window.open(`tel:+55${cleanPhone}`, "_self");
+    // Avoid double country code - check if already starts with 55
+    const finalPhone = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
+    window.open(`tel:+${finalPhone}`, "_self");
   };
 
   const handleRefresh = () => {
