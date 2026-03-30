@@ -75,6 +75,7 @@ export type Database = {
           revenue: string | null
           saved_at: string
           updated_at: string
+          user_id: string | null
           website: string | null
         }
         Insert: {
@@ -104,6 +105,7 @@ export type Database = {
           revenue?: string | null
           saved_at?: string
           updated_at?: string
+          user_id?: string | null
           website?: string | null
         }
         Update: {
@@ -133,6 +135,7 @@ export type Database = {
           revenue?: string | null
           saved_at?: string
           updated_at?: string
+          user_id?: string | null
           website?: string | null
         }
         Relationships: []
