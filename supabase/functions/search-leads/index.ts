@@ -3649,7 +3649,7 @@ serve(async (req) => {
       return scoreB - scoreA;
     });
 
-    let validationRadiusKm = 35;
+    let validationRadiusKm = isStateOnlySearch ? 35 : 25;
 
     // No detail fetching needed - RapidAPI returns phone/website directly!
     const placesWithPhone = activePlaces.filter(p => p.phone && p.phone.trim() !== '');
