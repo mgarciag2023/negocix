@@ -694,6 +694,14 @@ function generateSearchTerms(segment: string): string[] {
     'lojas de artigos para bebê': ['artigos para bebê', 'loja de bebê', 'enxoval de bebê'],
     'lojas de material de escritório': ['material de escritório', 'papelaria corporativa', 'suprimentos de escritório'],
     'lojas de móveis para escritório': ['móveis para escritório', 'mobiliário corporativo', 'estações de trabalho'],
+    // === SEGMENTOS DE CONSTRUÇÃO A SECO / FIXAÇÃO ===
+    'empresas de drywall': ['drywall', 'gesso acartonado', 'forro de drywall', 'parede de drywall', 'divisória drywall', 'instalação drywall', 'empresa de drywall', 'gesso drywall', 'placa de gesso', 'forro de gesso', 'divisória de gesso', 'construção a seco drywall', 'montagem drywall', 'drywall e forro'],
+    'gesseiros': ['gesseiro', 'gesso', 'forro de gesso', 'sanca de gesso', 'moldura de gesso', 'placa de gesso', 'gesso 3d', 'gesso liso', 'gessaria', 'serviços de gesso', 'aplicação de gesso', 'acabamento em gesso', 'gesso decorativo', 'gesso acartonado'],
+    'empresas de esquadrias': ['esquadrias', 'fábrica de esquadrias', 'esquadrias de alumínio', 'esquadrias de pvc', 'esquadrias metálicas', 'janelas e portas', 'caixilharia', 'serralheria de esquadrias', 'esquadrias sob medida', 'esquadrias de aço', 'vidraçaria e esquadrias'],
+    'empresas de container': ['container', 'container habitável', 'container marítimo', 'casa container', 'escritório container', 'container para obra', 'locação de container', 'venda de container', 'container modular', 'container refrigerado', 'container almoxarifado'],
+    'empresas de forro e divisórias': ['forro', 'divisórias', 'forro pvc', 'forro mineral', 'divisória naval', 'divisória de eucatex', 'forro de madeira', 'forro metálico', 'divisória de vidro', 'forro acústico', 'divisórias e forros'],
+    'construtoras de casas em container': ['casa container', 'construção em container', 'container residencial', 'container habitável', 'projeto container', 'casa em container', 'moradia container', 'container personalizado'],
+    'empresas de construção modular': ['construção modular', 'módulo habitável', 'construção industrializada', 'pré-fabricado modular', 'casa modular', 'escritório modular', 'construção off-site', 'módulos pré-fabricados', 'modular construction'],
   };
 
   
