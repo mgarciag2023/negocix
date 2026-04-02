@@ -3282,14 +3282,23 @@ serve(async (req) => {
             maxResultCount: 20,
           };
 
-          // Add locationBias to prioritize results near the target location
+          // Use locationRestriction for city searches (hard boundary) and locationBias for state searches (soft preference)
           if (searchGeocode && !nextPageToken) {
-            body.locationBias = {
-              circle: {
-                center: { latitude: searchGeocode.lat, longitude: searchGeocode.lng },
-                radius: radiusMeters,
-              }
-            };
+            if (isStateOnlySearch) {
+              body.locationBias = {
+                circle: {
+                  center: { latitude: searchGeocode.lat, longitude: searchGeocode.lng },
+                  radius: radiusMeters,
+                }
+              };
+            } else {
+              body.locationRestriction = {
+                circle: {
+                  center: { latitude: searchGeocode.lat, longitude: searchGeocode.lng },
+                  radius: radiusMeters,
+                }
+              };
+            }
           }
 
           if (nextPageToken) {
