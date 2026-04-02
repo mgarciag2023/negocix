@@ -75,7 +75,7 @@ export type Database = {
           revenue: string | null
           saved_at: string
           updated_at: string
-          user_id: string | null
+          user_id: string
           website: string | null
         }
         Insert: {
@@ -105,7 +105,7 @@ export type Database = {
           revenue?: string | null
           saved_at?: string
           updated_at?: string
-          user_id?: string | null
+          user_id: string
           website?: string | null
         }
         Update: {
@@ -135,7 +135,7 @@ export type Database = {
           revenue?: string | null
           saved_at?: string
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
           website?: string | null
         }
         Relationships: []
@@ -274,6 +274,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_profile_blocked_fields: {
+        Args: { _user_id: string }
+        Returns: {
+          blocked_at: string
+          blocked_reason: string
+          is_blocked: boolean
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
