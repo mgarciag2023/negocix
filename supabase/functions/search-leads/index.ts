@@ -3282,23 +3282,15 @@ serve(async (req) => {
             maxResultCount: 20,
           };
 
-          // Use locationRestriction for city searches (hard boundary) and locationBias for state searches (soft preference)
+          // Use locationBias to prioritize results near the target location
+          // Server-side validation (matchesRequestedLocation) enforces strict location filtering
           if (searchGeocode && !nextPageToken) {
-            if (isStateOnlySearch) {
-              body.locationBias = {
-                circle: {
-                  center: { latitude: searchGeocode.lat, longitude: searchGeocode.lng },
-                  radius: radiusMeters,
-                }
-              };
-            } else {
-              body.locationRestriction = {
-                circle: {
-                  center: { latitude: searchGeocode.lat, longitude: searchGeocode.lng },
-                  radius: radiusMeters,
-                }
-              };
-            }
+            body.locationBias = {
+              circle: {
+                center: { latitude: searchGeocode.lat, longitude: searchGeocode.lng },
+                radius: radiusMeters,
+              }
+            };
           }
 
           if (nextPageToken) {
