@@ -1831,6 +1831,41 @@ const nicheKeywords: { [key: string]: { include: string[], exclude: string[], mu
     mustMatch: [],
     exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'escola']
   },
+  'empresas de drywall': {
+    include: ['drywall', 'gesso acartonado', 'forro de drywall', 'parede drywall', 'divisória drywall', 'placa de gesso', 'forro de gesso', 'construção a seco', 'gesso', 'placa cimentícia'],
+    mustMatch: [],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'escola']
+  },
+  'gesseiros': {
+    include: ['gesso', 'gesseiro', 'forro de gesso', 'sanca', 'moldura de gesso', 'gesso 3d', 'gessaria', 'drywall', 'placa de gesso', 'acabamento gesso'],
+    mustMatch: [],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'escola']
+  },
+  'empresas de esquadrias': {
+    include: ['esquadrias', 'esquadria', 'caixilharia', 'janelas', 'portas e janelas', 'alumínio', 'pvc', 'vidraçaria', 'serralheria de esquadrias', 'box', 'vidro temperado'],
+    mustMatch: [],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'escola']
+  },
+  'empresas de container': {
+    include: ['container', 'contêiner', 'casa container', 'container habitável', 'container marítimo', 'container modular', 'módulo habitável', 'container escritório'],
+    mustMatch: [],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'escola', 'transporte', 'logística']
+  },
+  'empresas de forro e divisórias': {
+    include: ['forro', 'divisória', 'forro pvc', 'forro mineral', 'forro de gesso', 'forro metálico', 'divisória naval', 'divisória eucatex', 'forro acústico', 'divisória de vidro'],
+    mustMatch: [],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'escola']
+  },
+  'construtoras de casas em container': {
+    include: ['container', 'casa container', 'container habitável', 'container residencial', 'construção container', 'módulo container'],
+    mustMatch: [],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'escola', 'transporte', 'logística']
+  },
+  'empresas de construção modular': {
+    include: ['modular', 'construção modular', 'módulo habitável', 'pré-fabricado', 'construção industrializada', 'construção off-site', 'casa modular', 'módulos pré-fabricados'],
+    mustMatch: [],
+    exclude: ['restaurante', 'lanchonete', 'bar', 'supermercado', 'hotel', 'farmácia', 'padaria', 'mercado', 'escola']
+  },
   'fabricantes de máquinas e equipamentos': {
     include: ['fábrica de máquinas', 'fabricante de equipamentos', 'máquinas industriais', 'equipamentos industriais', 'indústria de máquinas', 'máquinas e equipamentos', 'equipamentos sob medida', 'máquinas especiais', 'automação industrial', 'linha de produção', 'equipamentos para indústria', 'máquinas para alimentos', 'máquinas para embalagem', 'equipamentos metalúrgicos', 'máquinas agrícolas', 'implementos', 'fabricação de equipamentos', 'máquinas sob encomenda'],
     mustMatch: [], // Removido para aumentar volume
