@@ -3116,15 +3116,15 @@ serve(async (req) => {
     } else if (segmentCount === 2) {
       defaultMaxLeads = 400;
     } else {
-      defaultMaxLeads = isStateOnlySearch ? 463 : 247;
+      defaultMaxLeads = isStateOnlySearch ? 380 : 247;
     }
     
     const MAX_TOTAL_LEADS = userMaxLeads || defaultMaxLeads;
     const isMegaBoost = isFerragens;
-    const MIN_LEADS_TARGET = isMegaBoost ? 200 : (isBoostSearch ? 150 : (segmentCount >= 3 ? 150 : (segmentCount === 2 ? 100 : (isStateOnlySearch ? 80 : 60))));
-    const TARGET_LEADS = isMegaBoost ? 600 : (isBoostSearch ? 400 : (segmentCount >= 3 ? 400 : (segmentCount === 2 ? 300 : (isStateOnlySearch ? 250 : 150))));
-    const MAX_TARGET_LEADS = isMegaBoost ? 750 : (isBoostSearch ? 550 : (segmentCount >= 3 ? 480 : (segmentCount === 2 ? 380 : (isStateOnlySearch ? 320 : 190))));
-    const MIN_LEADS_EARLY_EXIT = isMegaBoost ? 700 : (isBoostSearch ? 500 : (segmentCount >= 3 ? 450 : (segmentCount === 2 ? 350 : (isStateOnlySearch ? 300 : 180))));
+    const MIN_LEADS_TARGET = isMegaBoost ? 200 : (isBoostSearch ? 150 : (segmentCount >= 3 ? 150 : (segmentCount === 2 ? 100 : (isStateOnlySearch ? 65 : 60))));
+    const TARGET_LEADS = isMegaBoost ? 600 : (isBoostSearch ? 400 : (segmentCount >= 3 ? 400 : (segmentCount === 2 ? 300 : (isStateOnlySearch ? 200 : 150))));
+    const MAX_TARGET_LEADS = isMegaBoost ? 750 : (isBoostSearch ? 550 : (segmentCount >= 3 ? 480 : (segmentCount === 2 ? 380 : (isStateOnlySearch ? 260 : 190))));
+    const MIN_LEADS_EARLY_EXIT = isMegaBoost ? 700 : (isBoostSearch ? 500 : (segmentCount >= 3 ? 450 : (segmentCount === 2 ? 350 : (isStateOnlySearch ? 250 : 180))));
     
     console.log(`📊 Lead limits: max=${MAX_TOTAL_LEADS}, target=${TARGET_LEADS}, stateSearch=${isStateOnlySearch}`);
 
