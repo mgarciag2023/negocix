@@ -108,24 +108,54 @@ const Results = () => {
     }
 
     // Preparar dados para o Excel
-    const excelData = leads.map((lead) => ({
-      'Nome': lead.name,
-      'Endereço': lead.address,
-      'Telefone': lead.phone,
-      'Email': lead.email || 'N/A',
-      'Instagram': lead.instagram || 'N/A',
-      'Website': lead.website || 'Não possui site',
-      'Responsável': lead.responsible,
-      'Categoria': lead.category,
-      'Porte': lead.companySize || 'N/A',
-      'Funcionários': lead.employeeCount || 'N/A',
-      'Faturamento Estimado': lead.revenue,
-      'Tempo no Mercado': lead.openedDate,
-      'Score de Match (%)': lead.matchScore,
-      'Motivo 1': lead.reasons[0] || '',
-      'Motivo 2': lead.reasons[1] || '',
-      'Motivo 3': lead.reasons[2] || '',
-    }));
+    // Extract city and state from address
+    const extractCityState = (address: string) => {
+      const parts = address.split(',').map(p => p.trim());
+      let cidade = '';
+      let estado = '';
+      if (parts.length >= 2) {
+        // Usually: "Rua X, 123, Bairro, Cidade - UF, CEP"
+        const lastParts = parts[parts.length - 1];
+        const secondLast = parts[parts.length - 2];
+        const dashMatch = secondLast?.match(/^(.+?)\s*-\s*([A-Z]{2})$/);
+        if (dashMatch) {
+          cidade = dashMatch[1].trim();
+          estado = dashMatch[2].trim();
+        } else {
+          const dashMatch2 = lastParts?.match(/^(.+?)\s*-\s*([A-Z]{2})/);
+          if (dashMatch2) {
+            cidade = dashMatch2[1].trim();
+            estado = dashMatch2[2].trim();
+          } else {
+            cidade = secondLast || '';
+            estado = lastParts?.replace(/[\d-]/g, '').trim() || '';
+          }
+        }
+      }
+      return { cidade, estado };
+    };
+
+    const excelData = leads.map((lead) => {
+      const { cidade, estado } = extractCityState(lead.address);
+      return {
+        'Nome': lead.name,
+        'Cidade': cidade,
+        'Estado': estado,
+        'Endereço': lead.address,
+        'Telefone': lead.phone,
+        'Email': lead.email || 'N/A',
+        'Instagram': lead.instagram || 'N/A',
+        'Website': lead.website || 'Não possui site',
+        'Responsável': lead.responsible,
+        'Categoria': lead.category,
+        'Porte': lead.companySize || 'N/A',
+        'Funcionários': lead.employeeCount || 'N/A',
+        'Score de Match (%)': lead.matchScore,
+        'Motivo 1': lead.reasons[0] || '',
+        'Motivo 2': lead.reasons[1] || '',
+        'Motivo 3': lead.reasons[2] || '',
+      };
+    });
 
     // Criar workbook e worksheet
     const worksheet = XLSX.utils.json_to_sheet(excelData);
