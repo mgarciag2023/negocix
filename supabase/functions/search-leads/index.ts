@@ -3254,7 +3254,7 @@ serve(async (req) => {
 
     async function searchPlaces(query: string, location: string, _maxPages: number = 3, radiusMetersOverride?: number): Promise<any[]> {
       const searchCache = searchCacheGlobal;
-      const radiusMeters = Math.min(radiusMetersOverride ?? (isStateOnlySearch ? 50000 : 30000), 50000);
+      const radiusMeters = Math.min(radiusMetersOverride ?? (isStateOnlySearch ? 50000 : 20000), 50000);
       const cacheKey = `${query}|${location}|${radiusMeters}|${_maxPages}`;
       if (searchCache.has(cacheKey)) {
         console.log(`💾 Cache hit for: ${query}`);
