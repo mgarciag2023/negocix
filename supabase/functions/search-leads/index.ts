@@ -3116,7 +3116,7 @@ serve(async (req) => {
     } else if (segmentCount === 2) {
       defaultMaxLeads = 400;
     } else {
-      defaultMaxLeads = isStateOnlySearch ? 463 : 247;
+      defaultMaxLeads = isStateOnlySearch ? 380 : 247;
     }
     
     const MAX_TOTAL_LEADS = userMaxLeads || defaultMaxLeads;
