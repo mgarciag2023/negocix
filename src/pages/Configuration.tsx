@@ -6832,7 +6832,7 @@ const Configuration = () => {
       region = city || state || "";
     }
     
-    if (!category || !products || selectedCustomers.length === 0 || (!state && !city) || (country === "OTHER" && !customCountry)) {
+    if (!products || selectedCustomers.length === 0 || (!state && !city) || (country === "OTHER" && !customCountry)) {
       toast({
         title: "Campos obrigatórios",
         description: "Por favor, preencha pelo menos país e estado ou cidade",
@@ -6901,41 +6901,7 @@ const Configuration = () => {
           <form onSubmit={handleSubmit} translate="no">
             <Card className="p-4 md:p-8 shadow-card">
               <div className="space-y-6 md:space-y-8">
-                {/* Category */}
-                <div>
-                  <Label htmlFor="category" className="text-base font-semibold" translate="no">
-                    Eu sou representante de: *
-                  </Label>
-                  <Select value={category} onValueChange={setCategory}>
-                    <SelectTrigger className="mt-2" id="category" translate="no">
-                      <SelectValue placeholder="Selecione uma categoria" translate="no" />
-                    </SelectTrigger>
-                    <SelectContent sideOffset={5} translate="no">
-                      <SelectItem value="bebidas">Bebidas</SelectItem>
-                      <SelectItem value="alimentos">Alimentos</SelectItem>
-                      <SelectItem value="limpeza">Material de Limpeza</SelectItem>
-                      <SelectItem value="equipamentos">Equipamentos</SelectItem>
-                      <SelectItem value="tecnologia">Tecnologia</SelectItem>
-                      <SelectItem value="roupas">Roupas/Moda</SelectItem>
-                      <SelectItem value="cosmeticos">Cosméticos</SelectItem>
-                      <SelectItem value="materiais-construcao">Materiais de Construção</SelectItem>
-                      <SelectItem value="ferramentas">Ferramentas</SelectItem>
-                      <SelectItem value="ferragens">Ferragens</SelectItem>
-                      <SelectItem value="materiais-eletricos">Materiais Elétricos</SelectItem>
-                      <SelectItem value="tecidos">Tecidos</SelectItem>
-                      <SelectItem value="aviamentos">Aviamentos</SelectItem>
-                      <SelectItem value="fios-linhas">Fios e Linhas</SelectItem>
-                      <SelectItem value="cama-mesa-banho">Cama, Mesa e Banho</SelectItem>
-                      <SelectItem value="utilidade-domestica">Utilidade Doméstica</SelectItem>
-                      <SelectItem value="protecao-veicular">Proteção Veicular</SelectItem>
-                      <SelectItem value="telemedicina">Telemedicina / Saúde</SelectItem>
-                      <SelectItem value="grafica">Gráfica / Comunicação Visual</SelectItem>
-                      <SelectItem value="produtos-naturais">Produtos Naturais / Orgânicos</SelectItem>
-                      <SelectItem value="autopecas">Autopeças</SelectItem>
-                      <SelectItem value="outros">Outros</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+
 
                 {/* Products */}
                 <div>
