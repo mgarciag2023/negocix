@@ -3059,6 +3059,13 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 // Global search cache
 const searchCacheGlobal = new Map<string, any[]>();
 
+// Generate a normalized cache key for DB-level caching
+function generateDbCacheKey(segment: string, region: string, businessType: string, digitalPresence: string, digitalActivity: string, whatsappOnly: boolean, receitaFederalOnly: boolean): string {
+  const normalizedSegment = segment.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+  const normalizedRegion = region.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+  return `${normalizedSegment}|${normalizedRegion}|${businessType}|${digitalPresence}|${digitalActivity}|${whatsappOnly}|${receitaFederalOnly}`;
+}
+
 serve(async (req) => {
   searchCacheGlobal.clear();
   if (req.method === 'OPTIONS') {
@@ -3067,7 +3074,99 @@ serve(async (req) => {
 
   try {
     const { segment, products, region, country, filters, ecommerceType, businessType, digitalPresence, digitalActivity, whatsappOnly, receitaFederalOnly } = await req.json();
-    console.log('🔍 SEARCH v13 - State Search Boost - Input:', { segment, products, region, country, ecommerceType, businessType, digitalPresence, digitalActivity, whatsappOnly, receitaFederalOnly });
+    console.log('🔍 SEARCH v14 - DB Cache - Input:', { segment, products, region, country, ecommerceType, businessType, digitalPresence, digitalActivity, whatsappOnly, receitaFederalOnly });
+
+    // ===== CHECK DB CACHE FIRST =====
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    
+    const dbCacheKey = generateDbCacheKey(
+      segment, region.trim(), businessType || 'all', digitalPresence || 'all', 
+      digitalActivity || 'all', whatsappOnly || false, receitaFederalOnly || false
+    );
+    
+    console.log(`🔑 DB Cache key: ${dbCacheKey}`);
+    
+    // Check if we have cached results that haven't expired
+    const { data: cachedData } = await adminClient
+      .from("cached_search_results")
+      .select("results, results_count, created_at, expires_at")
+      .eq("cache_key", dbCacheKey)
+      .gt("expires_at", new Date().toISOString())
+      .maybeSingle();
+    
+    if (cachedData && cachedData.results_count > 0) {
+      console.log(`✅ DB CACHE HIT: ${cachedData.results_count} leads from cache (created: ${cachedData.created_at})`);
+      let cachedLeads = cachedData.results as any[];
+      
+      // Still filter out user's previously seen leads
+      try {
+        const authHeader = req.headers.get('authorization');
+        if (authHeader) {
+          const supabaseAuth = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || "", {
+            global: { headers: { Authorization: authHeader } }
+          });
+          const { data: { user } } = await supabaseAuth.auth.getUser();
+          
+          if (user) {
+            const leadPlaceIds = cachedLeads.map((l: any) => l.placeId).filter(Boolean);
+            if (leadPlaceIds.length > 0) {
+              const { data: seenData } = await adminClient
+                .from("user_seen_leads")
+                .select("place_id")
+                .eq("user_id", user.id)
+                .in("place_id", leadPlaceIds);
+              
+              const seenSet = new Set((seenData || []).map((s: any) => s.place_id));
+              const beforeFilter = cachedLeads.length;
+              
+              if (seenSet.size > 0) {
+                cachedLeads = cachedLeads.filter((lead: any) => !lead.placeId || !seenSet.has(lead.placeId));
+                console.log(`👁️ Cache: filtered ${beforeFilter - cachedLeads.length} seen leads, ${cachedLeads.length} remaining`);
+              }
+              
+              // Record newly shown leads
+              if (cachedLeads.length > 0) {
+                const newPlaceIds = cachedLeads
+                  .map((l: any) => l.placeId)
+                  .filter(Boolean)
+                  .map((placeId: string) => ({
+                    user_id: user.id,
+                    place_id: placeId,
+                    search_type: 'leads',
+                  }));
+                
+                if (newPlaceIds.length > 0) {
+                  await adminClient
+                    .from("user_seen_leads")
+                    .upsert(newPlaceIds, { onConflict: 'user_id,place_id', ignoreDuplicates: true });
+                }
+              }
+              
+              if (cachedLeads.length === 0 && beforeFilter > 0) {
+                return new Response(JSON.stringify({ 
+                  error: 'Todos os leads desta pesquisa já foram exibidos anteriormente. Tente buscar em outra região ou com outros filtros.',
+                  allSeen: true,
+                  fromCache: true
+                }), {
+                  status: 200,
+                  headers: { ...corsHeaders, "Content-Type": "application/json" },
+                });
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.error("⚠️ Cache seen-leads filter error:", e);
+      }
+      
+      return new Response(JSON.stringify({ leads: cachedLeads, fromCache: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    
+    console.log(`💾 DB CACHE MISS - proceeding with API search`);
     
     const countryCode = country || 'BR';
     const bizType = businessType || 'all';
