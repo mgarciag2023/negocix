@@ -283,7 +283,7 @@ const Results = () => {
         try {
           const { data: { user } } = await supabase.auth.getUser();
           if (user) {
-            await supabase.from("search_logs").insert({
+            await (supabase.from("search_logs") as any).insert({
               user_id: user.id,
               user_email: user.email || "",
               search_type: "leads",

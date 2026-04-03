@@ -33,8 +33,8 @@ export default function SearchHistory() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
-        .from("search_logs")
+      const { data, error } = await (supabase
+        .from("search_logs") as any)
         .select("id, search_type, search_config, results_count, results, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
@@ -54,21 +54,47 @@ export default function SearchHistory() {
     }
   };
 
-  const handleViewLeads = (log: SearchLog) => {
-    if (!log.results || (log.results as any[]).length === 0) {
-      toast({
-        title: "Sem resultados",
-        description: "Esta pesquisa não tem leads salvos para visualizar.",
-        variant: "destructive",
-      });
+  const handleViewLeads = async (log: SearchLog) => {
+    const results = log.results as any[];
+    
+    if (results && results.length > 0) {
+      // Results saved in the log - use directly
+      localStorage.setItem("cachedLeads", JSON.stringify(results));
+      localStorage.setItem("cachedSearchConfig", JSON.stringify(log.search_config));
+      localStorage.setItem("leadSearchConfig", JSON.stringify(log.search_config));
+      navigate("/resultados");
       return;
     }
 
-    // Save to localStorage and navigate to results
-    localStorage.setItem("cachedLeads", JSON.stringify(log.results));
-    localStorage.setItem("cachedSearchConfig", JSON.stringify(log.search_config));
-    localStorage.setItem("leadSearchConfig", JSON.stringify(log.search_config));
-    navigate("/resultados");
+    // Try to find results in the DB cache
+    const config = log.search_config as any;
+    const segment = config?.selectedCustomers?.join(", ") || config?.segment || "";
+    const region = config?.region || "";
+    
+    if (segment && region) {
+      const normalizeStr = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+      const cacheKey = `${normalizeStr(segment)}|${normalizeStr(region)}`;
+      
+      const { data: cached } = await (supabase
+        .from("cached_search_results") as any)
+        .select("results, results_count")
+        .eq("cache_key", cacheKey)
+        .maybeSingle();
+      
+      if (cached && cached.results_count > 0) {
+        localStorage.setItem("cachedLeads", JSON.stringify(cached.results));
+        localStorage.setItem("cachedSearchConfig", JSON.stringify(log.search_config));
+        localStorage.setItem("leadSearchConfig", JSON.stringify(log.search_config));
+        navigate("/resultados");
+        return;
+      }
+    }
+
+    toast({
+      title: "Sem resultados salvos",
+      description: "Os leads desta pesquisa não estão mais disponíveis. Faça uma nova busca.",
+      variant: "destructive",
+    });
   };
 
   const formatDate = (dateStr: string) => {
@@ -132,7 +158,7 @@ export default function SearchHistory() {
             <div className="space-y-3">
               {logs.map((log) => {
                 const { segments, region } = getSearchDescription(log.search_config);
-                const hasResults = log.results && (log.results as any[]).length > 0;
+                const hasResults = (log.results && (log.results as any[]).length > 0) || (log.results_count ?? 0) > 0;
 
                 return (
                   <Card key={log.id} className="hover:shadow-md transition-shadow">
