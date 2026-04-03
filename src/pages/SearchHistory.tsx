@@ -158,7 +158,7 @@ export default function SearchHistory() {
             <div className="space-y-3">
               {logs.map((log) => {
                 const { segments, region } = getSearchDescription(log.search_config);
-                const hasResults = log.results && (log.results as any[]).length > 0;
+                const hasResults = (log.results && (log.results as any[]).length > 0) || (log.results_count ?? 0) > 0;
 
                 return (
                   <Card key={log.id} className="hover:shadow-md transition-shadow">
