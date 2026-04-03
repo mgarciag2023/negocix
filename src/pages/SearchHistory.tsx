@@ -33,8 +33,8 @@ export default function SearchHistory() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
-        .from("search_logs")
+      const { data, error } = await (supabase
+        .from("search_logs") as any)
         .select("id, search_type, search_config, results_count, results, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
