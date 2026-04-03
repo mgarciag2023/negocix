@@ -3081,10 +3081,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
     
-    const dbCacheKey = generateDbCacheKey(
-      segment, region.trim(), businessType || 'all', digitalPresence || 'all', 
-      digitalActivity || 'all', whatsappOnly || false, receitaFederalOnly || false
-    );
+    const dbCacheKey = generateDbCacheKey(segment, region.trim());
     
     console.log(`🔑 DB Cache key: ${dbCacheKey}`);
     
