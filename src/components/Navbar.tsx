@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Building2, Settings, Users, Package, Menu, LogIn, LogOut, User, Shield } from "lucide-react";
+import { Building2, Settings, Users, Package, Menu, LogIn, LogOut, User, Shield, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
