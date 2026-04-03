@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      cached_search_results: {
+        Row: {
+          cache_key: string
+          created_at: string
+          expires_at: string
+          id: string
+          results: Json
+          results_count: number
+          search_config: Json
+          search_type: string
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          results?: Json
+          results_count?: number
+          search_config?: Json
+          search_type?: string
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          results?: Json
+          results_count?: number
+          search_config?: Json
+          search_type?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           blocked_at: string | null
@@ -144,6 +177,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          results: Json | null
           results_count: number | null
           search_config: Json
           search_type: string
@@ -153,6 +187,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          results?: Json | null
           results_count?: number | null
           search_config?: Json
           search_type?: string
@@ -162,6 +197,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          results?: Json | null
           results_count?: number | null
           search_config?: Json
           search_type?: string

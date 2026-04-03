@@ -18,6 +18,7 @@ import RepresentativesResults from "./pages/RepresentativesResults";
 import SearchSuppliers from "./pages/SearchSuppliers";
 import SuppliersResults from "./pages/SuppliersResults";
 import Admin from "./pages/Admin";
+import SearchHistory from "./pages/SearchHistory";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -78,6 +79,7 @@ const App = () => (
           <Route path="/search-suppliers" element={<ProtectedRoute><SearchSuppliers /></ProtectedRoute>} />
           <Route path="/suppliers-results" element={<ProtectedRoute><SuppliersResults /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+          <Route path="/historico" element={<ProtectedRoute><SearchHistory /></ProtectedRoute>} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>

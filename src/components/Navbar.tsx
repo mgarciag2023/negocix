@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Building2, Settings, Users, Package, Menu, LogIn, LogOut, User, Shield } from "lucide-react";
+import { Building2, Settings, Users, Package, Menu, LogIn, LogOut, User, Shield, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -48,6 +48,7 @@ const Navbar = () => {
     { path: "/configuracao", icon: Settings, label: "Buscar" },
     { path: "/search-suppliers", icon: Package, label: "Fornecedores" },
     { path: "/leads-salvos", icon: Users, label: "Leads Salvos" },
+    { path: "/historico", icon: History, label: "Histórico" },
   ];
   
   return (

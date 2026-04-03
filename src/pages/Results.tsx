@@ -289,6 +289,7 @@ const Results = () => {
               search_type: "leads",
               search_config: searchConfig,
               results_count: resultsCount,
+              results: data?.leads || [],
             });
           }
         } catch (logErr) {
