@@ -6832,7 +6832,7 @@ const Configuration = () => {
       region = city || state || "";
     }
     
-    if (!category || !products || selectedCustomers.length === 0 || (!state && !city) || (country === "OTHER" && !customCountry)) {
+    if (!products || selectedCustomers.length === 0 || (!state && !city) || (country === "OTHER" && !customCountry)) {
       toast({
         title: "Campos obrigatórios",
         description: "Por favor, preencha pelo menos país e estado ou cidade",
