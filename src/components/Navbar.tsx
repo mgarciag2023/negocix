@@ -48,6 +48,7 @@ const Navbar = () => {
     { path: "/configuracao", icon: Settings, label: "Buscar" },
     { path: "/search-suppliers", icon: Package, label: "Fornecedores" },
     { path: "/leads-salvos", icon: Users, label: "Leads Salvos" },
+    { path: "/historico", icon: History, label: "Histórico" },
   ];
   
   return (
