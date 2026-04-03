@@ -3059,11 +3059,11 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 // Global search cache
 const searchCacheGlobal = new Map<string, any[]>();
 
-// Generate a normalized cache key for DB-level caching
-function generateDbCacheKey(segment: string, region: string, businessType: string, digitalPresence: string, digitalActivity: string, whatsappOnly: boolean, receitaFederalOnly: boolean): string {
+// Generate a normalized cache key - only segment + region matter
+function generateDbCacheKey(segment: string, region: string): string {
   const normalizedSegment = segment.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
   const normalizedRegion = region.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
-  return `${normalizedSegment}|${normalizedRegion}|${businessType}|${digitalPresence}|${digitalActivity}|${whatsappOnly}|${receitaFederalOnly}`;
+  return `${normalizedSegment}|${normalizedRegion}`;
 }
 
 serve(async (req) => {
@@ -3081,10 +3081,7 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
     
-    const dbCacheKey = generateDbCacheKey(
-      segment, region.trim(), businessType || 'all', digitalPresence || 'all', 
-      digitalActivity || 'all', whatsappOnly || false, receitaFederalOnly || false
-    );
+    const dbCacheKey = generateDbCacheKey(segment, region.trim());
     
     console.log(`🔑 DB Cache key: ${dbCacheKey}`);
     
