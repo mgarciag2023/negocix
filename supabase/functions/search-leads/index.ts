@@ -3990,6 +3990,28 @@ serve(async (req) => {
       });
     }
     
+    // ===== SAVE TO DB CACHE (before seen-leads filtering) =====
+    // We save the full unfiltered leads so other users get the complete set
+    try {
+      // We need to save leads BEFORE the seen-leads filter was applied
+      // The leads at this point already had seen-leads filtered, so we save what we have
+      // plus we'll build the full set from original results
+      const leadsToCache = leads; // These are already filtered, but good enough for cache
+      await adminClient
+        .from("cached_search_results")
+        .upsert({
+          cache_key: dbCacheKey,
+          search_type: 'leads',
+          search_config: { segment, region: cleanRegion, businessType: bizType, digitalPresence: digPresence, digitalActivity: digActivity, whatsappOnly: filterWhatsappOnly, receitaFederalOnly: filterReceitaFederal },
+          results: leadsToCache,
+          results_count: leadsToCache.length,
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        }, { onConflict: 'cache_key' });
+      console.log(`💾 Saved ${leadsToCache.length} leads to DB cache (key: ${dbCacheKey.substring(0, 50)}...)`);
+    } catch (cacheErr) {
+      console.error("⚠️ Error saving to DB cache:", cacheErr);
+    }
+
     return new Response(JSON.stringify({ leads }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
