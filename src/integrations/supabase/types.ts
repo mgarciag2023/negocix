@@ -332,6 +332,99 @@ export type Database = {
         }
         Relationships: []
       }
+      tmp_staging: {
+        Row: {
+          bairro: string | null
+          capital_social: number | null
+          cep: string | null
+          cidade: string | null
+          cnae_principal: string | null
+          cnae_secundaria: string | null
+          cnpj: string | null
+          complemento: string | null
+          data_abertura: string | null
+          data_situacao_cadastral: string | null
+          descricao_cnae: string | null
+          email: string | null
+          endereco: string | null
+          estado: string | null
+          faixa_etaria_socio: string | null
+          matriz_filial: string | null
+          mei: string | null
+          motivo_situacao: string | null
+          natureza_juridica: string | null
+          nome_fantasia: string | null
+          nome_socio: string | null
+          porte: string | null
+          qualificacao_socio: string | null
+          razao_social: string | null
+          simples: string | null
+          situacao_cadastral: string | null
+          telefone_1: string | null
+          telefone_2: string | null
+        }
+        Insert: {
+          bairro?: string | null
+          capital_social?: number | null
+          cep?: string | null
+          cidade?: string | null
+          cnae_principal?: string | null
+          cnae_secundaria?: string | null
+          cnpj?: string | null
+          complemento?: string | null
+          data_abertura?: string | null
+          data_situacao_cadastral?: string | null
+          descricao_cnae?: string | null
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          faixa_etaria_socio?: string | null
+          matriz_filial?: string | null
+          mei?: string | null
+          motivo_situacao?: string | null
+          natureza_juridica?: string | null
+          nome_fantasia?: string | null
+          nome_socio?: string | null
+          porte?: string | null
+          qualificacao_socio?: string | null
+          razao_social?: string | null
+          simples?: string | null
+          situacao_cadastral?: string | null
+          telefone_1?: string | null
+          telefone_2?: string | null
+        }
+        Update: {
+          bairro?: string | null
+          capital_social?: number | null
+          cep?: string | null
+          cidade?: string | null
+          cnae_principal?: string | null
+          cnae_secundaria?: string | null
+          cnpj?: string | null
+          complemento?: string | null
+          data_abertura?: string | null
+          data_situacao_cadastral?: string | null
+          descricao_cnae?: string | null
+          email?: string | null
+          endereco?: string | null
+          estado?: string | null
+          faixa_etaria_socio?: string | null
+          matriz_filial?: string | null
+          mei?: string | null
+          motivo_situacao?: string | null
+          natureza_juridica?: string | null
+          nome_fantasia?: string | null
+          nome_socio?: string | null
+          porte?: string | null
+          qualificacao_socio?: string | null
+          razao_social?: string | null
+          simples?: string | null
+          situacao_cadastral?: string | null
+          telefone_1?: string | null
+          telefone_2?: string | null
+        }
+        Relationships: []
+      }
       user_lead_limits: {
         Row: {
           created_at: string
