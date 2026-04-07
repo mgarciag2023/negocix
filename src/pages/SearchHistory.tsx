@@ -54,45 +54,22 @@ export default function SearchHistory() {
     }
   };
 
-  const handleViewLeads = async (log: SearchLog) => {
+  const handleViewLeads = (log: SearchLog) => {
     const results = log.results as any[];
     
     if (results && results.length > 0) {
       // Results saved in the log - use directly
       localStorage.setItem("cachedLeads", JSON.stringify(results));
-      localStorage.setItem("cachedSearchConfig", JSON.stringify(log.search_config));
-      localStorage.setItem("leadSearchConfig", JSON.stringify(log.search_config));
+      const configStr = JSON.stringify(log.search_config);
+      localStorage.setItem("cachedSearchConfig", configStr);
+      localStorage.setItem("leadSearchConfig", configStr);
       navigate("/resultados");
       return;
     }
 
-    // Try to find results in the DB cache
-    const config = log.search_config as any;
-    const segment = config?.selectedCustomers?.join(", ") || config?.segment || "";
-    const region = config?.region || "";
-    
-    if (segment && region) {
-      const normalizeStr = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
-      const cacheKey = `${normalizeStr(segment)}|${normalizeStr(region)}`;
-      
-      const { data: cached } = await (supabase
-        .from("cached_search_results") as any)
-        .select("results, results_count")
-        .eq("cache_key", cacheKey)
-        .maybeSingle();
-      
-      if (cached && cached.results_count > 0) {
-        localStorage.setItem("cachedLeads", JSON.stringify(cached.results));
-        localStorage.setItem("cachedSearchConfig", JSON.stringify(log.search_config));
-        localStorage.setItem("leadSearchConfig", JSON.stringify(log.search_config));
-        navigate("/resultados");
-        return;
-      }
-    }
-
     toast({
       title: "Sem resultados salvos",
-      description: "Os leads desta pesquisa não estão mais disponíveis. Faça uma nova busca.",
+      description: "Os leads desta pesquisa não foram salvos. Faça uma nova busca.",
       variant: "destructive",
     });
   };
