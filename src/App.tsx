@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
+import { getSessionSafely } from "@/lib/auth-session";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Configuration from "./pages/Configuration";
@@ -23,23 +24,37 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Protected Route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+    let isMounted = true;
+
+    const restoreSession = async () => {
+      const currentSession = await getSessionSafely();
+
+      if (!isMounted) return;
+
+      setSession(currentSession);
+      setLoading(false);
+    };
+
+    void restoreSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (!isMounted) return;
+
+      setSession(nextSession);
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   if (loading) {

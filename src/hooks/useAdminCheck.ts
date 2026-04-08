@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getSessionSafely } from "@/lib/auth-session";
 
 export const useAdminCheck = () => {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -8,7 +9,9 @@ export const useAdminCheck = () => {
   useEffect(() => {
     const checkAdmin = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const session = await getSessionSafely();
+        const user = session?.user;
+
         if (!user) {
           setIsAdmin(false);
           setLoading(false);
@@ -31,10 +34,12 @@ export const useAdminCheck = () => {
       }
     };
 
-    checkAdmin();
+    void checkAdmin();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      checkAdmin();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      void checkAdmin();
     });
 
     return () => subscription.unsubscribe();

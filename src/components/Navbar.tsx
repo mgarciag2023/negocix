@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { getSessionSafely } from "@/lib/auth-session";
 
 const Navbar = () => {
   const location = useLocation();
@@ -22,15 +23,29 @@ const Navbar = () => {
   const { isAdmin } = useAdminCheck();
   
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    let isMounted = true;
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) return;
       setUser(session?.user ?? null);
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
+    const restoreSession = async () => {
+      const session = await getSessionSafely();
 
-    return () => subscription.unsubscribe();
+      if (!isMounted) return;
+
+      setUser(session?.user ?? null);
+    };
+
+    void restoreSession();
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
   
   const isActive = (path: string) => location.pathname === path;

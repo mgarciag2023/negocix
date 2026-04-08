@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { getSessionSafely } from "@/lib/auth-session";
 import { Building2, Mail, Lock, ArrowRight, Eye, EyeOff, Sparkles, Target, TrendingUp, Shield } from "lucide-react";
 import { z } from "zod";
 
@@ -23,19 +24,32 @@ const Auth = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    let isMounted = true;
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         navigate("/");
       }
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const restoreSession = async () => {
+      const session = await getSessionSafely();
+
+      if (!isMounted) return;
+
       if (session?.user) {
         navigate("/");
       }
-    });
+    };
 
-    return () => subscription.unsubscribe();
+    void restoreSession();
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   const validateForm = (): boolean => {
