@@ -117,6 +117,39 @@ const SuppliersResults = () => {
     window.location.reload();
   };
 
+  const exportToExcel = () => {
+    if (suppliers.length === 0) {
+      toast({ title: "Nenhum dado para exportar", variant: "destructive" });
+      return;
+    }
+
+    const excelData = suppliers.map((s) => ({
+      Nome: s.name,
+      Categoria: s.category,
+      Endereço: s.address,
+      Telefone: s.phone,
+      Website: s.website || "",
+      WhatsApp: s.hasWhatsApp ? "Sim" : "Não",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Fornecedores");
+
+    worksheet["!cols"] = [
+      { wch: 35 }, { wch: 20 }, { wch: 40 },
+      { wch: 18 }, { wch: 30 }, { wch: 10 },
+    ];
+
+    const timestamp = new Date().toISOString().split("T")[0];
+    XLSX.writeFile(workbook, `fornecedores-negocix-${timestamp}.xlsx`);
+
+    toast({
+      title: "Exportação concluída",
+      description: `${suppliers.length} fornecedor(es) exportados com sucesso`,
+    });
+  };
+
   const formatPhoneForCall = (phone: string) => {
     return phone.replace(/\D/g, "");
   };
