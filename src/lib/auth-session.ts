@@ -6,14 +6,48 @@ const authStorageKeys = [
   "supabase.auth.token",
 ];
 
+const AUTH_SESSION_TIMEOUT_MS = 4000;
+
 const isRecoverableAuthError = (error: unknown) => {
-  if (!(error instanceof Error)) return false;
+  if (!error || typeof error !== "object") return false;
 
-  const message = error.message.toLowerCase();
+  const candidate = error as {
+    message?: string;
+    name?: string;
+    status?: number;
+  };
 
-  return ["failed to fetch", "authretryablefetcherror", "network", "504"].some((term) =>
-    message.includes(term)
+  const message = candidate.message?.toLowerCase() ?? "";
+  const name = candidate.name?.toLowerCase() ?? "";
+
+  return (
+    candidate.status === 504 ||
+    [
+      "failed to fetch",
+      "authretryablefetcherror",
+      "network",
+      "504",
+      "auth session timeout",
+    ].some((term) => message.includes(term) || name.includes(term))
   );
+};
+
+const withTimeout = async <T>(promise: Promise<T>, timeoutMs = AUTH_SESSION_TIMEOUT_MS): Promise<T> => {
+  return await new Promise<T>((resolve, reject) => {
+    const timeoutId = globalThis.setTimeout(() => {
+      reject(new Error("Auth session timeout"));
+    }, timeoutMs);
+
+    promise
+      .then((value) => {
+        globalThis.clearTimeout(timeoutId);
+        resolve(value);
+      })
+      .catch((error: unknown) => {
+        globalThis.clearTimeout(timeoutId);
+        reject(error);
+      });
+  });
 };
 
 export const clearStoredAuthSession = () => {
@@ -27,7 +61,7 @@ export const getSessionSafely = async (): Promise<Session | null> => {
     const {
       data: { session },
       error,
-    } = await supabase.auth.getSession();
+    } = await withTimeout(supabase.auth.getSession());
 
     if (error) throw error;
 
