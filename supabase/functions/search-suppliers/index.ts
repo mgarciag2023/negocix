@@ -203,33 +203,55 @@ serve(async (req) => {
     const isStateOnlySearch = !location || location.trim() === '';
     const MAX_TOTAL_SUPPLIERS = 200;
 
-    // Build search terms from all products
+    // Build search terms - use only the most specific 2 terms per product
     const allSearchTerms: string[] = [];
     for (const product of products) {
       const terms = generateSupplierSearchTerms(product);
-      allSearchTerms.push(...terms);
+      // Take only first 2 most specific terms (skip generic ones like "construcao")
+      const specific = terms.filter(t => t.length > 5).slice(0, 2);
+      allSearchTerms.push(...(specific.length > 0 ? specific : terms.slice(0, 1)));
     }
     
-    // Deduplicate
-    const uniqueTerms = [...new Set(allSearchTerms)];
-    console.log(`📋 Search terms (${uniqueTerms.length}):`, uniqueTerms.slice(0, 10));
+    // Deduplicate and limit to 6 terms max to avoid timeouts
+    const uniqueTerms = [...new Set(allSearchTerms)].slice(0, 6);
+    console.log(`📋 Search terms (${uniqueTerms.length}):`, uniqueTerms);
 
-    // Search using search_companies RPC
     const cityParam = isStateOnlySearch ? null : normalizeStr(location).toUpperCase();
     const stateParam = state ? state.toUpperCase() : null;
 
-    // Filter out overly generic terms that cause timeouts
-    const filteredTerms = uniqueTerms.filter(t => t.length > 4);
-    console.log(`🔎 Filtered terms (${filteredTerms.length}):`, filteredTerms.slice(0, 8));
+    // Do multiple smaller queries instead of one big one
+    const allCompanies: any[] = [];
+    const seenIds = new Set<string>();
 
-    const { data: companies, error } = await supabase.rpc('search_companies', {
-      p_city: cityParam,
-      p_state: stateParam,
-      p_search_terms: filteredTerms.length > 0 ? filteredTerms : uniqueTerms.slice(0, 3),
-      p_biz_type: 'all',
-      p_limit_val: 500,
-      p_offset_val: 0,
-    });
+    // Query 2 terms at a time to avoid timeout
+    for (let i = 0; i < uniqueTerms.length; i += 2) {
+      const batch = uniqueTerms.slice(i, i + 2);
+      console.log(`🔎 Batch ${Math.floor(i/2)+1}: searching for`, batch);
+      
+      const { data, error } = await supabase.rpc('search_companies', {
+        p_city: cityParam,
+        p_state: stateParam,
+        p_search_terms: batch,
+        p_biz_type: 'all',
+        p_limit_val: 200,
+        p_offset_val: 0,
+      });
+
+      if (error) {
+        console.error(`❌ DB batch error:`, error.message);
+        continue; // Skip this batch, try next
+      }
+
+      for (const c of (data || [])) {
+        if (!seenIds.has(c.id)) {
+          seenIds.add(c.id);
+          allCompanies.push(c);
+        }
+      }
+      console.log(`📊 Batch result: ${(data || []).length} companies, total: ${allCompanies.length}`);
+    }
+
+    const companies = allCompanies;
 
     if (error) {
       console.error('❌ DB search error:', error);
