@@ -146,7 +146,6 @@ const Results = () => {
         'Email': lead.email || 'N/A',
         'Instagram': lead.instagram || 'N/A',
         'Responsável': lead.responsible,
-        'Responsável': lead.responsible,
         'Categoria': lead.category,
         'Porte': lead.companySize || 'N/A',
         'Funcionários': lead.employeeCount || 'N/A',
