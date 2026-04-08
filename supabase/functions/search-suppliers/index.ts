@@ -218,12 +218,16 @@ serve(async (req) => {
     const cityParam = isStateOnlySearch ? null : normalizeStr(location).toUpperCase();
     const stateParam = state ? state.toUpperCase() : null;
 
+    // Filter out overly generic terms that cause timeouts
+    const filteredTerms = uniqueTerms.filter(t => t.length > 4);
+    console.log(`🔎 Filtered terms (${filteredTerms.length}):`, filteredTerms.slice(0, 8));
+
     const { data: companies, error } = await supabase.rpc('search_companies', {
       p_city: cityParam,
       p_state: stateParam,
-      p_search_terms: uniqueTerms,
+      p_search_terms: filteredTerms.length > 0 ? filteredTerms : uniqueTerms.slice(0, 3),
       p_biz_type: 'all',
-      p_limit_val: 3000,
+      p_limit_val: 500,
       p_offset_val: 0,
     });
 
