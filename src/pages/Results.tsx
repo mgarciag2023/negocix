@@ -253,8 +253,24 @@ const Results = () => {
                 companySizes: searchConfig.companySizes || ['all'],
                 revenueRange: searchConfig.revenueRange,
               }
+            }
+          });
+          data = result.data;
+          error = result.error;
+        } catch (abortErr: any) {
+          if (abortErr?.name === 'AbortError' || controller.signal.aborted) {
+            toast({
+              title: "Tempo esgotado",
+              description: "A busca demorou demais. Tente novamente ou busque por uma região menor.",
+              variant: "destructive",
+            });
+            setLoading(false);
+            return;
           }
-        });
+          throw abortErr;
+        } finally {
+          clearTimeout(timeoutId);
+        }
 
         if (error) {
           console.error('❌ Error calling search-leads:', error);
