@@ -475,14 +475,14 @@ serve(async (req) => {
       }
     } catch (e) { console.error("⚠️ Error fetching user limits:", e); }
 
-    const MAX_LEADS = userMaxLeads || (isStateOnly ? 800 : 500);
+    const MAX_LEADS = userMaxLeads || (isStateOnly ? 3000 : 2000);
     const leadsPerSegment = Math.ceil(MAX_LEADS / segments.length);
 
     // ===== QUERY LOCAL DATABASE =====
     let allCompanies: any[] = [];
 
     for (const seg of segments) {
-      const terms = generateSearchTerms(seg).slice(0, 6);
+      const terms = generateSearchTerms(seg).slice(0, 10);
       console.log(`📤 Segment "${seg}" search terms:`, terms);
 
       // Build OR filter for nome_fantasia and descricao_cnae
@@ -494,37 +494,48 @@ serve(async (req) => {
         ];
       }).join(',');
 
-      let query = adminClient
-        .from('companies')
-        .select('id,cnpj,razao_social,nome_fantasia,telefone_1,telefone_2,email,cnae_principal,descricao_cnae,data_abertura,porte,mei,simples,capital_social,situacao_cadastral,natureza_juridica,endereco,complemento,cep,bairro,cidade,estado,matriz_filial,nome_socio,faixa_etaria_socio,qualificacao_socio')
-        .eq('situacao_cadastral', 'ATIVA')
-        .or(orConditions);
+      // Paginate to get more than 1000 results
+      const targetPerSegment = Math.min(leadsPerSegment * 2, 5000);
+      let segResults: any[] = [];
+      let page = 0;
+      const pageSize = 1000;
 
-      // Location filter
-      if (city && state) {
-        query = query.eq('cidade', city).eq('estado', state);
-      } else if (city) {
-        query = query.eq('cidade', city);
-      } else if (state) {
-        query = query.eq('estado', state);
+      while (segResults.length < targetPerSegment && page < 10) {
+        let query = adminClient
+          .from('companies')
+          .select('id,cnpj,razao_social,nome_fantasia,telefone_1,telefone_2,email,cnae_principal,descricao_cnae,data_abertura,porte,mei,simples,capital_social,situacao_cadastral,natureza_juridica,endereco,complemento,cep,bairro,cidade,estado,matriz_filial,nome_socio,faixa_etaria_socio,qualificacao_socio')
+          .eq('situacao_cadastral', 'ATIVA')
+          .or(orConditions);
+
+        // Location filter
+        if (city && state) {
+          query = query.eq('cidade', city).eq('estado', state);
+        } else if (city) {
+          query = query.eq('cidade', city);
+        } else if (state) {
+          query = query.eq('estado', state);
+        }
+
+        // Matriz/Filial filter
+        if (bizType === 'matriz') query = query.eq('matriz_filial', 'MATRIZ');
+        else if (bizType === 'filial') query = query.eq('matriz_filial', 'FILIAL');
+
+        query = query.range(page * pageSize, (page + 1) * pageSize - 1);
+
+        const { data, error } = await query;
+        if (error) {
+          console.error(`❌ DB query error for segment "${seg}" page ${page}:`, error.message);
+          break;
+        }
+
+        if (!data || data.length === 0) break;
+        segResults.push(...data);
+        page++;
+        if (data.length < pageSize) break; // No more pages
       }
 
-      // Matriz/Filial filter
-      if (bizType === 'matriz') query = query.eq('matriz_filial', 'MATRIZ');
-      else if (bizType === 'filial') query = query.eq('matriz_filial', 'FILIAL');
-
-      query = query.limit(Math.min(leadsPerSegment * 2, 1000));
-
-      const { data, error } = await query;
-      if (error) {
-        console.error(`❌ DB query error for segment "${seg}":`, error.message);
-        continue;
-      }
-
-      console.log(`📊 Segment "${seg}": ${data?.length || 0} results from DB`);
-      if (data) {
-        allCompanies.push(...data.map((c: any) => ({ ...c, _segment: seg })));
-      }
+      console.log(`📊 Segment "${seg}": ${segResults.length} results from DB (${page} pages)`);
+      allCompanies.push(...segResults.map((c: any) => ({ ...c, _segment: seg })));
     }
 
     console.log(`📊 Total raw companies: ${allCompanies.length}`);
