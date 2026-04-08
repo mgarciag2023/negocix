@@ -5495,8 +5495,7 @@ const Configuration = () => {
     "Fábricas de Cerâmica Estrutural",
     "Fábricas de Cerâmica Vermelha",
     "Fábricas de Ladrilhos",
-  ];
-  ].sort(); // Ordenação alfabética
+  ].sort();
 
   const handleCustomerToggle = (customer: string) => {
     setSelectedCustomers(prev =>
