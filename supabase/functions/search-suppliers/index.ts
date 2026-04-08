@@ -201,19 +201,17 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const isStateOnlySearch = !location || location.trim() === '';
-    const MAX_TOTAL_SUPPLIERS = 200;
+    const MAX_TOTAL_SUPPLIERS = 500;
 
-    // Build search terms - use only the most specific 2 terms per product
+    // Build search terms - use up to 4 terms per product for better coverage
     const allSearchTerms: string[] = [];
     for (const product of products) {
       const terms = generateSupplierSearchTerms(product);
-      // Take only first 2 most specific terms (skip generic ones like "construcao")
-      const specific = terms.filter(t => t.length > 5).slice(0, 2);
-      allSearchTerms.push(...(specific.length > 0 ? specific : terms.slice(0, 1)));
+      allSearchTerms.push(...terms.slice(0, 4));
     }
     
-    // Deduplicate and limit to 6 terms max to avoid timeouts
-    const uniqueTerms = [...new Set(allSearchTerms)].slice(0, 6);
+    // Deduplicate and limit to 10 terms max
+    const uniqueTerms = [...new Set(allSearchTerms)].slice(0, 10);
     console.log(`📋 Search terms (${uniqueTerms.length}):`, uniqueTerms);
 
     const cityParam = isStateOnlySearch ? null : normalizeStr(location).toUpperCase();
@@ -224,16 +222,16 @@ serve(async (req) => {
     const seenIds = new Set<string>();
 
     // Query 2 terms at a time to avoid timeout
-    for (let i = 0; i < uniqueTerms.length; i += 2) {
-      const batch = uniqueTerms.slice(i, i + 2);
-      console.log(`🔎 Batch ${Math.floor(i/2)+1}: searching for`, batch);
+    for (let i = 0; i < uniqueTerms.length; i += 3) {
+      const batch = uniqueTerms.slice(i, i + 3);
+      console.log(`🔎 Batch ${Math.floor(i/3)+1}: searching for`, batch);
       
       const { data, error } = await supabase.rpc('search_companies', {
         p_city: cityParam,
         p_state: stateParam,
         p_search_terms: batch,
         p_biz_type: 'all',
-        p_limit_val: 200,
+        p_limit_val: 500,
         p_offset_val: 0,
       });
 
