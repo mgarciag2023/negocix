@@ -230,24 +230,29 @@ const Results = () => {
         const searchConfig = JSON.parse(searchConfigStr);
         console.log('🔍 Fetching NEW leads with config:', searchConfig);
         
-        // Call the edge function
-        const { data, error } = await supabase.functions.invoke('search-leads', {
-          body: {
-            segment: searchConfig.selectedCustomers.join(', '),
-            products: searchConfig.products,
-            region: searchConfig.region,
-            country: searchConfig.country || 'BR',
-            ecommerceType: searchConfig.ecommerceType || '',
-            businessType: searchConfig.businessType || 'all',
-            digitalPresence: searchConfig.digitalPresence || 'all',
-            digitalActivity: searchConfig.digitalActivity || 'all',
-            whatsappOnly: searchConfig.whatsappOnly || false,
-            receitaFederalOnly: searchConfig.receitaFederalOnly || false,
-            filters: {
-              category: searchConfig.category,
-              companySizes: searchConfig.companySizes || ['all'],
-              revenueRange: searchConfig.revenueRange,
-            }
+        // Call the edge function with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 180000); // 3 min timeout
+        
+        let data, error;
+        try {
+          const result = await supabase.functions.invoke('search-leads', {
+            body: {
+              segment: searchConfig.selectedCustomers.join(', '),
+              products: searchConfig.products,
+              region: searchConfig.region,
+              country: searchConfig.country || 'BR',
+              ecommerceType: searchConfig.ecommerceType || '',
+              businessType: searchConfig.businessType || 'all',
+              digitalPresence: searchConfig.digitalPresence || 'all',
+              digitalActivity: searchConfig.digitalActivity || 'all',
+              whatsappOnly: searchConfig.whatsappOnly || false,
+              receitaFederalOnly: searchConfig.receitaFederalOnly || false,
+              filters: {
+                category: searchConfig.category,
+                companySizes: searchConfig.companySizes || ['all'],
+                revenueRange: searchConfig.revenueRange,
+              }
           }
         });
 
