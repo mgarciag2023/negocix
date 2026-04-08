@@ -88,10 +88,13 @@ const sortLeadsAlphabetically = (leads: Lead[]): Lead[] => {
   });
 };
 
+const LEADS_PER_PAGE = 30;
+
 const Results = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortOrder, setSortOrder] = useState<'alphabetical' | 'category'>('alphabetical');
+  const [visibleCount, setVisibleCount] = useState(LEADS_PER_PAGE);
   const { toast } = useToast();
   const location = useLocation();
   const { restoreScrollPosition } = useScrollPosition();
@@ -474,16 +477,29 @@ const Results = () => {
 
         {/* Lead Cards */}
         {leads.length > 0 ? (
-          <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {leads.map((lead) => (
-              <LeadCard 
-                key={lead.id} 
-                {...lead} 
-                website={lead.website}
-                hasWhatsApp={lead.hasWhatsApp}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+              {leads.slice(0, visibleCount).map((lead) => (
+                <LeadCard 
+                  key={lead.id} 
+                  {...lead} 
+                  website={lead.website}
+                  hasWhatsApp={lead.hasWhatsApp}
+                />
+              ))}
+            </div>
+            {visibleCount < leads.length && (
+              <div className="flex justify-center mt-8">
+                <Button 
+                  onClick={() => setVisibleCount(prev => Math.min(prev + LEADS_PER_PAGE, leads.length))}
+                  variant="outline"
+                  size="lg"
+                >
+                  Carregar mais ({leads.length - visibleCount} restantes)
+                </Button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="text-center py-12">
             <p className="text-muted-foreground text-lg">Nenhum lead encontrado. Configure uma nova busca.</p>
