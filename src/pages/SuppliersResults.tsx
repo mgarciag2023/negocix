@@ -219,6 +219,16 @@ const SuppliersResults = () => {
               <RefreshCw className="mr-2 h-4 w-4" />
               Atualizar
             </Button>
+            {suppliers.length > 0 && (
+              <Button 
+                onClick={exportToExcel}
+                className="w-fit rounded-xl bg-gradient-primary hover:opacity-90"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Exportar Excel
+              </Button>
+            )}
+            </Button>
           </div>
           
           <div className="flex items-center gap-4">
