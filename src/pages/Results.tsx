@@ -88,10 +88,13 @@ const sortLeadsAlphabetically = (leads: Lead[]): Lead[] => {
   });
 };
 
+const LEADS_PER_PAGE = 30;
+
 const Results = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortOrder, setSortOrder] = useState<'alphabetical' | 'category'>('alphabetical');
+  const [visibleCount, setVisibleCount] = useState(LEADS_PER_PAGE);
   const { toast } = useToast();
   const location = useLocation();
   const { restoreScrollPosition } = useScrollPosition();
