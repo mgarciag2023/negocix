@@ -485,44 +485,22 @@ serve(async (req) => {
       const terms = generateSearchTerms(seg).slice(0, 10);
       console.log(`📤 Segment "${seg}" search terms:`, terms);
 
-      // Build OR filter for nome_fantasia and descricao_cnae
-      const orConditions = terms.flatMap(t => {
-        const escaped = t.replace(/[%_]/g, '');
-        return [
-          `nome_fantasia.ilike.%${escaped}%`,
-          `descricao_cnae.ilike.%${escaped}%`,
-        ];
-      }).join(',');
-
-      // Paginate to get more than 1000 results
+      // Use optimized RPC function
       const targetPerSegment = Math.min(leadsPerSegment * 2, 5000);
       let segResults: any[] = [];
       let page = 0;
       const pageSize = 1000;
 
       while (segResults.length < targetPerSegment && page < 10) {
-        let query = adminClient
-          .from('companies')
-          .select('id,cnpj,razao_social,nome_fantasia,telefone_1,telefone_2,email,cnae_principal,descricao_cnae,data_abertura,porte,mei,simples,capital_social,situacao_cadastral,natureza_juridica,endereco,complemento,cep,bairro,cidade,estado,matriz_filial,nome_socio,faixa_etaria_socio,qualificacao_socio')
-          .eq('situacao_cadastral', 'ATIVA')
-          .or(orConditions);
+        const { data, error } = await adminClient.rpc('search_companies', {
+          p_city: city || null,
+          p_state: state || null,
+          p_search_terms: terms,
+          p_biz_type: bizType || 'all',
+          p_limit_val: pageSize,
+          p_offset_val: page * pageSize,
+        });
 
-        // Location filter
-        if (city && state) {
-          query = query.eq('cidade', city).eq('estado', state);
-        } else if (city) {
-          query = query.eq('cidade', city);
-        } else if (state) {
-          query = query.eq('estado', state);
-        }
-
-        // Matriz/Filial filter
-        if (bizType === 'matriz') query = query.eq('matriz_filial', 'MATRIZ');
-        else if (bizType === 'filial') query = query.eq('matriz_filial', 'FILIAL');
-
-        query = query.range(page * pageSize, (page + 1) * pageSize - 1);
-
-        const { data, error } = await query;
         if (error) {
           console.error(`❌ DB query error for segment "${seg}" page ${page}:`, error.message);
           break;
@@ -531,7 +509,7 @@ serve(async (req) => {
         if (!data || data.length === 0) break;
         segResults.push(...data);
         page++;
-        if (data.length < pageSize) break; // No more pages
+        if (data.length < pageSize) break;
       }
 
       console.log(`📊 Segment "${seg}": ${segResults.length} results from DB (${page} pages)`);
