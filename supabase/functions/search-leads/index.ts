@@ -647,9 +647,8 @@ serve(async (req) => {
 
     console.log(`✅ FINAL: ${leads.length} leads`);
 
-    // ===== FILTER SEEN LEADS =====
+    // ===== GET USER ID FOR LOGGING =====
     let userId: string | null = null;
-    let allFilteredBySeen = false;
     try {
       const authHeader = req.headers.get('authorization');
       if (authHeader) {
@@ -657,43 +656,11 @@ serve(async (req) => {
           global: { headers: { Authorization: authHeader } }
         });
         const { data: { user } } = await supabaseAuth.auth.getUser();
-        if (user) {
-          userId = user.id;
-          const leadIds = leads.map((l: any) => l.placeId).filter(Boolean);
-          if (leadIds.length > 0) {
-            const { data: seenData } = await adminClient
-              .from("user_seen_leads")
-              .select("place_id")
-              .eq("user_id", user.id)
-              .in("place_id", leadIds);
-            const seenSet = new Set((seenData || []).map((s: any) => s.place_id));
-            if (seenSet.size > 0) {
-              const before = leads.length;
-              leads = leads.filter((l: any) => !l.placeId || !seenSet.has(l.placeId));
-              console.log(`👁️ Seen filter: removed ${before - leads.length}, ${leads.length} remaining`);
-              if (leads.length === 0 && before > 0) allFilteredBySeen = true;
-            }
-            // Record newly shown leads
-            if (leads.length > 0) {
-              const newSeen = leads.map((l: any) => l.placeId).filter(Boolean)
-                .map((pid: string) => ({ user_id: user.id, place_id: pid, search_type: 'leads' }));
-              if (newSeen.length > 0) {
-                await adminClient.from("user_seen_leads")
-                  .upsert(newSeen, { onConflict: 'user_id,place_id', ignoreDuplicates: true });
-                console.log(`💾 Recorded ${newSeen.length} seen leads`);
-              }
-            }
-          }
-        }
+        if (user) userId = user.id;
       }
-    } catch (e) { console.error("⚠️ Seen leads error:", e); }
+    } catch (e) { console.error("⚠️ Auth error:", e); }
 
     if (leads.length === 0) {
-      if (allFilteredBySeen) {
-        return new Response(JSON.stringify({ error: 'Todos os leads desta pesquisa já foram exibidos anteriormente. Tente buscar em outra região ou com outros filtros.', allSeen: true }), {
-          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
       return new Response(JSON.stringify({ error: `Nenhum estabelecimento encontrado para "${segment}" em ${region}. Tente outra região ou outro segmento.` }), {
         status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
