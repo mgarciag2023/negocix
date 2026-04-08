@@ -576,7 +576,8 @@ serve(async (req) => {
       let rawName = c.nome_fantasia && c.nome_fantasia.trim() !== '' && !(/^\*+$/.test(c.nome_fantasia.trim())) ? c.nome_fantasia : c.razao_social || 'Empresa';
       // Convert from ALL CAPS to Title Case
       const name = rawName.replace(/[^\s]+/g, (w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
-      const address = [c.endereco, c.bairro, c.cidade, c.estado, c.cep].filter(Boolean).join(', ');
+      const addressParts = [c.endereco, c.bairro, c.cidade, c.estado, c.cep].filter(Boolean);
+      const address = addressParts.map((part: string) => part.replace(/[^\s]+/g, (w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())).join(', ');
       const category = segmentDisplayNames[c._segment?.toLowerCase()] || c._segment || segment;
       const { employeeCount, companySize, revenue } = estimateCompanySize(c);
       const matchScore = calculateMatchScore(c);
