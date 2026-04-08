@@ -25,6 +25,7 @@ interface LeadCardProps {
   employeeCount?: string;
   companySize?: string;
   hasWhatsApp?: boolean;
+  cnpj?: string;
 }
 
 const LeadCard = ({

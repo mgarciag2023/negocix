@@ -475,7 +475,7 @@ serve(async (req) => {
       }
     } catch (e) { console.error("⚠️ Error fetching user limits:", e); }
 
-    const MAX_LEADS = userMaxLeads || (isStateOnly ? 3000 : 2000);
+    const MAX_LEADS = userMaxLeads || (isStateOnly ? 6000 : 3000);
     const leadsPerSegment = Math.ceil(MAX_LEADS / segments.length);
 
     // ===== QUERY LOCAL DATABASE =====
