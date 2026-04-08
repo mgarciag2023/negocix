@@ -349,7 +349,7 @@ function generateSearchTerms(segment: string): string[] {
     'drogarias': ['drogaria', 'farmacia'],
     'lojas de produtos de limpeza': ['produtos de limpeza', 'limpeza', 'material de limpeza'],
     'e-commerce': ['e-commerce', 'ecommerce', 'loja virtual', 'loja online'],
-    'e-commerces de peças automotivas': ['ecommerce autopecas', 'pecas automotivas online'],
+    'e-commerces de peças automotivas': ['ecommerce autopecas', 'pecas automotivas online', 'loja virtual autopecas', 'autopecas online'],
     'e-commerces de utilidades domésticas': ['ecommerce utilidades', 'utilidades domesticas online'],
     'e-commerces de perfumaria e casa': ['ecommerce perfumaria', 'perfumes online'],
     'e-commerces de sabonetes': ['ecommerce sabonetes', 'sabonetes artesanais'],
