@@ -480,8 +480,8 @@ serve(async (req) => {
 
     console.log(`📊 Total raw companies: ${allCompanies.length}`);
 
-    // ===== FILTER: valid phone required =====
-    allCompanies = allCompanies.filter(c => isPhoneValid(c.telefone_1));
+    // ===== FILTER: valid phone required (check both telefone_1 and telefone_2) =====
+    allCompanies = allCompanies.filter(c => isPhoneValid(c.telefone_1) || isPhoneValid(c.telefone_2));
     console.log(`📞 After phone filter: ${allCompanies.length}`);
 
     // ===== DEDUPLICATE by CNPJ =====
@@ -497,7 +497,8 @@ serve(async (req) => {
     // ===== DEDUPLICATE by phone =====
     const seenPhones = new Set<string>();
     allCompanies = allCompanies.filter(c => {
-      const digits = (c.telefone_1 || '').replace(/\D/g, '');
+      const phone = isPhoneValid(c.telefone_1) ? c.telefone_1 : (c.telefone_2 || '');
+      const digits = phone.replace(/\D/g, '');
       if (digits.length >= 8) {
         const key = digits.slice(-8);
         if (seenPhones.has(key)) return false;
@@ -532,7 +533,7 @@ serve(async (req) => {
     });
 
     let leads = allCompanies.map((c: any, index: number) => {
-      const phone1 = c.telefone_1 || '';
+      const phone1 = isPhoneValid(c.telefone_1) ? c.telefone_1 : (c.telefone_2 || '');
       const phoneValidation = validatePhone(phone1);
       // Format name: title case, filter out asterisks-only names
       let rawName = c.nome_fantasia && c.nome_fantasia.trim() !== '' && !(/^\*+$/.test(c.nome_fantasia.trim())) ? c.nome_fantasia : c.razao_social || 'Empresa';
