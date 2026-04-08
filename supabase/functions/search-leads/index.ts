@@ -475,7 +475,7 @@ serve(async (req) => {
       }
     } catch (e) { console.error("⚠️ Error fetching user limits:", e); }
 
-    const MAX_LEADS = userMaxLeads || (isStateOnly ? 300 : 200);
+    const MAX_LEADS = userMaxLeads || (isStateOnly ? 800 : 500);
     const leadsPerSegment = Math.ceil(MAX_LEADS / segments.length);
 
     // ===== QUERY LOCAL DATABASE =====
@@ -513,7 +513,7 @@ serve(async (req) => {
       if (bizType === 'matriz') query = query.eq('matriz_filial', 'MATRIZ');
       else if (bizType === 'filial') query = query.eq('matriz_filial', 'FILIAL');
 
-      query = query.limit(leadsPerSegment);
+      query = query.limit(Math.min(leadsPerSegment * 2, 1000));
 
       const { data, error } = await query;
       if (error) {
@@ -556,6 +556,20 @@ serve(async (req) => {
     });
     console.log(`📊 After phone dedup: ${allCompanies.length}`);
 
+    // ===== DEDUPLICATE by nome_fantasia + cidade (same name in same city) =====
+    const seenNameCity = new Set<string>();
+    allCompanies = allCompanies.filter(c => {
+      const nf = (c.nome_fantasia || '').trim().toUpperCase();
+      const cid = (c.cidade || '').trim().toUpperCase();
+      if (nf && cid) {
+        const key = `${nf}|${cid}`;
+        if (seenNameCity.has(key)) return false;
+        seenNameCity.add(key);
+      }
+      return true;
+    });
+    console.log(`📊 After name+city dedup: ${allCompanies.length}`);
+
     // ===== TRANSFORM TO LEAD FORMAT =====
     const segmentDisplayNames: { [key: string]: string } = {};
     segments.forEach((seg: string) => {
@@ -569,7 +583,10 @@ serve(async (req) => {
     let leads = allCompanies.map((c: any, index: number) => {
       const phone1 = c.telefone_1 || '';
       const phoneValidation = validatePhone(phone1);
-      const name = c.nome_fantasia && c.nome_fantasia.trim() !== '' ? c.nome_fantasia : c.razao_social || 'Empresa';
+      // Format name: title case, filter out asterisks-only names
+      let rawName = c.nome_fantasia && c.nome_fantasia.trim() !== '' && !(/^\*+$/.test(c.nome_fantasia.trim())) ? c.nome_fantasia : c.razao_social || 'Empresa';
+      // Convert from ALL CAPS to Title Case
+      const name = rawName.replace(/[^\s]+/g, (w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
       const address = [c.endereco, c.bairro, c.cidade, c.estado, c.cep].filter(Boolean).join(', ');
       const category = segmentDisplayNames[c._segment?.toLowerCase()] || c._segment || segment;
       const { employeeCount, companySize, revenue } = estimateCompanySize(c);
@@ -583,7 +600,7 @@ serve(async (req) => {
         address: address || 'Endereço não disponível',
         phone: phoneValidation.valid ? phoneValidation.normalized : phone1,
         phoneValid: phoneValidation.valid,
-        email: c.email || '',
+        email: c.email ? c.email.toLowerCase() : '',
         website: null,
         instagram: '',
         facebook: '',
