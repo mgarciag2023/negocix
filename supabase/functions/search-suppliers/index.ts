@@ -1,289 +1,190 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-// Using Google Places API (New)
-
-// Validate Brazilian phone numbers
-function validatePhone(phone: string): { isValid: boolean; normalized: string } {
-  if (!phone) return { isValid: false, normalized: "" };
-  const cleaned = phone.replace(/\D/g, "");
-  if (cleaned.length >= 10 && cleaned.length <= 13) {
-    let normalized = cleaned;
-    if (cleaned.startsWith("55") && cleaned.length >= 12) {
-      normalized = cleaned.substring(2);
-    }
-    return { isValid: true, normalized: `+55${normalized}` };
-  }
-  return { isValid: false, normalized: "" };
-}
-
 function normalizeStr(str: string): string {
-  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 }
 
-// ====== SUPPLIER VALIDATION ======
+function toTitleCase(str: string): string {
+  if (!str) return '';
+  return str.replace(/[^\s]+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+}
 
+function isPhoneValid(phone: string | null): boolean {
+  if (!phone || phone.trim() === '' || phone === '()-' || phone === '(0)0-' || phone === '(0000)0000-0000') return false;
+  const digits = phone.replace(/\D/g, '');
+  return digits.length >= 8;
+}
+
+function validatePhone(phone: string): { valid: boolean; normalized: string; isWhatsApp: boolean } {
+  if (!phone) return { valid: false, normalized: '', isWhatsApp: false };
+  const digitsOnly = phone.replace(/\D/g, '');
+  if (digitsOnly.startsWith('55') && (digitsOnly.length === 12 || digitsOnly.length === 13)) {
+    const isMobile = digitsOnly.length === 13 && digitsOnly.charAt(4) === '9';
+    return { valid: true, normalized: `+${digitsOnly}`, isWhatsApp: isMobile };
+  }
+  if (digitsOnly.length === 10 || digitsOnly.length === 11) {
+    const isMobile = digitsOnly.length === 11 && digitsOnly.charAt(2) === '9';
+    return { valid: true, normalized: `+55${digitsOnly}`, isWhatsApp: isMobile };
+  }
+  if (digitsOnly.length >= 8) return { valid: true, normalized: phone, isWhatsApp: false };
+  return { valid: false, normalized: '', isWhatsApp: false };
+}
+
+// ====== SUPPLIER SEARCH TERMS ======
+// Maps product categories to search terms for nome_fantasia and descricao_cnae
+const productSearchTerms: { [key: string]: string[] } = {
+  "Alimentos em Geral": ["distribuidora de alimentos", "atacado alimentos", "distribuidora alimenticia"],
+  "Bebidas": ["distribuidora de bebidas", "atacado bebidas", "bebidas"],
+  "Laticínios": ["distribuidora laticinios", "laticinios", "leite", "queijo"],
+  "Carnes e Frigoríficos": ["frigorifico", "distribuidora de carnes", "carnes", "abatedouro"],
+  "Frutas e Verduras": ["hortifruti", "frutas", "verduras", "hortifrutigranjeiro"],
+  "Cereais e Grãos": ["distribuidora de graos", "cereais", "graos"],
+  "Congelados": ["congelados", "distribuidora congelados", "frios"],
+  "Embalagens para Alimentos": ["embalagens", "embalagem", "descartaveis"],
+  "Materiais de Construção": ["materiais de construcao", "material de construcao", "construcao"],
+  "Cimento e Argamassa": ["cimento", "argamassa", "concreto"],
+  "Tintas e Vernizes": ["tintas", "vernizes", "tinta", "distribuidora tintas"],
+  "Ferragens": ["ferragens", "ferragem", "parafusos", "fixadores"],
+  "Madeiras": ["madeireira", "madeiras", "madeira"],
+  "Tubos e Conexões": ["tubos", "conexoes", "hidraulico", "pvc"],
+  "Pisos e Revestimentos": ["pisos", "revestimentos", "ceramica", "porcelanato"],
+  "Materiais Elétricos": ["material eletrico", "eletrico", "eletrica", "fios", "cabos"],
+  "Materiais Hidráulicos": ["hidraulico", "hidraulica", "tubos", "conexoes"],
+  "Tecidos": ["tecidos", "tecido", "textil"],
+  "Aviamentos": ["aviamentos", "aviamento", "armarinho"],
+  "Fios e Linhas": ["fios", "linhas", "textil"],
+  "Malhas": ["malhas", "malha", "malharia"],
+  "Uniformes": ["uniformes", "uniforme", "confeccao"],
+  "Roupas em Geral": ["roupas", "confeccao", "confeccoes", "vestuario"],
+  "Máquinas e Equipamentos": ["maquinas", "equipamentos", "industrial"],
+  "Ferramentas Industriais": ["ferramentas", "ferramenta", "industrial"],
+  "Peças e Componentes": ["pecas", "componentes", "industrial"],
+  "Produtos Químicos": ["quimicos", "quimica", "produtos quimicos"],
+  "Lubrificantes": ["lubrificantes", "lubrificante", "oleo"],
+  "EPIs": ["epi", "equipamento de protecao", "seguranca do trabalho"],
+  "Insumos Agrícolas": ["insumos agricolas", "agropecuaria", "agricola", "defensivos"],
+  "Fertilizantes": ["fertilizantes", "fertilizante", "adubo"],
+  "Sementes": ["sementes", "semente"],
+  "Rações Animais": ["racao", "racoes", "ração animal", "pet"],
+  "Medicamentos Veterinários": ["veterinario", "veterinaria", "medicamentos animais"],
+  "Embalagens Plásticas": ["embalagens plasticas", "plasticos", "plastico"],
+  "Embalagens de Papelão": ["papelao", "caixas", "embalagens"],
+  "Sacolas e Sacos": ["sacolas", "sacos", "embalagens"],
+  "Fitas e Lacres": ["fitas", "lacres", "adesivos"],
+  "Papelaria": ["papelaria", "papel", "cadernos"],
+  "Material de Escritório": ["escritorio", "papelaria", "material de escritorio"],
+  "Informática e Tecnologia": ["informatica", "tecnologia", "computadores", "ti"],
+  "Produtos de Limpeza": ["produtos de limpeza", "limpeza", "higiene"],
+  "Descartáveis": ["descartaveis", "descartavel", "copos", "pratos"],
+  "Produtos de Higiene": ["higiene", "higiene pessoal", "limpeza"],
+  "Peças Automotivas": ["autopecas", "auto pecas", "pecas automotivas", "automotivo"],
+  "Pneus": ["pneus", "pneu", "borracharia"],
+  "Óleos e Lubrificantes": ["oleo", "lubrificante", "lubrificantes"],
+  "Acessórios Automotivos": ["acessorios automotivos", "automotivo", "acessorios"],
+  "Móveis": ["moveis", "movel", "mobiliario"],
+  "Eletrodomésticos": ["eletrodomesticos", "eletro", "eletrodomestico"],
+  "Brinquedos": ["brinquedos", "brinquedo"],
+  "Cosméticos": ["cosmeticos", "cosmetico", "beleza"],
+  "Produtos Farmacêuticos": ["farmaceutica", "medicamentos", "farmacia"],
+  "Bijuterias e Acessórios": ["bijuterias", "bijuteria", "acessorios"],
+  "Utilidades Domésticas": ["utilidades domesticas", "utilidades", "domesticas"],
+  "Produtos para Pet Shop": ["pet", "ração", "racao", "animais", "veterinario"],
+  "Produtos pet": ["pet", "ração", "racao", "animais", "veterinario"],
+  "Tintas e Materiais para Pintura": ["tintas", "pintura", "verniz", "tinta"],
+  "Pré-Moldados": ["pre-moldados", "pre moldados", "artefatos concreto", "concreto", "lajes"],
+  "Steel Frame": ["steel frame", "estrutura metalica", "perfil aco", "construcao seco"],
+  "Artigos para Festas": ["festas", "artigos festas", "baloes", "descartaveis"],
+  "Balões e Decoração": ["baloes", "decoracao", "festas"],
+  "Materiais para Artesanato": ["artesanato", "aviamentos", "armarinho"],
+  "Produtos Naturais e Suplementos": ["produtos naturais", "suplementos", "natural"],
+  "Produtos de Beleza e Cabelo": ["beleza", "cabelo", "cosmeticos", "profissional"],
+  "Material Fotográfico": ["fotografico", "fotografia", "cameras"],
+  "Instrumentos Musicais": ["instrumentos musicais", "musica", "audio"],
+  "Equipamentos para Restaurantes": ["equipamentos restaurante", "cozinha industrial", "inox"],
+  "Produtos para Confeitaria e Panificação": ["confeitaria", "panificacao", "padaria", "ingredientes"],
+  "Materiais para Serigrafia e Estamparia": ["serigrafia", "estamparia", "sublimacao"],
+  "Produtos de Jardinagem e Paisagismo": ["jardinagem", "paisagismo", "plantas", "vasos"],
+  "Equipamentos para Academia": ["academia", "fitness", "musculacao", "esportivos"],
+  "Materiais Odontológicos": ["odontologico", "dentario", "odontologia"],
+  "Suprimentos para Impressão": ["impressao", "toner", "cartucho", "papel"],
+  "Equipamentos de Segurança Eletrônica": ["seguranca", "cameras", "cftv", "alarmes"],
+  "Produtos para Piscinas": ["piscina", "piscinas", "cloro", "tratamento agua"],
+};
+
+// Supplier indicators for filtering
 const SUPPLIER_INDICATORS = [
-  'distribuidora', 'distribuidor', 'atacado', 'atacadista', 'atacadão',
-  'fornecedor', 'fornecedora', 'fabrica', 'fábrica', 'fabricante',
-  'industria', 'indústria', 'industrial',
-  'deposito', 'depósito', 'armazem', 'armazém',
+  'distribuidora', 'distribuidor', 'atacado', 'atacadista', 'atacadao',
+  'fornecedor', 'fornecedora', 'fabrica', 'fabricante',
+  'industria', 'industrial', 'deposito', 'armazem',
   'importadora', 'importador', 'exportadora',
-  'representante', 'representação', 'representacoes',
-  'cooperativa', 'coop',
-  'comercio atacadista', 'comércio atacadista',
-  'central de distribuição', 'centro de distribuição',
+  'representante', 'representacao', 'representacoes',
+  'cooperativa', 'coop', 'comercio atacadista',
+  'central de distribuicao', 'centro de distribuicao',
   'supply', 'wholesale', 'trading',
-  'ltda', 'eireli', 'me', 's/a', 's.a', 'epp', 'sa',
 ];
 
 const NON_SUPPLIER_EXCLUDES = [
   'restaurante', 'lanchonete', 'bar ', 'barzinho', 'boteco',
   'padaria', 'confeitaria', 'pizzaria', 'hamburgueria', 'sorveteria',
-  'cafeteria', 'café', 'bistrô', 'bistro', 'cantina',
-  'churrascaria', 'rodízio', 'rodizio', 'food truck',
-  'salão', 'salao', 'barbearia', 'estética', 'estetica',
+  'cafeteria', 'cafe', 'bistro', 'cantina',
+  'churrascaria', 'rodizio', 'food truck',
+  'salao', 'barbearia', 'estetica',
   'academia', 'crossfit', 'pilates',
-  'consultório', 'consultorio', 'clínica', 'clinica', 'dentista',
-  'hospital', 'laboratório', 'laboratorio', 'farmácia', 'farmacia',
-  'escola', 'colégio', 'colegio', 'universidade', 'faculdade',
-  'igreja', 'templo', 'paróquia', 'paroquia',
-  'posto de gasolina', 'posto de combustível',
-  'oficina mecânica', 'oficina mecanica', 'borracharia',
+  'consultorio', 'clinica', 'dentista',
+  'hospital', 'laboratorio', 'farmacia',
+  'escola', 'colegio', 'universidade', 'faculdade',
+  'igreja', 'templo', 'paroquia',
+  'posto de gasolina', 'posto de combustivel',
+  'oficina mecanica', 'borracharia',
   'pet shop', 'petshop', 'banho e tosa',
-  'imobiliária', 'imobiliaria',
-  'hotel', 'pousada', 'hostel', 'motel',
-  'supermercado', 'minimercado', 'mercearia', 'mercadinho', 'mercado municipal',
-  'açougue', 'acougue',
-  'lavanderia', 'lavajato',
-  'funerária', 'funeraria',
-  'cartório', 'cartorio',
-  'lotérica', 'loterica',
+  'imobiliaria', 'hotel', 'pousada', 'hostel', 'motel',
+  'supermercado', 'minimercado', 'mercearia', 'mercadinho',
+  'acougue', 'lavanderia', 'lavajato',
+  'funeraria', 'cartorio', 'loterica',
 ];
 
-// Context-aware exclusions: some terms should NOT be excluded when searching for related products
-const CONTEXT_ALLOWED: { [key: string]: string[] } = {
-  'pet shop': ['produtos para pet shop', 'produtos pet'],
-  'petshop': ['produtos para pet shop', 'produtos pet'],
-  'banho e tosa': ['produtos para pet shop', 'produtos pet'],
-};
-
-function isLikelySupplier(place: any, searchedProducts: string[]): boolean {
-  const title = normalizeStr(place.name || "");
-  const category = normalizeStr(place.type || "");
-  const allCategories = (place.subtypes || []).map((c: string) => normalizeStr(c));
-  const fullText = `${title} ${category} ${allCategories.join(" ")}`;
+function isLikelySupplier(nome: string, descricaoCnae: string, searchedProducts: string[]): boolean {
+  const fullText = normalizeStr(`${nome} ${descricaoCnae}`);
   const normalizedProducts = searchedProducts.map(p => normalizeStr(p));
 
+  // Check non-supplier excludes
   for (const exclude of NON_SUPPLIER_EXCLUDES) {
-    if (title.includes(normalizeStr(exclude))) {
-      // Check if this exclusion should be bypassed for the current search context
-      const allowedFor = CONTEXT_ALLOWED[exclude];
-      if (allowedFor && allowedFor.some(ctx => normalizedProducts.includes(normalizeStr(ctx)))) {
-        continue; // Skip this exclusion - it's relevant to what we're searching
-      }
-      const hasSupplierWord = SUPPLIER_INDICATORS.some(ind => title.includes(normalizeStr(ind)));
-      if (!hasSupplierWord) {
-        console.log(`❌ Excluded (non-supplier name): "${place.name}"`);
-        return false;
-      }
+    if (fullText.includes(normalizeStr(exclude))) {
+      const hasSupplierWord = SUPPLIER_INDICATORS.some(ind => fullText.includes(normalizeStr(ind)));
+      if (!hasSupplierWord) return false;
     }
   }
 
-  const hasSupplierIndicator = SUPPLIER_INDICATORS.some(ind => fullText.includes(normalizeStr(ind)));
-  if (hasSupplierIndicator) return true;
+  // Has supplier indicator?
+  if (SUPPLIER_INDICATORS.some(ind => fullText.includes(normalizeStr(ind)))) return true;
 
-  const wholesaleCategories = ['wholesale', 'distributor', 'warehouse', 'supplier', 'factory',
-    'atacado', 'distribuidora', 'deposito', 'armazem', 'fabrica', 'industria'];
-  const hasWholesaleCategory = allCategories.some((c: string) => 
-    wholesaleCategories.some(wc => c.includes(wc))
-  );
-  if (hasWholesaleCategory) return true;
-
-  const productContext = searchedProducts.map(p => normalizeStr(p)).join(" ");
-  const hasProductMatch = productContext.split(" ").some(word => 
-    word.length > 3 && fullText.includes(word)
-  );
-  if (hasProductMatch && place.website && (place.review_count || 0) >= 3) {
-    console.log(`⚠️ Allowed with caution (product match + website + reviews): "${place.name}"`);
-    return true;
+  // Has product-related term in CNAE description?
+  for (const prod of normalizedProducts) {
+    const words = prod.split(/\s+/).filter(w => w.length > 3);
+    if (words.some(w => fullText.includes(w))) return true;
   }
 
-  console.log(`❌ Excluded (no supplier indicators): "${place.name}" | cat: "${category}"`);
   return false;
 }
 
-// ====== SEARCH TERM MAPPING ======
-const productSearchTerms: { [key: string]: string[] } = {
-  "Alimentos em Geral": ["distribuidora de alimentos", "atacado alimentos"],
-  "Bebidas": ["distribuidora de bebidas", "atacado bebidas"],
-  "Laticínios": ["distribuidora laticínios", "atacado laticínios"],
-  "Carnes e Frigoríficos": ["frigorífico", "distribuidora de carnes", "atacado carnes"],
-  "Frutas e Verduras": ["distribuidora hortifruti", "atacado frutas verduras"],
-  "Cereais e Grãos": ["distribuidora de grãos", "atacado cereais"],
-  "Congelados": ["distribuidora congelados", "atacado congelados"],
-  "Embalagens para Alimentos": ["distribuidora embalagens alimentos", "fábrica embalagens alimentos"],
-  "Materiais de Construção": ["distribuidora materiais construção", "atacado construção"],
-  "Cimento e Argamassa": ["distribuidora cimento", "atacado cimento argamassa"],
-  "Tintas e Vernizes": ["distribuidora tintas", "atacado tintas vernizes"],
-  "Ferragens": ["distribuidora ferragens", "atacado ferragens"],
-  "Madeiras": ["madeireira atacado", "distribuidora madeiras"],
-  "Tubos e Conexões": ["distribuidora tubos conexões", "atacado hidráulico"],
-  "Pisos e Revestimentos": ["distribuidora pisos revestimentos", "atacado cerâmica porcelanato"],
-  "Materiais Elétricos": ["distribuidora material elétrico", "atacado elétrico"],
-  "Materiais Hidráulicos": ["distribuidora material hidráulico", "atacado hidráulico"],
-  "Tecidos": ["distribuidora tecidos", "atacado tecidos"],
-  "Aviamentos": ["distribuidora aviamentos", "atacado aviamentos"],
-  "Fios e Linhas": ["distribuidora fios linhas", "atacado têxtil"],
-  "Malhas": ["distribuidora malhas", "atacado malhas"],
-  "Uniformes": ["fábrica uniformes", "confecção uniformes atacado"],
-  "Roupas em Geral": ["atacado roupas", "distribuidora confecções"],
-  "Máquinas e Equipamentos": ["distribuidora máquinas", "fornecedor equipamentos industriais"],
-  "Ferramentas Industriais": ["distribuidora ferramentas industriais", "atacado ferramentas"],
-  "Peças e Componentes": ["distribuidora peças industriais", "fornecedor componentes"],
-  "Produtos Químicos": ["distribuidora produtos químicos", "fornecedor químicos"],
-  "Lubrificantes": ["distribuidora lubrificantes", "atacado lubrificantes"],
-  "EPIs": ["distribuidora EPIs", "atacado equipamentos segurança"],
-  "Insumos Agrícolas": ["distribuidora insumos agrícolas", "atacado agrícola"],
-  "Fertilizantes": ["distribuidora fertilizantes", "atacado fertilizantes"],
-  "Sementes": ["distribuidora sementes", "atacado sementes"],
-  "Rações Animais": ["distribuidora rações", "atacado ração animal"],
-  "Medicamentos Veterinários": ["distribuidora veterinária", "atacado veterinário"],
-  "Embalagens Plásticas": ["fábrica embalagens plásticas", "distribuidora plásticos"],
-  "Embalagens de Papelão": ["fábrica papelão", "distribuidora caixas papelão"],
-  "Sacolas e Sacos": ["fábrica sacolas", "distribuidora sacolas embalagens"],
-  "Fitas e Lacres": ["distribuidora fitas adesivas", "fornecedor lacres embalagens"],
-  "Papelaria": ["distribuidora papelaria", "atacado papelaria"],
-  "Material de Escritório": ["distribuidora material escritório", "atacado escritório"],
-  "Informática e Tecnologia": ["distribuidora informática", "atacado tecnologia"],
-  "Produtos de Limpeza": ["distribuidora produtos limpeza", "atacado limpeza"],
-  "Descartáveis": ["distribuidora descartáveis", "atacado descartáveis"],
-  "Produtos de Higiene": ["distribuidora higiene", "atacado higiene"],
-  "Peças Automotivas": ["distribuidora autopeças", "atacado peças automotivas"],
-  "Pneus": ["distribuidora pneus", "atacado pneus"],
-  "Óleos e Lubrificantes": ["distribuidora óleos lubrificantes", "atacado lubrificantes automotivos"],
-  "Acessórios Automotivos": ["distribuidora acessórios automotivos", "atacado automotivo"],
-  "Móveis": ["fábrica móveis", "distribuidora móveis atacado"],
-  "Eletrodomésticos": ["distribuidora eletrodomésticos", "atacado eletro"],
-  "Brinquedos": ["distribuidora brinquedos", "atacado brinquedos"],
-  "Cosméticos": ["distribuidora cosméticos", "atacado beleza cosméticos"],
-  "Produtos Farmacêuticos": ["distribuidora farmacêutica", "atacado medicamentos"],
-  "Bijuterias e Acessórios": ["distribuidora bijuterias", "atacado acessórios bijuterias"],
-  "Utilidades Domésticas": ["distribuidora utilidades domésticas", "atacado utilidades"],
-  "Produtos para Pet Shop": ["distribuidora pet shop", "atacado produtos pet", "distribuidora ração animal", "atacado acessórios pet", "fornecedor pet shop", "distribuidora produtos veterinários", "atacado ração cães gatos", "distribuidora acessórios animais"],
-  "Produtos pet": ["distribuidora pet shop", "atacado produtos pet", "distribuidora ração animal", "atacado acessórios pet", "fornecedor pet shop", "distribuidora produtos veterinários", "atacado ração cães gatos", "distribuidora acessórios animais"],
-  "Tintas e Materiais para Pintura": ["distribuidora tintas", "atacado tintas vernizes", "fábrica tintas", "distribuidora materiais pintura"],
-  "Pré-Moldados": ["fábrica pré-moldados", "distribuidora pré-moldados", "fornecedor pré-moldados", "construtora pré-moldado", "artefatos de concreto", "fábrica artefatos concreto", "lajes pré-moldadas", "postes pré-moldados", "blocos de concreto"],
-  "Steel Frame": ["steel frame", "fornecedor steel frame", "distribuidora steel frame", "construtora steel frame", "estrutura metálica", "fábrica estrutura metálica", "perfil de aço", "construção a seco", "drywall steel frame"],
-  "Artigos para Festas": ["distribuidora artigos para festas", "atacado festas", "loja de festas atacado", "fornecedor descartáveis festas", "distribuidora balões", "atacado decoração festas"],
-  "Balões e Decoração": ["distribuidora balões", "atacado balões", "fábrica balões", "fornecedor decoração festas", "distribuidora decoração eventos"],
-  "Materiais para Artesanato": ["distribuidora artesanato", "atacado artesanato", "fornecedor materiais artesanato", "atacado aviamentos artesanato"],
-  "Produtos Naturais e Suplementos": ["distribuidora produtos naturais", "atacado suplementos", "distribuidora suplementos alimentares", "atacado produtos naturais"],
-  "Produtos de Beleza e Cabelo": ["distribuidora produtos beleza", "atacado cabelo", "distribuidora profissional cabelo", "fornecedor cosméticos profissionais"],
-  "Material Fotográfico": ["distribuidora material fotográfico", "atacado equipamentos fotografia", "fornecedor câmeras acessórios"],
-  "Instrumentos Musicais": ["distribuidora instrumentos musicais", "atacado instrumentos musicais", "fornecedor equipamentos áudio"],
-  "Equipamentos para Restaurantes": ["distribuidora equipamentos restaurantes", "atacado equipamentos cozinha industrial", "fornecedor inox cozinha"],
-  "Produtos para Confeitaria e Panificação": ["distribuidora confeitaria", "atacado panificação", "fornecedor insumos padaria", "distribuidora ingredientes confeitaria"],
-  "Materiais para Serigrafia e Estamparia": ["distribuidora serigrafia", "atacado estamparia", "fornecedor tintas serigrafia", "distribuidora sublimação"],
-  "Produtos de Jardinagem e Paisagismo": ["distribuidora jardinagem", "atacado paisagismo", "fornecedor plantas vasos", "distribuidora ferramentas jardinagem"],
-  "Equipamentos para Academia": ["distribuidora equipamentos academia", "atacado fitness", "fornecedor aparelhos musculação", "distribuidora equipamentos esportivos"],
-  "Materiais Odontológicos": ["distribuidora odontológica", "atacado materiais dentários", "fornecedor equipamentos odontológicos"],
-  "Suprimentos para Impressão": ["distribuidora suprimentos impressão", "atacado toner cartucho", "fornecedor papel impressora"],
-  "Equipamentos de Segurança Eletrônica": ["distribuidora câmeras segurança", "atacado CFTV", "fornecedor alarmes segurança", "distribuidora equipamentos monitoramento"],
-  "Produtos para Piscinas": ["distribuidora produtos piscina", "atacado cloro piscina", "fornecedor equipamentos piscina", "distribuidora tratamento água"],
-};
+function generateSupplierSearchTerms(product: string): string[] {
+  const key = product.trim();
+  const mapped = productSearchTerms[key];
+  if (mapped) return mapped;
 
-// ====== CONCURRENCY LIMITER AND RETRY ======
-
-const MAX_CONCURRENT = 20;
-let activeRequests = 0;
-const requestQueue: (() => void)[] = [];
-
-async function acquireSlot(): Promise<void> {
-  if (activeRequests < MAX_CONCURRENT) { activeRequests++; return; }
-  return new Promise<void>((resolve) => {
-    requestQueue.push(() => { activeRequests++; resolve(); });
-  });
-}
-
-function releaseSlot(): void {
-  activeRequests--;
-  if (requestQueue.length > 0) { const next = requestQueue.shift(); if (next) next(); }
-}
-
-async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3): Promise<Response> {
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    await acquireSlot();
-    let response: Response;
-    try { response = await fetch(url, options); } catch (err) {
-      releaseSlot();
-      if (attempt === maxRetries) throw err;
-      await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
-      continue;
-    }
-    releaseSlot();
-    if (response.status === 429 && attempt < maxRetries) {
-      const waitMs = 2000 * Math.pow(2, attempt);
-      console.log(`⏳ Rate limited (429). Waiting ${waitMs}ms before retry ${attempt + 1}/${maxRetries}`);
-      await new Promise(r => setTimeout(r, waitMs));
-      continue;
-    }
-    return response;
-  }
-  throw new Error('Max retries exceeded');
-}
-
-// ====== GOOGLE PLACES API SEARCH ======
-
-async function searchGooglePlaces(query: string, apiKey: string, limit: number = 20): Promise<any[]> {
-  const fieldMask = 'places.id,places.displayName,places.formattedAddress,places.internationalPhoneNumber,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.types,places.businessStatus';
-
-  try {
-    const response = await fetchWithRetry('https://places.googleapis.com/v1/places:searchText', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Goog-Api-Key': apiKey,
-        'X-Goog-FieldMask': fieldMask,
-      },
-      body: JSON.stringify({
-        textQuery: query,
-        languageCode: 'pt',
-        regionCode: 'BR',
-        maxResultCount: Math.min(limit, 20),
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ Google Places error: ${response.status} - ${errorText}`);
-      return [];
-    }
-
-    const data = await response.json();
-    const places = data.places || [];
-    
-    return places.map((place: any) => ({
-      business_id: place.id || '',
-      place_id: place.id || '',
-      name: place.displayName?.text || '',
-      full_address: place.formattedAddress || '',
-      phone_number: place.internationalPhoneNumber || place.nationalPhoneNumber || '',
-      website: place.websiteUri || '',
-      type: place.types?.[0] || '',
-      subtypes: place.types || [],
-      rating: place.rating || 0,
-      review_count: place.userRatingCount || 0,
-      business_status: place.businessStatus || 'OPERATIONAL',
-    }));
-  } catch (error) {
-    console.error('❌ Google Places search error:', error);
-    return [];
-  }
+  // Fallback: generate terms from product name
+  const norm = normalizeStr(product);
+  const cleaned = norm
+    .replace(/^(distribuidoras?\s+de\s+|atacado\s+de\s+|fornecedores?\s+de\s+)/i, '')
+    .trim();
+  
+  return [cleaned, `distribuidora ${cleaned}`, `atacado ${cleaned}`];
 }
 
 serve(async (req) => {
@@ -293,215 +194,112 @@ serve(async (req) => {
 
   try {
     const { products, location, state } = await req.json();
-    console.log("🔍 Searching suppliers for:", { products, location, state });
+    console.log("🔍 Searching suppliers in local DB for:", { products, location, state });
 
-    const GOOGLE_PLACES_API_KEY = Deno.env.get("GOOGLE_PLACES_API_KEY");
-    if (!GOOGLE_PLACES_API_KEY) {
-      throw new Error("GOOGLE_PLACES_API_KEY is not configured");
-    }
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const isStateOnlySearch = !location || location.trim() === '';
+    const MAX_TOTAL_SUPPLIERS = 200;
 
-    // Major cities by state for state-wide searches
-    const stateCities: { [key: string]: string[] } = {
-      'AC': ['Rio Branco', 'Cruzeiro do Sul'],
-      'AL': ['Maceió', 'Arapiraca'],
-      'AP': ['Macapá', 'Santana'],
-      'AM': ['Manaus', 'Parintins'],
-      'BA': ['Salvador', 'Feira de Santana', 'Vitória da Conquista', 'Camaçari', 'Itabuna'],
-      'CE': ['Fortaleza', 'Caucaia', 'Juazeiro do Norte', 'Sobral'],
-      'DF': ['Brasília', 'Taguatinga'],
-      'ES': ['Vitória', 'Vila Velha', 'Serra', 'Cariacica'],
-      'GO': ['Goiânia', 'Aparecida de Goiânia', 'Anápolis', 'Rio Verde'],
-      'MA': ['São Luís', 'Imperatriz'],
-      'MT': ['Cuiabá', 'Várzea Grande', 'Rondonópolis', 'Sinop'],
-      'MS': ['Campo Grande', 'Dourados', 'Três Lagoas'],
-      'MG': ['Belo Horizonte', 'Uberlândia', 'Contagem', 'Juiz de Fora', 'Betim', 'Montes Claros', 'Uberaba'],
-      'PA': ['Belém', 'Ananindeua', 'Santarém', 'Marabá'],
-      'PB': ['João Pessoa', 'Campina Grande'],
-      'PR': ['Curitiba', 'Londrina', 'Maringá', 'Ponta Grossa', 'Cascavel', 'Foz do Iguaçu'],
-      'PE': ['Recife', 'Jaboatão dos Guararapes', 'Olinda', 'Caruaru', 'Petrolina'],
-      'PI': ['Teresina', 'Parnaíba'],
-      'RJ': ['Rio de Janeiro', 'São Gonçalo', 'Duque de Caxias', 'Nova Iguaçu', 'Niterói', 'Campos dos Goytacazes'],
-      'RN': ['Natal', 'Mossoró', 'Parnamirim'],
-      'RS': ['Porto Alegre', 'Caxias do Sul', 'Pelotas', 'Canoas', 'Santa Maria', 'Novo Hamburgo', 'Passo Fundo'],
-      'RO': ['Porto Velho', 'Ji-Paraná'],
-      'RR': ['Boa Vista'],
-      'SC': ['Florianópolis', 'Joinville', 'Blumenau', 'Chapecó', 'Criciúma', 'Itajaí'],
-      'SP': ['São Paulo', 'Guarulhos', 'Campinas', 'São Bernardo do Campo', 'Santo André', 'Osasco', 'São José dos Campos', 'Ribeirão Preto', 'Sorocaba', 'Santos'],
-      'SE': ['Aracaju', 'Nossa Senhora do Socorro'],
-      'TO': ['Palmas', 'Araguaína'],
-    };
-
-    const MAX_TOTAL_SUPPLIERS = 30;
-
-    if (isStateOnlySearch) {
-      // STATE-WIDE SEARCH: search across major cities
-      const cities = stateCities[state] || [state];
-      console.log(`🏙️ State-wide search across ${cities.length} cities:`, cities);
-
-      const allPlaces: any[] = [];
-      const seenIds = new Set<string>();
-
-      // Process cities in batches of 3
-      for (let i = 0; i < cities.length && allPlaces.length < MAX_TOTAL_SUPPLIERS * 2; i += 3) {
-        const cityBatch = cities.slice(i, i + 3);
-        const batchPromises = cityBatch.flatMap(city => {
-          const searchQueries: string[] = [];
-          for (const product of products) {
-            const terms = productSearchTerms[product];
-            if (terms && terms.length > 0) {
-              searchQueries.push(`${terms[0]} ${city} ${state}`);
-            } else {
-              searchQueries.push(`distribuidora ${product} ${city} ${state}`);
-            }
-          }
-          return searchQueries.slice(0, 3).map(q => searchGooglePlaces(q, GOOGLE_PLACES_API_KEY, 15));
-        });
-
-        const batchResults = await Promise.all(batchPromises);
-        for (const resultList of batchResults) {
-          for (const place of resultList) {
-            const id = place.business_id || place.place_id;
-            if (id && !seenIds.has(id)) {
-              seenIds.add(id);
-              allPlaces.push(place);
-            }
-          }
-        }
-        console.log(`📊 After batch ${Math.floor(i/3)+1}: ${allPlaces.length} unique places`);
-      }
-
-      console.log(`📊 Total unique places from state search: ${allPlaces.length}`);
-
-      // Filter by state only (no city filter)
-      const stateLower = normalizeStr(state);
-      let filtered = allPlaces.filter((place: any) => {
-        const address = normalizeStr(place.full_address || "");
-        if (!place.phone_number || place.phone_number.trim() === "") return false;
-        if (!address.includes(stateLower)) return false;
-        return true;
-      });
-
-      console.log(`📍 After state/phone filter: ${filtered.length} places`);
-
-      filtered = filtered.filter((place: any) => isLikelySupplier(place, products));
-      console.log(`✅ After supplier quality filter: ${filtered.length} suppliers`);
-
-      if (filtered.length > MAX_TOTAL_SUPPLIERS) {
-        filtered = filtered.slice(0, MAX_TOTAL_SUPPLIERS);
-      }
-
-      const suppliers = filtered.map((place: any, index: number) => {
-        const phoneValidation = validatePhone(place.phone_number || "");
-        const normalizedPhone = (place.phone_number || "").replace(/\D/g, "");
-        const hasWhatsApp = phoneValidation.isValid && normalizedPhone.length === 11 && normalizedPhone.charAt(2) === '9';
-        return {
-          id: `supplier-${index}-${Date.now()}`,
-          name: place.name || "Fornecedor",
-          address: place.full_address || "",
-          phone: place.phone_number || "",
-          website: place.website || null,
-          category: place.type || products[0] || "Fornecedor",
-          hasWhatsApp,
-        };
-      });
-
-      const seenPhones = new Set<string>();
-      const uniqueSuppliers = suppliers.filter((s: any) => {
-        const phone = s.phone.replace(/\D/g, "");
-        if (seenPhones.has(phone)) return false;
-        seenPhones.add(phone);
-        return true;
-      });
-
-      console.log(`📦 Returning ${uniqueSuppliers.length} unique suppliers (state search)`);
-
-      return new Response(
-        JSON.stringify({ suppliers: uniqueSuppliers }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // CITY-SPECIFIC SEARCH (original logic)
-    const searchQueries: string[] = [];
+    // Build search terms from all products
+    const allSearchTerms: string[] = [];
     for (const product of products) {
-      const terms = productSearchTerms[product];
-      if (terms && terms.length > 0) {
-        searchQueries.push(`${terms[0]} ${location} ${state}`);
-      } else {
-        searchQueries.push(`distribuidora ${product} ${location} ${state}`);
-      }
+      const terms = generateSupplierSearchTerms(product);
+      allSearchTerms.push(...terms);
+    }
+    
+    // Deduplicate
+    const uniqueTerms = [...new Set(allSearchTerms)];
+    console.log(`📋 Search terms (${uniqueTerms.length}):`, uniqueTerms.slice(0, 10));
+
+    // Search using search_companies RPC
+    const cityParam = isStateOnlySearch ? null : normalizeStr(location).toUpperCase();
+    const stateParam = state ? state.toUpperCase() : null;
+
+    const { data: companies, error } = await supabase.rpc('search_companies', {
+      p_city: cityParam,
+      p_state: stateParam,
+      p_search_terms: uniqueTerms,
+      p_biz_type: 'all',
+      p_limit_val: 3000,
+      p_offset_val: 0,
+    });
+
+    if (error) {
+      console.error('❌ DB search error:', error);
+      throw new Error(`Database error: ${error.message}`);
     }
 
-    const limitedQueries = searchQueries.slice(0, 5);
-    console.log(`📋 Search queries (${limitedQueries.length}):`, limitedQueries);
+    console.log(`📊 DB returned ${(companies || []).length} companies`);
 
-    const placesPerSearch = Math.max(15, Math.floor(50 / limitedQueries.length));
+    // Filter: must have phone, filter by supplier indicators
+    let filtered = (companies || []).filter((c: any) => {
+      if (!isPhoneValid(c.telefone_1) && !isPhoneValid(c.telefone_2)) return false;
+      
+      // Filter out names that are just asterisks
+      const nome = (c.nome_fantasia || c.razao_social || '').trim();
+      if (!nome || /^\*+$/.test(nome)) return false;
 
-    const searchPromises = limitedQueries.map(query => searchGooglePlaces(query, GOOGLE_PLACES_API_KEY, placesPerSearch));
-    const results = await Promise.all(searchPromises);
+      return isLikelySupplier(
+        nome,
+        c.descricao_cnae || '',
+        products
+      );
+    });
 
-    let allPlaces: any[] = [];
-    const seenIds = new Set<string>();
-    for (const resultList of results) {
-      for (const place of resultList) {
-        const id = place.business_id || place.place_id;
-        if (id && !seenIds.has(id)) {
-          seenIds.add(id);
-          allPlaces.push(place);
-        }
-      }
-    }
+    console.log(`✅ After supplier filter: ${filtered.length} suppliers`);
 
-    console.log(`📊 RapidAPI returned ${allPlaces.length} unique places`);
-
-    const locationLower = normalizeStr(location);
-    const stateLower = normalizeStr(state);
-
-    let filtered = allPlaces.filter((place: any) => {
-      const address = normalizeStr(place.full_address || "");
-      if (!place.phone_number || place.phone_number.trim() === "") return false;
-      if (!address.includes(locationLower) || !address.includes(stateLower)) return false;
+    // Deduplicate by phone
+    const seenPhones = new Set<string>();
+    const seenNames = new Set<string>();
+    const deduped = filtered.filter((c: any) => {
+      const phone = (c.telefone_1 || c.telefone_2 || '').replace(/\D/g, '');
+      const nome = normalizeStr(c.nome_fantasia || c.razao_social || '');
+      if (seenPhones.has(phone)) return false;
+      if (seenNames.has(nome)) return false;
+      seenPhones.add(phone);
+      seenNames.add(nome);
       return true;
     });
 
-    console.log(`📍 After location/phone filter: ${filtered.length} places`);
+    // Limit results
+    const limited = deduped.slice(0, MAX_TOTAL_SUPPLIERS);
 
-    filtered = filtered.filter((place: any) => isLikelySupplier(place, products));
-    console.log(`✅ After supplier quality filter: ${filtered.length} suppliers`);
+    // Map to supplier format
+    const suppliers = limited.map((c: any, index: number) => {
+      const rawName = c.nome_fantasia || c.razao_social || 'Fornecedor';
+      const name = /^\*+$/.test(rawName.trim()) ? (c.razao_social || 'Fornecedor') : rawName;
+      const displayName = toTitleCase(name);
 
-    if (filtered.length > MAX_TOTAL_SUPPLIERS) {
-      filtered = filtered.slice(0, MAX_TOTAL_SUPPLIERS);
-    }
+      const phone = c.telefone_1 || c.telefone_2 || '';
+      const phoneValidation = validatePhone(phone);
 
-    const suppliers = filtered.map((place: any, index: number) => {
-      const phoneValidation = validatePhone(place.phone_number || "");
-      const normalizedPhone = (place.phone_number || "").replace(/\D/g, "");
-      const hasWhatsApp = phoneValidation.isValid && normalizedPhone.length === 11 && normalizedPhone.charAt(2) === '9';
+      // Build address
+      const addressParts = [
+        c.endereco, c.bairro, c.cidade, c.estado, c.cep
+      ].filter(Boolean);
+      const address = toTitleCase(addressParts.join(', '));
+
       return {
-        id: `supplier-${index}-${Date.now()}`,
-        name: place.name || "Fornecedor",
-        address: place.full_address || "",
-        phone: place.phone_number || "",
-        website: place.website || null,
-        category: place.type || products[0] || "Fornecedor",
-        hasWhatsApp,
+        id: `supplier-${c.cnpj || index}-${Date.now()}`,
+        name: displayName,
+        address,
+        phone: phoneValidation.normalized || phone,
+        email: c.email ? c.email.toLowerCase() : null,
+        cnpj: c.cnpj || null,
+        website: null,
+        category: c.descricao_cnae ? toTitleCase(c.descricao_cnae) : products[0] || 'Fornecedor',
+        hasWhatsApp: phoneValidation.isWhatsApp,
+        porte: c.porte ? toTitleCase(c.porte) : null,
       };
     });
 
-    const seenPhones = new Set<string>();
-    const uniqueSuppliers = suppliers.filter((s: any) => {
-      const phone = s.phone.replace(/\D/g, "");
-      if (seenPhones.has(phone)) return false;
-      seenPhones.add(phone);
-      return true;
-    });
-
-    console.log(`📦 Returning ${uniqueSuppliers.length} unique suppliers`);
+    console.log(`📦 Returning ${suppliers.length} unique suppliers`);
 
     return new Response(
-      JSON.stringify({ suppliers: uniqueSuppliers }),
+      JSON.stringify({ suppliers }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
