@@ -228,7 +228,6 @@ const SuppliersResults = () => {
                 Exportar Excel
               </Button>
             )}
-            </Button>
           </div>
           
           <div className="flex items-center gap-4">
