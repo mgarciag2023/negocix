@@ -95,7 +95,6 @@ const LeadCard = ({
         <div className="flex-1 min-w-0">
           <h3 className="text-lg md:text-xl font-bold text-foreground mb-1 truncate pr-8">{name}</h3>
           <Badge variant="secondary" className="mb-2 text-xs">{category}</Badge>
-          {cnpj && <Badge variant="outline" className="mb-2 ml-1 text-xs font-mono">{cnpj}</Badge>}
           <div className="flex items-start text-muted-foreground text-xs md:text-sm">
             <MapPin className="h-3 w-3 md:h-4 md:w-4 mr-1 mt-0.5 flex-shrink-0" />
             <span className="line-clamp-2">{address}</span>
@@ -125,6 +124,12 @@ const LeadCard = ({
       
       {/* Company Info Grid */}
       <div className="grid grid-cols-2 gap-3 md:gap-4 mb-4 p-3 bg-muted/30 rounded-lg">
+        {cnpj && (
+          <div className="flex items-center gap-2 text-xs md:text-sm col-span-2">
+            <span className="text-muted-foreground text-[10px]">CNPJ:</span>
+            <span className="text-foreground font-medium font-mono">{cnpj}</span>
+          </div>
+        )}
         {companySize && (
           <div className="flex items-center gap-2 text-xs md:text-sm">
             <Users className="h-3 w-3 md:h-4 md:w-4 text-primary flex-shrink-0" />
