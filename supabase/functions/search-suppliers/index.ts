@@ -253,12 +253,7 @@ serve(async (req) => {
 
     const companies = allCompanies;
 
-    if (error) {
-      console.error('❌ DB search error:', error);
-      throw new Error(`Database error: ${error.message}`);
-    }
-
-    console.log(`📊 DB returned ${(companies || []).length} companies`);
+    console.log(`📊 Total companies found: ${companies.length}`);
 
     // Filter: must have phone, filter by supplier indicators
     let filtered = (companies || []).filter((c: any) => {
