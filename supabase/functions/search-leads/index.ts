@@ -397,47 +397,7 @@ serve(async (req) => {
 
     if (cachedData && cachedData.results_count > 0) {
       console.log(`✅ DB CACHE HIT: ${cachedData.results_count} leads`);
-      let cachedLeads = cachedData.results as any[];
-
-      // Filter seen leads
-      try {
-        const authHeader = req.headers.get('authorization');
-        if (authHeader) {
-          const supabaseAuth = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || "", {
-            global: { headers: { Authorization: authHeader } }
-          });
-          const { data: { user } } = await supabaseAuth.auth.getUser();
-          if (user) {
-            const leadIds = cachedLeads.map((l: any) => l.placeId).filter(Boolean);
-            if (leadIds.length > 0) {
-              const { data: seenData } = await adminClient
-                .from("user_seen_leads")
-                .select("place_id")
-                .eq("user_id", user.id)
-                .in("place_id", leadIds);
-              const seenSet = new Set((seenData || []).map((s: any) => s.place_id));
-              if (seenSet.size > 0) {
-                const before = cachedLeads.length;
-                cachedLeads = cachedLeads.filter((l: any) => !l.placeId || !seenSet.has(l.placeId));
-                console.log(`👁️ Filtered ${before - cachedLeads.length} seen leads`);
-              }
-              if (cachedLeads.length > 0) {
-                const newSeen = cachedLeads.map((l: any) => l.placeId).filter(Boolean)
-                  .map((pid: string) => ({ user_id: user.id, place_id: pid, search_type: 'leads' }));
-                if (newSeen.length > 0) {
-                  await adminClient.from("user_seen_leads")
-                    .upsert(newSeen, { onConflict: 'user_id,place_id', ignoreDuplicates: true });
-                }
-              }
-              if (cachedLeads.length === 0) {
-                return new Response(JSON.stringify({ error: 'Todos os leads desta pesquisa já foram exibidos anteriormente. Tente buscar em outra região ou com outros filtros.', allSeen: true, fromCache: true }), {
-                  status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-                });
-              }
-            }
-          }
-        }
-      } catch (e) { console.error("⚠️ Cache seen-leads error:", e); }
+      const cachedLeads = cachedData.results as any[];
 
       return new Response(JSON.stringify({ leads: cachedLeads, fromCache: true }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
