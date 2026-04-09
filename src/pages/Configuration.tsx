@@ -2468,7 +2468,8 @@ const Configuration = () => {
                         })
                       ).values()
                     );
-                    const filtered = uniqueCustomerTypes.filter((customer) => matchesSearch(customer, customerSearch));
+                    const sorted = [...uniqueCustomerTypes].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+                    const filtered = sorted.filter((customer) => matchesSearch(customer, customerSearch));
                     const displayItems = filtered.slice(0, customerSearch ? 200 : visibleCount);
                     const hasMore = filtered.length > displayItems.length;
                     return (
