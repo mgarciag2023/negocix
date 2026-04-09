@@ -891,6 +891,35 @@ serve(async (req) => {
       console.log(`🔍 Distributor strict filter: ${allCompanies.length} (removed ${beforeDistFilter - allCompanies.length} non-matching distributors)`);
     }
 
+    // ===== UNIVERSAL RELEVANCE FILTER FOR ALL SEGMENTS =====
+    // Ensures every result actually matches the segment's keywords in nome_fantasia, razao_social, or descricao_cnae
+    {
+      const beforeUniversalFilter = allCompanies.length;
+      allCompanies = allCompanies.filter(c => {
+        const seg = (c._segment || '').trim();
+        const segTerms = generateSearchTerms(seg);
+        if (!segTerms || segTerms.length === 0) return true;
+
+        const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
+        const cnae = normalizeText(c.descricao_cnae || '').toLowerCase();
+        const rs = normalizeText(c.razao_social || '').toLowerCase();
+        const combined = `${nf} ${cnae} ${rs}`;
+
+        // Check if at least one search term appears in the combined text
+        return segTerms.some(term => {
+          const normalizedTerm = term.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          // Split multi-word terms and check if all words appear
+          const words = normalizedTerm.split(/\s+/).filter(w => w.length > 2);
+          if (words.length <= 1) {
+            return combined.includes(normalizedTerm);
+          }
+          // For multi-word terms, all significant words must appear
+          return words.every(w => combined.includes(w));
+        });
+      });
+      console.log(`🎯 Universal relevance filter: ${allCompanies.length} (removed ${beforeUniversalFilter - allCompanies.length} irrelevant results)`);
+    }
+
     // ===== TRANSFORM TO LEAD FORMAT =====
     const segmentDisplayNames: { [key: string]: string } = {};
     segments.forEach((seg: string) => {
