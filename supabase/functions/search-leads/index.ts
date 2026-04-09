@@ -1387,6 +1387,80 @@ serve(async (req) => {
       console.log(`🔍 Distributor strict filter: ${allCompanies.length} (removed ${beforeDistFilter - allCompanies.length} non-matching distributors)`);
     }
 
+    // ===== STRICT INDUSTRY RELEVANCE FILTER =====
+    // When searching for "indústrias de X" or "fábricas de X", ensure companies are actual factories/industries
+    const industrySegments = segments.filter((s: string) => {
+      const lower = s.toLowerCase();
+      return lower.includes('indústria') || lower.includes('industria') || lower.includes('fábrica') || lower.includes('fabrica');
+    });
+
+    if (industrySegments.length > 0) {
+      const industryKeywords = [
+        'industria', 'indústria', 'industrial', 'fabrica', 'fábrica', 'fabricante', 'fabricação', 'fabricacao',
+        'manufatura', 'producao', 'produção', 'transformacao', 'transformação',
+        'usina', 'envasador', 'processament', 'beneficiament',
+      ];
+
+      const industryProductKeywords: { [seg: string]: string[] } = {};
+      for (const is2 of industrySegments) {
+        const lower = is2.toLowerCase();
+        const match = lower.match(/(?:ind[uú]strias?|f[aá]bricas?|fabricantes?)\s+de\s+(.+)/);
+        if (match) {
+          const product = match[1].trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          const productKws: string[] = [product];
+          if (product.endsWith('s') && product.length > 4) productKws.push(product.slice(0, -1));
+          if (product.endsWith('es') && product.length > 5) productKws.push(product.slice(0, -2));
+          const industryProductMap: { [k: string]: string[] } = {
+            'chocolates': ['chocolate', 'cacau', 'bombom', 'trufa', 'achocolatado', 'cobertura', 'confeit'],
+            'barrinhas de cereal': ['barrinha', 'barra de cereal', 'barra proteica', 'barra energetica', 'cereal', 'granola', 'snack'],
+            'barrinhas': ['barrinha', 'barra', 'cereal', 'proteica', 'energetica'],
+            'alimentos': ['aliment', 'alimentic', 'comestiv'],
+            'alimentos congelados': ['congelado', 'congela', 'frigorifico'],
+            'biscoitos': ['biscoito', 'bolacha', 'wafer'],
+            'cosmeticos': ['cosmetico', 'beleza', 'higiene'],
+            'bebidas': ['bebida', 'refrigerante', 'cerveja', 'suco', 'agua'],
+            'embalagens': ['embalagem', 'embalagens'],
+            'moveis': ['movel', 'moveis', 'mobilia'],
+            'tintas': ['tinta', 'verniz', 'revestimento'],
+            'calcados': ['calcado', 'sapato', 'tenis'],
+            'plasticos': ['plastico', 'injecao', 'sopro'],
+            'laticinios': ['laticinio', 'leite', 'queijo', 'iogurte'],
+            'pao de queijo': ['pao de queijo'],
+            'racao animal': ['racao', 'nutricao animal', 'pet'],
+            'produtos de limpeza': ['limpeza', 'detergente', 'desinfetante'],
+          };
+          const mapped = industryProductMap[product];
+          if (mapped) productKws.push(...mapped);
+          industryProductKeywords[lower] = productKws;
+        }
+      }
+
+      const beforeIndustryFilter = allCompanies.length;
+      allCompanies = allCompanies.filter(c => {
+        const seg = (c._segment || '').toLowerCase();
+        const isIndustrySeg = seg.includes('industria') || seg.includes('indústria') || seg.includes('fabrica') || seg.includes('fábrica');
+        if (!isIndustrySeg) return true;
+
+        const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
+        const cnae = normalizeText(c.descricao_cnae || '').toLowerCase();
+        const rs = normalizeText(c.razao_social || '').toLowerCase();
+        const combined = `${nf} ${cnae} ${rs}`;
+
+        // Must be an actual industry/factory
+        const isIndustry = industryKeywords.some(kw => combined.includes(kw));
+        if (!isIndustry) return false;
+
+        // Must match the product segment
+        const productKws = industryProductKeywords[seg];
+        if (productKws && productKws.length > 0) {
+          return productKws.some(pk => combined.includes(pk));
+        }
+
+        return true;
+      });
+      console.log(`🏭 Industry strict filter: ${allCompanies.length} (removed ${beforeIndustryFilter - allCompanies.length} non-matching industries)`);
+    }
+
     // ===== STRICT UNIVERSAL RELEVANCE FILTER FOR ALL SEGMENTS =====
     // Ensures every result actually matches the segment type.
     // For each search term, ALL significant words (>=4 chars) must appear in the company's
