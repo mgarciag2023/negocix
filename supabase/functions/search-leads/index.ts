@@ -468,11 +468,18 @@ function generateSearchTerms(segment: string): string[] {
   let searchTerms = categoryTerms[term] || null;
 
   if (!searchTerms) {
-    for (const [cat, terms] of Object.entries(categoryTerms)) {
-      if (term.includes(cat) || cat.includes(term)) {
-        searchTerms = terms;
-        break;
+    // Find the LONGEST matching key to prefer specific entries over generic ones
+    // e.g. "distribuidoras de congelados" should match before "distribuidoras"
+    let bestMatch: string | null = null;
+    let bestLen = 0;
+    for (const cat of Object.keys(categoryTerms)) {
+      if ((term.includes(cat) || cat.includes(term)) && cat.length > bestLen) {
+        bestMatch = cat;
+        bestLen = cat.length;
       }
+    }
+    if (bestMatch) {
+      searchTerms = categoryTerms[bestMatch];
     }
   }
 
