@@ -900,47 +900,43 @@ serve(async (req) => {
       console.log(`🔍 Distributor strict filter: ${allCompanies.length} (removed ${beforeDistFilter - allCompanies.length} non-matching distributors)`);
     }
 
-    // ===== UNIVERSAL RELEVANCE FILTER FOR ALL SEGMENTS =====
-    // Ensures every result actually matches the segment's keywords in nome_fantasia, razao_social, or descricao_cnae
-    // Uses keyword roots (min 4 chars) to match Portuguese FTS stemming behavior
+    // ===== STRICT UNIVERSAL RELEVANCE FILTER FOR ALL SEGMENTS =====
+    // Ensures every result actually matches the segment type.
+    // For each search term, ALL significant words (>=4 chars) must appear in the company's
+    // nome_fantasia, razao_social, or descricao_cnae. At least one term must fully match.
     {
       const beforeUniversalFilter = allCompanies.length;
 
-      // Extract keyword roots from each segment's search terms
-      function extractRoots(terms: string[]): string[] {
-        const roots = new Set<string>();
-        for (const term of terms) {
-          const normalized = term.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-          const words = normalized.split(/\s+/).filter(w => w.length >= 4);
-          for (const w of words) {
-            // Take the root (first 4-6 chars depending on word length)
-            const rootLen = w.length <= 6 ? w.length : Math.max(4, Math.floor(w.length * 0.65));
-            roots.add(w.substring(0, rootLen));
-          }
-        }
-        return Array.from(roots);
+      // Stop-words to ignore when checking term matches
+      const stopWords = new Set(['para', 'com', 'das', 'dos', 'que', 'por', 'mais', 'uma', 'uns', 'como', 'nao', 'sem']);
+
+      // Parse each search term into its significant words
+      function parseTermWords(term: string): string[] {
+        const normalized = term.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        return normalized.split(/\s+/).filter(w => w.length >= 4 && !stopWords.has(w));
       }
 
-      // Pre-compute roots per segment
-      const segRootsMap = new Map<string, string[]>();
+      // For each segment, build an array of "term word-sets"
+      // A company matches if ANY term's words ALL appear in the combined text
+      const segTermSetsMap = new Map<string, string[][]>();
       for (const seg of segments) {
         const terms = generateSearchTerms(seg);
-        const roots = extractRoots(terms);
-        segRootsMap.set(seg.toLowerCase(), roots);
+        const termSets = terms.map(t => parseTermWords(t)).filter(ws => ws.length > 0);
+        segTermSetsMap.set(seg.toLowerCase(), termSets);
       }
 
       allCompanies = allCompanies.filter(c => {
         const seg = (c._segment || '').trim().toLowerCase();
-        const roots = segRootsMap.get(seg);
-        if (!roots || roots.length === 0) return true;
+        const termSets = segTermSetsMap.get(seg);
+        if (!termSets || termSets.length === 0) return true;
 
         const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
         const cnae = normalizeText(c.descricao_cnae || '').toLowerCase();
         const rs = normalizeText(c.razao_social || '').toLowerCase();
         const combined = `${nf} ${cnae} ${rs}`;
 
-        // At least one root must appear in the combined text
-        return roots.some(root => combined.includes(root));
+        // At least one term must have ALL its significant words present
+        return termSets.some(words => words.every(w => combined.includes(w)));
       });
       console.log(`🎯 Universal relevance filter: ${allCompanies.length} (removed ${beforeUniversalFilter - allCompanies.length} irrelevant results)`);
     }
