@@ -883,7 +883,7 @@ function generateSearchTerms(segment: string): string[] {
   }
 
   if (!searchTerms) {
-    // Smart fallback: generate terms from the segment name itself
+    // Enhanced Smart fallback: generate rich terms from the segment name
     const baseTerms: string[] = [term];
     const normalizedTerm = term.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     if (normalizedTerm !== term) baseTerms.push(normalizedTerm);
@@ -893,38 +893,127 @@ function generateSearchTerms(segment: string): string[] {
     if (term.endsWith('es') && term.length > 5) baseTerms.push(term.slice(0, -2));
     if (term.endsWith('ões') || term.endsWith('oes')) baseTerms.push(term.replace(/ões$|oes$/, 'ão'));
     if (term.endsWith('ais') && term.length > 5) baseTerms.push(term.replace(/ais$/, 'al'));
+    if (term.endsWith('ias') && term.length > 5) baseTerms.push(term.slice(0, -1)); // confeitarias -> confeitaria
+    if (term.endsWith('ores') && term.length > 6) baseTerms.push(term.replace(/ores$/, 'or')); // distribuidores -> distribuidor
+    if (term.endsWith('eiras') && term.length > 7) baseTerms.push(term.replace(/eiras$/, 'eira'));
+    if (term.endsWith('ários') || term.endsWith('arios')) {
+      baseTerms.push(term.replace(/ários$|arios$/, 'ário'));
+      baseTerms.push(term.replace(/ários$|arios$/, 'ario'));
+    }
 
-    // Remove common prefixes to get the core term
+    // Remove common prefixes to get the core term (expanded list)
     const prefixes = [
-      /^lojas?\s+de\s+/, /^distribuidoras?\s+de\s+/, /^indústrias?\s+de\s+/,
-      /^industrias?\s+de\s+/, /^fábricas?\s+de\s+/, /^fabricas?\s+de\s+/,
+      /^lojas?\s+de\s+/, /^distribuidoras?\s+de\s+/, /^distribuidores?\s+de\s+/,
+      /^indústrias?\s+de\s+/, /^industrias?\s+de\s+/,
+      /^fábricas?\s+de\s+/, /^fabricas?\s+de\s+/, /^fabricantes?\s+de\s+/,
       /^empresas?\s+de\s+/, /^clínicas?\s+de\s+/, /^clinicas?\s+de\s+/,
+      /^centros?\s+de\s+/, /^casas?\s+de\s+/, /^agências?\s+de\s+/, /^agencias?\s+de\s+/,
+      /^escritórios?\s+de\s+/, /^escritorios?\s+de\s+/,
+      /^estúdios?\s+de\s+/, /^estudios?\s+de\s+/,
+      /^escolas?\s+de\s+/, /^escolinhas?\s+de\s+/,
+      /^oficinas?\s+especializadas?\s+em\s+/,
+      /^oficinas?\s+de\s+/,
+      /^organizadores?\s+de\s+/,
+      /^fornecedores?\s+de\s+/,
+      /^revendas?\s+de\s+/, /^revendedores?\s+de\s+/,
+      /^cooperativas?\s+de\s+/, /^criadores?\s+de\s+/,
+      /^construtoras?\s+de\s+/, /^produtoras?\s+de\s+/,
+      /^laboratórios?\s+de\s+/, /^laboratorios?\s+de\s+/,
+      /^arenas?\s+de\s+/, /^quadras?\s+de\s+/,
+      /^provedores?\s+de\s+/, /^plataformas?\s+de\s+/,
+      /^cursos?\s+de\s+/, /^beneficiadoras?\s+de\s+/,
+      /^usinas?\s+de\s+/, /^fazendas?\s+de\s+/,
     ];
+
+    let coreExtracted = '';
     for (const prefix of prefixes) {
       const match = term.match(prefix);
       if (match) {
         const core = term.replace(prefix, '').trim();
         if (core.length >= 3) {
+          coreExtracted = core;
           baseTerms.push(core);
           const normalizedCore = core.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
           if (normalizedCore !== core) baseTerms.push(normalizedCore);
+          // Also add singular of core
+          if (core.endsWith('s') && core.length > 4) baseTerms.push(core.slice(0, -1));
+          if (core.endsWith('es') && core.length > 5) baseTerms.push(core.slice(0, -2));
         }
         break;
       }
     }
 
-    // For distributor segments in smart fallback, also add atacadista variations
+    // For "indústrias de X" also add "fabrica de X" and vice versa
+    if (term.includes('industria') || term.includes('indústria')) {
+      const indMatch = term.match(/ind[uú]strias?\s+de\s+(.+)/);
+      if (indMatch) {
+        const product = indMatch[1].trim();
+        baseTerms.push(`fabrica de ${product}`);
+        baseTerms.push(`fabricante de ${product}`);
+      }
+    }
+    if (term.includes('fabrica') || term.includes('fábrica')) {
+      const fabMatch = term.match(/f[aá]bricas?\s+de\s+(.+)/);
+      if (fabMatch) {
+        const product = fabMatch[1].trim();
+        baseTerms.push(`industria de ${product}`);
+      }
+    }
+
+    // For "distribuidoras/distribuidores de X" also add atacadista/atacado
     if (term.includes('distribuidora') || term.includes('distribuidor') || term.includes('distribuidores')) {
-      const distribMatch = term.match(/distribuidoras?\s+de\s+(.+)/);
+      const distribMatch = term.match(/distribuidora?e?s?\s+de\s+(.+)/);
       if (distribMatch) {
         const product = distribMatch[1].trim();
         baseTerms.push(`atacadista de ${product}`);
         baseTerms.push(`atacado de ${product}`);
+        baseTerms.push(`comercio atacadista de ${product}`);
         const normalizedProduct = product.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         if (normalizedProduct !== product) {
           baseTerms.push(`atacadista de ${normalizedProduct}`);
           baseTerms.push(`atacado de ${normalizedProduct}`);
         }
+      }
+    }
+
+    // For "lojas de X" also add just the core product
+    if (term.match(/^lojas?\s+de\s+/)) {
+      const lojaMatch = term.match(/^lojas?\s+de\s+(.+)/);
+      if (lojaMatch) {
+        const product = lojaMatch[1].trim();
+        baseTerms.push(`comercio de ${product}`);
+        baseTerms.push(`venda de ${product}`);
+      }
+    }
+
+    // For "empresas de X" also add "servico de X" and "servicos de X"
+    if (term.match(/^empresas?\s+de\s+/)) {
+      const empMatch = term.match(/^empresas?\s+de\s+(.+)/);
+      if (empMatch) {
+        const service = empMatch[1].trim();
+        baseTerms.push(`servico de ${service}`);
+        baseTerms.push(`servicos de ${service}`);
+      }
+    }
+
+    // For "clínicas de X" also add "consultorio de X"
+    if (term.match(/^cl[ií]nicas?\s+de\s+/)) {
+      const clinMatch = term.match(/^cl[ií]nicas?\s+de\s+(.+)/);
+      if (clinMatch) {
+        const specialty = clinMatch[1].trim();
+        baseTerms.push(`consultorio de ${specialty}`);
+        baseTerms.push(specialty); // just the specialty name
+      }
+    }
+
+    // For "oficinas especializadas em X" add brand/type variations
+    if (term.match(/oficinas?\s+especializadas?\s+em\s+/)) {
+      const ofMatch = term.match(/oficinas?\s+especializadas?\s+em\s+(.+)/);
+      if (ofMatch) {
+        const brand = ofMatch[1].trim();
+        baseTerms.push(`oficina ${brand}`);
+        baseTerms.push(`mecanica ${brand}`);
+        baseTerms.push(brand);
       }
     }
 
