@@ -893,29 +893,45 @@ serve(async (req) => {
 
     // ===== UNIVERSAL RELEVANCE FILTER FOR ALL SEGMENTS =====
     // Ensures every result actually matches the segment's keywords in nome_fantasia, razao_social, or descricao_cnae
+    // Uses keyword roots (min 4 chars) to match Portuguese FTS stemming behavior
     {
       const beforeUniversalFilter = allCompanies.length;
+
+      // Extract keyword roots from each segment's search terms
+      function extractRoots(terms: string[]): string[] {
+        const roots = new Set<string>();
+        for (const term of terms) {
+          const normalized = term.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          const words = normalized.split(/\s+/).filter(w => w.length >= 4);
+          for (const w of words) {
+            // Take the root (first 4-6 chars depending on word length)
+            const rootLen = w.length <= 6 ? w.length : Math.max(4, Math.floor(w.length * 0.65));
+            roots.add(w.substring(0, rootLen));
+          }
+        }
+        return Array.from(roots);
+      }
+
+      // Pre-compute roots per segment
+      const segRootsMap = new Map<string, string[]>();
+      for (const seg of segments) {
+        const terms = generateSearchTerms(seg);
+        const roots = extractRoots(terms);
+        segRootsMap.set(seg.toLowerCase(), roots);
+      }
+
       allCompanies = allCompanies.filter(c => {
-        const seg = (c._segment || '').trim();
-        const segTerms = generateSearchTerms(seg);
-        if (!segTerms || segTerms.length === 0) return true;
+        const seg = (c._segment || '').trim().toLowerCase();
+        const roots = segRootsMap.get(seg);
+        if (!roots || roots.length === 0) return true;
 
         const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
         const cnae = normalizeText(c.descricao_cnae || '').toLowerCase();
         const rs = normalizeText(c.razao_social || '').toLowerCase();
         const combined = `${nf} ${cnae} ${rs}`;
 
-        // Check if at least one search term appears in the combined text
-        return segTerms.some(term => {
-          const normalizedTerm = term.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-          // Split multi-word terms and check if all words appear
-          const words = normalizedTerm.split(/\s+/).filter(w => w.length > 2);
-          if (words.length <= 1) {
-            return combined.includes(normalizedTerm);
-          }
-          // For multi-word terms, all significant words must appear
-          return words.every(w => combined.includes(w));
-        });
+        // At least one root must appear in the combined text
+        return roots.some(root => combined.includes(root));
       });
       console.log(`🎯 Universal relevance filter: ${allCompanies.length} (removed ${beforeUniversalFilter - allCompanies.length} irrelevant results)`);
     }
