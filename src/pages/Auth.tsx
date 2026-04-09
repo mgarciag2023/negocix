@@ -449,6 +449,8 @@ const Auth = () => {
                     setErrors({});
                     setPassword("");
                     setConfirmPassword("");
+                    setFullName("");
+                    setPhone("");
                   }}
                   className="ml-2 text-primary hover:underline font-semibold"
                 >
