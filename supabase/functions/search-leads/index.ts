@@ -1198,7 +1198,12 @@ serve(async (req) => {
       }
     } catch (e) { console.error("⚠️ Error fetching user limits:", e); }
 
-    const MAX_LEADS = userMaxLeads || (isStateOnly ? 6000 : 3000);
+    // For industry searches, no limit - find ALL
+    const hasIndustrySegment = segments.some((s: string) => {
+      const l = s.toLowerCase();
+      return l.includes('indústria') || l.includes('industria') || l.includes('fábrica') || l.includes('fabrica');
+    });
+    const MAX_LEADS = hasIndustrySegment ? 999999 : (userMaxLeads || (isStateOnly ? 6000 : 3000));
     const leadsPerSegment = Math.ceil(MAX_LEADS / segments.length);
 
     // ===== QUERY LOCAL DATABASE =====
