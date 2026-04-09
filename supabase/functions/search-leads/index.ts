@@ -773,6 +773,41 @@ serve(async (req) => {
     });
     console.log(`📊 After name+city dedup: ${allCompanies.length}`);
 
+    // ===== STRICT RELEVANCE FILTER FOR DISTRIBUTORS =====
+    // When searching for "distribuidores/distribuidoras", filter out companies that are NOT distributors
+    const distributorSegments = segments.filter((s: string) => {
+      const lower = s.toLowerCase();
+      return lower.includes('distribuidor') || lower.includes('distribuidora');
+    });
+
+    if (distributorSegments.length > 0) {
+      const distributorKeywords = [
+        'distribui', 'distribuidor', 'distribuidora', 'distribuicao', 'distribuição',
+        'atacado', 'atacadista', 'atacadão', 'atacadao',
+        'representac', 'representante', 'representação',
+        'revenda', 'revendedor',
+        'importador', 'importadora',
+        'exportador', 'exportadora',
+        'trading', 'supply',
+        'logistic', 'logística',
+      ];
+
+      const beforeDistFilter = allCompanies.length;
+      allCompanies = allCompanies.filter(c => {
+        const seg = (c._segment || '').toLowerCase();
+        // Only apply strict filter to distributor segments
+        if (!seg.includes('distribuidor') && !seg.includes('distribuidora')) return true;
+
+        const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
+        const cnae = normalizeText(c.descricao_cnae || '').toLowerCase();
+        const rs = normalizeText(c.razao_social || '').toLowerCase();
+        const combined = `${nf} ${cnae} ${rs}`;
+
+        return distributorKeywords.some(kw => combined.includes(kw));
+      });
+      console.log(`🔍 Distributor strict filter: ${allCompanies.length} (removed ${beforeDistFilter - allCompanies.length} non-distributors)`);
+    }
+
     // ===== TRANSFORM TO LEAD FORMAT =====
     const segmentDisplayNames: { [key: string]: string } = {};
     segments.forEach((seg: string) => {
