@@ -20,16 +20,20 @@ export const useBlockedCheck = () => {
 
         const { data: profile } = await supabase
           .from("profiles")
-          .select("is_blocked, blocked_reason")
+          .select("is_blocked, blocked_reason, trial_expires_at")
           .eq("user_id", user.id)
           .maybeSingle();
 
-        if (profile?.is_blocked) {
+        const trialExpired = profile?.trial_expires_at && new Date(profile.trial_expires_at) < new Date();
+
+        if (profile?.is_blocked || trialExpired) {
           setIsBlocked(true);
           await supabase.auth.signOut();
           toast({
             title: "Acesso bloqueado",
-            description: profile.blocked_reason || "Sua conta foi bloqueada. Entre em contato com o suporte.",
+            description: trialExpired 
+              ? "Seu período de teste expirou. Entre em contato com o suporte para continuar usando."
+              : (profile?.blocked_reason || "Sua conta foi bloqueada. Entre em contato com o suporte."),
             variant: "destructive",
           });
           navigate("/auth");

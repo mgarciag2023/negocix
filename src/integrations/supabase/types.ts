@@ -156,6 +156,7 @@ export type Database = {
           id: string
           is_blocked: boolean
           phone: string | null
+          trial_expires_at: string | null
           updated_at: string
           user_id: string
         }
@@ -168,6 +169,7 @@ export type Database = {
           id?: string
           is_blocked?: boolean
           phone?: string | null
+          trial_expires_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -180,6 +182,7 @@ export type Database = {
           id?: string
           is_blocked?: boolean
           phone?: string | null
+          trial_expires_at?: string | null
           updated_at?: string
           user_id?: string
         }
