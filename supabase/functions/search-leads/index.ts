@@ -216,7 +216,7 @@ function generateSearchTerms(segment: string): string[] {
     'bares': ['bar', 'boteco', 'pub', 'cervejaria'],
     'mercados': ['mercado', 'minimercado', 'mercadinho', 'mercearia'],
     'mercearias': ['mercearia', 'armazem', 'secos e molhados'],
-    'atacadistas de alimentos': ['atacadista de alimentos', 'atacado de alimentos', 'atacadao'],
+    
     'salgadeiros': ['salgadeiro', 'salgados', 'fabrica de salgados'],
     'empresas de gulla': ['gulla', 'gulosices', 'doces', 'guloseimas'],
     'catering': ['catering', 'buffet', 'refeicao coletiva', 'servico de alimentacao'],
