@@ -1218,7 +1218,7 @@ serve(async (req) => {
       let page = 0;
       const pageSize = 1000;
 
-      while (segResults.length < targetPerSegment && page < 10) {
+      while (segResults.length < targetPerSegment && page < maxPages) {
         const { data, error } = await adminClient.rpc('search_companies', {
           p_city: city || null,
           p_state: state || null,
