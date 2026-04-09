@@ -869,7 +869,18 @@ serve(async (req) => {
         const isDistributor = distributorKeywords.some(kw => combined.includes(kw));
         if (!isDistributor) return false;
 
-        // Step 2: Must match the product segment
+        // Step 2: Reject generic CNAE "sem predominância de alimentos" when searching food segments
+        if (cnae.includes('sem predominancia de alimentos') || cnae.includes('sem predominancia de')) {
+          // Only keep if the company NAME explicitly mentions the product
+          const productKws = segmentProductKeywords[seg];
+          if (productKws && productKws.length > 0) {
+            const nameAndRs = `${nf} ${rs}`;
+            return productKws.some(pk => nameAndRs.includes(pk));
+          }
+          return false;
+        }
+
+        // Step 3: Must match the product segment in name, CNAE, or razao_social
         const productKws = segmentProductKeywords[seg];
         if (productKws && productKws.length > 0) {
           return productKws.some(pk => combined.includes(pk));
