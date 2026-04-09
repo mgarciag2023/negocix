@@ -82,10 +82,10 @@ const SuppliersResults = () => {
         data = await response.json();
         const error = !response.ok && !data?.suppliers ? data : null;
 
-        if (error) throw new Error(error?.error || 'Erro na busca');
+        if (error) {
           toast({
             title: "Erro na busca",
-            description: data.error,
+            description: error?.error || 'Erro ao buscar fornecedores',
             variant: "destructive",
           });
           setSuppliers([]);
@@ -93,7 +93,6 @@ const SuppliersResults = () => {
           const suppliersData = data?.suppliers || [];
           setSuppliers(suppliersData);
           
-          // Cache results
           localStorage.setItem("suppliersCache", JSON.stringify({
             suppliers: suppliersData,
             timestamp: Date.now(),
