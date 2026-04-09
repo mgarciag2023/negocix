@@ -1211,58 +1211,78 @@ serve(async (req) => {
     const MAX_LEADS = hasIndustrySegment ? 999999 : (userMaxLeads || (isStateOnly ? 6000 : 3000));
     const leadsPerSegment = Math.ceil(MAX_LEADS / segments.length);
 
-    // ===== QUERY LOCAL DATABASE =====
+    // ===== QUERY LOCAL DATABASE (PARALLEL) =====
     let allCompanies: any[] = [];
 
-    for (const seg of segments) {
+    // Fetch a single segment's data with parallel page batching
+    async function fetchSegment(seg: string): Promise<any[]> {
       const segLower = seg.toLowerCase();
       const isIndustrySearch = segLower.includes('indústria') || segLower.includes('industria') || segLower.includes('fábrica') || segLower.includes('fabrica');
       const maxTerms = isIndustrySearch ? 20 : 10;
       const terms = generateSearchTerms(seg).slice(0, maxTerms);
       console.log(`📤 Segment "${seg}" search terms (${terms.length}):`, terms);
 
-      // For industry searches, fetch more exhaustively
-      const maxPages = isIndustrySearch ? 50 : 10;
+      const maxPages = isIndustrySearch ? 50 : 6;
       const targetPerSegment = isIndustrySearch ? 50000 : Math.min(leadsPerSegment * 2, 5000);
+      const pageSize = 3000; // Larger pages = fewer round-trips
+      const PARALLEL_PAGES = 3; // Fetch 3 pages at once
       let segResults: any[] = [];
       let page = 0;
-      const pageSize = 1000;
+      let exhausted = false;
 
-      while (segResults.length < targetPerSegment && page < maxPages) {
-        // Time guard: stop fetching if we're running out of time
+      while (segResults.length < targetPerSegment && page < maxPages && !exhausted) {
         if (isNearTimeout()) {
-          console.log(`⏰ Time guard triggered for segment "${seg}" at page ${page} with ${segResults.length} results`);
+          console.log(`⏰ Time guard for "${seg}" at page ${page} (${segResults.length} results)`);
           break;
         }
 
-        const { data, error } = await adminClient.rpc('search_companies', {
-          p_city: city || null,
-          p_state: state || null,
-          p_search_terms: terms,
-          p_biz_type: bizType || 'all',
-          p_limit_val: pageSize,
-          p_offset_val: page * pageSize,
-        });
-
-        if (error) {
-          console.error(`❌ DB query error for segment "${seg}" page ${page}:`, error.message);
-          break;
+        // Build a batch of parallel page requests
+        const batch: Promise<{ data: any; error: any; pageIdx: number }>[] = [];
+        for (let i = 0; i < PARALLEL_PAGES && (page + i) < maxPages; i++) {
+          const offset = (page + i) * pageSize;
+          batch.push(
+            adminClient.rpc('search_companies', {
+              p_city: city || null,
+              p_state: state || null,
+              p_search_terms: terms,
+              p_biz_type: bizType || 'all',
+              p_limit_val: pageSize,
+              p_offset_val: offset,
+            }).then((r: any) => ({ ...r, pageIdx: page + i }))
+          );
         }
 
-        if (!data || data.length === 0) break;
-        segResults.push(...data);
-        page++;
-        if (data.length < pageSize) break;
+        const results = await Promise.all(batch);
+
+        for (const r of results) {
+          if (r.error) {
+            console.error(`❌ DB error seg "${seg}" page ${r.pageIdx}:`, r.error.message);
+            exhausted = true;
+            break;
+          }
+          if (!r.data || r.data.length === 0) {
+            exhausted = true;
+            break;
+          }
+          segResults.push(...r.data);
+          if (r.data.length < pageSize) {
+            exhausted = true;
+            break;
+          }
+        }
+
+        page += PARALLEL_PAGES;
       }
 
-      console.log(`📊 Segment "${seg}": ${segResults.length} results from DB (${page} pages)`);
-      allCompanies.push(...segResults.map((c: any) => ({ ...c, _segment: seg })));
+      console.log(`📊 Segment "${seg}": ${segResults.length} results (${Math.ceil(page)} pages)`);
+      return segResults.map((c: any) => ({ ...c, _segment: seg }));
+    }
 
-      // Time guard: if near timeout, skip remaining segments and use what we have
-      if (isNearTimeout() && allCompanies.length > 0) {
-        console.log(`⏰ Time guard: skipping remaining segments, have ${allCompanies.length} companies`);
-        break;
-      }
+    // Run ALL segments in parallel
+    const segmentPromises = segments.map((seg: string) => fetchSegment(seg));
+    const segmentResults = await Promise.all(segmentPromises);
+    for (const sr of segmentResults) {
+      allCompanies.push(...sr);
     }
 
     console.log(`📊 Total raw companies: ${allCompanies.length} (elapsed: ${Date.now() - FUNCTION_START}ms)`);
