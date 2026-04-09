@@ -222,7 +222,7 @@ const Results = () => {
         
         // Call the edge function with timeout
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 180000); // 3 min timeout
+        const timeoutId = setTimeout(() => controller.abort(), 600000); // 10 min timeout for heavy searches
         
         let data, error;
         try {
