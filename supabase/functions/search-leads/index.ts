@@ -1131,7 +1131,7 @@ serve(async (req) => {
 
   // Time guard: track when we started so we can bail before Supabase kills us
   const FUNCTION_START = Date.now();
-  const MAX_EXECUTION_MS = 140_000; // 140s safety margin (Supabase limit ~150s free, ~400s pro)
+  const MAX_EXECUTION_MS = 380_000; // 380s safety margin (Supabase Pro limit ~400s)
   const isNearTimeout = () => (Date.now() - FUNCTION_START) > MAX_EXECUTION_MS;
 
   try {
