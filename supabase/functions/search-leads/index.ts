@@ -1205,11 +1205,15 @@ serve(async (req) => {
     let allCompanies: any[] = [];
 
     for (const seg of segments) {
-      const terms = generateSearchTerms(seg).slice(0, 10);
-      console.log(`📤 Segment "${seg}" search terms:`, terms);
+      const segLower = seg.toLowerCase();
+      const isIndustrySearch = segLower.includes('indústria') || segLower.includes('industria') || segLower.includes('fábrica') || segLower.includes('fabrica');
+      const maxTerms = isIndustrySearch ? 20 : 10;
+      const terms = generateSearchTerms(seg).slice(0, maxTerms);
+      console.log(`📤 Segment "${seg}" search terms (${terms.length}):`, terms);
 
-      // Use optimized RPC function
-      const targetPerSegment = Math.min(leadsPerSegment * 2, 5000);
+      // For industry searches, fetch more exhaustively
+      const maxPages = isIndustrySearch ? 50 : 10;
+      const targetPerSegment = isIndustrySearch ? 50000 : Math.min(leadsPerSegment * 2, 5000);
       let segResults: any[] = [];
       let page = 0;
       const pageSize = 1000;
