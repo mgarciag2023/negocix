@@ -300,6 +300,52 @@ const Auth = () => {
           {/* Form Card */}
           <div className="bg-card/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-border/50">
             <form onSubmit={handleSubmit} className="space-y-5">
+              {!isLogin && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName" className="text-sm font-medium">Nome completo</Label>
+                    <div className="relative group">
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                      <Input
+                        id="fullName"
+                        type="text"
+                        placeholder="Seu nome completo"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        className="pl-11 h-12 bg-background/50 border-border/50 focus:border-primary transition-all"
+                        required
+                      />
+                    </div>
+                    {errors.fullName && (
+                      <p className="text-sm text-destructive flex items-center gap-1">
+                        <span className="inline-block w-1 h-1 rounded-full bg-destructive" />
+                        {errors.fullName}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-sm font-medium">Telefone</Label>
+                    <div className="relative group">
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="(00) 00000-0000"
+                        value={phone}
+                        onChange={(e) => setPhone(formatPhone(e.target.value))}
+                        className="pl-11 h-12 bg-background/50 border-border/50 focus:border-primary transition-all"
+                        required
+                      />
+                    </div>
+                    {errors.phone && (
+                      <p className="text-sm text-destructive flex items-center gap-1">
+                        <span className="inline-block w-1 h-1 rounded-full bg-destructive" />
+                        {errors.phone}
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium">Email</Label>
                 <div className="relative group">
