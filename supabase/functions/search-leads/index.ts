@@ -1129,6 +1129,11 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Time guard: track when we started so we can bail before Supabase kills us
+  const FUNCTION_START = Date.now();
+  const MAX_EXECUTION_MS = 140_000; // 140s safety margin (Supabase limit ~150s free, ~400s pro)
+  const isNearTimeout = () => (Date.now() - FUNCTION_START) > MAX_EXECUTION_MS;
+
   try {
     const { segment, region, businessType, whatsappOnly, receitaFederalOnly } = await req.json();
     console.log('🔍 LOCAL DB SEARCH v1 - Input:', { segment, region, businessType, whatsappOnly, receitaFederalOnly });
@@ -1224,6 +1229,12 @@ serve(async (req) => {
       const pageSize = 1000;
 
       while (segResults.length < targetPerSegment && page < maxPages) {
+        // Time guard: stop fetching if we're running out of time
+        if (isNearTimeout()) {
+          console.log(`⏰ Time guard triggered for segment "${seg}" at page ${page} with ${segResults.length} results`);
+          break;
+        }
+
         const { data, error } = await adminClient.rpc('search_companies', {
           p_city: city || null,
           p_state: state || null,
@@ -1246,9 +1257,15 @@ serve(async (req) => {
 
       console.log(`📊 Segment "${seg}": ${segResults.length} results from DB (${page} pages)`);
       allCompanies.push(...segResults.map((c: any) => ({ ...c, _segment: seg })));
+
+      // Time guard: if near timeout, skip remaining segments and use what we have
+      if (isNearTimeout() && allCompanies.length > 0) {
+        console.log(`⏰ Time guard: skipping remaining segments, have ${allCompanies.length} companies`);
+        break;
+      }
     }
 
-    console.log(`📊 Total raw companies: ${allCompanies.length}`);
+    console.log(`📊 Total raw companies: ${allCompanies.length} (elapsed: ${Date.now() - FUNCTION_START}ms)`);
 
     // ===== FILTER: valid phone required (check both telefone_1 and telefone_2) =====
     allCompanies = allCompanies.filter(c => isPhoneValid(c.telefone_1) || isPhoneValid(c.telefone_2));
@@ -1595,20 +1612,22 @@ serve(async (req) => {
       leads = leads.slice(0, MAX_LEADS);
     }
 
-    console.log(`✅ FINAL: ${leads.length} leads`);
+    console.log(`✅ FINAL: ${leads.length} leads (elapsed: ${Date.now() - FUNCTION_START}ms)`);
 
-    // ===== GET USER ID FOR LOGGING =====
+    // ===== GET USER ID FOR LOGGING (skip if near timeout) =====
     let userId: string | null = null;
-    try {
-      const authHeader = req.headers.get('authorization');
-      if (authHeader) {
-        const supabaseAuth = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || "", {
-          global: { headers: { Authorization: authHeader } }
-        });
-        const { data: { user } } = await supabaseAuth.auth.getUser();
-        if (user) userId = user.id;
-      }
-    } catch (e) { console.error("⚠️ Auth error:", e); }
+    if (!isNearTimeout()) {
+      try {
+        const authHeader = req.headers.get('authorization');
+        if (authHeader) {
+          const supabaseAuth = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || "", {
+            global: { headers: { Authorization: authHeader } }
+          });
+          const { data: { user } } = await supabaseAuth.auth.getUser();
+          if (user) userId = user.id;
+        }
+      } catch (e) { console.error("⚠️ Auth error:", e); }
+    }
 
     if (leads.length === 0) {
       return new Response(JSON.stringify({ error: `Nenhum estabelecimento encontrado para "${segment}" em ${region}. Tente outra região ou outro segmento.` }), {
@@ -1616,39 +1635,45 @@ serve(async (req) => {
       });
     }
 
-    // ===== SAVE TO DB CACHE =====
-    try {
-      await adminClient.from("cached_search_results").upsert({
-        cache_key: dbCacheKey,
-        search_type: 'leads',
-        search_config: { segment, region: region.trim(), businessType: bizType, whatsappOnly: filterWhatsappOnly },
-        results: leads,
-        results_count: leads.length,
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      }, { onConflict: 'cache_key' });
-      console.log(`💾 Cached ${leads.length} leads`);
-    } catch (e) { console.error("⚠️ Cache save error:", e); }
+    // ===== SAVE TO DB CACHE (skip if near timeout) =====
+    if (!isNearTimeout()) {
+      try {
+        await adminClient.from("cached_search_results").upsert({
+          cache_key: dbCacheKey,
+          search_type: 'leads',
+          search_config: { segment, region: region.trim(), businessType: bizType, whatsappOnly: filterWhatsappOnly },
+          results: leads,
+          results_count: leads.length,
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        }, { onConflict: 'cache_key' });
+        console.log(`💾 Cached ${leads.length} leads`);
+      } catch (e) { console.error("⚠️ Cache save error:", e); }
+    } else {
+      console.log('⏰ Skipping cache save due to time pressure');
+    }
 
-    // ===== LOG SEARCH =====
-    try {
-      const authHeader = req.headers.get('authorization');
-      if (authHeader && userId) {
-        const supabaseAuth = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || "", {
-          global: { headers: { Authorization: authHeader } }
-        });
-        const { data: { user } } = await supabaseAuth.auth.getUser();
-        if (user) {
-          await adminClient.from("search_logs").insert({
-            user_id: user.id,
-            user_email: user.email || '',
-            search_type: 'leads',
-            search_config: { segment, region: region.trim(), businessType: bizType },
-            results_count: leads.length,
-            results: leads.slice(0, 10),
+    // ===== LOG SEARCH (skip if near timeout) =====
+    if (!isNearTimeout()) {
+      try {
+        const authHeader = req.headers.get('authorization');
+        if (authHeader && userId) {
+          const supabaseAuth = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || "", {
+            global: { headers: { Authorization: authHeader } }
           });
+          const { data: { user } } = await supabaseAuth.auth.getUser();
+          if (user) {
+            await adminClient.from("search_logs").insert({
+              user_id: user.id,
+              user_email: user.email || '',
+              search_type: 'leads',
+              search_config: { segment, region: region.trim(), businessType: bizType },
+              results_count: leads.length,
+              results: leads.slice(0, 10),
+            });
+          }
         }
-      }
-    } catch (e) { console.error("⚠️ Search log error:", e); }
+      } catch (e) { console.error("⚠️ Search log error:", e); }
+    }
 
     return new Response(JSON.stringify({ leads }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
