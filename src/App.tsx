@@ -31,17 +31,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     let isMounted = true;
 
-    const restoreSession = async () => {
-      const currentSession = await getSessionSafely();
-
-      if (!isMounted) return;
-
-      setSession(currentSession);
-      setLoading(false);
-    };
-
-    void restoreSession();
-
+    // Set up listener FIRST so we catch auth events during session restore
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
@@ -50,6 +40,18 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       setSession(nextSession);
       setLoading(false);
     });
+
+    const restoreSession = async () => {
+      const currentSession = await getSessionSafely();
+
+      if (!isMounted) return;
+
+      // Only update if onAuthStateChange hasn't already provided a session
+      setSession((prev) => prev ?? currentSession);
+      setLoading(false);
+    };
+
+    void restoreSession();
 
     return () => {
       isMounted = false;

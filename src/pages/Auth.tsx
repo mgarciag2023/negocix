@@ -180,8 +180,9 @@ const Auth = () => {
         } else {
           toast({
             title: "Conta criada!",
-            description: "Verifique seu email para confirmar o cadastro",
+            description: "Bem-vindo! Você já pode começar a usar.",
           });
+          navigate("/");
         }
       }
     } catch (error) {
