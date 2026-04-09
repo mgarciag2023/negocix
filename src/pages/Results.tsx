@@ -172,9 +172,19 @@ const Results = () => {
     ];
     worksheet['!cols'] = columnWidths;
 
-    // Gerar arquivo e fazer download
+    // Gerar arquivo e fazer download (compatível com mobile)
     const timestamp = new Date().toISOString().split('T')[0];
-    XLSX.writeFile(workbook, `leads-negocix-${timestamp}.xlsx`);
+    const fileName = `leads-negocix-${timestamp}.xlsx`;
+    const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 
     toast({
       title: "Exportação concluída",
