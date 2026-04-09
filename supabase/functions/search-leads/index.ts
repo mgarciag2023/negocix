@@ -507,6 +507,21 @@ function generateSearchTerms(segment: string): string[] {
       }
     }
 
+    // For distributor segments in smart fallback, also add atacadista variations
+    if (term.includes('distribuidora') || term.includes('distribuidor') || term.includes('distribuidores')) {
+      const distribMatch = term.match(/distribuidoras?\s+de\s+(.+)/);
+      if (distribMatch) {
+        const product = distribMatch[1].trim();
+        baseTerms.push(`atacadista de ${product}`);
+        baseTerms.push(`atacado de ${product}`);
+        const normalizedProduct = product.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        if (normalizedProduct !== product) {
+          baseTerms.push(`atacadista de ${normalizedProduct}`);
+          baseTerms.push(`atacado de ${normalizedProduct}`);
+        }
+      }
+    }
+
     searchTerms = [...new Set(baseTerms)];
   }
 
