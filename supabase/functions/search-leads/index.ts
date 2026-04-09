@@ -788,7 +788,9 @@ serve(async (req) => {
     console.log(`📊 After name+city dedup: ${allCompanies.length}`);
 
     // ===== STRICT RELEVANCE FILTER FOR DISTRIBUTORS =====
-    // When searching for "distribuidores/distribuidoras", filter out companies that are NOT distributors
+    // When searching for "distribuidores/distribuidoras", ensure companies are:
+    // 1) Actually distributors (not retail shops, restaurants, etc.)
+    // 2) In the correct product segment (not a construction distributor when searching for food)
     const distributorSegments = segments.filter((s: string) => {
       const lower = s.toLowerCase();
       return lower.includes('distribuidor') || lower.includes('distribuidora');
@@ -806,6 +808,52 @@ serve(async (req) => {
         'logistic', 'logística',
       ];
 
+      // Build product-specific keywords per distributor segment
+      const segmentProductKeywords: { [seg: string]: string[] } = {};
+      for (const ds of distributorSegments) {
+        const lower = ds.toLowerCase();
+        // Extract product from "distribuidores de X" or "distribuidoras de X"
+        const match = lower.match(/distribuidora?e?s?\s+de\s+(.+)/);
+        if (match) {
+          const product = match[1].trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          // Generate product keywords
+          const productKws: string[] = [product];
+          // Add singular
+          if (product.endsWith('s') && product.length > 4) productKws.push(product.slice(0, -1));
+          if (product.endsWith('es') && product.length > 5) productKws.push(product.slice(0, -2));
+          // Map common product categories to broader terms
+          const productMap: { [k: string]: string[] } = {
+            'alimentos': ['aliment', 'alimentic', 'comestiv', 'generos alimenticios', 'produtos alimenticios', 'mercearia', 'cereais', 'secos e molhados'],
+            'bebidas': ['bebida', 'refrigerante', 'cerveja', 'agua mineral', 'suco', 'drink'],
+            'frios': ['frios', 'embutido', 'laticinio', 'queijo', 'presunto', 'salsicha', 'frigorific'],
+            'congelados': ['congelado', 'congela', 'frigorifico', 'alimento congelado', 'sorvete', 'polpa'],
+            'carnes': ['carne', 'bovina', 'suina', 'frango', 'frigorifico', 'charque', 'proteina animal'],
+            'queijos': ['queijo', 'laticinio', 'laticio', 'laticinios'],
+            'sorvetes': ['sorvete', 'gelato', 'picole'],
+            'acai': ['acai', 'açai'],
+            'ovos': ['ovo', 'ovos', 'granja'],
+            'polpas de frutas': ['polpa', 'fruta', 'suco'],
+            'doces': ['doce', 'bala', 'guloseima', 'chocolate', 'bombom', 'confeito'],
+            'embutidos': ['embutido', 'linguica', 'salsicha', 'presunto', 'frios'],
+            'food service': ['food service', 'alimentacao', 'refeicao', 'restaurante'],
+            'material hospitalar': ['hospitalar', 'medico', 'saude', 'cirurgico'],
+            'produtos hospitalares': ['hospitalar', 'medico', 'saude'],
+            'embalagens': ['embalagem', 'embalagens', 'descartav'],
+            'gases industriais': ['gas', 'gases', 'oxigenio', 'acetileno'],
+            'agua': ['agua', 'mineral', 'bebida'],
+            'refrigerantes': ['refrigerante', 'bebida', 'suco'],
+            'cervejas': ['cerveja', 'bebida', 'chopp'],
+            'racao animal': ['racao', 'pet', 'animal', 'nutricao animal'],
+            'eletronicos': ['eletronico', 'informatica', 'tecnologia'],
+            'autopeças': ['autopeca', 'auto peca', 'automotiv', 'veiculo'],
+          };
+          const normalizedProduct = product.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          const mapped = productMap[normalizedProduct] || productMap[product];
+          if (mapped) productKws.push(...mapped);
+          segmentProductKeywords[lower] = productKws;
+        }
+      }
+
       const beforeDistFilter = allCompanies.length;
       allCompanies = allCompanies.filter(c => {
         const seg = (c._segment || '').toLowerCase();
@@ -817,9 +865,19 @@ serve(async (req) => {
         const rs = normalizeText(c.razao_social || '').toLowerCase();
         const combined = `${nf} ${cnae} ${rs}`;
 
-        return distributorKeywords.some(kw => combined.includes(kw));
+        // Step 1: Must be a distributor/atacadista
+        const isDistributor = distributorKeywords.some(kw => combined.includes(kw));
+        if (!isDistributor) return false;
+
+        // Step 2: Must match the product segment
+        const productKws = segmentProductKeywords[seg];
+        if (productKws && productKws.length > 0) {
+          return productKws.some(pk => combined.includes(pk));
+        }
+
+        return true;
       });
-      console.log(`🔍 Distributor strict filter: ${allCompanies.length} (removed ${beforeDistFilter - allCompanies.length} non-distributors)`);
+      console.log(`🔍 Distributor strict filter: ${allCompanies.length} (removed ${beforeDistFilter - allCompanies.length} non-matching distributors)`);
     }
 
     // ===== TRANSFORM TO LEAD FORMAT =====
