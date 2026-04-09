@@ -143,13 +143,25 @@ const Auth = () => {
           navigate("/");
         }
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { error, data: signUpData } = await supabase.auth.signUp({
           email: email.trim(),
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
+            data: {
+              full_name: fullName.trim(),
+              phone: phone.replace(/\D/g, ""),
+            },
           },
         });
+
+        // Update profile with name and phone after signup
+        if (!error && signUpData?.user) {
+          await supabase
+            .from("profiles")
+            .update({ full_name: fullName.trim(), phone: phone.replace(/\D/g, "") })
+            .eq("user_id", signUpData.user.id);
+        }
 
         if (error) {
           if (error.message.includes("already registered")) {
