@@ -82,7 +82,7 @@ const SuppliersResults = () => {
         data = await response.json();
         const error = !response.ok && !data?.suppliers ? data : null;
 
-        if (data?.error) {
+        if (error) throw new Error(error?.error || 'Erro na busca');
           toast({
             title: "Erro na busca",
             description: data.error,
