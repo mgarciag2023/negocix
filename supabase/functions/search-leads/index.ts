@@ -103,23 +103,22 @@ function generateSearchTerms(segment: string): string[] {
     'lojas de materiais elétricos': ['materiais eletricos', 'material eletrico', 'eletrica', 'componentes eletricos'],
     'empresas de energia solar': ['energia solar', 'solar fotovoltaica', 'painel solar', 'placa solar'],
     'distribuidores de aço e ferro': ['distribuidora de aco', 'ferro e aco', 'deposito de ferro', 'metalon', 'vergalhao'],
-    'distribuidores de food service': ['food service', 'distribuidor food service', 'atacado restaurantes'],
-    'distribuidores de alimentos': ['distribuidora de alimentos', 'alimentos atacado'],
-    'distribuidores de bebidas': ['distribuidora de bebidas', 'deposito de bebidas', 'bebidas atacado'],
-    'distribuidores de frios': ['distribuidora de frios', 'frios e laticinios'],
+    'distribuidores de food service': ['food service', 'distribuidor food service', 'atacado restaurantes', 'atacadista food service'],
+    'distribuidores de alimentos': ['distribuidora de alimentos', 'alimentos atacado', 'atacadista de alimentos', 'atacado de alimentos'],
+    'distribuidores de bebidas': ['distribuidora de bebidas', 'deposito de bebidas', 'bebidas atacado', 'atacadista de bebidas', 'atacado de bebidas'],
+    'distribuidores de frios': ['distribuidora de frios', 'frios e laticinios', 'atacadista de frios', 'atacado de frios'],
     'pizzarias': ['pizzaria', 'pizza'],
     'oficinas mecânicas': ['oficina mecanica', 'auto center', 'funilaria', 'mecanica automotiva'],
     'postos de combustível': ['posto de combustivel', 'posto de gasolina', 'combustiveis'],
     'escolas': ['escola', 'colegio', 'ensino', 'centro educacional'],
     'papelarias': ['papelaria', 'livraria', 'material escolar'],
-    'atacadistas': ['atacadista', 'atacado'],
-    'distribuidoras': ['distribuidora', 'distribuidor', 'distribuicao'],
+    'distribuidoras': ['distribuidora', 'distribuidor', 'distribuicao', 'atacadista', 'atacado'],
     'serralherias': ['serralheria', 'serralheiro', 'portoes', 'grades', 'esquadrias metalicas'],
     'lanchonetes': ['lanchonete', 'lanche'],
     'açougues': ['acougue', 'casa de carnes', 'carnes e frios', 'boutique de carnes'],
     'açouguerias': ['acougue', 'acougueria', 'casa de carnes', 'frios e embutidos'],
     'casas de carnes': ['casa de carnes', 'acougue', 'boutique de carnes'],
-    'distribuidoras de carnes': ['distribuidora de carnes', 'atacado de carnes', 'frigorifico'],
+    'distribuidoras de carnes': ['distribuidora de carnes', 'atacado de carnes', 'atacadista de carnes', 'frigorifico'],
     'indústrias de cosméticos': ['industria de cosmeticos', 'fabrica de cosmeticos', 'cosmeticos'],
     'indústrias farmacêuticas': ['industria farmaceutica', 'laboratorio farmaceutico', 'fabrica de medicamentos'],
     'indústrias de bebidas': ['industria de bebidas', 'fabrica de bebidas', 'engarrafadora', 'cervejaria'],
@@ -182,12 +181,12 @@ function generateSearchTerms(segment: string): string[] {
     'farmácias de manipulação': ['farmacia de manipulacao', 'manipulacao', 'farmacia magistral'],
     'empresas de cftv': ['cftv', 'cameras de seguranca', 'vigilancia'],
     'empresas de engenharia elétrica': ['engenharia eletrica', 'projeto eletrico', 'instalacoes eletricas'],
-    'distribuidoras de ovos': ['distribuidora de ovos', 'ovos atacado', 'granja distribuidora'],
-    'distribuidoras de queijos': ['distribuidora de queijos', 'queijos atacado', 'laticinios'],
-    'distribuidoras de congelados': ['distribuidora de congelados', 'congelados atacado'],
-    'distribuidoras de sorvetes': ['distribuidora de sorvetes', 'sorvetes atacado'],
-    'distribuidoras de açaí': ['distribuidora de acai', 'acai atacado'],
-    'distribuidoras de polpas de frutas': ['distribuidora de polpas', 'polpa de fruta'],
+    'distribuidoras de ovos': ['distribuidora de ovos', 'ovos atacado', 'granja distribuidora', 'atacadista de ovos'],
+    'distribuidoras de queijos': ['distribuidora de queijos', 'queijos atacado', 'laticinios', 'atacadista de queijos'],
+    'distribuidoras de congelados': ['distribuidora de congelados', 'congelados atacado', 'atacadista de congelados'],
+    'distribuidoras de sorvetes': ['distribuidora de sorvetes', 'sorvetes atacado', 'atacadista de sorvetes'],
+    'distribuidoras de açaí': ['distribuidora de acai', 'acai atacado', 'atacadista de acai'],
+    'distribuidoras de polpas de frutas': ['distribuidora de polpas', 'polpa de fruta', 'atacadista de polpas'],
     'açaiterias': ['acaiteria', 'acai'],
     'casas de açaí': ['casa de acai', 'acai'],
     'creperies': ['creperie', 'crepe'],
@@ -217,7 +216,7 @@ function generateSearchTerms(segment: string): string[] {
     'bares': ['bar', 'boteco', 'pub', 'cervejaria'],
     'mercados': ['mercado', 'minimercado', 'mercadinho', 'mercearia'],
     'mercearias': ['mercearia', 'armazem', 'secos e molhados'],
-    'atacadistas de alimentos': ['atacadista de alimentos', 'atacado de alimentos', 'atacadao'],
+    
     'salgadeiros': ['salgadeiro', 'salgados', 'fabrica de salgados'],
     'empresas de gulla': ['gulla', 'gulosices', 'doces', 'guloseimas'],
     'catering': ['catering', 'buffet', 'refeicao coletiva', 'servico de alimentacao'],
@@ -505,6 +504,21 @@ function generateSearchTerms(segment: string): string[] {
           if (normalizedCore !== core) baseTerms.push(normalizedCore);
         }
         break;
+      }
+    }
+
+    // For distributor segments in smart fallback, also add atacadista variations
+    if (term.includes('distribuidora') || term.includes('distribuidor') || term.includes('distribuidores')) {
+      const distribMatch = term.match(/distribuidoras?\s+de\s+(.+)/);
+      if (distribMatch) {
+        const product = distribMatch[1].trim();
+        baseTerms.push(`atacadista de ${product}`);
+        baseTerms.push(`atacado de ${product}`);
+        const normalizedProduct = product.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        if (normalizedProduct !== product) {
+          baseTerms.push(`atacadista de ${normalizedProduct}`);
+          baseTerms.push(`atacado de ${normalizedProduct}`);
+        }
       }
     }
 
