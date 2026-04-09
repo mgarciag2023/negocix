@@ -609,7 +609,8 @@ function generateSearchTerms(segment: string): string[] {
     'indústrias de temperos e condimentos': ['industria de temperos', 'fabrica de temperos', 'condimentos'],
     'indústrias de molhos': ['industria de molhos', 'fabrica de molhos', 'molhos'],
     'indústrias de sorvetes': ['industria de sorvetes', 'fabrica de sorvetes', 'sorvete'],
-    'indústrias de chocolates': ['industria de chocolates', 'fabrica de chocolates', 'chocolate'],
+    'indústrias de chocolates': ['industria de chocolates', 'fabrica de chocolates', 'chocolate', 'chocolateria', 'cacau', 'bombom', 'bombons', 'trufas', 'achocolatado', 'cobertura de chocolate', 'chocolate em barra', 'tabletes de chocolate', 'chocolate artesanal', 'confeitaria de chocolate', 'cacau em po', 'nibs de cacau', 'manteiga de cacau', 'gotas de chocolate'],
+    'indústrias de barrinhas de cereal': ['industria de barrinhas', 'fabrica de barrinhas', 'barrinhas de cereal', 'barra de cereal', 'barra de cereais', 'barras de cereal', 'barra proteica', 'barrinhas proteicas', 'barra energetica', 'barrinhas energeticas', 'snack saudavel', 'barra de frutas', 'barra de nuts', 'granola em barra', 'cereal em barra', 'fabrica de barras'],
     'indústrias de balas e guloseimas': ['industria de balas', 'fabrica de balas', 'guloseimas', 'confeitos'],
     'indústrias de salgadinhos': ['industria de salgadinhos', 'fabrica de salgadinhos', 'snacks'],
     'indústrias de café': ['industria de cafe', 'torrefacao', 'fabrica de cafe'],
@@ -1197,23 +1198,32 @@ serve(async (req) => {
       }
     } catch (e) { console.error("⚠️ Error fetching user limits:", e); }
 
-    const MAX_LEADS = userMaxLeads || (isStateOnly ? 6000 : 3000);
+    // For industry searches, no limit - find ALL
+    const hasIndustrySegment = segments.some((s: string) => {
+      const l = s.toLowerCase();
+      return l.includes('indústria') || l.includes('industria') || l.includes('fábrica') || l.includes('fabrica');
+    });
+    const MAX_LEADS = hasIndustrySegment ? 999999 : (userMaxLeads || (isStateOnly ? 6000 : 3000));
     const leadsPerSegment = Math.ceil(MAX_LEADS / segments.length);
 
     // ===== QUERY LOCAL DATABASE =====
     let allCompanies: any[] = [];
 
     for (const seg of segments) {
-      const terms = generateSearchTerms(seg).slice(0, 10);
-      console.log(`📤 Segment "${seg}" search terms:`, terms);
+      const segLower = seg.toLowerCase();
+      const isIndustrySearch = segLower.includes('indústria') || segLower.includes('industria') || segLower.includes('fábrica') || segLower.includes('fabrica');
+      const maxTerms = isIndustrySearch ? 20 : 10;
+      const terms = generateSearchTerms(seg).slice(0, maxTerms);
+      console.log(`📤 Segment "${seg}" search terms (${terms.length}):`, terms);
 
-      // Use optimized RPC function
-      const targetPerSegment = Math.min(leadsPerSegment * 2, 5000);
+      // For industry searches, fetch more exhaustively
+      const maxPages = isIndustrySearch ? 50 : 10;
+      const targetPerSegment = isIndustrySearch ? 50000 : Math.min(leadsPerSegment * 2, 5000);
       let segResults: any[] = [];
       let page = 0;
       const pageSize = 1000;
 
-      while (segResults.length < targetPerSegment && page < 10) {
+      while (segResults.length < targetPerSegment && page < maxPages) {
         const { data, error } = await adminClient.rpc('search_companies', {
           p_city: city || null,
           p_state: state || null,
@@ -1384,6 +1394,80 @@ serve(async (req) => {
         return true;
       });
       console.log(`🔍 Distributor strict filter: ${allCompanies.length} (removed ${beforeDistFilter - allCompanies.length} non-matching distributors)`);
+    }
+
+    // ===== STRICT INDUSTRY RELEVANCE FILTER =====
+    // When searching for "indústrias de X" or "fábricas de X", ensure companies are actual factories/industries
+    const industrySegments = segments.filter((s: string) => {
+      const lower = s.toLowerCase();
+      return lower.includes('indústria') || lower.includes('industria') || lower.includes('fábrica') || lower.includes('fabrica');
+    });
+
+    if (industrySegments.length > 0) {
+      const industryKeywords = [
+        'industria', 'indústria', 'industrial', 'fabrica', 'fábrica', 'fabricante', 'fabricação', 'fabricacao',
+        'manufatura', 'producao', 'produção', 'transformacao', 'transformação',
+        'usina', 'envasador', 'processament', 'beneficiament',
+      ];
+
+      const industryProductKeywords: { [seg: string]: string[] } = {};
+      for (const is2 of industrySegments) {
+        const lower = is2.toLowerCase();
+        const match = lower.match(/(?:ind[uú]strias?|f[aá]bricas?|fabricantes?)\s+de\s+(.+)/);
+        if (match) {
+          const product = match[1].trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          const productKws: string[] = [product];
+          if (product.endsWith('s') && product.length > 4) productKws.push(product.slice(0, -1));
+          if (product.endsWith('es') && product.length > 5) productKws.push(product.slice(0, -2));
+          const industryProductMap: { [k: string]: string[] } = {
+            'chocolates': ['chocolate', 'cacau', 'bombom', 'trufa', 'achocolatado', 'cobertura', 'confeit'],
+            'barrinhas de cereal': ['barrinha', 'barra de cereal', 'barra proteica', 'barra energetica', 'cereal', 'granola', 'snack'],
+            'barrinhas': ['barrinha', 'barra', 'cereal', 'proteica', 'energetica'],
+            'alimentos': ['aliment', 'alimentic', 'comestiv'],
+            'alimentos congelados': ['congelado', 'congela', 'frigorifico'],
+            'biscoitos': ['biscoito', 'bolacha', 'wafer'],
+            'cosmeticos': ['cosmetico', 'beleza', 'higiene'],
+            'bebidas': ['bebida', 'refrigerante', 'cerveja', 'suco', 'agua'],
+            'embalagens': ['embalagem', 'embalagens'],
+            'moveis': ['movel', 'moveis', 'mobilia'],
+            'tintas': ['tinta', 'verniz', 'revestimento'],
+            'calcados': ['calcado', 'sapato', 'tenis'],
+            'plasticos': ['plastico', 'injecao', 'sopro'],
+            'laticinios': ['laticinio', 'leite', 'queijo', 'iogurte'],
+            'pao de queijo': ['pao de queijo'],
+            'racao animal': ['racao', 'nutricao animal', 'pet'],
+            'produtos de limpeza': ['limpeza', 'detergente', 'desinfetante'],
+          };
+          const mapped = industryProductMap[product];
+          if (mapped) productKws.push(...mapped);
+          industryProductKeywords[lower] = productKws;
+        }
+      }
+
+      const beforeIndustryFilter = allCompanies.length;
+      allCompanies = allCompanies.filter(c => {
+        const seg = (c._segment || '').toLowerCase();
+        const isIndustrySeg = seg.includes('industria') || seg.includes('indústria') || seg.includes('fabrica') || seg.includes('fábrica');
+        if (!isIndustrySeg) return true;
+
+        const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
+        const cnae = normalizeText(c.descricao_cnae || '').toLowerCase();
+        const rs = normalizeText(c.razao_social || '').toLowerCase();
+        const combined = `${nf} ${cnae} ${rs}`;
+
+        // Must be an actual industry/factory
+        const isIndustry = industryKeywords.some(kw => combined.includes(kw));
+        if (!isIndustry) return false;
+
+        // Must match the product segment
+        const productKws = industryProductKeywords[seg];
+        if (productKws && productKws.length > 0) {
+          return productKws.some(pk => combined.includes(pk));
+        }
+
+        return true;
+      });
+      console.log(`🏭 Industry strict filter: ${allCompanies.length} (removed ${beforeIndustryFilter - allCompanies.length} non-matching industries)`);
     }
 
     // ===== STRICT UNIVERSAL RELEVANCE FILTER FOR ALL SEGMENTS =====
