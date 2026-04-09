@@ -112,7 +112,9 @@ function generateSearchTerms(segment: string): string[] {
     'postos de combustível': ['posto de combustivel', 'posto de gasolina', 'combustiveis'],
     'escolas': ['escola', 'colegio', 'ensino', 'centro educacional'],
     'papelarias': ['papelaria', 'livraria', 'material escolar'],
-    'distribuidoras': ['distribuidora', 'distribuidor', 'distribuicao', 'atacadista', 'atacado'],
+    'distribuidoras de alimentos congelados': ['distribuidora de congelados', 'congelados atacado', 'atacadista de congelados', 'alimentos congelados', 'frigorifico'],
+    'distribuidoras de alimentos para food service': ['distribuidora de alimentos', 'food service', 'atacadista de alimentos', 'distribuidor food service', 'refeicao coletiva'],
+    'distribuidoras de alimentos': ['distribuidora de alimentos', 'atacadista de alimentos', 'comercio atacadista de produtos alimenticios', 'generos alimenticios'],
     'serralherias': ['serralheria', 'serralheiro', 'portoes', 'grades', 'esquadrias metalicas'],
     'lanchonetes': ['lanchonete', 'lanche'],
     'açougues': ['acougue', 'casa de carnes', 'carnes e frios', 'boutique de carnes'],
@@ -468,11 +470,18 @@ function generateSearchTerms(segment: string): string[] {
   let searchTerms = categoryTerms[term] || null;
 
   if (!searchTerms) {
-    for (const [cat, terms] of Object.entries(categoryTerms)) {
-      if (term.includes(cat) || cat.includes(term)) {
-        searchTerms = terms;
-        break;
+    // Find the LONGEST matching key to prefer specific entries over generic ones
+    // e.g. "distribuidoras de congelados" should match before "distribuidoras"
+    let bestMatch: string | null = null;
+    let bestLen = 0;
+    for (const cat of Object.keys(categoryTerms)) {
+      if ((term.includes(cat) || cat.includes(term)) && cat.length > bestLen) {
+        bestMatch = cat;
+        bestLen = cat.length;
       }
+    }
+    if (bestMatch) {
+      searchTerms = categoryTerms[bestMatch];
     }
   }
 
