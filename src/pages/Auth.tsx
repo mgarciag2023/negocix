@@ -6,20 +6,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { getSessionSafely } from "@/lib/auth-session";
-import { Building2, Mail, Lock, ArrowRight, Eye, EyeOff, Sparkles, Target, TrendingUp, Shield } from "lucide-react";
+import { Building2, Mail, Lock, ArrowRight, Eye, EyeOff, Sparkles, Target, TrendingUp, Shield, User, Phone } from "lucide-react";
 import { z } from "zod";
 
 const emailSchema = z.string().email("Email inválido").max(255);
 const passwordSchema = z.string().min(6, "Senha deve ter no mínimo 6 caracteres").max(100);
+const nameSchema = z.string().min(2, "Nome deve ter no mínimo 2 caracteres").max(100);
+const phoneSchema = z.string().min(10, "Telefone deve ter no mínimo 10 dígitos").max(20);
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string; fullName?: string; phone?: string }>({});
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -52,8 +56,15 @@ const Auth = () => {
     };
   }, [navigate]);
 
+  const formatPhone = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 11);
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  };
+
   const validateForm = (): boolean => {
-    const newErrors: { email?: string; password?: string; confirmPassword?: string } = {};
+    const newErrors: { email?: string; password?: string; confirmPassword?: string; fullName?: string; phone?: string } = {};
 
     try {
       emailSchema.parse(email);
@@ -71,8 +82,25 @@ const Auth = () => {
       }
     }
 
-    if (!isLogin && password !== confirmPassword) {
-      newErrors.confirmPassword = "As senhas não coincidem";
+    if (!isLogin) {
+      if (password !== confirmPassword) {
+        newErrors.confirmPassword = "As senhas não coincidem";
+      }
+      try {
+        nameSchema.parse(fullName.trim());
+      } catch (e) {
+        if (e instanceof z.ZodError) {
+          newErrors.fullName = e.errors[0].message;
+        }
+      }
+      const phoneDigits = phone.replace(/\D/g, "");
+      try {
+        phoneSchema.parse(phoneDigits);
+      } catch (e) {
+        if (e instanceof z.ZodError) {
+          newErrors.phone = e.errors[0].message;
+        }
+      }
     }
 
     setErrors(newErrors);
@@ -115,13 +143,25 @@ const Auth = () => {
           navigate("/");
         }
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { error, data: signUpData } = await supabase.auth.signUp({
           email: email.trim(),
           password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
+            data: {
+              full_name: fullName.trim(),
+              phone: phone.replace(/\D/g, ""),
+            },
           },
         });
+
+        // Update profile with name and phone after signup
+        if (!error && signUpData?.user) {
+          await supabase
+            .from("profiles")
+            .update({ full_name: fullName.trim(), phone: phone.replace(/\D/g, "") })
+            .eq("user_id", signUpData.user.id);
+        }
 
         if (error) {
           if (error.message.includes("already registered")) {
@@ -260,6 +300,52 @@ const Auth = () => {
           {/* Form Card */}
           <div className="bg-card/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-border/50">
             <form onSubmit={handleSubmit} className="space-y-5">
+              {!isLogin && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName" className="text-sm font-medium">Nome completo</Label>
+                    <div className="relative group">
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                      <Input
+                        id="fullName"
+                        type="text"
+                        placeholder="Seu nome completo"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        className="pl-11 h-12 bg-background/50 border-border/50 focus:border-primary transition-all"
+                        required
+                      />
+                    </div>
+                    {errors.fullName && (
+                      <p className="text-sm text-destructive flex items-center gap-1">
+                        <span className="inline-block w-1 h-1 rounded-full bg-destructive" />
+                        {errors.fullName}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-sm font-medium">Telefone</Label>
+                    <div className="relative group">
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="(00) 00000-0000"
+                        value={phone}
+                        onChange={(e) => setPhone(formatPhone(e.target.value))}
+                        className="pl-11 h-12 bg-background/50 border-border/50 focus:border-primary transition-all"
+                        required
+                      />
+                    </div>
+                    {errors.phone && (
+                      <p className="text-sm text-destructive flex items-center gap-1">
+                        <span className="inline-block w-1 h-1 rounded-full bg-destructive" />
+                        {errors.phone}
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium">Email</Label>
                 <div className="relative group">
@@ -363,6 +449,8 @@ const Auth = () => {
                     setErrors({});
                     setPassword("");
                     setConfirmPassword("");
+                    setFullName("");
+                    setPhone("");
                   }}
                   className="ml-2 text-primary hover:underline font-semibold"
                 >

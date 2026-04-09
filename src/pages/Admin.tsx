@@ -42,6 +42,8 @@ interface Profile {
   id: string;
   user_id: string;
   email: string;
+  full_name: string | null;
+  phone: string | null;
   is_blocked: boolean;
   blocked_reason: string | null;
   created_at: string;
@@ -482,6 +484,8 @@ const Admin = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Email</TableHead>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Telefone</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Leads</TableHead>
                     <TableHead>Representantes</TableHead>
@@ -493,6 +497,20 @@ const Admin = () => {
                   {profiles.map((profile) => (
                     <TableRow key={profile.id}>
                       <TableCell className="font-medium">{profile.email}</TableCell>
+                      <TableCell>{profile.full_name || <span className="text-muted-foreground text-sm">—</span>}</TableCell>
+                      <TableCell>
+                        {profile.phone ? (
+                          <span className="text-sm">
+                            {profile.phone.length === 11
+                              ? `(${profile.phone.slice(0,2)}) ${profile.phone.slice(2,7)}-${profile.phone.slice(7)}`
+                              : profile.phone.length === 10
+                              ? `(${profile.phone.slice(0,2)}) ${profile.phone.slice(2,6)}-${profile.phone.slice(6)}`
+                              : profile.phone}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">—</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         {profile.is_blocked ? (
                           <Badge variant="destructive" className="gap-1">
@@ -527,7 +545,20 @@ const Admin = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        {new Date(profile.created_at).toLocaleDateString("pt-BR")}
+                        <span className="text-sm">
+                          {new Date(profile.created_at).toLocaleDateString("pt-BR", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          })}{" "}
+                          <span className="text-muted-foreground">
+                            {new Date(profile.created_at).toLocaleTimeString("pt-BR", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              second: "2-digit",
+                            })}
+                          </span>
+                        </span>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
