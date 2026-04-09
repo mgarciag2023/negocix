@@ -117,21 +117,26 @@ const Results = () => {
       let cidade = '';
       let estado = '';
       if (parts.length >= 2) {
-        // Usually: "Rua X, 123, Bairro, Cidade - UF, CEP"
-        const lastParts = parts[parts.length - 1];
-        const secondLast = parts[parts.length - 2];
-        const dashMatch = secondLast?.match(/^(.+?)\s*-\s*([A-Z]{2})$/);
-        if (dashMatch) {
-          cidade = dashMatch[1].trim();
-          estado = dashMatch[2].trim();
-        } else {
-          const dashMatch2 = lastParts?.match(/^(.+?)\s*-\s*([A-Z]{2})/);
-          if (dashMatch2) {
-            cidade = dashMatch2[1].trim();
-            estado = dashMatch2[2].trim();
-          } else {
-            cidade = secondLast || '';
-            estado = lastParts?.replace(/[\d-]/g, '').trim() || '';
+        // Look for "Cidade - UF" pattern (case-insensitive)
+        for (let i = 0; i < parts.length; i++) {
+          const dashMatch = parts[i]?.match(/^(.+?)\s*-\s*([A-Za-z]{2})$/);
+          if (dashMatch) {
+            cidade = dashMatch[1].trim();
+            estado = dashMatch[2].trim().toUpperCase();
+            break;
+          }
+        }
+        // Fallback: find standalone 2-letter state code
+        if (!estado) {
+          for (let i = parts.length - 1; i >= 0; i--) {
+            const clean = parts[i]?.replace(/[\d\-\.]/g, '').trim();
+            if (clean && /^[A-Za-z]{2}$/.test(clean)) {
+              estado = clean.toUpperCase();
+              if (i > 0 && !cidade) {
+                cidade = parts[i - 1]?.replace(/[\d\-\.]/g, '').trim() || '';
+              }
+              break;
+            }
           }
         }
       }
@@ -153,32 +158,17 @@ const Results = () => {
         'Porte': lead.companySize || 'N/A',
         'Funcionários': lead.employeeCount || 'N/A',
         'Score de Match (%)': lead.matchScore,
-        'Motivo 1': lead.reasons[0] || '',
-        'Motivo 2': lead.reasons[1] || '',
-        'Motivo 3': lead.reasons[2] || '',
       };
     });
 
-    // Criar workbook e worksheet
     const worksheet = XLSX.utils.json_to_sheet(excelData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Leads');
 
-    // Ajustar largura das colunas
     const columnWidths = [
-      { wch: 30 }, // Nome
-      { wch: 40 }, // Endereço
-      { wch: 15 }, // Telefone
-      { wch: 30 }, // Email
-      { wch: 20 }, // Instagram
-      { wch: 25 }, // Responsável
-      { wch: 15 }, // Categoria
-      { wch: 25 }, // Faturamento
-      { wch: 20 }, // Tempo no Mercado
-      { wch: 12 }, // Score
-      { wch: 50 }, // Motivo 1
-      { wch: 50 }, // Motivo 2
-      { wch: 50 }, // Motivo 3
+      { wch: 30 }, { wch: 20 }, { wch: 8 }, { wch: 40 },
+      { wch: 15 }, { wch: 30 }, { wch: 20 }, { wch: 25 },
+      { wch: 15 }, { wch: 12 }, { wch: 15 }, { wch: 12 },
     ];
     worksheet['!cols'] = columnWidths;
 
