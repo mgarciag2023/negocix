@@ -1129,6 +1129,11 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Time guard: track when we started so we can bail before Supabase kills us
+  const FUNCTION_START = Date.now();
+  const MAX_EXECUTION_MS = 140_000; // 140s safety margin (Supabase limit ~150s free, ~400s pro)
+  const isNearTimeout = () => (Date.now() - FUNCTION_START) > MAX_EXECUTION_MS;
+
   try {
     const { segment, region, businessType, whatsappOnly, receitaFederalOnly } = await req.json();
     console.log('🔍 LOCAL DB SEARCH v1 - Input:', { segment, region, businessType, whatsappOnly, receitaFederalOnly });
