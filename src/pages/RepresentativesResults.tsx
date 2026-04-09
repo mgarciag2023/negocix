@@ -56,32 +56,37 @@ export default function RepresentativesResults() {
     setIsLoading(true);
     
     try {
-      // Get user id to pass for per-user limits
       const { data: { user } } = await supabase.auth.getUser();
       const bodyConfig = { ...config, user_id: user?.id };
       
       console.log("Calling search-representatives with:", bodyConfig);
       
-      const { data, error } = await supabase.functions.invoke("search-representatives", {
-        body: bodyConfig,
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 600000);
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await fetch(`${supabaseUrl}/functions/v1/search-representatives`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token || supabaseKey}`,
+          'apikey': supabaseKey,
+        },
+        body: JSON.stringify(bodyConfig),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
+      
+      const data = await response.json();
+      console.log("Response:", data);
 
-      console.log("Response:", data, error);
-
-      if (error) {
-        console.error("Error searching representatives:", error);
+      if (!response.ok || data?.error) {
+        console.error("Error searching representatives:", data);
         toast({
           title: "Erro na busca",
-          description: error.message || "Não foi possível buscar representantes. Tente novamente.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (data?.error) {
-        toast({
-          title: "Erro",
-          description: data.error,
+          description: data?.error || "Não foi possível buscar representantes. Tente novamente.",
           variant: "destructive",
         });
         return;

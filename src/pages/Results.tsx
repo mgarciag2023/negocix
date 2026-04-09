@@ -230,14 +230,24 @@ const Results = () => {
         const searchConfig = JSON.parse(searchConfigStr);
         console.log('🔍 Fetching NEW leads with config:', searchConfig);
         
-        // Call the edge function with timeout
+        // Call the edge function with raw fetch to support long timeout (10 min)
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 600000); // 10 min timeout for heavy searches
+        const timeoutId = setTimeout(() => controller.abort(), 600000);
         
-        let data, error;
+        let data: any = null;
         try {
-          const result = await supabase.functions.invoke('search-leads', {
-            body: {
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+          const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          const response = await fetch(`${supabaseUrl}/functions/v1/search-leads`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session?.access_token || supabaseKey}`,
+              'apikey': supabaseKey,
+            },
+            body: JSON.stringify({
               segment: searchConfig.selectedCustomers.join(', '),
               products: searchConfig.products,
               region: searchConfig.region,
@@ -253,113 +263,46 @@ const Results = () => {
                 companySizes: searchConfig.companySizes || ['all'],
                 revenueRange: searchConfig.revenueRange,
               }
-            }
+            }),
+            signal: controller.signal,
           });
-          data = result.data;
-          error = result.error;
-        } catch (abortErr: any) {
-          if (abortErr?.name === 'AbortError' || controller.signal.aborted) {
+          
+          data = await response.json();
+          
+          if (!response.ok && !data?.leads) {
+            console.error('❌ Edge function error:', response.status, data);
+            toast({
+              title: data?.allSeen ? "Leads já exibidos" : "Erro ao buscar leads",
+              description: data?.error || "Tente novamente mais tarde",
+              variant: data?.allSeen ? "default" : "destructive",
+            });
+            setLoading(false);
+            return;
+          }
+        } catch (fetchErr: any) {
+          clearTimeout(timeoutId);
+          if (fetchErr?.name === 'AbortError') {
             toast({
               title: "Tempo esgotado",
               description: "A busca demorou demais. Tente novamente ou busque por uma região menor.",
               variant: "destructive",
             });
-            setLoading(false);
-            return;
+          } else {
+            console.error('❌ Fetch error:', fetchErr);
+            toast({
+              title: "Erro ao buscar leads",
+              description: "Tente novamente mais tarde",
+              variant: "destructive",
+            });
           }
-          throw abortErr;
+          setLoading(false);
+          return;
         } finally {
           clearTimeout(timeoutId);
         }
 
-        if (error) {
-          console.error('❌ Error calling search-leads:', error);
-
-          // Try to surface the actual error body returned by the backend function
-          let description = error.message || "Tente novamente mais tarde";
-          try {
-            const anyErr = error as any;
-            const ctx = anyErr?.context;
-            if (ctx && typeof ctx.json === 'function') {
-              const body = await ctx.json();
-              if (body?.error) description = body.error;
-            } else if (typeof anyErr?.details === 'string' && anyErr.details.trim()) {
-              description = anyErr.details;
-            }
-          } catch {
-            // ignore parsing issues
-          }
-
-          toast({
-            title: "Erro ao buscar leads",
-            description,
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
-
       console.log('✅ API returned leads:', data?.leads?.length || 0);
-        
-        // Always log the search, regardless of result count
-        const resultsCount = data?.leads?.length || 0;
-        const leadsToSave = data?.leads || [];
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            // Save search log with results
-            const { error: logError } = await supabase
-              .from("search_logs")
-              .insert({
-                user_id: user.id,
-                user_email: user.email || "",
-                search_type: "leads",
-                search_config: searchConfig as any,
-                results_count: resultsCount,
-                results: leadsToSave as any,
-              });
-            if (logError) console.error("Error saving search log:", logError);
-
-            // Also persist leads to companies table for future reuse
-            if (leadsToSave.length > 0) {
-              const companyRows = leadsToSave
-                .filter((l: any) => l.name && l.phone)
-                .map((l: any) => {
-                  // Extract city/state from address
-                  const parts = (l.address || '').split(',').map((p: string) => p.trim());
-                  let cidade = '', estado = '';
-                  for (const part of parts) {
-                    const match = part.match(/^(.+?)\s*-\s*([A-Z]{2})$/);
-                    if (match) { cidade = match[1].trim(); estado = match[2].trim(); break; }
-                  }
-                  return {
-                    cnpj: null,
-                    razao_social: l.name,
-                    nome_fantasia: l.name,
-                    telefone_1: l.phone || null,
-                    telefone_2: null,
-                    email: l.email || null,
-                    descricao_cnae: l.category || null,
-                    endereco: l.address || null,
-                    cidade: cidade || null,
-                    estado: estado || null,
-                    situacao_cadastral: 'ATIVA',
-                  };
-                });
-              
-              if (companyRows.length > 0) {
-                // Use upsert-like approach: insert and ignore conflicts on nome_fantasia+cidade
-                const { error: compErr } = await supabase
-                  .from("companies")
-                  .insert(companyRows);
-                if (compErr) console.error("Error saving to companies:", compErr);
-                else console.log(`✅ Saved ${companyRows.length} leads to companies table`);
-              }
-            }
-          }
-        } catch (logErr) {
-          console.error("Error logging search:", logErr);
-        }
+        // Edge function already logs the search — no duplicate logging needed here
 
         if (data?.leads && data.leads.length > 0) {
           const sortedLeads = sortLeadsAlphabetically(data.leads);

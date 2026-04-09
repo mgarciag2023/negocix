@@ -57,20 +57,35 @@ const SuppliersResults = () => {
       }
 
       try {
-        const { data, error } = await supabase.functions.invoke("search-suppliers", {
-          body: {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 600000);
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        let data: any = null;
+        const response = await fetch(`${supabaseUrl}/functions/v1/search-suppliers`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token || supabaseKey}`,
+            'apikey': supabaseKey,
+          },
+          body: JSON.stringify({
             products: config.products,
             location: config.location,
             state: config.state,
-          },
+          }),
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
+        data = await response.json();
+        const error = !response.ok && !data?.suppliers ? data : null;
 
-        if (error) throw error;
-
-        if (data?.error) {
+        if (error) {
           toast({
             title: "Erro na busca",
-            description: data.error,
+            description: error?.error || 'Erro ao buscar fornecedores',
             variant: "destructive",
           });
           setSuppliers([]);
@@ -78,7 +93,6 @@ const SuppliersResults = () => {
           const suppliersData = data?.suppliers || [];
           setSuppliers(suppliersData);
           
-          // Cache results
           localStorage.setItem("suppliersCache", JSON.stringify({
             suppliers: suppliersData,
             timestamp: Date.now(),
