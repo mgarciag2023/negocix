@@ -230,14 +230,24 @@ const Results = () => {
         const searchConfig = JSON.parse(searchConfigStr);
         console.log('🔍 Fetching NEW leads with config:', searchConfig);
         
-        // Call the edge function with timeout
+        // Call the edge function with raw fetch to support long timeout (10 min)
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 600000); // 10 min timeout for heavy searches
+        const timeoutId = setTimeout(() => controller.abort(), 600000);
         
-        let data, error;
+        let data: any = null;
         try {
-          const result = await supabase.functions.invoke('search-leads', {
-            body: {
+          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+          const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          const response = await fetch(`${supabaseUrl}/functions/v1/search-leads`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session?.access_token || supabaseKey}`,
+              'apikey': supabaseKey,
+            },
+            body: JSON.stringify({
               segment: searchConfig.selectedCustomers.join(', '),
               products: searchConfig.products,
               region: searchConfig.region,
@@ -253,50 +263,42 @@ const Results = () => {
                 companySizes: searchConfig.companySizes || ['all'],
                 revenueRange: searchConfig.revenueRange,
               }
-            }
+            }),
+            signal: controller.signal,
           });
-          data = result.data;
-          error = result.error;
-        } catch (abortErr: any) {
-          if (abortErr?.name === 'AbortError' || controller.signal.aborted) {
+          
+          data = await response.json();
+          
+          if (!response.ok && !data?.leads) {
+            console.error('❌ Edge function error:', response.status, data);
+            toast({
+              title: data?.allSeen ? "Leads já exibidos" : "Erro ao buscar leads",
+              description: data?.error || "Tente novamente mais tarde",
+              variant: data?.allSeen ? "default" : "destructive",
+            });
+            setLoading(false);
+            return;
+          }
+        } catch (fetchErr: any) {
+          clearTimeout(timeoutId);
+          if (fetchErr?.name === 'AbortError') {
             toast({
               title: "Tempo esgotado",
               description: "A busca demorou demais. Tente novamente ou busque por uma região menor.",
               variant: "destructive",
             });
-            setLoading(false);
-            return;
+          } else {
+            console.error('❌ Fetch error:', fetchErr);
+            toast({
+              title: "Erro ao buscar leads",
+              description: "Tente novamente mais tarde",
+              variant: "destructive",
+            });
           }
-          throw abortErr;
-        } finally {
-          clearTimeout(timeoutId);
-        }
-
-        if (error) {
-          console.error('❌ Error calling search-leads:', error);
-
-          // Try to surface the actual error body returned by the backend function
-          let description = error.message || "Tente novamente mais tarde";
-          try {
-            const anyErr = error as any;
-            const ctx = anyErr?.context;
-            if (ctx && typeof ctx.json === 'function') {
-              const body = await ctx.json();
-              if (body?.error) description = body.error;
-            } else if (typeof anyErr?.details === 'string' && anyErr.details.trim()) {
-              description = anyErr.details;
-            }
-          } catch {
-            // ignore parsing issues
-          }
-
-          toast({
-            title: "Erro ao buscar leads",
-            description,
-            variant: "destructive",
-          });
           setLoading(false);
           return;
+        } finally {
+          clearTimeout(timeoutId);
         }
 
       console.log('✅ API returned leads:', data?.leads?.length || 0);
