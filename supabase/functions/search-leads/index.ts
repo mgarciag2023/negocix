@@ -1229,6 +1229,12 @@ serve(async (req) => {
       const pageSize = 1000;
 
       while (segResults.length < targetPerSegment && page < maxPages) {
+        // Time guard: stop fetching if we're running out of time
+        if (isNearTimeout()) {
+          console.log(`⏰ Time guard triggered for segment "${seg}" at page ${page} with ${segResults.length} results`);
+          break;
+        }
+
         const { data, error } = await adminClient.rpc('search_companies', {
           p_city: city || null,
           p_state: state || null,
@@ -1251,9 +1257,15 @@ serve(async (req) => {
 
       console.log(`📊 Segment "${seg}": ${segResults.length} results from DB (${page} pages)`);
       allCompanies.push(...segResults.map((c: any) => ({ ...c, _segment: seg })));
+
+      // Time guard: if near timeout, skip remaining segments and use what we have
+      if (isNearTimeout() && allCompanies.length > 0) {
+        console.log(`⏰ Time guard: skipping remaining segments, have ${allCompanies.length} companies`);
+        break;
+      }
     }
 
-    console.log(`📊 Total raw companies: ${allCompanies.length}`);
+    console.log(`📊 Total raw companies: ${allCompanies.length} (elapsed: ${Date.now() - FUNCTION_START}ms)`);
 
     // ===== FILTER: valid phone required (check both telefone_1 and telefone_2) =====
     allCompanies = allCompanies.filter(c => isPhoneValid(c.telefone_1) || isPhoneValid(c.telefone_2));
