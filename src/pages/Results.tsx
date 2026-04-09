@@ -302,66 +302,7 @@ const Results = () => {
         }
 
       console.log('✅ API returned leads:', data?.leads?.length || 0);
-        
-        // Always log the search, regardless of result count
-        const resultsCount = data?.leads?.length || 0;
-        const leadsToSave = data?.leads || [];
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            // Save search log with results
-            const { error: logError } = await supabase
-              .from("search_logs")
-              .insert({
-                user_id: user.id,
-                user_email: user.email || "",
-                search_type: "leads",
-                search_config: searchConfig as any,
-                results_count: resultsCount,
-                results: leadsToSave as any,
-              });
-            if (logError) console.error("Error saving search log:", logError);
-
-            // Also persist leads to companies table for future reuse
-            if (leadsToSave.length > 0) {
-              const companyRows = leadsToSave
-                .filter((l: any) => l.name && l.phone)
-                .map((l: any) => {
-                  // Extract city/state from address
-                  const parts = (l.address || '').split(',').map((p: string) => p.trim());
-                  let cidade = '', estado = '';
-                  for (const part of parts) {
-                    const match = part.match(/^(.+?)\s*-\s*([A-Z]{2})$/);
-                    if (match) { cidade = match[1].trim(); estado = match[2].trim(); break; }
-                  }
-                  return {
-                    cnpj: null,
-                    razao_social: l.name,
-                    nome_fantasia: l.name,
-                    telefone_1: l.phone || null,
-                    telefone_2: null,
-                    email: l.email || null,
-                    descricao_cnae: l.category || null,
-                    endereco: l.address || null,
-                    cidade: cidade || null,
-                    estado: estado || null,
-                    situacao_cadastral: 'ATIVA',
-                  };
-                });
-              
-              if (companyRows.length > 0) {
-                // Use upsert-like approach: insert and ignore conflicts on nome_fantasia+cidade
-                const { error: compErr } = await supabase
-                  .from("companies")
-                  .insert(companyRows);
-                if (compErr) console.error("Error saving to companies:", compErr);
-                else console.log(`✅ Saved ${companyRows.length} leads to companies table`);
-              }
-            }
-          }
-        } catch (logErr) {
-          console.error("Error logging search:", logErr);
-        }
+        // Edge function already logs the search — no duplicate logging needed here
 
         if (data?.leads && data.leads.length > 0) {
           const sortedLeads = sortLeadsAlphabetically(data.leads);
