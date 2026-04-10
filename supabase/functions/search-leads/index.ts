@@ -33,6 +33,15 @@ function normalizeText(str: string): string {
   return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
 }
 
+function chunkArray<T>(items: T[], size: number): T[][] {
+  if (size <= 0) return [items];
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
+  return chunks;
+}
+
 // ===== CATEGORY SEARCH TERMS MAPPING =====
 // Maps user-facing segment names to search terms for matching against nome_fantasia and descricao_cnae
 function generateSearchTerms(segment: string): string[] {
@@ -1224,58 +1233,108 @@ serve(async (req) => {
 
       const maxPages = isIndustrySearch ? 50 : 6;
       const targetPerSegment = isIndustrySearch ? 50000 : Math.min(leadsPerSegment * 2, 5000);
-      const pageSize = 3000; // Larger pages = fewer round-trips
-      const PARALLEL_PAGES = 3; // Fetch 3 pages at once
-      let segResults: any[] = [];
-      let page = 0;
-      let exhausted = false;
+      const isBroadStateSearch = isStateOnly && !isIndustrySearch;
 
-      while (segResults.length < targetPerSegment && page < maxPages && !exhausted) {
-        if (isNearTimeout()) {
-          console.log(`⏰ Time guard for "${seg}" at page ${page} (${segResults.length} results)`);
-          break;
+      const queryPlans = [
+        {
+          label: isBroadStateSearch ? 'state-safe' : 'default',
+          termGroups: isBroadStateSearch ? chunkArray(terms, 3) : [terms],
+          pageSize: isBroadStateSearch ? 1000 : 3000,
+          parallelPages: isBroadStateSearch ? 1 : 3,
+          planMaxPages: maxPages,
+        },
+        {
+          label: 'fallback-single-term',
+          termGroups: chunkArray(terms, 1),
+          pageSize: isBroadStateSearch ? 500 : 1000,
+          parallelPages: 1,
+          planMaxPages: Math.min(maxPages, isBroadStateSearch ? 4 : 2),
+        },
+      ];
+
+      let bestResults: any[] = [];
+      const seenIds = new Set<string>();
+
+      for (const plan of queryPlans) {
+        if (bestResults.length >= targetPerSegment) break;
+
+        let planTimedOut = false;
+        let planHadHardError = false;
+
+        for (const termGroup of plan.termGroups) {
+          if (bestResults.length >= targetPerSegment || isNearTimeout()) break;
+
+          let page = 0;
+          let exhausted = false;
+
+          while (bestResults.length < targetPerSegment && page < plan.planMaxPages && !exhausted) {
+            if (isNearTimeout()) {
+              console.log(`⏰ Time guard for "${seg}" in plan ${plan.label} at page ${page} (${bestResults.length} results)`);
+              exhausted = true;
+              planTimedOut = true;
+              break;
+            }
+
+            const batch: Promise<{ data: any; error: any; pageIdx: number }>[] = [];
+            for (let i = 0; i < plan.parallelPages && (page + i) < plan.planMaxPages; i++) {
+              const offset = (page + i) * plan.pageSize;
+              batch.push(
+                adminClient.rpc('search_companies', {
+                  p_city: city || null,
+                  p_state: state || null,
+                  p_search_terms: termGroup,
+                  p_biz_type: bizType || 'all',
+                  p_limit_val: plan.pageSize,
+                  p_offset_val: offset,
+                }).then((r: any) => ({ ...r, pageIdx: page + i }))
+              );
+            }
+
+            const results = await Promise.all(batch);
+
+            for (const r of results) {
+              if (r.error) {
+                const message = r.error.message || 'unknown error';
+                console.error(`❌ DB error seg "${seg}" plan ${plan.label} page ${r.pageIdx}:`, message);
+                exhausted = true;
+                if (message.toLowerCase().includes('statement timeout')) {
+                  planTimedOut = true;
+                } else {
+                  planHadHardError = true;
+                }
+                break;
+              }
+
+              if (!r.data || r.data.length === 0) {
+                exhausted = true;
+                break;
+              }
+
+              for (const company of r.data) {
+                if (seenIds.has(company.id)) continue;
+                seenIds.add(company.id);
+                bestResults.push(company);
+                if (bestResults.length >= targetPerSegment) break;
+              }
+
+              if (r.data.length < plan.pageSize || bestResults.length >= targetPerSegment) {
+                exhausted = true;
+                break;
+              }
+            }
+
+            page += plan.parallelPages;
+          }
         }
 
-        // Build a batch of parallel page requests
-        const batch: Promise<{ data: any; error: any; pageIdx: number }>[] = [];
-        for (let i = 0; i < PARALLEL_PAGES && (page + i) < maxPages; i++) {
-          const offset = (page + i) * pageSize;
-          batch.push(
-            adminClient.rpc('search_companies', {
-              p_city: city || null,
-              p_state: state || null,
-              p_search_terms: terms,
-              p_biz_type: bizType || 'all',
-              p_limit_val: pageSize,
-              p_offset_val: offset,
-            }).then((r: any) => ({ ...r, pageIdx: page + i }))
-          );
-        }
+        console.log(`📊 Segment "${seg}" plan ${plan.label}: ${bestResults.length} acumulados`);
 
-        const results = await Promise.all(batch);
-
-        for (const r of results) {
-          if (r.error) {
-            console.error(`❌ DB error seg "${seg}" page ${r.pageIdx}:`, r.error.message);
-            exhausted = true;
-            break;
-          }
-          if (!r.data || r.data.length === 0) {
-            exhausted = true;
-            break;
-          }
-          segResults.push(...r.data);
-          if (r.data.length < pageSize) {
-            exhausted = true;
-            break;
-          }
-        }
-
-        page += PARALLEL_PAGES;
+        if (bestResults.length > 0) break;
+        if (!planTimedOut && !planHadHardError) break;
       }
 
-      console.log(`📊 Segment "${seg}": ${segResults.length} results (${Math.ceil(page)} pages)`);
-      return segResults.map((c: any) => ({ ...c, _segment: seg }));
+      console.log(`📊 Segment "${seg}": ${bestResults.length} results`);
+      return bestResults.map((c: any) => ({ ...c, _segment: seg }));
     }
 
     // Run ALL segments in parallel
