@@ -23,6 +23,7 @@ export default function SearchHistory() {
   const { toast } = useToast();
   const [logs, setLogs] = useState<SearchLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [openingLogId, setOpeningLogId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchHistory();
@@ -54,24 +55,84 @@ export default function SearchHistory() {
     }
   };
 
-  const handleViewLeads = (log: SearchLog) => {
-    const results = log.results as any[];
-    
-    if (results && results.length > 0) {
-      // Results saved in the log - use directly
-      localStorage.setItem("cachedLeads", JSON.stringify(results));
-      const configStr = JSON.stringify(log.search_config);
-      localStorage.setItem("cachedSearchConfig", configStr);
-      localStorage.setItem("leadSearchConfig", configStr);
-      navigate("/resultados");
-      return;
-    }
+  const normalizeCacheKeyPart = (value: string) =>
+    value
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
 
-    toast({
-      title: "Sem resultados salvos",
-      description: "Os leads desta pesquisa não foram salvos. Faça uma nova busca.",
-      variant: "destructive",
-    });
+  const generateDbCacheKey = (segment: string, region: string) =>
+    `local|${normalizeCacheKeyPart(segment)}|${normalizeCacheKeyPart(region)}`;
+
+  const openResults = (results: any[], configStr: string) => {
+    localStorage.setItem("cachedLeads", JSON.stringify(results));
+    localStorage.setItem("cachedSearchConfig", configStr);
+    localStorage.setItem("leadSearchConfig", configStr);
+    navigate("/resultados");
+  };
+
+  const handleViewLeads = async (log: SearchLog) => {
+    setOpeningLogId(log.id);
+
+    try {
+      const results = Array.isArray(log.results) ? log.results : [];
+      const config = log.search_config || {};
+      const configStr = JSON.stringify(config);
+      const segment = Array.isArray(config.selectedCustomers)
+        ? config.selectedCustomers.join(", ")
+        : config.segment || "";
+      const region = config.region || "";
+      const hasFullSavedResults = results.length > 0 && (!log.results_count || results.length >= log.results_count);
+
+      if (hasFullSavedResults) {
+        openResults(results, configStr);
+        return;
+      }
+
+      if (log.search_type === "leads" && segment && region) {
+        const cacheKey = generateDbCacheKey(segment, region);
+        const { data: cacheData, error: cacheError } = await (supabase
+          .from("cached_search_results") as any)
+          .select("results, results_count")
+          .eq("cache_key", cacheKey)
+          .maybeSingle();
+
+        if (!cacheError) {
+          const cachedResults = Array.isArray(cacheData?.results) ? cacheData.results : [];
+          if (cachedResults.length > results.length) {
+            openResults(cachedResults, configStr);
+            return;
+          }
+        }
+
+        localStorage.removeItem("cachedLeads");
+        localStorage.removeItem("cachedSearchConfig");
+        localStorage.setItem("leadSearchConfig", configStr);
+
+        toast({
+          title: "Recarregando resultados",
+          description: "Essa busca antiga será reprocessada para abrir todos os leads disponíveis.",
+        });
+
+        navigate("/resultados");
+        return;
+      }
+
+      if (results.length > 0) {
+        openResults(results, configStr);
+        return;
+      }
+
+      toast({
+        title: "Sem resultados salvos",
+        description: "Os leads desta pesquisa não foram salvos. Faça uma nova busca.",
+        variant: "destructive",
+      });
+    } finally {
+      setOpeningLogId(null);
+    }
   };
 
   const formatDate = (dateStr: string) => {
@@ -169,12 +230,12 @@ export default function SearchHistory() {
                         <Button
                           size="sm"
                           variant={hasResults ? "default" : "outline"}
-                          disabled={!hasResults}
-                          onClick={() => handleViewLeads(log)}
+                          disabled={!hasResults || openingLogId === log.id}
+                          onClick={() => void handleViewLeads(log)}
                           className="gap-1 flex-shrink-0"
                         >
                           <Eye className="w-4 h-4" />
-                          Ver Leads
+                          {openingLogId === log.id ? "Abrindo..." : "Ver Leads"}
                         </Button>
                       </div>
                     </CardContent>

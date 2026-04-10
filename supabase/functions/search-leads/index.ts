@@ -1162,25 +1162,6 @@ serve(async (req) => {
     const bizType = businessType || 'all';
     const filterWhatsappOnly = whatsappOnly || false;
 
-    // ===== CHECK DB CACHE =====
-    const { data: cachedData } = await adminClient
-      .from("cached_search_results")
-      .select("results, results_count, created_at, expires_at")
-      .eq("cache_key", dbCacheKey)
-      .gt("expires_at", new Date().toISOString())
-      .maybeSingle();
-
-    if (cachedData && cachedData.results_count > 0) {
-      console.log(`✅ DB CACHE HIT: ${cachedData.results_count} leads`);
-      const cachedLeads = cachedData.results as any[];
-
-      return new Response(JSON.stringify({ leads: cachedLeads, fromCache: true }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    console.log('💾 DB CACHE MISS - searching local database');
-
     // ===== PARSE REGION =====
     const { city, state, isStateOnly } = parseRegion(region.trim());
     console.log(`📍 Parsed region: city=${city}, state=${state}, isStateOnly=${isStateOnly}`);
@@ -1219,6 +1200,36 @@ serve(async (req) => {
     });
     const MAX_LEADS = hasIndustrySegment ? 999999 : (userMaxLeads || (isStateOnly ? 6000 : 3000));
     const leadsPerSegment = Math.ceil(MAX_LEADS / segments.length);
+
+    // ===== CHECK DB CACHE =====
+    const { data: cachedData } = await adminClient
+      .from("cached_search_results")
+      .select("results, results_count, created_at, expires_at, search_config")
+      .eq("cache_key", dbCacheKey)
+      .gt("expires_at", new Date().toISOString())
+      .maybeSingle();
+
+    if (cachedData && cachedData.results_count > 0) {
+      const cachedLeads = Array.isArray(cachedData.results) ? cachedData.results as any[] : [];
+      const cachedResultsCount = typeof cachedData.results_count === 'number' ? cachedData.results_count : cachedLeads.length;
+      const cachedSearchConfig = cachedData.search_config && typeof cachedData.search_config === 'object'
+        ? cachedData.search_config as Record<string, any>
+        : {};
+      const cachedMaxLeads = Number(cachedSearchConfig.maxLeads || 0);
+      const cacheLooksCapped = cachedResultsCount < MAX_LEADS && [500, 1000, 3000, 6000].includes(cachedResultsCount);
+      const cacheWasBuiltForSmallerLimit = cachedMaxLeads > 0 && cachedMaxLeads < MAX_LEADS && cachedResultsCount >= cachedMaxLeads;
+
+      if (!cacheLooksCapped && !cacheWasBuiltForSmallerLimit) {
+        console.log(`✅ DB CACHE HIT: ${cachedResultsCount} leads`);
+        return new Response(JSON.stringify({ leads: cachedLeads, fromCache: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      console.log(`↩️ Ignoring stale DB cache (${cachedResultsCount}/${MAX_LEADS}) and rerunning search`);
+    } else {
+      console.log('💾 DB CACHE MISS - searching local database');
+    }
 
     // ===== QUERY LOCAL DATABASE (PARALLEL) =====
     let allCompanies: any[] = [];
@@ -1720,7 +1731,14 @@ serve(async (req) => {
         await adminClient.from("cached_search_results").upsert({
           cache_key: dbCacheKey,
           search_type: 'leads',
-          search_config: { segment, region: region.trim(), businessType: bizType, whatsappOnly: filterWhatsappOnly },
+          search_config: {
+            segment,
+            region: region.trim(),
+            businessType: bizType,
+            whatsappOnly: filterWhatsappOnly,
+            maxLeads: MAX_LEADS,
+            hitLimit: leads.length >= MAX_LEADS,
+          },
           results: leads,
           results_count: leads.length,
           expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
