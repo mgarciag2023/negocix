@@ -1747,7 +1747,7 @@ serve(async (req) => {
               search_type: 'leads',
               search_config: { segment, region: region.trim(), businessType: bizType },
               results_count: leads.length,
-              results: leads.slice(0, 10),
+              results: leads,
             });
           }
         }
