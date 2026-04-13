@@ -198,7 +198,7 @@ const TrialSearch = () => {
   // ==================== LOCK DIALOG (rendered via Portal, works in any step) ====================
   const lockDialog = (
     <Dialog open={showLockDialog} onOpenChange={setShowLockDialog}>
-      <DialogContent className="max-w-md text-center">
+      <DialogContent className="max-w-[90vw] sm:max-w-md text-center z-[100] max-h-[90vh] overflow-y-auto">
         <DialogHeader className="items-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-2">
             <Lock className="h-8 w-8 text-primary" />
