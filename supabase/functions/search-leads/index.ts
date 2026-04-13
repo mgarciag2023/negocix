@@ -1193,6 +1193,74 @@ serve(async (req) => {
       }
     } catch (e) { console.error("⚠️ Error fetching user limits:", e); }
 
+    // For trial searches, use very small limits to return fast
+    if (isTrial) {
+      const MAX_LEADS = 50;
+      const leadsPerSegment = Math.ceil(MAX_LEADS / segments.length);
+
+      // Skip cache for trial - go straight to a quick query
+      console.log(`🧪 TRIAL MODE: limiting to ${MAX_LEADS} leads`);
+      
+      // Quick single query per segment, 1 page only
+      let allCompanies: any[] = [];
+      for (const seg of segments) {
+        if (isNearTimeout()) break;
+        const terms = generateSearchTerms(seg).slice(0, 3);
+        console.log(`📤 Trial segment "${seg}" terms:`, terms);
+        
+        const { data, error } = await adminClient.rpc('search_companies', {
+          p_city: city,
+          p_state: state,
+          p_search_terms: terms,
+          p_biz_type: bizType,
+          p_limit_val: leadsPerSegment,
+          p_offset_val: 0,
+        });
+        
+        if (!error && data) {
+          allCompanies.push(...data);
+        }
+      }
+
+      // Quick dedup and filter
+      const seenCnpj = new Set<string>();
+      const filtered = allCompanies.filter((c: any) => {
+        if (!isPhoneValid(c.telefone_1) && !isPhoneValid(c.telefone_2)) return false;
+        const cnpj = c.cnpj || '';
+        if (cnpj && seenCnpj.has(cnpj)) return false;
+        if (cnpj) seenCnpj.add(cnpj);
+        return true;
+      });
+
+      const leads = filtered.slice(0, MAX_LEADS).map((c: any, i: number) => {
+        const rawName = c.nome_fantasia || c.razao_social || 'Empresa';
+        const phone = c.telefone_1 || c.telefone_2 || '';
+        const phoneInfo = validatePhone(phone);
+        const matchScore = calculateMatchScore(c);
+        const sizeInfo = estimateCompanySize(c);
+        const addr = [c.endereco, c.bairro, c.cidade, c.estado].filter(Boolean).join(', ');
+        return {
+          id: `lead-${c.cnpj || i}-${Date.now()}`,
+          name: rawName,
+          address: addr,
+          phone: phoneInfo.normalized || phone,
+          email: c.email || null,
+          website: null,
+          category: segments[0] || 'Empresa',
+          matchScore,
+          reasons: generateReasons(c, segments[0] || 'Empresa', matchScore),
+          hasWhatsApp: phoneInfo.isWhatsApp,
+          cnpj: c.cnpj || null,
+          ...sizeInfo,
+        };
+      });
+
+      console.log(`✅ TRIAL: returning ${leads.length} leads`);
+      return new Response(JSON.stringify({ leads }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // For industry searches, no limit - find ALL
     const hasIndustrySegment = segments.some((s: string) => {
       const l = s.toLowerCase();
