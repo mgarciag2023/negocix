@@ -562,6 +562,7 @@ const TrialSearch = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden w-full max-w-[100vw]" lang="pt-BR">
       <TrialNavbar />
+      {lockDialog}
       <main className="container mx-auto px-4 py-6 md:py-8">
         <div className="mx-auto max-w-4xl">
           <div className="mb-6 md:mb-8">
