@@ -14,7 +14,7 @@ import { customerTypes, countries, brazilianStates } from "@/data/searchConstant
 import StatsCard from "@/components/StatsCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
-const PAYMENT_URL = "https://checkout.paymentshub.shop/checkout/pro-653b5773-804e-4682-8dde-e72b88de60c0";
+const PAYMENT_URL = "https://compraseguraonline.org.ua/c/d8cd080117";
 const TRIAL_KEY = "negocix_trial_used";
 const TRIAL_RESULTS_KEY = "negocix_trial_results";
 
@@ -177,7 +177,7 @@ const TrialSearch = () => {
 
       if (data?.leads && data.leads.length > 0) {
         const total = data.leads.length;
-        const preview = data.leads.slice(0, 15);
+        const preview = data.leads.slice(0, 10);
         setLeads(preview);
         setTotalFound(total);
         localStorage.setItem(TRIAL_KEY, "true");
@@ -497,7 +497,7 @@ const TrialSearch = () => {
 
           {/* Blurred/locked section */}
           <div className="relative">
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 blur-md select-none pointer-events-none" aria-hidden="true">
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 blur-[3px] select-none pointer-events-none" aria-hidden="true">
               {Array.from({ length: 6 }).map((_, i) => (
                 <Card key={i} className="p-4 md:p-6 border border-border/50">
                   <div className="flex items-start justify-between mb-4">
@@ -530,7 +530,7 @@ const TrialSearch = () => {
                   <Lock className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="text-2xl font-bold text-foreground mb-2">
-                  +{(totalFound - 15).toLocaleString('pt-BR')} empresas disponíveis
+                  +{(totalFound - 10).toLocaleString('pt-BR')} empresas disponíveis
                 </h3>
                 <p className="text-muted-foreground mb-6">
                   Desbloqueie o acesso completo para ver todas as {totalFound.toLocaleString('pt-BR')} empresas com telefone, email, responsável e mais.
