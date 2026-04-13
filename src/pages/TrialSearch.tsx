@@ -177,7 +177,7 @@ const TrialSearch = () => {
 
       if (data?.leads && data.leads.length > 0) {
         const total = data.leads.length;
-        const preview = data.leads.slice(0, 15);
+        const preview = data.leads.slice(0, 10);
         setLeads(preview);
         setTotalFound(total);
         localStorage.setItem(TRIAL_KEY, "true");
