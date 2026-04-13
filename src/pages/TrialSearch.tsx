@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -81,6 +81,21 @@ const TrialSearch = () => {
 
   const [showLockDialog, setShowLockDialog] = useState(false);
   const alreadyUsed = localStorage.getItem(TRIAL_KEY) === "true";
+
+  // Prevent back button from navigating to the main app
+  useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      // Push state again to prevent leaving /teste
+      window.history.pushState(null, "", "/teste");
+    };
+    
+    // Replace current state and push a new one so back button stays on /teste
+    window.history.replaceState(null, "", "/teste");
+    window.history.pushState(null, "", "/teste");
+    
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   const normalizeText = (text: string) =>
     text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -183,7 +198,7 @@ const TrialSearch = () => {
   // ==================== HOME STEP ====================
   if (step === "home") {
     return (
-      <div className="min-h-screen bg-background overflow-hidden">
+      <div className="min-h-screen bg-background overflow-x-hidden w-full max-w-[100vw]">
         <TrialNavbar />
         {/* Lock Dialog */}
         <Dialog open={showLockDialog} onOpenChange={setShowLockDialog}>
@@ -417,7 +432,7 @@ const TrialSearch = () => {
   // ==================== LOADING STEP ====================
   if (step === "loading") {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background overflow-x-hidden w-full max-w-[100vw]">
         <TrialNavbar />
         <main className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
@@ -435,11 +450,11 @@ const TrialSearch = () => {
   // ==================== RESULTS STEP ====================
   if (step === "results") {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background overflow-x-hidden w-full max-w-[100vw]">
         <TrialNavbar />
         <main className="container mx-auto px-4 py-6 md:py-8">
           <div className="mb-6 md:mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Leads Encontrados</h1>
+            <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-2">Leads Encontrados</h1>
             <p className="text-muted-foreground text-base md:text-lg">
               Encontramos {totalFound.toLocaleString('pt-BR')} leads compatíveis com seu perfil
             </p>
@@ -450,7 +465,7 @@ const TrialSearch = () => {
             <StatsCard title="Total de Leads" value={totalFound} icon={Building2} trend="Encontrados" trendUp={true} />
             <StatsCard title="Alta Prioridade" value={leads.filter(l => l.matchScore >= 85).length} icon={Zap} trend={`${Math.round(leads.filter(l => l.matchScore >= 85).length / Math.max(leads.length, 1) * 100)}% do total`} trendUp={true} />
             <StatsCard title="Match Médio" value={leads.length > 0 ? `${Math.round(leads.reduce((acc, l) => acc + l.matchScore, 0) / leads.length)}%` : "0%"} icon={TrendingUp} />
-            <StatsCard title="Exibidos" value={`${leads.length} de ${totalFound.toLocaleString('pt-BR')}`} icon={Users} />
+            <StatsCard title="Exibidos" value={leads.length} icon={Users} trend={`de ${totalFound.toLocaleString('pt-BR')}`} />
           </div>
 
           {/* Visible leads - using real LeadCard layout */}
@@ -543,7 +558,7 @@ const TrialSearch = () => {
 
   // ==================== CONFIG STEP ====================
   return (
-    <div className="min-h-screen bg-background" lang="pt-BR">
+    <div className="min-h-screen bg-background overflow-x-hidden w-full max-w-[100vw]" lang="pt-BR">
       <TrialNavbar />
       <main className="container mx-auto px-4 py-6 md:py-8">
         <div className="mx-auto max-w-4xl">

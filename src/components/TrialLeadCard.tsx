@@ -213,31 +213,25 @@ const TrialLeadCard = ({
       {/* Action Buttons - all locked */}
       <div className="flex flex-col sm:flex-row gap-2">
         <button 
-          className="flex-1 inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium h-9 md:h-10 px-4 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          className="flex-1 inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium h-10 md:h-12 px-4 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
           onClick={() => window.open(PAYMENT_URL, "_blank")}
         >
-          <Lock className="h-3 w-3" />
+          <Lock className="h-4 w-4" />
           Ver Detalhes
         </button>
         <button 
-          className="flex-1 inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium h-9 md:h-10 px-4 border border-input bg-background hover:bg-accent transition-colors"
+          className="flex-1 inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium h-10 md:h-12 px-4 border border-input bg-background hover:bg-accent transition-colors"
           onClick={() => window.open(PAYMENT_URL, "_blank")}
         >
-          {isPhoneBlocked ? <Lock className="h-3 w-3" /> : null}
+          {isPhoneBlocked ? <Lock className="h-4 w-4" /> : null}
           Ligar
         </button>
         {hasWhatsApp && (
           <button 
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium h-9 md:h-10 px-4 border border-green-500 text-green-600 hover:bg-green-50 transition-colors"
-            onClick={() => {
-              if (isWhatsAppBlocked) {
-                window.open(PAYMENT_URL, "_blank");
-              } else {
-                window.open(PAYMENT_URL, "_blank");
-              }
-            }}
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium h-10 md:h-12 px-4 border border-green-500 text-green-600 hover:bg-green-50 transition-colors"
+            onClick={() => window.open(PAYMENT_URL, "_blank")}
           >
-            {isWhatsAppBlocked && <Lock className="h-3 w-3" />}
+            {isWhatsAppBlocked && <Lock className="h-4 w-4" />}
             WhatsApp
           </button>
         )}
