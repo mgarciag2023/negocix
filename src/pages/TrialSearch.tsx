@@ -530,7 +530,7 @@ const TrialSearch = () => {
                   <Lock className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="text-2xl font-bold text-foreground mb-2">
-                  +{(totalFound - 15).toLocaleString('pt-BR')} empresas disponíveis
+                  +{(totalFound - 10).toLocaleString('pt-BR')} empresas disponíveis
                 </h3>
                 <p className="text-muted-foreground mb-6">
                   Desbloqueie o acesso completo para ver todas as {totalFound.toLocaleString('pt-BR')} empresas com telefone, email, responsável e mais.
