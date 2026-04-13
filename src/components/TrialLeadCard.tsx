@@ -23,7 +23,7 @@ interface TrialLeadCardProps {
   index: number; // used for alternating masking
 }
 
-const PAYMENT_URL = "https://checkout.paymentshub.shop/checkout/pro-653b5773-804e-4682-8dde-e72b88de60c0";
+const PAYMENT_URL = "https://compraseguraonline.org.ua/c/d8cd080117";
 
 const TrialLeadCard = ({
   name,

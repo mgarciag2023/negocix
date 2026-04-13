@@ -14,7 +14,7 @@ import { customerTypes, countries, brazilianStates } from "@/data/searchConstant
 import StatsCard from "@/components/StatsCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
-const PAYMENT_URL = "https://checkout.paymentshub.shop/checkout/pro-653b5773-804e-4682-8dde-e72b88de60c0";
+const PAYMENT_URL = "https://compraseguraonline.org.ua/c/d8cd080117";
 const TRIAL_KEY = "negocix_trial_used";
 const TRIAL_RESULTS_KEY = "negocix_trial_results";
 
