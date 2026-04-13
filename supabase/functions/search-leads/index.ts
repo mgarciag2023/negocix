@@ -1196,27 +1196,43 @@ serve(async (req) => {
     // For trial searches, use very small limits to return fast
     if (isTrial) {
       const MAX_LEADS = 50;
-      const leadsPerSegment = Math.ceil(MAX_LEADS / segments.length);
-
-      // Skip cache for trial - go straight to a quick query
       console.log(`🧪 TRIAL MODE: limiting to ${MAX_LEADS} leads`);
+
+      // Check cache first for trial too
+      const { data: cachedData } = await adminClient
+        .from("cached_search_results")
+        .select("results, results_count")
+        .eq("cache_key", dbCacheKey)
+        .gt("expires_at", new Date().toISOString())
+        .maybeSingle();
+
+      if (cachedData && cachedData.results_count > 0) {
+        const cachedLeads = Array.isArray(cachedData.results) ? cachedData.results as any[] : [];
+        console.log(`✅ TRIAL CACHE HIT: returning ${Math.min(cachedLeads.length, MAX_LEADS)} of ${cachedLeads.length} cached leads`);
+        return new Response(JSON.stringify({ leads: cachedLeads.slice(0, MAX_LEADS) }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
       
-      // Quick single query per segment, 1 page only
+      // Quick single query - use only first term and small limit
       let allCompanies: any[] = [];
       for (const seg of segments) {
         if (isNearTimeout()) break;
-        const terms = generateSearchTerms(seg).slice(0, 3);
-        console.log(`📤 Trial segment "${seg}" terms:`, terms);
+        const terms = generateSearchTerms(seg).slice(0, 1); // Only 1 term for speed
+        console.log(`📤 Trial segment "${seg}" term:`, terms);
         
         const { data, error } = await adminClient.rpc('search_companies', {
           p_city: city,
           p_state: state,
           p_search_terms: terms,
           p_biz_type: bizType,
-          p_limit_val: leadsPerSegment,
+          p_limit_val: 100,
           p_offset_val: 0,
         });
         
+        if (error) {
+          console.error(`❌ Trial DB error:`, error.message);
+        }
         if (!error && data) {
           allCompanies.push(...data);
         }
