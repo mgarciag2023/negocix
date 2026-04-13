@@ -502,10 +502,11 @@ const TrialSearch = () => {
             ))}
           </div>
 
-          {/* Blurred/locked section */}
-          <div className="relative">
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 blur-[3px] select-none pointer-events-none" aria-hidden="true">
-              {Array.from({ length: 6 }).map((_, i) => (
+          {/* Locked CTA section */}
+          <div className="relative rounded-2xl overflow-hidden">
+            {/* Just 2 blurred skeleton cards for visual hint */}
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 blur-[2px] select-none pointer-events-none opacity-40" aria-hidden="true">
+              {Array.from({ length: 2 }).map((_, i) => (
                 <Card key={i} className="p-4 md:p-6 border border-border/50">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
@@ -519,28 +520,21 @@ const TrialSearch = () => {
                     <div className="h-3 bg-muted rounded w-full"></div>
                     <div className="h-3 bg-muted rounded w-4/5"></div>
                   </div>
-                  <div className="grid grid-cols-2 gap-3 mb-4 p-3 bg-muted/30 rounded-lg">
-                    <div className="h-8 bg-muted rounded"></div>
-                    <div className="h-8 bg-muted rounded"></div>
-                  </div>
-                  <div className="space-y-2 p-3 border rounded-lg">
-                    <div className="h-3 bg-muted rounded w-full"></div>
-                    <div className="h-3 bg-muted rounded w-3/4"></div>
-                  </div>
                 </Card>
               ))}
             </div>
 
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="bg-card/95 backdrop-blur-sm rounded-2xl p-8 max-w-md text-center shadow-2xl border border-border">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
-                  <Lock className="h-8 w-8 text-primary" />
+            {/* Overlay CTA */}
+            <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-[1px]">
+              <div className="text-center max-w-sm px-4">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-3">
+                  <Lock className="h-7 w-7 text-primary" />
                 </div>
-                <h3 className="text-2xl font-bold text-foreground mb-2">
-                  +{(totalFound - 10).toLocaleString('pt-BR')} empresas disponíveis
+                <h3 className="text-xl font-bold text-foreground mb-2">
+                  +{(totalFound - 10).toLocaleString('pt-BR')} leads bloqueados
                 </h3>
-                <p className="text-muted-foreground mb-6">
-                  Desbloqueie o acesso completo para ver todas as {totalFound.toLocaleString('pt-BR')} empresas com telefone, email, responsável e mais.
+                <p className="text-sm text-muted-foreground mb-4">
+                  Desbloqueie para ver todos os resultados completos.
                 </p>
                 <Button
                   size="lg"
@@ -548,13 +542,9 @@ const TrialSearch = () => {
                   onClick={() => setShowLockDialog(true)}
                 >
                   <Sparkles className="mr-2 h-5 w-5" />
-                  Desbloquear Acesso Completo
+                  Desbloquear Acesso
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
-                <div className="mt-4 flex items-center justify-center gap-4 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-success" /><span>Acesso imediato</span></div>
-                  <div className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-success" /><span>Exportar Excel</span></div>
-                </div>
               </div>
             </div>
           </div>
