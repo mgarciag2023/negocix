@@ -497,6 +497,7 @@ const TrialSearch = () => {
                 hasWhatsApp={lead.hasWhatsApp}
                 cnpj={(lead as any).cnpj}
                 index={i}
+                onRequestUnlock={() => setShowLockDialog(true)}
               />
             ))}
           </div>
@@ -544,7 +545,7 @@ const TrialSearch = () => {
                 <Button
                   size="lg"
                   className="w-full bg-gradient-primary hover:opacity-90 text-base h-14 rounded-xl shadow-primary"
-                  onClick={() => window.open(PAYMENT_URL, "_blank")}
+                  onClick={() => setShowLockDialog(true)}
                 >
                   <Sparkles className="mr-2 h-5 w-5" />
                   Desbloquear Acesso Completo
@@ -778,7 +779,7 @@ const TrialSearch = () => {
                 {alreadyUsed && (
                   <div className="text-center">
                     <p className="text-sm text-muted-foreground mb-3">Você já realizou sua pesquisa gratuita.</p>
-                    <Button variant="outline" className="gap-2" onClick={() => window.open(PAYMENT_URL, "_blank")}>
+                    <Button variant="outline" className="gap-2" onClick={() => setShowLockDialog(true)}>
                       <Lock className="h-4 w-4" />
                       Desbloquear Acesso Completo
                     </Button>
