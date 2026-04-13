@@ -240,6 +240,7 @@ const TrialLeadCard = ({
               WhatsApp
             </button>
         )}
+        </div>
       </div>
     </Card>
   );
