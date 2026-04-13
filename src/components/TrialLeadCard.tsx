@@ -215,31 +215,31 @@ const TrialLeadCard = ({
       </div>
       
       {/* Action Buttons - all locked */}
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2.5">
         <button 
-          className="w-full inline-flex items-center justify-center gap-2 rounded-lg text-base font-semibold h-14 px-6 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          className="w-full inline-flex items-center justify-center gap-2 rounded-lg text-sm font-semibold h-[50px] px-5 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
           onClick={handleUnlock}
         >
-          <Lock className="h-5 w-5" />
+          <Lock className="h-4 w-4" />
           Ver Detalhes
         </button>
-        <div className="flex gap-3">
+        <div className="flex gap-2.5">
           <button 
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg text-base font-medium h-14 px-4 border border-input bg-background hover:bg-accent transition-colors"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium h-[50px] px-4 border border-input bg-background hover:bg-accent transition-colors"
             onClick={handleUnlock}
           >
-            {isPhoneBlocked ? <Lock className="h-5 w-5" /> : null}
+            {isPhoneBlocked ? <Lock className="h-4 w-4" /> : null}
             Ligar
           </button>
           {hasWhatsApp && (
             <button 
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg text-base font-medium h-14 px-4 border border-green-500 text-green-600 hover:bg-green-50 transition-colors"
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium h-[50px] px-4 border border-green-500 text-green-600 hover:bg-green-50 transition-colors"
               onClick={handleUnlock}
             >
-              {isWhatsAppBlocked && <Lock className="h-5 w-5" />}
+              {isWhatsAppBlocked && <Lock className="h-4 w-4" />}
               WhatsApp
             </button>
-        )}
+          )}
         </div>
       </div>
     </Card>
