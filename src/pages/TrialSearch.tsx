@@ -497,7 +497,7 @@ const TrialSearch = () => {
 
           {/* Blurred/locked section */}
           <div className="relative">
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 blur-md select-none pointer-events-none" aria-hidden="true">
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 blur-[3px] select-none pointer-events-none" aria-hidden="true">
               {Array.from({ length: 6 }).map((_, i) => (
                 <Card key={i} className="p-4 md:p-6 border border-border/50">
                   <div className="flex items-start justify-between mb-4">
