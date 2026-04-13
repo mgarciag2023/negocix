@@ -21,6 +21,7 @@ import SuppliersResults from "./pages/SuppliersResults";
 import Admin from "./pages/Admin";
 import SearchHistory from "./pages/SearchHistory";
 import NotFound from "./pages/NotFound";
+import TrialSearch from "./pages/TrialSearch";
 
 const queryClient = new QueryClient();
 
@@ -81,8 +82,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* Auth page - public */}
+          {/* Public pages */}
           <Route path="/auth" element={<Auth />} />
+          <Route path="/teste" element={<TrialSearch />} />
           
           {/* Protected routes */}
           <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
