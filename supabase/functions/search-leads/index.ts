@@ -1144,8 +1144,8 @@ serve(async (req) => {
   const isNearTimeout = () => (Date.now() - FUNCTION_START) > MAX_EXECUTION_MS;
 
   try {
-    const { segment, region, businessType, whatsappOnly, receitaFederalOnly } = await req.json();
-    console.log('🔍 LOCAL DB SEARCH v1 - Input:', { segment, region, businessType, whatsappOnly, receitaFederalOnly });
+    const { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial } = await req.json();
+    console.log('🔍 LOCAL DB SEARCH v1 - Input:', { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial: !!isTrial });
 
     if (!segment || !region) {
       return new Response(JSON.stringify({ error: 'Segmento e região são obrigatórios.' }), {
