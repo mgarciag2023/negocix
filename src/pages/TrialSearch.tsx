@@ -453,26 +453,30 @@ const TrialSearch = () => {
             <StatsCard title="Exibidos" value={`${leads.length} de ${totalFound.toLocaleString('pt-BR')}`} icon={Users} />
           </div>
 
-          {/* Visible leads */}
+          {/* Visible leads - using real LeadCard layout */}
           <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mb-8">
             {leads.map((lead, i) => (
-              <Card key={lead.id || i} className="p-4 border border-border/50 shadow-card">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-semibold text-foreground text-sm line-clamp-1">{lead.name}</h3>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-success/10 text-success font-medium whitespace-nowrap ml-2">
-                    {lead.matchScore}%
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground line-clamp-1 mb-1">{lead.address}</p>
-                <p className="text-xs text-muted-foreground">{lead.phone}</p>
-                {lead.email && <p className="text-xs text-muted-foreground">{lead.email}</p>}
-                <div className="mt-2 flex flex-wrap gap-1">
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">{lead.category}</span>
-                  {lead.companySize && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{lead.companySize}</span>
-                  )}
-                </div>
-              </Card>
+              <TrialLeadCard
+                key={lead.id || i}
+                id={lead.id}
+                name={lead.name}
+                address={lead.address}
+                phone={lead.phone}
+                email={lead.email}
+                instagram={lead.instagram}
+                website={lead.website}
+                responsible={lead.responsible}
+                matchScore={lead.matchScore}
+                reasons={lead.reasons}
+                revenue={lead.revenue}
+                openedDate={lead.openedDate}
+                category={lead.category}
+                employeeCount={lead.employeeCount}
+                companySize={lead.companySize}
+                hasWhatsApp={lead.hasWhatsApp}
+                cnpj={(lead as any).cnpj}
+                index={i}
+              />
             ))}
           </div>
 
@@ -480,13 +484,27 @@ const TrialSearch = () => {
           <div className="relative">
             <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 blur-md select-none pointer-events-none" aria-hidden="true">
               {Array.from({ length: 6 }).map((_, i) => (
-                <Card key={i} className="p-4 border border-border/50">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="h-4 bg-muted rounded w-3/4"></div>
-                    <div className="h-4 bg-muted rounded w-10"></div>
+                <Card key={i} className="p-4 md:p-6 border border-border/50">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="h-5 bg-muted rounded w-3/4 mb-2"></div>
+                      <div className="h-4 bg-muted rounded w-16 mb-2"></div>
+                      <div className="h-3 bg-muted rounded w-full"></div>
+                    </div>
+                    <div className="h-16 w-16 bg-muted rounded-full"></div>
                   </div>
-                  <div className="h-3 bg-muted rounded w-full mb-1"></div>
-                  <div className="h-3 bg-muted rounded w-1/2"></div>
+                  <div className="bg-muted/50 rounded-md p-3 mb-4 space-y-2">
+                    <div className="h-3 bg-muted rounded w-full"></div>
+                    <div className="h-3 bg-muted rounded w-4/5"></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 mb-4 p-3 bg-muted/30 rounded-lg">
+                    <div className="h-8 bg-muted rounded"></div>
+                    <div className="h-8 bg-muted rounded"></div>
+                  </div>
+                  <div className="space-y-2 p-3 border rounded-lg">
+                    <div className="h-3 bg-muted rounded w-full"></div>
+                    <div className="h-3 bg-muted rounded w-3/4"></div>
+                  </div>
                 </Card>
               ))}
             </div>
