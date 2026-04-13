@@ -157,8 +157,12 @@ const TrialSearch = () => {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 min timeout for trial
+
       const response = await fetch(`${supabaseUrl}/functions/v1/search-leads`, {
         method: 'POST',
+        signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${supabaseKey}`,
@@ -184,6 +188,7 @@ const TrialSearch = () => {
         }),
       });
 
+      clearTimeout(timeoutId);
       const data = await response.json();
 
       if (data?.leads && data.leads.length > 0) {
@@ -207,9 +212,13 @@ const TrialSearch = () => {
         toast({ title: "Nenhum resultado", description: "Tente outro segmento ou localização", variant: "destructive" });
         setStep("config");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Trial search error:", error);
-      toast({ title: "Erro na busca", description: "Tente novamente", variant: "destructive" });
+      if (error?.name === 'AbortError') {
+        toast({ title: "Busca demorou demais", description: "Tente uma cidade menor ou outro segmento", variant: "destructive" });
+      } else {
+        toast({ title: "Erro na busca", description: "Tente novamente", variant: "destructive" });
+      }
       setStep("config");
     }
   };
