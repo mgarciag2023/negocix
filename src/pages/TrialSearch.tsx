@@ -185,6 +185,33 @@ const TrialSearch = () => {
     return (
       <div className="min-h-screen bg-background overflow-hidden">
         <TrialNavbar />
+        {/* Lock Dialog */}
+        <Dialog open={showLockDialog} onOpenChange={setShowLockDialog}>
+          <DialogContent className="max-w-md text-center">
+            <DialogHeader className="items-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-2">
+                <Lock className="h-8 w-8 text-primary" />
+              </div>
+              <DialogTitle className="text-xl">Desbloqueie o Acesso Completo</DialogTitle>
+              <DialogDescription className="text-base">
+                Busca de fornecedores e representantes estão disponíveis apenas na versão completa da plataforma.
+              </DialogDescription>
+            </DialogHeader>
+            <Button
+              size="lg"
+              className="w-full bg-gradient-primary hover:opacity-90 text-base h-14 rounded-xl shadow-primary mt-2"
+              onClick={() => window.open(PAYMENT_URL, "_blank")}
+            >
+              <Sparkles className="mr-2 h-5 w-5" />
+              Desbloquear Agora
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+            <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-success" /><span>Acesso imediato</span></div>
+              <div className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-success" /><span>Todos os recursos</span></div>
+            </div>
+          </DialogContent>
+        </Dialog>
         <main>
           {/* Hero Section - mirrors Index.tsx */}
           <section className="relative overflow-hidden py-16 md:py-28">
