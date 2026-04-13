@@ -185,7 +185,7 @@ const TrialSearch = () => {
           return !accountingTerms.some(term => nameLC.includes(term) || emailLC.includes(term) || categoryLC.includes(term));
         });
         const total = filteredLeads.length;
-        const preview = filteredLeads.slice(0, 10);
+        const preview = filteredLeads.slice(0, 6);
         setLeads(preview);
         setTotalFound(total);
         localStorage.setItem(TRIAL_KEY, "true");
