@@ -195,44 +195,48 @@ const TrialSearch = () => {
     }
   };
 
+  // ==================== LOCK DIALOG (rendered via Portal, works in any step) ====================
+  const lockDialog = (
+    <Dialog open={showLockDialog} onOpenChange={setShowLockDialog}>
+      <DialogContent className="max-w-md text-center">
+        <DialogHeader className="items-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-2">
+            <Lock className="h-8 w-8 text-primary" />
+          </div>
+          <DialogTitle className="text-xl">Função disponível na versão completa</DialogTitle>
+          <DialogDescription className="text-base">
+            Para acessar todas as funcionalidades, desbloqueie o acesso completo da plataforma.
+          </DialogDescription>
+        </DialogHeader>
+        <ul className="text-sm text-muted-foreground space-y-2 text-left mx-auto">
+          <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" /> Pesquisas ilimitadas de leads</li>
+          <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" /> Telefone, email e WhatsApp completos</li>
+          <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" /> Busca de fornecedores e representantes</li>
+          <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" /> Exportação para Excel</li>
+        </ul>
+        <Button
+          size="lg"
+          className="w-full bg-gradient-primary hover:opacity-90 text-base h-14 rounded-xl shadow-primary mt-2"
+          onClick={() => window.open(PAYMENT_URL, "_blank")}
+        >
+          <Sparkles className="mr-2 h-5 w-5" />
+          Desbloquear Acesso Completo
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+        <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-success" /><span>Acesso imediato</span></div>
+          <div className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-success" /><span>Todos os recursos</span></div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
   // ==================== HOME STEP ====================
   if (step === "home") {
     return (
       <div className="min-h-screen bg-background overflow-x-hidden w-full max-w-[100vw]">
         <TrialNavbar />
-        {/* Lock Dialog */}
-        <Dialog open={showLockDialog} onOpenChange={setShowLockDialog}>
-          <DialogContent className="max-w-md text-center">
-            <DialogHeader className="items-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-2">
-                <Lock className="h-8 w-8 text-primary" />
-              </div>
-              <DialogTitle className="text-xl">Função disponível na versão completa</DialogTitle>
-              <DialogDescription className="text-base">
-                Para acessar todas as funcionalidades, desbloqueie o acesso completo da plataforma.
-              </DialogDescription>
-            </DialogHeader>
-            <ul className="text-sm text-muted-foreground space-y-2 text-left mx-auto">
-              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" /> Pesquisas ilimitadas de leads</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" /> Telefone, email e WhatsApp completos</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" /> Busca de fornecedores e representantes</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" /> Exportação para Excel</li>
-            </ul>
-            <Button
-              size="lg"
-              className="w-full bg-gradient-primary hover:opacity-90 text-base h-14 rounded-xl shadow-primary mt-2"
-              onClick={() => window.open(PAYMENT_URL, "_blank")}
-            >
-              <Sparkles className="mr-2 h-5 w-5" />
-              Desbloquear Acesso Completo
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-            <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-success" /><span>Acesso imediato</span></div>
-              <div className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-success" /><span>Todos os recursos</span></div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {lockDialog}
         <main>
           {/* Hero Section - mirrors Index.tsx */}
           <section className="relative overflow-hidden py-16 md:py-28">
@@ -458,39 +462,7 @@ const TrialSearch = () => {
     return (
       <div className="min-h-screen bg-background overflow-x-hidden w-full max-w-[100vw]">
         <TrialNavbar />
-        {/* Lock Dialog */}
-        <Dialog open={showLockDialog} onOpenChange={setShowLockDialog}>
-          <DialogContent className="max-w-md text-center">
-            <DialogHeader className="items-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-2">
-                <Lock className="h-8 w-8 text-primary" />
-              </div>
-              <DialogTitle className="text-xl">Função disponível na versão completa</DialogTitle>
-              <DialogDescription className="text-base">
-                Para acessar todas as funcionalidades, desbloqueie o acesso completo da plataforma.
-              </DialogDescription>
-            </DialogHeader>
-            <ul className="text-sm text-muted-foreground space-y-2 text-left mx-auto">
-              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" /> Pesquisas ilimitadas de leads</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" /> Telefone, email e WhatsApp completos</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" /> Busca de fornecedores e representantes</li>
-              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" /> Exportação para Excel</li>
-            </ul>
-            <Button
-              size="lg"
-              className="w-full bg-gradient-primary hover:opacity-90 text-base h-14 rounded-xl shadow-primary mt-2"
-              onClick={() => window.open(PAYMENT_URL, "_blank")}
-            >
-              <Sparkles className="mr-2 h-5 w-5" />
-              Desbloquear Acesso Completo
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-            <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-success" /><span>Acesso imediato</span></div>
-              <div className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-success" /><span>Todos os recursos</span></div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {lockDialog}
         <main className="container mx-auto px-4 py-6 md:py-8">
           <div className="mb-6 md:mb-8">
             <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-2">Leads Encontrados</h1>
@@ -590,6 +562,7 @@ const TrialSearch = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden w-full max-w-[100vw]" lang="pt-BR">
       <TrialNavbar />
+      {lockDialog}
       <main className="container mx-auto px-4 py-6 md:py-8">
         <div className="mx-auto max-w-4xl">
           <div className="mb-6 md:mb-8">
