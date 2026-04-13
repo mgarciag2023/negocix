@@ -9,10 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Lock, Building, Building2, Target, TrendingUp, Zap, Users, Package, ArrowRight, Star, CheckCircle2, Sparkles, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import TrialNavbar from "@/components/TrialNavbar";
+import TrialLeadCard from "@/components/TrialLeadCard";
 import { customerTypes, countries, brazilianStates } from "@/data/searchConstants";
 import StatsCard from "@/components/StatsCard";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
-const PAYMENT_URL = "https://compraseguraonline.org.ua/c/d8cd080117";
+const PAYMENT_URL = "https://checkout.paymentshub.shop/checkout/pro-653b5773-804e-4682-8dde-e72b88de60c0";
 const TRIAL_KEY = "negocix_trial_used";
 const TRIAL_RESULTS_KEY = "negocix_trial_results";
 
@@ -77,6 +79,7 @@ const TrialSearch = () => {
     } catch { return 0; }
   });
 
+  const [showLockDialog, setShowLockDialog] = useState(false);
   const alreadyUsed = localStorage.getItem(TRIAL_KEY) === "true";
 
   const normalizeText = (text: string) =>
@@ -98,10 +101,7 @@ const TrialSearch = () => {
   };
 
   const handleLockedClick = () => {
-    toast({
-      title: "🔒 Função bloqueada",
-      description: "Desbloqueie o acesso completo para usar esta funcionalidade.",
-    });
+    setShowLockDialog(true);
   };
 
   const handleSearch = async () => {
