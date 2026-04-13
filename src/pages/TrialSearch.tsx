@@ -176,8 +176,16 @@ const TrialSearch = () => {
       const data = await response.json();
 
       if (data?.leads && data.leads.length > 0) {
-        const total = data.leads.length;
-        const preview = data.leads.slice(0, 10);
+        // Filter out accounting-related leads to avoid confusion in trial results
+        const accountingTerms = ['contabil', 'contábil', 'contabilidade', 'contador', 'escritorio contabil', 'escritório contábil'];
+        const filteredLeads = data.leads.filter((lead: any) => {
+          const nameLC = (lead.name || '').toLowerCase();
+          const emailLC = (lead.email || '').toLowerCase();
+          const categoryLC = (lead.category || '').toLowerCase();
+          return !accountingTerms.some(term => nameLC.includes(term) || emailLC.includes(term) || categoryLC.includes(term));
+        });
+        const total = filteredLeads.length;
+        const preview = filteredLeads.slice(0, 10);
         setLeads(preview);
         setTotalFound(total);
         localStorage.setItem(TRIAL_KEY, "true");
