@@ -207,18 +207,24 @@ const TrialSearch = () => {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-2">
                 <Lock className="h-8 w-8 text-primary" />
               </div>
-              <DialogTitle className="text-xl">Desbloqueie o Acesso Completo</DialogTitle>
+              <DialogTitle className="text-xl">Função disponível na versão completa</DialogTitle>
               <DialogDescription className="text-base">
-                Busca de fornecedores e representantes estão disponíveis apenas na versão completa da plataforma.
+                Para acessar todas as funcionalidades, desbloqueie o acesso completo da plataforma.
               </DialogDescription>
             </DialogHeader>
+            <ul className="text-sm text-muted-foreground space-y-2 text-left mx-auto">
+              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" /> Pesquisas ilimitadas de leads</li>
+              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" /> Telefone, email e WhatsApp completos</li>
+              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" /> Busca de fornecedores e representantes</li>
+              <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" /> Exportação para Excel</li>
+            </ul>
             <Button
               size="lg"
               className="w-full bg-gradient-primary hover:opacity-90 text-base h-14 rounded-xl shadow-primary mt-2"
               onClick={() => window.open(PAYMENT_URL, "_blank")}
             >
               <Sparkles className="mr-2 h-5 w-5" />
-              Desbloquear Agora
+              Desbloquear Acesso Completo
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
             <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
