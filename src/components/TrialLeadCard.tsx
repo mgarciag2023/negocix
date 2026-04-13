@@ -21,9 +21,8 @@ interface TrialLeadCardProps {
   hasWhatsApp?: boolean;
   cnpj?: string;
   index: number; // used for alternating masking
+  onRequestUnlock?: () => void;
 }
-
-const PAYMENT_URL = "https://compraseguraonline.org.ua/c/d8cd080117";
 
 const TrialLeadCard = ({
   name,
@@ -43,7 +42,12 @@ const TrialLeadCard = ({
   hasWhatsApp,
   cnpj,
   index,
+  onRequestUnlock,
 }: TrialLeadCardProps) => {
+
+  const handleUnlock = () => {
+    if (onRequestUnlock) onRequestUnlock();
+  };
 
   // Alternating mask pattern based on index
   const isPhoneBlocked = index % 4 === 0;
@@ -71,7 +75,7 @@ const TrialLeadCard = ({
   const BlockedField = ({ children }: { children: React.ReactNode }) => (
     <span 
       className="inline-flex items-center gap-1 text-muted-foreground cursor-pointer hover:text-primary transition-colors"
-      onClick={() => window.open(PAYMENT_URL, "_blank")}
+      onClick={handleUnlock}
     >
       <Lock className="h-3 w-3 flex-shrink-0" />
       <span className="blur-sm select-none">{children}</span>
@@ -214,14 +218,14 @@ const TrialLeadCard = ({
       <div className="flex flex-col sm:flex-row gap-2">
         <button 
           className="flex-1 inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium h-10 md:h-12 px-4 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-          onClick={() => window.open(PAYMENT_URL, "_blank")}
+          onClick={handleUnlock}
         >
           <Lock className="h-4 w-4" />
           Ver Detalhes
         </button>
         <button 
           className="flex-1 inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium h-10 md:h-12 px-4 border border-input bg-background hover:bg-accent transition-colors"
-          onClick={() => window.open(PAYMENT_URL, "_blank")}
+          onClick={handleUnlock}
         >
           {isPhoneBlocked ? <Lock className="h-4 w-4" /> : null}
           Ligar
@@ -229,7 +233,7 @@ const TrialLeadCard = ({
         {hasWhatsApp && (
           <button 
             className="flex-1 inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium h-10 md:h-12 px-4 border border-green-500 text-green-600 hover:bg-green-50 transition-colors"
-            onClick={() => window.open(PAYMENT_URL, "_blank")}
+            onClick={handleUnlock}
           >
             {isWhatsAppBlocked && <Lock className="h-4 w-4" />}
             WhatsApp
