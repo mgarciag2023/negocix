@@ -9,10 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Lock, Building, Building2, Target, TrendingUp, Zap, Users, Package, ArrowRight, Star, CheckCircle2, Sparkles, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import TrialNavbar from "@/components/TrialNavbar";
+import TrialLeadCard from "@/components/TrialLeadCard";
 import { customerTypes, countries, brazilianStates } from "@/data/searchConstants";
 import StatsCard from "@/components/StatsCard";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
-const PAYMENT_URL = "https://compraseguraonline.org.ua/c/d8cd080117";
+const PAYMENT_URL = "https://checkout.paymentshub.shop/checkout/pro-653b5773-804e-4682-8dde-e72b88de60c0";
 const TRIAL_KEY = "negocix_trial_used";
 const TRIAL_RESULTS_KEY = "negocix_trial_results";
 
@@ -77,6 +79,7 @@ const TrialSearch = () => {
     } catch { return 0; }
   });
 
+  const [showLockDialog, setShowLockDialog] = useState(false);
   const alreadyUsed = localStorage.getItem(TRIAL_KEY) === "true";
 
   const normalizeText = (text: string) =>
@@ -98,10 +101,7 @@ const TrialSearch = () => {
   };
 
   const handleLockedClick = () => {
-    toast({
-      title: "🔒 Função bloqueada",
-      description: "Desbloqueie o acesso completo para usar esta funcionalidade.",
-    });
+    setShowLockDialog(true);
   };
 
   const handleSearch = async () => {
@@ -185,6 +185,33 @@ const TrialSearch = () => {
     return (
       <div className="min-h-screen bg-background overflow-hidden">
         <TrialNavbar />
+        {/* Lock Dialog */}
+        <Dialog open={showLockDialog} onOpenChange={setShowLockDialog}>
+          <DialogContent className="max-w-md text-center">
+            <DialogHeader className="items-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-2">
+                <Lock className="h-8 w-8 text-primary" />
+              </div>
+              <DialogTitle className="text-xl">Desbloqueie o Acesso Completo</DialogTitle>
+              <DialogDescription className="text-base">
+                Busca de fornecedores e representantes estão disponíveis apenas na versão completa da plataforma.
+              </DialogDescription>
+            </DialogHeader>
+            <Button
+              size="lg"
+              className="w-full bg-gradient-primary hover:opacity-90 text-base h-14 rounded-xl shadow-primary mt-2"
+              onClick={() => window.open(PAYMENT_URL, "_blank")}
+            >
+              <Sparkles className="mr-2 h-5 w-5" />
+              Desbloquear Agora
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+            <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-success" /><span>Acesso imediato</span></div>
+              <div className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-success" /><span>Todos os recursos</span></div>
+            </div>
+          </DialogContent>
+        </Dialog>
         <main>
           {/* Hero Section - mirrors Index.tsx */}
           <section className="relative overflow-hidden py-16 md:py-28">
@@ -426,26 +453,30 @@ const TrialSearch = () => {
             <StatsCard title="Exibidos" value={`${leads.length} de ${totalFound.toLocaleString('pt-BR')}`} icon={Users} />
           </div>
 
-          {/* Visible leads */}
+          {/* Visible leads - using real LeadCard layout */}
           <div className="grid gap-4 md:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mb-8">
             {leads.map((lead, i) => (
-              <Card key={lead.id || i} className="p-4 border border-border/50 shadow-card">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="font-semibold text-foreground text-sm line-clamp-1">{lead.name}</h3>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-success/10 text-success font-medium whitespace-nowrap ml-2">
-                    {lead.matchScore}%
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground line-clamp-1 mb-1">{lead.address}</p>
-                <p className="text-xs text-muted-foreground">{lead.phone}</p>
-                {lead.email && <p className="text-xs text-muted-foreground">{lead.email}</p>}
-                <div className="mt-2 flex flex-wrap gap-1">
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary">{lead.category}</span>
-                  {lead.companySize && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{lead.companySize}</span>
-                  )}
-                </div>
-              </Card>
+              <TrialLeadCard
+                key={lead.id || i}
+                id={lead.id}
+                name={lead.name}
+                address={lead.address}
+                phone={lead.phone}
+                email={lead.email}
+                instagram={lead.instagram}
+                website={lead.website}
+                responsible={lead.responsible}
+                matchScore={lead.matchScore}
+                reasons={lead.reasons}
+                revenue={lead.revenue}
+                openedDate={lead.openedDate}
+                category={lead.category}
+                employeeCount={lead.employeeCount}
+                companySize={lead.companySize}
+                hasWhatsApp={lead.hasWhatsApp}
+                cnpj={(lead as any).cnpj}
+                index={i}
+              />
             ))}
           </div>
 
@@ -453,13 +484,27 @@ const TrialSearch = () => {
           <div className="relative">
             <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 blur-md select-none pointer-events-none" aria-hidden="true">
               {Array.from({ length: 6 }).map((_, i) => (
-                <Card key={i} className="p-4 border border-border/50">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="h-4 bg-muted rounded w-3/4"></div>
-                    <div className="h-4 bg-muted rounded w-10"></div>
+                <Card key={i} className="p-4 md:p-6 border border-border/50">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="h-5 bg-muted rounded w-3/4 mb-2"></div>
+                      <div className="h-4 bg-muted rounded w-16 mb-2"></div>
+                      <div className="h-3 bg-muted rounded w-full"></div>
+                    </div>
+                    <div className="h-16 w-16 bg-muted rounded-full"></div>
                   </div>
-                  <div className="h-3 bg-muted rounded w-full mb-1"></div>
-                  <div className="h-3 bg-muted rounded w-1/2"></div>
+                  <div className="bg-muted/50 rounded-md p-3 mb-4 space-y-2">
+                    <div className="h-3 bg-muted rounded w-full"></div>
+                    <div className="h-3 bg-muted rounded w-4/5"></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 mb-4 p-3 bg-muted/30 rounded-lg">
+                    <div className="h-8 bg-muted rounded"></div>
+                    <div className="h-8 bg-muted rounded"></div>
+                  </div>
+                  <div className="space-y-2 p-3 border rounded-lg">
+                    <div className="h-3 bg-muted rounded w-full"></div>
+                    <div className="h-3 bg-muted rounded w-3/4"></div>
+                  </div>
                 </Card>
               ))}
             </div>
