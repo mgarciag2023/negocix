@@ -24,6 +24,7 @@ import NotFound from "./pages/NotFound";
 import TrialSearch from "./pages/TrialSearch";
 import TrialAdmin from "./pages/TrialAdmin";
 import ResetPassword from "./pages/ResetPassword";
+import InAppAd from "./components/InAppAd";
 
 const queryClient = new QueryClient();
 
@@ -74,7 +75,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/auth" replace />;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      <InAppAd />
+      {children}
+    </>
+  );
 };
 
 const App = () => (
