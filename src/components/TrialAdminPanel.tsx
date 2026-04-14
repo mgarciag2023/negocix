@@ -26,9 +26,8 @@ export default function TrialAdminPanel() {
 
   const fetchEvents = async () => {
     try {
-      const { supabase } = await import("@/integrations/supabase/client");
       const { data, error } = await supabase
-        .from("trial_analytics" as any)
+        .from("trial_analytics")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(500);
