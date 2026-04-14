@@ -1671,13 +1671,12 @@ serve(async (req) => {
         return normalized.split(/\s+/).filter(w => w.length >= 4 && !stopWords.has(w));
       }
 
-      // For each segment, also extract "core keywords" - the most essential words
-      // that MUST appear in the name for a match (e.g., "papelaria" for papelarias)
+      // For each segment, extract "core keywords" from ALL terms
+      // so sub-niches (pizzaria, hamburgueria, sushi) are accepted in broad searches (Restaurantes)
       function extractCoreKeywords(seg: string): string[] {
         const terms = generateSearchTerms(seg);
-        // The first few terms are typically the most specific (e.g., 'papelaria', 'papeis')
         const coreWords: string[] = [];
-        for (const term of terms.slice(0, 5)) {
+        for (const term of terms) {
           const normalized = term.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
           const words = normalized.split(/\s+/).filter(w => w.length >= 4 && !stopWords.has(w));
           for (const w of words) {
