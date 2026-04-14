@@ -40,9 +40,9 @@ const ADS: Ad[] = [
     icon: <Award className="h-10 w-10" />,
     accentColor: "from-amber-500 to-orange-600",
     glowColor: "shadow-amber-500/30",
-    title: "Seja um Representante Melhor",
+    title: "Método para Representantes Comerciais",
     description:
-      "Aprenda o método completo para se destacar como representante e conquistar mais clientes.",
+      "Aprenda o método completo de como aumentar suas vendas, se destacar como representante e conquistar mais clientes.",
     ctaLabel: "Conhecer o método",
     ctaUrl: "#",
   },
@@ -50,7 +50,7 @@ const ADS: Ad[] = [
 
 const STORAGE_KEY = "negocix_hidden_ads";
 const FIRST_DELAY = 3_000;
-const REPEAT_INTERVAL = 5_000; // TEMP: 5s para teste — voltar para 7 * 60 * 1000
+const REPEAT_INTERVAL = 7 * 60 * 1000; // 7 minutos
 
 function getHiddenAds(): string[] {
   try {
