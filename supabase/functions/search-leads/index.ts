@@ -1352,7 +1352,7 @@ serve(async (req) => {
 
       const targetPerSegment = isIndustrySearch ? 50000 : Math.min(leadsPerSegment * 2, 50000);
       const PAGE_SIZE = 1000; // SDK max per call
-      const PARALLEL_PAGES = 5; // 5 concurrent pages = 5000 rows per batch
+      const PARALLEL_PAGES = 25; // 25 concurrent pages = 25000 rows per batch
       const MAX_PAGES = Math.ceil(targetPerSegment / PAGE_SIZE);
 
       let bestResults: any[] = [];
