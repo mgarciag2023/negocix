@@ -402,7 +402,7 @@ const Auth = () => {
                       type="button"
                       onClick={async () => {
                         if (!email.trim()) {
-                          toast({ title: "Informe seu email", description: "Digite seu email acima para receber o link de redefinição.", variant: "destructive" });
+                          toast({ title: "Informe seu email primeiro", description: "Preencha o campo de email acima e clique novamente para receber o link de redefinição.", variant: "destructive" });
                           return;
                         }
                         try {
