@@ -34,6 +34,7 @@ export const customerTypes = [
 "Distribuidores de Frios",
 "Farmácias",
 "Lojas de Roupas",
+"Lojas de Moda Infantil",
 "Salões de Beleza",
 "Escritórios",
 "Materiais de Construção",

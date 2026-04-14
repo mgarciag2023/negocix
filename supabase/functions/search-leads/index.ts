@@ -240,7 +240,7 @@ function generateSearchTerms(segment: string): string[] {
 
     // ===== MODA E VESTUÁRIO =====
     'lojas de roupas': ['roupas', 'vestuario', 'boutique', 'moda', 'confeccao', 'loja de roupas'],
-    'lojas de moda infantil': ['moda infantil', 'roupas infantis', 'roupa de bebe'],
+    'lojas de moda infantil': ['moda infantil', 'roupas infantis', 'roupa de bebe', 'roupa infantil', 'enxoval infantil', 'enxoval bebe', 'bebe', 'kids', 'infantil', 'loja infantil', 'gestante', 'maternidade'],
     'lojas de calçados': ['calcados', 'sapatos', 'tenis', 'sapataria'],
     'lojas de bolsas e acessórios': ['bolsas', 'acessorios', 'malas', 'carteiras'],
     'joalherias': ['joalheria', 'joias', 'relojoaria', 'bijuteria', 'ourivesaria'],
