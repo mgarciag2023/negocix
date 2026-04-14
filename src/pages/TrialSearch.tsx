@@ -236,11 +236,11 @@ const TrialSearch = () => {
             Desbloqueie o acesso completo da plataforma.
           </DialogDescription>
         </DialogHeader>
-        <ul className="text-xs text-muted-foreground space-y-1.5 text-left mx-auto">
-          <li className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-success flex-shrink-0" /> Pesquisas ilimitadas</li>
-          <li className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-success flex-shrink-0" /> Contatos completos</li>
-          <li className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-success flex-shrink-0" /> Fornecedores e representantes</li>
-          <li className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-success flex-shrink-0" /> Exportação para Excel</li>
+        <ul className="text-sm text-muted-foreground space-y-2.5 text-left mx-auto">
+          <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" /> Pesquisas ilimitadas</li>
+          <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" /> Contatos completos</li>
+          <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" /> Fornecedores e representantes</li>
+          <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" /> Exportação para Excel</li>
         </ul>
         <Button
           size="default"
