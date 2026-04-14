@@ -27,24 +27,16 @@ const getDeviceId = (): string => {
 
 const trackTrialEvent = async (eventType: string, searchConfig: Record<string, any> = {}, resultsCount = 0) => {
   try {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-    await fetch(`${supabaseUrl}/rest/v1/trial_analytics`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`,
-        Prefer: "return=minimal",
-      },
-      body: JSON.stringify({
-        event_type: eventType,
-        search_config: searchConfig,
-        results_count: resultsCount,
-        device_id: getDeviceId(),
-      }),
+    const { supabase } = await import("@/integrations/supabase/client");
+    await (supabase as any).from("trial_analytics").insert({
+      event_type: eventType,
+      search_config: searchConfig,
+      results_count: resultsCount,
+      device_id: getDeviceId(),
     });
-  } catch {}
+  } catch (e) {
+    console.error("Trial tracking error:", e);
+  }
 };
 
 const PAYMENT_URL = "https://compraseguraonline.org.ua/c/d8cd080117";
