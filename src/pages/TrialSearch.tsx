@@ -113,6 +113,42 @@ const TrialSearch = () => {
   const [showLockDialog, setShowLockDialog] = useState(false);
   const alreadyUsed = localStorage.getItem(TRIAL_KEY) === "true";
 
+  // Track page view and time on page
+  useEffect(() => {
+    const enteredAt = Date.now();
+    trackTrialEvent("page_view");
+    
+    const handleUnload = () => {
+      const seconds = Math.round((Date.now() - enteredAt) / 1000);
+      if (seconds > 1) {
+        // Use sendBeacon for reliability on page close
+        const payload = JSON.stringify({
+          event_type: "time_on_page",
+          search_config: { seconds },
+          results_count: 0,
+          device_id: getDeviceId(),
+        });
+        const url = `${(import.meta as any).env.VITE_SUPABASE_URL}/rest/v1/trial_analytics`;
+        const headers = {
+          'Content-Type': 'application/json',
+          'apikey': (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          'Prefer': 'return=minimal',
+        };
+        try {
+          navigator.sendBeacon(url, new Blob([payload], { type: 'application/json' }));
+        } catch {
+          // fallback ignored
+        }
+      }
+    };
+    
+    window.addEventListener("beforeunload", handleUnload);
+    return () => {
+      handleUnload();
+      window.removeEventListener("beforeunload", handleUnload);
+    };
+  }, []);
+
   // Keep users inside the trial flow without breaking access to /teste/admin
   useEffect(() => {
     const blockNavigation = () => {
