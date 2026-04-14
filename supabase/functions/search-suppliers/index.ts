@@ -115,6 +115,7 @@ const productSearchTerms: { [key: string]: string[] } = {
   "Suprimentos para Impressão": ["impressao", "toner", "cartucho", "papel"],
   "Equipamentos de Segurança Eletrônica": ["seguranca", "cameras", "cftv", "alarmes"],
   "Produtos para Piscinas": ["piscina", "piscinas", "cloro", "tratamento agua"],
+  "Moda Infantil": ["moda infantil", "roupas infantis", "roupa infantil", "confeccao infantil", "enxoval infantil", "enxoval bebe", "vestuario infantil", "atacado infantil"],
 };
 
 // Supplier indicators for filtering
