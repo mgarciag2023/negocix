@@ -49,8 +49,8 @@ const ADS: Ad[] = [
 ];
 
 const STORAGE_KEY = "negocix_hidden_ads";
-const FIRST_DELAY = 6_000;
-const REPEAT_INTERVAL = 7 * 60 * 1000;
+const FIRST_DELAY = 3_000;
+const REPEAT_INTERVAL = 5_000; // TEMP: 5s para teste — voltar para 7 * 60 * 1000
 
 function getHiddenAds(): string[] {
   try {
