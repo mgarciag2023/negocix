@@ -1713,8 +1713,26 @@ serve(async (req) => {
           if (!hasAnyCoreKeyword) return false;
         }
 
-        // At least one term must have ALL its significant words present in the name
-        return termSets.some(words => words.every(w => nameText.includes(w)));
+        // Split terms into multi-word (2+ significant words) and single-word
+        const multiWordSets = termSets.filter(ws => ws.length >= 2);
+        const singleWordSets = termSets.filter(ws => ws.length === 1);
+
+        // If multi-word terms exist, PREFER them: require at least one multi-word match
+        // This prevents generic single-word matches (e.g. just "atacado") from passing
+        // when the search is specific (e.g. "distribuidores de doces")
+        if (multiWordSets.length > 0) {
+          const hasMultiWordMatch = multiWordSets.some(words => words.every(w => nameText.includes(w)));
+          if (hasMultiWordMatch) return true;
+          // Fallback: if no multi-word match, only accept if a single-word term matches
+          // AND there are very few multi-word terms (meaning the segment is inherently simple)
+          if (multiWordSets.length <= 2 && singleWordSets.length > 0) {
+            return singleWordSets.some(words => words.every(w => nameText.includes(w)));
+          }
+          return false;
+        }
+
+        // Only single-word terms: accept any match
+        return singleWordSets.some(words => words.every(w => nameText.includes(w)));
       });
       console.log(`🎯 Universal relevance filter (name-only): ${allCompanies.length} (removed ${beforeUniversalFilter - allCompanies.length} irrelevant results)`);
     }
