@@ -105,11 +105,11 @@ const TrialLeadCard = ({
     <Card className="p-4 md:p-6 hover:shadow-card-hover transition-all duration-300 relative">
       <div className="flex items-start justify-between mb-4 gap-2">
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg md:text-xl font-bold text-foreground mb-1 truncate pr-8">{name}</h3>
+          <h3 className="text-lg md:text-xl font-bold text-foreground mb-1 truncate pr-8">{formattedName}</h3>
           <Badge variant="secondary" className="mb-2 text-xs">{category}</Badge>
           <div className="flex items-start text-muted-foreground text-xs md:text-sm">
             <MapPin className="h-3 w-3 md:h-4 md:w-4 mr-1 mt-0.5 flex-shrink-0" />
-            <span className="line-clamp-2">{address}</span>
+            <span className="line-clamp-2">{formattedAddress}</span>
           </div>
         </div>
         
