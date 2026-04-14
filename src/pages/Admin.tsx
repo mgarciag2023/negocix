@@ -78,6 +78,7 @@ const Admin = () => {
   const [newPassword, setNewPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   useEffect(() => {
     checkAdminAccess();
   }, []);
