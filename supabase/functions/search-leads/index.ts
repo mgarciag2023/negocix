@@ -1224,6 +1224,12 @@ serve(async (req) => {
       const seenCnpj = new Set<string>();
       const filtered = allCompanies.filter((c: any) => {
         if (!isPhoneValid(c.telefone_1) && !isPhoneValid(c.telefone_2)) return false;
+        // Exclude MEIs without meaningful business name
+        const nf = (c.nome_fantasia || '').trim();
+        if (!nf || nf.length < 3 || /^\*+$/.test(nf)) {
+          const rs = (c.razao_social || '').trim();
+          if (/^\d/.test(rs)) return false;
+        }
         const cnpj = c.cnpj || '';
         if (cnpj && seenCnpj.has(cnpj)) return false;
         if (cnpj) seenCnpj.add(cnpj);
@@ -1428,6 +1434,20 @@ serve(async (req) => {
     // ===== FILTER: valid phone required (check both telefone_1 and telefone_2) =====
     allCompanies = allCompanies.filter(c => isPhoneValid(c.telefone_1) || isPhoneValid(c.telefone_2));
     console.log(`📞 After phone filter: ${allCompanies.length}`);
+
+    // ===== FILTER: exclude companies without meaningful business name =====
+    {
+      const beforeNameFilter = allCompanies.length;
+      allCompanies = allCompanies.filter(c => {
+        const nf = (c.nome_fantasia || '').trim();
+        if (nf && nf.length >= 3 && !/^\*+$/.test(nf)) return true;
+        const rs = (c.razao_social || '').trim();
+        if (/^\d/.test(rs)) return false;
+        const hasBusinessIndicator = /\b(ltda|eireli|epp|s\.?a\.?|s\/a|me\b|micro empresa|industria|comercio|servic|loja|restaurante|bar |padaria|mercado|oficina|clinica|consultorio|distribui|fabrica|hotel|pousada|academia|escola|instituto)/i.test(rs);
+        return hasBusinessIndicator;
+      });
+      console.log(`🏷️ After business name filter: ${allCompanies.length} (removed ${beforeNameFilter - allCompanies.length} without meaningful names)`);
+    }
 
     // ===== DEDUPLICATE by CNPJ =====
     const seenCnpj = new Set<string>();
