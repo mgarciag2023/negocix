@@ -1639,13 +1639,14 @@ serve(async (req) => {
 
     // ===== STRICT UNIVERSAL RELEVANCE FILTER FOR ALL SEGMENTS =====
     // Ensures every result actually matches the segment type.
-    // For each search term, ALL significant words (>=4 chars) must appear in the company's
-    // nome_fantasia, razao_social, or descricao_cnae. At least one term must fully match.
+    // IMPORTANT: Only checks nome_fantasia and razao_social (the business NAME).
+    // CNAE descriptions are IGNORED because they are too generic and cause false positives
+    // (e.g. "comércio varejista" matches almost anything).
     {
       const beforeUniversalFilter = allCompanies.length;
 
       // Stop-words to ignore when checking term matches
-      const stopWords = new Set(['para', 'com', 'das', 'dos', 'que', 'por', 'mais', 'uma', 'uns', 'como', 'nao', 'sem']);
+      const stopWords = new Set(['para', 'com', 'das', 'dos', 'que', 'por', 'mais', 'uma', 'uns', 'como', 'nao', 'sem', 'loja', 'casa', 'comercio', 'comercial', 'ltda', 'eireli', 'empresa']);
 
       // Parse each search term into its significant words
       function parseTermWords(term: string): string[] {
@@ -1653,29 +1654,53 @@ serve(async (req) => {
         return normalized.split(/\s+/).filter(w => w.length >= 4 && !stopWords.has(w));
       }
 
-      // For each segment, build an array of "term word-sets"
-      // A company matches if ANY term's words ALL appear in the combined text
+      // For each segment, also extract "core keywords" - the most essential words
+      // that MUST appear in the name for a match (e.g., "papelaria" for papelarias)
+      function extractCoreKeywords(seg: string): string[] {
+        const terms = generateSearchTerms(seg);
+        // The first few terms are typically the most specific (e.g., 'papelaria', 'papeis')
+        const coreWords: string[] = [];
+        for (const term of terms.slice(0, 5)) {
+          const normalized = term.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          const words = normalized.split(/\s+/).filter(w => w.length >= 4 && !stopWords.has(w));
+          for (const w of words) {
+            if (!coreWords.includes(w)) coreWords.push(w);
+          }
+        }
+        return coreWords;
+      }
+
+      // For each segment, build core keywords and term word-sets
+      const segCoreKeywordsMap = new Map<string, string[]>();
       const segTermSetsMap = new Map<string, string[][]>();
       for (const seg of segments) {
         const terms = generateSearchTerms(seg);
         const termSets = terms.map(t => parseTermWords(t)).filter(ws => ws.length > 0);
         segTermSetsMap.set(seg.toLowerCase(), termSets);
+        segCoreKeywordsMap.set(seg.toLowerCase(), extractCoreKeywords(seg));
       }
 
       allCompanies = allCompanies.filter(c => {
         const seg = (c._segment || '').trim().toLowerCase();
         const termSets = segTermSetsMap.get(seg);
+        const coreKeywords = segCoreKeywordsMap.get(seg);
         if (!termSets || termSets.length === 0) return true;
 
         const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
-        const cnae = normalizeText(c.descricao_cnae || '').toLowerCase();
         const rs = normalizeText(c.razao_social || '').toLowerCase();
-        const combined = `${nf} ${cnae} ${rs}`;
+        // ONLY check the business NAME, not CNAE
+        const nameText = `${nf} ${rs}`;
 
-        // At least one term must have ALL its significant words present
-        return termSets.some(words => words.every(w => combined.includes(w)));
+        // At least one core keyword must appear in the business name
+        if (coreKeywords && coreKeywords.length > 0) {
+          const hasAnyCoreKeyword = coreKeywords.some(kw => nameText.includes(kw));
+          if (!hasAnyCoreKeyword) return false;
+        }
+
+        // At least one term must have ALL its significant words present in the name
+        return termSets.some(words => words.every(w => nameText.includes(w)));
       });
-      console.log(`🎯 Universal relevance filter: ${allCompanies.length} (removed ${beforeUniversalFilter - allCompanies.length} irrelevant results)`);
+      console.log(`🎯 Universal relevance filter (name-only): ${allCompanies.length} (removed ${beforeUniversalFilter - allCompanies.length} irrelevant results)`);
     }
 
     // ===== TRANSFORM TO LEAD FORMAT =====
