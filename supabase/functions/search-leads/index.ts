@@ -1335,7 +1335,9 @@ serve(async (req) => {
     async function fetchSegment(seg: string): Promise<any[]> {
       const segLower = seg.toLowerCase();
       const isIndustrySearch = segLower.includes('indústria') || segLower.includes('industria') || segLower.includes('fábrica') || segLower.includes('fabrica');
-      const maxTerms = isIndustrySearch ? 20 : 10;
+      // Broad categories like "restaurantes" have 25+ terms (including sub-niches like pizzaria, hamburgueria, sushi)
+      // We need ALL terms to ensure sub-niches appear in parent category searches
+      const maxTerms = isIndustrySearch ? 20 : 30;
       const terms = generateSearchTerms(seg).slice(0, maxTerms);
       console.log(`📤 Segment "${seg}" search terms (${terms.length}):`, terms);
 
