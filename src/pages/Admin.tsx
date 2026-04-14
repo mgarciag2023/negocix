@@ -103,7 +103,6 @@ const Admin = () => {
   };
 
   const fetchProfiles = async () => {
-    // Fetch profiles
     const { data: profilesData, error: profilesError } = await supabase
       .from("profiles")
       .select("*")
@@ -114,22 +113,7 @@ const Admin = () => {
       return;
     }
 
-    // Fetch user lead limits
-    const { data: limitsData } = await supabase
-      .from("user_lead_limits")
-      .select("user_id, leads_per_search, representatives_per_search");
-
-    // Merge limits into profiles
-    const profilesWithLimits = (profilesData || []).map((profile) => {
-      const limit = limitsData?.find((l) => l.user_id === profile.user_id);
-      return {
-        ...profile,
-        leads_per_search: limit?.leads_per_search || null,
-        representatives_per_search: limit?.representatives_per_search || null,
-      };
-    });
-
-    setProfiles(profilesWithLimits);
+    setProfiles(profilesData || []);
   };
 
   const toggleBlockUser = async (profile: Profile) => {
