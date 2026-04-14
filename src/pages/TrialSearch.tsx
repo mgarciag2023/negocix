@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, lazy, Suspense } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,17 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Lock, Building, Building2, Target, TrendingUp, Zap, Users, Package, ArrowRight, Star, CheckCircle2, Sparkles, MessageSquare, Settings } from "lucide-react";
+import { Search, Lock, Building, Building2, Target, TrendingUp, Zap, Users, Package, ArrowRight, Star, CheckCircle2, Sparkles, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import TrialNavbar from "@/components/TrialNavbar";
 import TrialLeadCard from "@/components/TrialLeadCard";
 import { customerTypes, countries, brazilianStates } from "@/data/searchConstants";
 import StatsCard from "@/components/StatsCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
-const TrialAdminPanel = lazy(() => import("@/components/TrialAdminPanel"));
-
-const TRIAL_ADMIN_PASSWORD = "negocix2025";
 
 const getDeviceId = (): string => {
   let id = localStorage.getItem("negocix_device_id");
@@ -76,6 +74,7 @@ type TrialStep = "home" | "config" | "loading" | "results";
 
 const TrialSearch = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [step, setStep] = useState<TrialStep>(() => {
     const saved = localStorage.getItem(TRIAL_RESULTS_KEY);
     if (saved) return "results";
@@ -115,21 +114,7 @@ const TrialSearch = () => {
   });
 
   const [showLockDialog, setShowLockDialog] = useState(false);
-  const [showAdminDialog, setShowAdminDialog] = useState(false);
-  const [adminPassword, setAdminPassword] = useState("");
-  const [adminUnlocked, setAdminUnlocked] = useState(false);
-  const [adminError, setAdminError] = useState(false);
   const alreadyUsed = localStorage.getItem(TRIAL_KEY) === "true";
-
-  const handleAdminLogin = () => {
-    if (adminPassword === TRIAL_ADMIN_PASSWORD) {
-      setAdminUnlocked(true);
-      setShowAdminDialog(false);
-      setAdminError(false);
-    } else {
-      setAdminError(true);
-    }
-  };
 
   // Prevent back button from navigating away from /teste
   useEffect(() => {
@@ -492,50 +477,14 @@ const TrialSearch = () => {
             </div>
           </div>
 
-          {/* Admin access button */}
-          <div className="mt-12 flex justify-center">
-            {!adminUnlocked ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs text-muted-foreground/40 hover:text-muted-foreground/60"
-                onClick={() => setShowAdminDialog(true)}
-              >
-                <Settings className="h-3 w-3 mr-1" />
-                Painel
-              </Button>
-            ) : null}
+          {/* Discrete admin button */}
+          <div className="mt-16 mb-4 flex justify-center">
+            <button
+              onClick={() => navigate("/teste/admin")}
+              className="w-3 h-3 rounded-full bg-primary/30 hover:bg-primary/60 transition-colors"
+              aria-label="Admin"
+            />
           </div>
-
-          {/* Admin Panel */}
-          {adminUnlocked && (
-            <div className="mt-8">
-              <Suspense fallback={<div className="flex justify-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" /></div>}>
-                <TrialAdminPanel />
-              </Suspense>
-            </div>
-          )}
-
-          {/* Admin Password Dialog */}
-          <Dialog open={showAdminDialog} onOpenChange={setShowAdminDialog}>
-            <DialogContent className="w-[90vw] max-w-xs">
-              <DialogHeader>
-                <DialogTitle className="text-base">Acesso Restrito</DialogTitle>
-                <DialogDescription className="text-sm">Digite a senha para acessar o painel.</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-3">
-                <Input
-                  type="password"
-                  placeholder="Senha"
-                  value={adminPassword}
-                  onChange={(e) => { setAdminPassword(e.target.value); setAdminError(false); }}
-                  onKeyDown={(e) => e.key === "Enter" && handleAdminLogin()}
-                />
-                {adminError && <p className="text-xs text-destructive">Senha incorreta</p>}
-                <Button className="w-full" onClick={handleAdminLogin}>Entrar</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
         </main>
       </div>
     );

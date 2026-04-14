@@ -22,6 +22,7 @@ import Admin from "./pages/Admin";
 import SearchHistory from "./pages/SearchHistory";
 import NotFound from "./pages/NotFound";
 import TrialSearch from "./pages/TrialSearch";
+import TrialAdmin from "./pages/TrialAdmin";
 
 const queryClient = new QueryClient();
 
@@ -85,6 +86,7 @@ const App = () => (
           {/* Public pages */}
           <Route path="/auth" element={<Auth />} />
           <Route path="/teste" element={<TrialSearch />} />
+          <Route path="/teste/admin" element={<TrialAdmin />} />
           
           {/* Protected routes */}
           <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
