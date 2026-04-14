@@ -51,29 +51,14 @@ interface Profile {
   representatives_per_search?: number;
 }
 
-interface LeadSettings {
-  leads_min: string;
-  leads_max: string;
-  leads_target: string;
-}
-
 const Admin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [settings, setSettings] = useState<LeadSettings>({
-    leads_min: "70",
-    leads_max: "150",
-    leads_target: "90",
-  });
-  const [savingSettings, setSavingSettings] = useState(false);
   const [blockReason, setBlockReason] = useState("");
-  const [editingUser, setEditingUser] = useState<Profile | null>(null);
-  const [userLeadLimit, setUserLeadLimit] = useState("");
-  const [userRepLimit, setUserRepLimit] = useState("");
-  const [savingUserLimit, setSavingUserLimit] = useState(false);
+  const [passwordUser, setPasswordUser] = useState<Profile | null>(null);
   const [passwordUser, setPasswordUser] = useState<Profile | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
@@ -109,7 +94,7 @@ const Admin = () => {
       }
 
       setIsAdmin(true);
-      await Promise.all([fetchProfiles(), fetchSettings()]);
+      await fetchProfiles();
     } catch (error) {
       console.error("Error checking admin access:", error);
       navigate("/");
@@ -146,31 +131,6 @@ const Admin = () => {
     });
 
     setProfiles(profilesWithLimits);
-  };
-
-  const fetchSettings = async () => {
-    const { data, error } = await supabase
-      .from("system_settings")
-      .select("setting_key, setting_value");
-
-    if (error) {
-      console.error("Error fetching settings:", error);
-      return;
-    }
-
-    if (data) {
-      const settingsMap: LeadSettings = {
-        leads_min: "70",
-        leads_max: "150",
-        leads_target: "90",
-      };
-      data.forEach((s) => {
-        if (s.setting_key in settingsMap) {
-          settingsMap[s.setting_key as keyof LeadSettings] = s.setting_value;
-        }
-      });
-      setSettings(settingsMap);
-    }
   };
 
   const toggleBlockUser = async (profile: Profile) => {
