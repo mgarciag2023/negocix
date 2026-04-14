@@ -1248,7 +1248,28 @@ serve(async (req) => {
         return true;
       });
 
-      const leads = filtered.slice(0, MAX_LEADS).map((c: any, i: number) => {
+      // Apply relevance filter to trial results too
+      const stopWords = new Set(['para', 'com', 'das', 'dos', 'que', 'por', 'mais', 'uma', 'uns', 'como', 'nao', 'sem']);
+      const trialRelevant = filtered.filter((c: any) => {
+        const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
+        const cnae = normalizeText(c.descricao_cnae || '').toLowerCase();
+        const rs = normalizeText(c.razao_social || '').toLowerCase();
+        const combined = `${nf} ${cnae} ${rs}`;
+        
+        // Check if at least one search term's significant words all appear
+        for (const seg of segments) {
+          const terms = generateSearchTerms(seg);
+          for (const term of terms) {
+            const words = term.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+              .split(/\s+/).filter((w: string) => w.length >= 4 && !stopWords.has(w));
+            if (words.length === 0) continue;
+            if (words.every((w: string) => combined.includes(w))) return true;
+          }
+        }
+        return false;
+      });
+
+      const leads = trialRelevant.slice(0, MAX_LEADS).map((c: any, i: number) => {
         const rawName = c.nome_fantasia || c.razao_social || 'Empresa';
         const phone = c.telefone_1 || c.telefone_2 || '';
         const phoneInfo = validatePhone(phone);
