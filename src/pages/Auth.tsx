@@ -397,30 +397,32 @@ const Auth = () => {
                   </p>
                 )}
                 {isLogin && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!email.trim()) {
-                        toast({ title: "Informe seu email", description: "Digite seu email acima para receber o link de redefinição.", variant: "destructive" });
-                        return;
-                      }
-                      try {
-                        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-                          redirectTo: `${window.location.origin}/reset-password`,
-                        });
-                        if (error) {
-                          toast({ title: "Erro", description: error.message, variant: "destructive" });
-                        } else {
-                          toast({ title: "Email enviado!", description: "Verifique sua caixa de entrada para redefinir sua senha." });
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!email.trim()) {
+                          toast({ title: "Informe seu email", description: "Digite seu email acima para receber o link de redefinição.", variant: "destructive" });
+                          return;
                         }
-                      } catch {
-                        toast({ title: "Erro", description: "Erro inesperado. Tente novamente.", variant: "destructive" });
-                      }
-                    }}
-                    className="text-xs text-primary hover:underline"
-                  >
-                    Esqueceu sua senha?
-                  </button>
+                        try {
+                          const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+                            redirectTo: `${window.location.origin}/reset-password`,
+                          });
+                          if (error) {
+                            toast({ title: "Erro", description: error.message, variant: "destructive" });
+                          } else {
+                            toast({ title: "Email enviado!", description: "Verifique sua caixa de entrada para redefinir sua senha." });
+                          }
+                        } catch {
+                          toast({ title: "Erro", description: "Erro inesperado. Tente novamente.", variant: "destructive" });
+                        }
+                      }}
+                      className="text-sm text-primary font-medium hover:underline transition-colors"
+                    >
+                      Esqueceu sua senha?
+                    </button>
+                  </div>
                 )}
               </div>
 
