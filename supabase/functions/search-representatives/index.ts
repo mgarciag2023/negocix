@@ -119,20 +119,8 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch user-specific limit
-    let MAX_RESULTS = 150;
-    try {
-      if (user_id) {
-        const { data: limitData } = await supabase
-          .from("user_lead_limits")
-          .select("representatives_per_search")
-          .eq("user_id", user_id)
-          .maybeSingle();
-        if (limitData?.representatives_per_search) {
-          MAX_RESULTS = limitData.representatives_per_search;
-        }
-      }
-    } catch (e) { console.error("Error fetching user limit:", e); }
+    // No per-user limits - search all available representatives
+    const MAX_RESULTS = 999999;
 
     const isStateSearch = !city || city.trim() === '';
     const cityParam = isStateSearch ? null : normalizeStr(city).toUpperCase();
