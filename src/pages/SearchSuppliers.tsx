@@ -110,6 +110,7 @@ const SearchSuppliers = () => {
     "Suprimentos para Impressão",
     "Equipamentos de Segurança Eletrônica",
     "Produtos para Piscinas",
+    "Moda Infantil",
   ];
 
   const brazilianStates = [
