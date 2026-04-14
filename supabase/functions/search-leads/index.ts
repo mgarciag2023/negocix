@@ -1230,22 +1230,30 @@ serve(async (req) => {
         return true;
       });
 
-      // Apply relevance filter to trial results too
-      const stopWords = new Set(['para', 'com', 'das', 'dos', 'que', 'por', 'mais', 'uma', 'uns', 'como', 'nao', 'sem']);
+      // Apply relevance filter to trial results too (NAME-ONLY, ignore CNAE)
+      const stopWords = new Set(['para', 'com', 'das', 'dos', 'que', 'por', 'mais', 'uma', 'uns', 'como', 'nao', 'sem', 'loja', 'casa', 'comercio', 'comercial', 'ltda', 'eireli', 'empresa']);
       const trialRelevant = filtered.filter((c: any) => {
         const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
-        const cnae = normalizeText(c.descricao_cnae || '').toLowerCase();
         const rs = normalizeText(c.razao_social || '').toLowerCase();
-        const combined = `${nf} ${cnae} ${rs}`;
+        const nameText = `${nf} ${rs}`;
         
-        // Check if at least one search term's significant words all appear
+        // Check if at least one search term's significant words all appear in the NAME
         for (const seg of segments) {
           const terms = generateSearchTerms(seg);
+          // First check: at least one core keyword from first 5 terms must be in name
+          const coreWords: string[] = [];
+          for (const term of terms.slice(0, 5)) {
+            const words = term.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+              .split(/\s+/).filter((w: string) => w.length >= 4 && !stopWords.has(w));
+            for (const w of words) if (!coreWords.includes(w)) coreWords.push(w);
+          }
+          if (coreWords.length > 0 && !coreWords.some((w: string) => nameText.includes(w))) continue;
+          
           for (const term of terms) {
             const words = term.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
               .split(/\s+/).filter((w: string) => w.length >= 4 && !stopWords.has(w));
             if (words.length === 0) continue;
-            if (words.every((w: string) => combined.includes(w))) return true;
+            if (words.every((w: string) => nameText.includes(w))) return true;
           }
         }
         return false;
