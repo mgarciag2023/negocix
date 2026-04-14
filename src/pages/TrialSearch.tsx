@@ -496,7 +496,7 @@ const TrialSearch = () => {
                 <Button
                   size="lg"
                   className="w-full bg-gradient-primary hover:opacity-90 text-base h-14 rounded-xl shadow-primary"
-                  onClick={() => setShowLockDialog(true)}
+                  onClick={() => { trackTrialEvent("unlock_click"); setShowLockDialog(true); }}
                 >
                   <Sparkles className="mr-2 h-5 w-5" />
                   Desbloquear Acesso
