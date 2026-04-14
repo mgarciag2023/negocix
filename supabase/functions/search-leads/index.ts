@@ -1173,28 +1173,7 @@ serve(async (req) => {
     const segments = segment.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0);
     console.log(`📋 Segments: ${segments.join(', ')}`);
 
-    // ===== USER LEAD LIMITS =====
-    let userMaxLeads: number | null = null;
-    try {
-      const authHeader = req.headers.get('authorization');
-      if (authHeader) {
-        const supabaseAuth = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || "", {
-          global: { headers: { Authorization: authHeader } }
-        });
-        const { data: { user } } = await supabaseAuth.auth.getUser();
-        if (user) {
-          const { data: limitData } = await supabaseAuth
-            .from("user_lead_limits")
-            .select("leads_per_search")
-            .eq("user_id", user.id)
-            .maybeSingle();
-          if (limitData?.leads_per_search) {
-            userMaxLeads = limitData.leads_per_search;
-            console.log(`👤 User lead limit: ${userMaxLeads}`);
-          }
-        }
-      }
-    } catch (e) { console.error("⚠️ Error fetching user limits:", e); }
+    // No per-user limits - search all available leads
 
     // For trial searches, use very small limits to return fast
     if (isTrial) {
@@ -1301,12 +1280,8 @@ serve(async (req) => {
       });
     }
 
-    // Find ALL matching results - no artificial caps
-    const hasIndustrySegment = segments.some((s: string) => {
-      const l = s.toLowerCase();
-      return l.includes('indústria') || l.includes('industria') || l.includes('fábrica') || l.includes('fabrica');
-    });
-    const MAX_LEADS = hasIndustrySegment ? 999999 : (userMaxLeads || (isStateOnly ? 50000 : 30000));
+    // No artificial limits - search everything
+    const MAX_LEADS = 999999;
     const leadsPerSegment = Math.ceil(MAX_LEADS / segments.length);
 
     // ===== CHECK DB CACHE =====
