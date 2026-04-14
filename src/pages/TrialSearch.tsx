@@ -227,7 +227,7 @@ const TrialSearch = () => {
           return !accountingTerms.some(term => nameLC.includes(term) || emailLC.includes(term) || categoryLC.includes(term));
         });
         const total = filteredLeads.length;
-        const inflatedTotal = Math.ceil(total * 1.15); // Show 15% more to encourage signup
+        const inflatedTotal = Math.ceil(total * 1.30); // Show 30% more to encourage signup
         const preview = filteredLeads.slice(0, 6);
         setLeads(preview);
         setTotalFound(inflatedTotal);
