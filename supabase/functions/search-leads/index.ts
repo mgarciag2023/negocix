@@ -1318,7 +1318,7 @@ serve(async (req) => {
     // ===== QUERY LOCAL DATABASE (PARALLEL) =====
     let allCompanies: any[] = [];
 
-    // Fetch a single segment's data with aggressive pagination (no ORDER BY in DB = fast pages)
+    // Fetch a single segment's data - single large query (no ORDER BY = instant streaming)
     async function fetchSegment(seg: string): Promise<any[]> {
       const segLower = seg.toLowerCase();
       const isIndustrySearch = segLower.includes('indústria') || segLower.includes('industria') || segLower.includes('fábrica') || segLower.includes('fabrica');
@@ -1326,93 +1326,58 @@ serve(async (req) => {
       const terms = generateSearchTerms(seg).slice(0, maxTerms);
       console.log(`📤 Segment "${seg}" search terms (${terms.length}):`, terms);
 
-      const maxPages = isIndustrySearch ? 50 : 20;
       const targetPerSegment = isIndustrySearch ? 50000 : Math.min(leadsPerSegment * 2, 50000);
-
-      // Without ORDER BY, we can use large pages and high parallelism
-      const PAGE_SIZE = 5000;
-      const PARALLEL_PAGES = 4;
 
       let bestResults: any[] = [];
       const seenIds = new Set<string>();
 
-      // Plan A: all terms combined, large parallel pages
-      let page = 0;
-      let exhausted = false;
-      let timedOut = false;
+      if (isNearTimeout()) return [];
 
-      while (bestResults.length < targetPerSegment && page < maxPages && !exhausted) {
-        if (isNearTimeout()) {
-          console.log(`⏰ Time guard for "${seg}" at page ${page} (${bestResults.length} results)`);
-          break;
-        }
+      // Single large query with all terms - no pagination needed
+      const { data, error } = await adminClient.rpc('search_companies', {
+        p_city: city || null,
+        p_state: state || null,
+        p_search_terms: terms,
+        p_biz_type: bizType || 'all',
+        p_limit_val: targetPerSegment,
+        p_offset_val: 0,
+      });
 
-        const batch: Promise<{ data: any; error: any; pageIdx: number }>[] = [];
-        for (let i = 0; i < PARALLEL_PAGES && (page + i) < maxPages; i++) {
-          const offset = (page + i) * PAGE_SIZE;
-          batch.push(
-            adminClient.rpc('search_companies', {
+      if (error) {
+        const message = error.message || 'unknown error';
+        console.error(`❌ DB error seg "${seg}":`, message);
+        
+        // Fallback: try individual terms with smaller limits
+        if (message.toLowerCase().includes('statement timeout')) {
+          console.log(`🔄 Fallback to single-term queries for "${seg}"`);
+          for (const term of terms.slice(0, 5)) {
+            if (isNearTimeout()) break;
+            const { data: fallbackData, error: fallbackError } = await adminClient.rpc('search_companies', {
               p_city: city || null,
               p_state: state || null,
-              p_search_terms: terms,
+              p_search_terms: [term],
               p_biz_type: bizType || 'all',
-              p_limit_val: PAGE_SIZE,
-              p_offset_val: offset,
-            }).then((r: any) => ({ ...r, pageIdx: page + i }))
-          );
+              p_limit_val: Math.min(targetPerSegment, 10000),
+              p_offset_val: 0,
+            });
+            if (!fallbackError && fallbackData) {
+              for (const company of fallbackData) {
+                if (!seenIds.has(company.id)) {
+                  seenIds.add(company.id);
+                  bestResults.push(company);
+                }
+              }
+              console.log(`  📤 Term "${term}": +${fallbackData.length} (total: ${bestResults.length})`);
+            } else if (fallbackError) {
+              console.error(`  ❌ Term "${term}" error:`, fallbackError.message);
+            }
+          }
         }
-
-        const results = await Promise.all(batch);
-
-        for (const r of results) {
-          if (r.error) {
-            const message = r.error.message || 'unknown error';
-            console.error(`❌ DB error seg "${seg}" page ${r.pageIdx}:`, message);
-            exhausted = true;
-            if (message.toLowerCase().includes('statement timeout')) timedOut = true;
-            break;
-          }
-
-          if (!r.data || r.data.length === 0) {
-            exhausted = true;
-            break;
-          }
-
-          for (const company of r.data) {
-            if (seenIds.has(company.id)) continue;
+      } else if (data) {
+        for (const company of data) {
+          if (!seenIds.has(company.id)) {
             seenIds.add(company.id);
             bestResults.push(company);
-            if (bestResults.length >= targetPerSegment) break;
-          }
-
-          if (r.data.length < PAGE_SIZE || bestResults.length >= targetPerSegment) {
-            exhausted = true;
-            break;
-          }
-        }
-
-        page += PARALLEL_PAGES;
-      }
-
-      // Plan B fallback: if timed out, try single terms with smaller pages
-      if (timedOut && bestResults.length === 0) {
-        console.log(`🔄 Fallback to single-term queries for "${seg}"`);
-        for (const term of terms.slice(0, 3)) {
-          if (isNearTimeout() || bestResults.length >= targetPerSegment) break;
-          const { data, error } = await adminClient.rpc('search_companies', {
-            p_city: city || null,
-            p_state: state || null,
-            p_search_terms: [term],
-            p_biz_type: bizType || 'all',
-            p_limit_val: 2000,
-            p_offset_val: 0,
-          });
-          if (!error && data) {
-            for (const company of data) {
-              if (seenIds.has(company.id)) continue;
-              seenIds.add(company.id);
-              bestResults.push(company);
-            }
           }
         }
       }
