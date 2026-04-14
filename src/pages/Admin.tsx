@@ -59,7 +59,6 @@ const Admin = () => {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [blockReason, setBlockReason] = useState("");
   const [passwordUser, setPasswordUser] = useState<Profile | null>(null);
-  const [passwordUser, setPasswordUser] = useState<Profile | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
