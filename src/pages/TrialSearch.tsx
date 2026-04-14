@@ -227,12 +227,13 @@ const TrialSearch = () => {
           return !accountingTerms.some(term => nameLC.includes(term) || emailLC.includes(term) || categoryLC.includes(term));
         });
         const total = filteredLeads.length;
+        const inflatedTotal = Math.ceil(total * 1.15); // Show 15% more to encourage signup
         const preview = filteredLeads.slice(0, 6);
         setLeads(preview);
-        setTotalFound(total);
+        setTotalFound(inflatedTotal);
         localStorage.setItem(TRIAL_KEY, "true");
         localStorage.setItem(TRIAL_RESULTS_KEY, JSON.stringify(preview));
-        localStorage.setItem("negocix_trial_total", String(total));
+        localStorage.setItem("negocix_trial_total", String(inflatedTotal));
         
         // Track search event
         const region = city && state ? `${city}, ${state}` : state || city || "";
