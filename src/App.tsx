@@ -86,6 +86,7 @@ const App = () => (
           {/* Public pages */}
           <Route path="/auth" element={<Auth />} />
           <Route path="/teste" element={<TrialSearch />} />
+          <Route path="/teste/admin" element={<TrialAdmin />} />
           
           {/* Protected routes */}
           <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
