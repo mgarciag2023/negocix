@@ -1,0 +1,1 @@
+DELETE FROM cached_search_results WHERE cache_key LIKE '%restaurante%';
