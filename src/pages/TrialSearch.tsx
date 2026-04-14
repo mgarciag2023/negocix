@@ -113,6 +113,35 @@ const TrialSearch = () => {
   const [showLockDialog, setShowLockDialog] = useState(false);
   const alreadyUsed = localStorage.getItem(TRIAL_KEY) === "true";
 
+  // Track page view and time on page
+  useEffect(() => {
+    const enteredAt = Date.now();
+    trackTrialEvent("page_view");
+    
+    // Track time periodically and on page hide
+    let lastTracked = 0;
+    const trackTime = () => {
+      const seconds = Math.round((Date.now() - enteredAt) / 1000);
+      if (seconds > lastTracked + 5) { // only track if 5+ more seconds
+        lastTracked = seconds;
+        trackTrialEvent("time_on_page", { seconds });
+      }
+    };
+    
+    const handleVisChange = () => {
+      if (document.visibilityState === "hidden") trackTime();
+    };
+    const handleUnload = () => trackTime();
+    
+    document.addEventListener("visibilitychange", handleVisChange);
+    window.addEventListener("beforeunload", handleUnload);
+    return () => {
+      trackTime();
+      document.removeEventListener("visibilitychange", handleVisChange);
+      window.removeEventListener("beforeunload", handleUnload);
+    };
+  }, []);
+
   // Keep users inside the trial flow without breaking access to /teste/admin
   useEffect(() => {
     const blockNavigation = () => {
@@ -418,7 +447,7 @@ const TrialSearch = () => {
                 hasWhatsApp={lead.hasWhatsApp}
                 cnpj={(lead as any).cnpj}
                 index={i}
-                onRequestUnlock={() => setShowLockDialog(true)}
+                onRequestUnlock={() => { trackTrialEvent("card_click", { lead_name: lead.name }); setShowLockDialog(true); }}
               />
             ))}
           </div>
@@ -460,7 +489,7 @@ const TrialSearch = () => {
                 <Button
                   size="lg"
                   className="w-full bg-gradient-primary hover:opacity-90 text-base h-14 rounded-xl shadow-primary"
-                  onClick={() => setShowLockDialog(true)}
+                  onClick={() => { trackTrialEvent("unlock_click"); setShowLockDialog(true); }}
                 >
                   <Sparkles className="mr-2 h-5 w-5" />
                   Desbloquear Acesso
