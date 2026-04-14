@@ -75,6 +75,7 @@ type TrialStep = "home" | "config" | "loading" | "results";
 
 const TrialSearch = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [step, setStep] = useState<TrialStep>(() => {
     const saved = localStorage.getItem(TRIAL_RESULTS_KEY);
     if (saved) return "results";
