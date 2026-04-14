@@ -454,7 +454,7 @@ const TrialSearch = () => {
                 hasWhatsApp={lead.hasWhatsApp}
                 cnpj={(lead as any).cnpj}
                 index={i}
-                onRequestUnlock={() => setShowLockDialog(true)}
+                onRequestUnlock={() => { trackTrialEvent("card_click", { lead_name: lead.name }); setShowLockDialog(true); }}
               />
             ))}
           </div>
