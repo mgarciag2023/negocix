@@ -250,59 +250,6 @@ const Admin = () => {
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Lead Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                Configurações de Leads
-              </CardTitle>
-              <CardDescription>
-                Defina os limites de leads por pesquisa
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="space-y-2">
-                  <Label htmlFor="leads_min">Mínimo</Label>
-                  <Input
-                    id="leads_min"
-                    type="number"
-                    value={settings.leads_min}
-                    onChange={(e) => setSettings({ ...settings, leads_min: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="leads_target">Meta</Label>
-                  <Input
-                    id="leads_target"
-                    type="number"
-                    value={settings.leads_target}
-                    onChange={(e) => setSettings({ ...settings, leads_target: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="leads_max">Máximo</Label>
-                  <Input
-                    id="leads_max"
-                    type="number"
-                    value={settings.leads_max}
-                    onChange={(e) => setSettings({ ...settings, leads_max: e.target.value })}
-                  />
-                </div>
-              </div>
-              <Button onClick={saveSettings} disabled={savingSettings} className="w-full">
-                {savingSettings ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Save className="h-4 w-4 mr-2" />
-                )}
-                Salvar Configurações
-              </Button>
-            </CardContent>
-          </Card>
-
           {/* Stats Card */}
           <Card>
             <CardHeader>
@@ -360,8 +307,6 @@ const Admin = () => {
                     <TableHead>Nome</TableHead>
                     <TableHead>Telefone</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Leads</TableHead>
-                    <TableHead>Representantes</TableHead>
                     <TableHead>Cadastro</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -408,26 +353,6 @@ const Admin = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        {profile.leads_per_search ? (
-                          <Badge variant="secondary" className="gap-1">
-                            <Target className="h-3 w-3" />
-                            {profile.leads_per_search}
-                          </Badge>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">Padrão</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {profile.representatives_per_search ? (
-                          <Badge variant="secondary" className="gap-1">
-                            <Users className="h-3 w-3" />
-                            {profile.representatives_per_search}
-                          </Badge>
-                        ) : (
-                          <span className="text-muted-foreground text-sm">Padrão (30)</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
                         <span className="text-sm">
                           {new Date(profile.created_at).toLocaleDateString("pt-BR", {
                             day: "2-digit",
@@ -445,14 +370,6 @@ const Admin = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openUserLimitDialog(profile)}
-                          >
-                            <Target className="h-3 w-3 mr-1" />
-                            Limite
-                          </Button>
                           <Button
                             variant="outline"
                             size="sm"
@@ -562,55 +479,6 @@ const Admin = () => {
           <SearchLogsTable />
         </div>
 
-        {/* User Lead Limit Dialog */}
-        <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Limites por Pesquisa</DialogTitle>
-              <DialogDescription>
-                Defina limites personalizados para {editingUser?.email}. Deixe vazio para usar o padrão.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="user-lead-limit">Leads por pesquisa</Label>
-                <Input
-                  id="user-lead-limit"
-                  type="number"
-                  placeholder={`Padrão: ${settings.leads_target}`}
-                  value={userLeadLimit}
-                  onChange={(e) => setUserLeadLimit(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Global: Mín {settings.leads_min}, Meta {settings.leads_target}, Máx {settings.leads_max}
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="user-rep-limit">Representantes por pesquisa</Label>
-                <Input
-                  id="user-rep-limit"
-                  type="number"
-                  placeholder="Padrão: 30"
-                  value={userRepLimit}
-                  onChange={(e) => setUserRepLimit(e.target.value)}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEditingUser(null)}>
-                Cancelar
-              </Button>
-              <Button onClick={saveUserLeadLimit} disabled={savingUserLimit}>
-                {savingUserLimit ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Save className="h-4 w-4 mr-2" />
-                )}
-                Salvar
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
 
         {/* Password Reset Dialog */}
         <Dialog open={!!passwordUser} onOpenChange={(open) => !open && setPasswordUser(null)}>
