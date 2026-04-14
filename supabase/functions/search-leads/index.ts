@@ -49,7 +49,7 @@ function generateSearchTerms(segment: string): string[] {
   
   const categoryTerms: { [key: string]: string[] } = {
     // ===== ALIMENTAÇÃO / RESTAURANTES =====
-    'restaurantes': ['restaurante', 'churrascaria', 'self service', 'bistro', 'pizzaria', 'hamburgueria', 'lanchonete', 'pastelaria', 'esfiharia', 'espetaria', 'marmitaria', 'rotisserie', 'comida', 'gastronomia', 'bar e restaurante', 'cantina', 'buffet', 'por quilo', 'grelhados', 'cozinha'],
+    'restaurantes': ['restaurante', 'self service', 'bistro', 'comida', 'gastronomia', 'bar e restaurante', 'cantina', 'buffet', 'por quilo', 'grelhados', 'cozinha'],
     'pizzarias': ['pizzaria', 'pizza'],
     'hamburguerias': ['hamburgueria', 'burger', 'hamburguer'],
     'lanchonetes': ['lanchonete', 'lanche', 'fast food'],
@@ -93,12 +93,12 @@ function generateSearchTerms(segment: string): string[] {
     'catering': ['catering', 'buffet', 'refeicao coletiva', 'servico de alimentacao'],
 
     // ===== PADARIAS E CONFEITARIAS =====
-    'padarias': ['padaria', 'panificadora', 'panificacao', 'confeitaria', 'casa de paes'],
+    'padarias': ['padaria', 'panificadora', 'panificacao', 'casa de paes'],
     'panificadoras': ['panificadora', 'padaria', 'panificacao'],
-    'confeitarias': ['confeitaria', 'doceria', 'bolos', 'cake', 'patisserie'],
-    'docerias': ['doceria', 'confeitaria', 'doces', 'brigadeiro'],
+    'confeitarias': ['confeitaria', 'bolos', 'cake', 'patisserie'],
+    'docerias': ['doceria', 'doces', 'brigadeiro'],
     'chocolaterias': ['chocolateria', 'chocolate artesanal', 'bombons'],
-    'pâtisseries': ['patisserie', 'confeitaria fina', 'doces finos'],
+    'pâtisseries': ['patisserie', 'doces finos'],
 
     // ===== SORVETERIAS E BEBIDAS GELADAS =====
     'sorveterias': ['sorveteria', 'sorvete', 'gelato', 'picole', 'acai'],
