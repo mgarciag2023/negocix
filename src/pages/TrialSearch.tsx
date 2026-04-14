@@ -491,6 +491,51 @@ const TrialSearch = () => {
               </div>
             </div>
           </div>
+
+          {/* Admin access button */}
+          <div className="mt-12 flex justify-center">
+            {!adminUnlocked ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground/40 hover:text-muted-foreground/60"
+                onClick={() => setShowAdminDialog(true)}
+              >
+                <Settings className="h-3 w-3 mr-1" />
+                Painel
+              </Button>
+            ) : null}
+          </div>
+
+          {/* Admin Panel */}
+          {adminUnlocked && (
+            <div className="mt-8">
+              <Suspense fallback={<div className="flex justify-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" /></div>}>
+                <TrialAdminPanel />
+              </Suspense>
+            </div>
+          )}
+
+          {/* Admin Password Dialog */}
+          <Dialog open={showAdminDialog} onOpenChange={setShowAdminDialog}>
+            <DialogContent className="w-[90vw] max-w-xs">
+              <DialogHeader>
+                <DialogTitle className="text-base">Acesso Restrito</DialogTitle>
+                <DialogDescription className="text-sm">Digite a senha para acessar o painel.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3">
+                <Input
+                  type="password"
+                  placeholder="Senha"
+                  value={adminPassword}
+                  onChange={(e) => { setAdminPassword(e.target.value); setAdminError(false); }}
+                  onKeyDown={(e) => e.key === "Enter" && handleAdminLogin()}
+                />
+                {adminError && <p className="text-xs text-destructive">Senha incorreta</p>}
+                <Button className="w-full" onClick={handleAdminLogin}>Entrar</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </main>
       </div>
     );
