@@ -118,33 +118,26 @@ const TrialSearch = () => {
     const enteredAt = Date.now();
     trackTrialEvent("page_view");
     
-    const handleUnload = () => {
+    // Track time periodically and on page hide
+    let lastTracked = 0;
+    const trackTime = () => {
       const seconds = Math.round((Date.now() - enteredAt) / 1000);
-      if (seconds > 1) {
-        // Use sendBeacon for reliability on page close
-        const payload = JSON.stringify({
-          event_type: "time_on_page",
-          search_config: { seconds },
-          results_count: 0,
-          device_id: getDeviceId(),
-        });
-        const url = `${(import.meta as any).env.VITE_SUPABASE_URL}/rest/v1/trial_analytics`;
-        const headers = {
-          'Content-Type': 'application/json',
-          'apikey': (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY,
-          'Prefer': 'return=minimal',
-        };
-        try {
-          navigator.sendBeacon(url, new Blob([payload], { type: 'application/json' }));
-        } catch {
-          // fallback ignored
-        }
+      if (seconds > lastTracked + 5) { // only track if 5+ more seconds
+        lastTracked = seconds;
+        trackTrialEvent("time_on_page", { seconds });
       }
     };
     
+    const handleVisChange = () => {
+      if (document.visibilityState === "hidden") trackTime();
+    };
+    const handleUnload = () => trackTime();
+    
+    document.addEventListener("visibilitychange", handleVisChange);
     window.addEventListener("beforeunload", handleUnload);
     return () => {
-      handleUnload();
+      trackTime();
+      document.removeEventListener("visibilitychange", handleVisChange);
       window.removeEventListener("beforeunload", handleUnload);
     };
   }, []);
