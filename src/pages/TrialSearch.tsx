@@ -28,12 +28,17 @@ const getDeviceId = (): string => {
 const trackTrialEvent = async (eventType: string, searchConfig: Record<string, any> = {}, resultsCount = 0) => {
   try {
     const { supabase } = await import("@/integrations/supabase/client");
-    await (supabase as any).from("trial_analytics").insert({
+    const { data, error } = await (supabase as any).from("trial_analytics").insert({
       event_type: eventType,
       search_config: searchConfig,
       results_count: resultsCount,
       device_id: getDeviceId(),
-    });
+    }).select();
+    if (error) {
+      console.error("Trial tracking insert error:", error);
+    } else {
+      console.log("Trial event tracked:", eventType, data);
+    }
   } catch (e) {
     console.error("Trial tracking error:", e);
   }
