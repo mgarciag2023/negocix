@@ -113,29 +113,24 @@ const TrialSearch = () => {
   const [showLockDialog, setShowLockDialog] = useState(false);
   const alreadyUsed = localStorage.getItem(TRIAL_KEY) === "true";
 
-  // Prevent back button from navigating away from /teste
+  // Keep users inside the trial flow without breaking access to /teste/admin
   useEffect(() => {
     const blockNavigation = () => {
-      window.history.pushState(null, "", "/teste");
+      if (window.location.pathname === "/teste") {
+        window.history.pushState(null, "", "/teste");
+      }
     };
 
-    // Stack multiple entries so back button has nowhere to go
-    window.history.replaceState(null, "", "/teste");
-    window.history.pushState(null, "", "/teste");
-    window.history.pushState(null, "", "/teste");
+    if (window.location.pathname === "/teste") {
+      window.history.replaceState(null, "", "/teste");
+      window.history.pushState(null, "", "/teste");
+      window.history.pushState(null, "", "/teste");
+    }
 
     window.addEventListener("popstate", blockNavigation);
-    
-    // Also intercept beforeunload for extra safety
-    const interval = setInterval(() => {
-      if (window.location.pathname !== "/teste") {
-        window.history.replaceState(null, "", "/teste");
-      }
-    }, 200);
 
     return () => {
       window.removeEventListener("popstate", blockNavigation);
-      clearInterval(interval);
     };
   }, []);
 

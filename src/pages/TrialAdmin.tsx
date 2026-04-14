@@ -1,11 +1,10 @@
-import { useState, useEffect, Suspense, lazy } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ArrowLeft, Lock } from "lucide-react";
-
-const TrialAdminPanel = lazy(() => import("@/components/TrialAdminPanel"));
+import TrialAdminPanel from "@/components/TrialAdminPanel";
 
 const TRIAL_ADMIN_PASSWORD = "negocix2025";
 
@@ -66,9 +65,7 @@ const TrialAdminPage = () => {
         </div>
       </header>
       <main className="container mx-auto px-4 py-6">
-        <Suspense fallback={<div className="flex justify-center py-12"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" /></div>}>
-          <TrialAdminPanel />
-        </Suspense>
+        <TrialAdminPanel />
       </main>
     </div>
   );
