@@ -1351,87 +1351,85 @@ serve(async (req) => {
       console.log(`📤 Segment "${seg}" search terms (${terms.length}):`, terms);
 
       const targetPerSegment = isIndustrySearch ? 50000 : Math.min(leadsPerSegment * 2, 50000);
-      const PAGE_SIZE = 1000; // SDK max per call
-      const PARALLEL_PAGES = 25; // 25 concurrent pages = 25000 rows per batch
-      const MAX_PAGES = Math.ceil(targetPerSegment / PAGE_SIZE);
-
-      let bestResults: any[] = [];
+      const PAGE_SIZE = 1000;
       const seenIds = new Set<string>();
-      let page = 0;
-      let exhausted = false;
+      let bestResults: any[] = [];
 
-      while (bestResults.length < targetPerSegment && page < MAX_PAGES && !exhausted) {
-        if (isNearTimeout()) {
-          console.log(`⏰ Time guard for "${seg}" at page ${page} (${bestResults.length} results)`);
-          break;
+      // Strategy: query each term individually in parallel, then paginate the top terms
+      // This avoids combining many OR terms in a single tsquery which overwhelms the DB
+      
+      // Phase 1: First page of each term in parallel (fast discovery)
+      const firstPagePromises = terms.map(term => 
+        adminClient.rpc('search_companies', {
+          p_city: city || null,
+          p_state: state || null,
+          p_search_terms: [term],
+          p_biz_type: bizType || 'all',
+          p_limit_val: PAGE_SIZE,
+          p_offset_val: 0,
+        }).then((r: any) => ({ ...r, term }))
+      );
+
+      const firstPages = await Promise.all(firstPagePromises);
+      
+      // Collect results and track which terms have more data
+      const termsWithMore: { term: string; count: number }[] = [];
+      for (const r of firstPages) {
+        if (r.error) {
+          console.error(`❌ DB error term "${r.term}":`, r.error.message);
+          continue;
         }
-
-        const batch: Promise<{ data: any; error: any; pageIdx: number }>[] = [];
-        for (let i = 0; i < PARALLEL_PAGES && (page + i) < MAX_PAGES; i++) {
-          const offset = (page + i) * PAGE_SIZE;
-          batch.push(
-            adminClient.rpc('search_companies', {
-              p_city: city || null,
-              p_state: state || null,
-              p_search_terms: terms,
-              p_biz_type: bizType || 'all',
-              p_limit_val: PAGE_SIZE,
-              p_offset_val: offset,
-            }).then((r: any) => ({ ...r, pageIdx: page + i }))
-          );
-        }
-
-        const results = await Promise.all(batch);
-
-        for (const r of results) {
-          if (r.error) {
-            const message = r.error.message || 'unknown error';
-            console.error(`❌ DB error seg "${seg}" page ${r.pageIdx}:`, message);
-            exhausted = true;
-            if (message.toLowerCase().includes('statement timeout') && bestResults.length === 0) {
-              console.log(`🔄 Fallback to single-term queries for "${seg}"`);
-              for (const term of terms.slice(0, 5)) {
-                if (isNearTimeout()) break;
-                const { data: fbData, error: fbError } = await adminClient.rpc('search_companies', {
-                  p_city: city || null,
-                  p_state: state || null,
-                  p_search_terms: [term],
-                  p_biz_type: bizType || 'all',
-                  p_limit_val: PAGE_SIZE,
-                  p_offset_val: 0,
-                });
-                if (!fbError && fbData) {
-                  for (const c of fbData) {
-                    if (!seenIds.has(c.id)) { seenIds.add(c.id); bestResults.push(c); }
-                  }
-                }
-              }
-            }
-            break;
+        if (r.data) {
+          for (const c of r.data) {
+            if (!seenIds.has(c.id)) { seenIds.add(c.id); bestResults.push(c); }
           }
-
-          if (!r.data || r.data.length === 0) {
-            exhausted = true;
-            break;
-          }
-
-          for (const company of r.data) {
-            if (!seenIds.has(company.id)) {
-              seenIds.add(company.id);
-              bestResults.push(company);
-            }
-          }
-
-          if (r.data.length < PAGE_SIZE) {
-            exhausted = true;
-            break;
+          if (r.data.length === PAGE_SIZE) {
+            termsWithMore.push({ term: r.term, count: r.data.length });
           }
         }
-
-        page += PARALLEL_PAGES;
       }
 
-      console.log(`📊 Segment "${seg}": ${bestResults.length} results (${page} pages)`);
+      console.log(`📊 Phase 1 "${seg}": ${bestResults.length} results from ${terms.length} terms, ${termsWithMore.length} terms have more`);
+
+      // Phase 2: Paginate terms that returned full pages (they have more data)
+      if (bestResults.length < targetPerSegment && termsWithMore.length > 0) {
+        const MAX_EXTRA_PAGES = 10; // up to 10 more pages per term
+        
+        for (const { term } of termsWithMore) {
+          if (bestResults.length >= targetPerSegment || isNearTimeout()) break;
+          
+          // Fetch pages 2-11 in parallel for this term
+          const pagePromises: Promise<any>[] = [];
+          for (let p = 1; p <= MAX_EXTRA_PAGES; p++) {
+            pagePromises.push(
+              adminClient.rpc('search_companies', {
+                p_city: city || null,
+                p_state: state || null,
+                p_search_terms: [term],
+                p_biz_type: bizType || 'all',
+                p_limit_val: PAGE_SIZE,
+                p_offset_val: p * PAGE_SIZE,
+              }).then((r: any) => ({ ...r, pageIdx: p }))
+            );
+          }
+
+          const pages = await Promise.all(pagePromises);
+          let termExhausted = false;
+          
+          for (const r of pages.sort((a, b) => a.pageIdx - b.pageIdx)) {
+            if (termExhausted) break;
+            if (r.error) { termExhausted = true; continue; }
+            if (!r.data || r.data.length === 0) { termExhausted = true; continue; }
+            
+            for (const c of r.data) {
+              if (!seenIds.has(c.id)) { seenIds.add(c.id); bestResults.push(c); }
+            }
+            if (r.data.length < PAGE_SIZE) termExhausted = true;
+          }
+        }
+      }
+
+      console.log(`📊 Segment "${seg}": ${bestResults.length} total results`);
       return bestResults.map((c: any) => ({ ...c, _segment: seg }));
     }
 
