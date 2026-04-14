@@ -274,19 +274,19 @@ const TrialSearch = () => {
           <div className="relative z-10 text-center px-6 max-w-lg mx-auto">
             <div className="inline-flex items-center gap-2 mb-5 px-4 py-2 rounded-full bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/20 animate-fade-in-down">
               <Star className="h-4 w-4 text-warning" fill="currentColor" />
-              <span className="text-sm text-primary-foreground/90 font-medium">Pesquisa 100% Gratuita</span>
+              <span className="text-sm text-primary-foreground/90 font-medium">Experimente Agora</span>
             </div>
             
             <h1 className="mb-4 text-3xl md:text-5xl font-bold leading-tight text-primary-foreground opacity-0 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-              Teste Grátis:<br />
+              Descubra Seus{" "}
               <span className="relative">
-                <span className="relative z-10">Encontre Seus Clientes</span>
+                <span className="relative z-10">Próximos Clientes</span>
                 <span className="absolute bottom-1 left-0 right-0 h-3 bg-success-glow/40 -rotate-1 rounded" />
               </span>
             </h1>
             
             <p className="mb-8 text-base md:text-lg text-primary-foreground/80 opacity-0 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-              Faça uma pesquisa gratuita e veja leads reais do seu segmento. Sem cadastro, sem compromisso.
+              Veja na prática como a nossa plataforma encontra leads qualificados para o seu negócio. Uma pesquisa grátis, resultados reais.
             </p>
             
             <div className="flex flex-col gap-3 opacity-0 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
@@ -302,15 +302,15 @@ const TrialSearch = () => {
                 }}
               >
                 <Search className="mr-2 h-5 w-5" />
-                Fazer Pesquisa Grátis
+                Experimentar Grátis
                 <ArrowRight className="ml-2 h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
               </Button>
             </div>
             
             <div className="mt-6 flex items-center justify-center gap-4 text-xs text-primary-foreground/60 opacity-0 animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
               <div className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-success" /><span>Sem cadastro</span></div>
-              <div className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-success" /><span>Resultados reais</span></div>
-              <div className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-success" /><span>Grátis</span></div>
+              <div className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-success" /><span>Dados reais</span></div>
+              <div className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-success" /><span>100% grátis</span></div>
             </div>
           </div>
         </main>
