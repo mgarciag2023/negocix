@@ -1286,86 +1286,135 @@ serve(async (req) => {
     const leadsPerSegment = Math.ceil(MAX_LEADS / segments.length);
 
     // ===== CHECK DB CACHE =====
+    const { data: cachedData } = await adminClient
+      .from("cached_search_results")
+      .select("results, results_count, created_at, expires_at, search_config")
+      .eq("cache_key", dbCacheKey)
+      .gt("expires_at", new Date().toISOString())
+      .maybeSingle();
+
+    if (cachedData && cachedData.results_count > 0) {
+      const cachedLeads = Array.isArray(cachedData.results) ? cachedData.results as any[] : [];
+      const cachedResultsCount = typeof cachedData.results_count === 'number' ? cachedData.results_count : cachedLeads.length;
+      const cachedSearchConfig = cachedData.search_config && typeof cachedData.search_config === 'object'
+        ? cachedData.search_config as Record<string, any>
+        : {};
+      const cachedMaxLeads = Number(cachedSearchConfig.maxLeads || 0);
+      const cacheLooksCapped = cachedResultsCount < MAX_LEADS && [500, 1000, 3000, 6000].includes(cachedResultsCount);
+      const cacheWasBuiltForSmallerLimit = cachedMaxLeads > 0 && cachedMaxLeads < MAX_LEADS && cachedResultsCount >= cachedMaxLeads;
+
+      if (!cacheLooksCapped && !cacheWasBuiltForSmallerLimit) {
+        console.log(`✅ DB CACHE HIT: ${cachedResultsCount} leads`);
+        return new Response(JSON.stringify({ leads: cachedLeads, fromCache: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      console.log(`↩️ Ignoring stale DB cache (${cachedResultsCount}/${MAX_LEADS}) and rerunning search`);
+    } else {
+      console.log('💾 DB CACHE MISS - searching local database');
+    }
+
+    // ===== QUERY LOCAL DATABASE (PARALLEL) =====
+    let allCompanies: any[] = [];
+
+    // Fetch a single segment's data with aggressive pagination (no ORDER BY in DB = fast pages)
+    async function fetchSegment(seg: string): Promise<any[]> {
+      const segLower = seg.toLowerCase();
+      const isIndustrySearch = segLower.includes('indústria') || segLower.includes('industria') || segLower.includes('fábrica') || segLower.includes('fabrica');
+      const maxTerms = isIndustrySearch ? 20 : 10;
+      const terms = generateSearchTerms(seg).slice(0, maxTerms);
+      console.log(`📤 Segment "${seg}" search terms (${terms.length}):`, terms);
+
+      const maxPages = isIndustrySearch ? 50 : 20;
+      const targetPerSegment = isIndustrySearch ? 50000 : Math.min(leadsPerSegment * 2, 50000);
+
+      // Without ORDER BY, we can use large pages and high parallelism
+      const PAGE_SIZE = 5000;
+      const PARALLEL_PAGES = 4;
 
       let bestResults: any[] = [];
       const seenIds = new Set<string>();
 
-      for (const plan of queryPlans) {
-        if (bestResults.length >= targetPerSegment) break;
+      // Plan A: all terms combined, large parallel pages
+      let page = 0;
+      let exhausted = false;
+      let timedOut = false;
 
-        let planTimedOut = false;
-        let planHadHardError = false;
+      while (bestResults.length < targetPerSegment && page < maxPages && !exhausted) {
+        if (isNearTimeout()) {
+          console.log(`⏰ Time guard for "${seg}" at page ${page} (${bestResults.length} results)`);
+          break;
+        }
 
-        for (const termGroup of plan.termGroups) {
-          if (bestResults.length >= targetPerSegment || isNearTimeout()) break;
+        const batch: Promise<{ data: any; error: any; pageIdx: number }>[] = [];
+        for (let i = 0; i < PARALLEL_PAGES && (page + i) < maxPages; i++) {
+          const offset = (page + i) * PAGE_SIZE;
+          batch.push(
+            adminClient.rpc('search_companies', {
+              p_city: city || null,
+              p_state: state || null,
+              p_search_terms: terms,
+              p_biz_type: bizType || 'all',
+              p_limit_val: PAGE_SIZE,
+              p_offset_val: offset,
+            }).then((r: any) => ({ ...r, pageIdx: page + i }))
+          );
+        }
 
-          let page = 0;
-          let exhausted = false;
+        const results = await Promise.all(batch);
 
-          while (bestResults.length < targetPerSegment && page < plan.planMaxPages && !exhausted) {
-            if (isNearTimeout()) {
-              console.log(`⏰ Time guard for "${seg}" in plan ${plan.label} at page ${page} (${bestResults.length} results)`);
-              exhausted = true;
-              planTimedOut = true;
-              break;
-            }
+        for (const r of results) {
+          if (r.error) {
+            const message = r.error.message || 'unknown error';
+            console.error(`❌ DB error seg "${seg}" page ${r.pageIdx}:`, message);
+            exhausted = true;
+            if (message.toLowerCase().includes('statement timeout')) timedOut = true;
+            break;
+          }
 
-            const batch: Promise<{ data: any; error: any; pageIdx: number }>[] = [];
-            for (let i = 0; i < plan.parallelPages && (page + i) < plan.planMaxPages; i++) {
-              const offset = (page + i) * plan.pageSize;
-              batch.push(
-                adminClient.rpc('search_companies', {
-                  p_city: city || null,
-                  p_state: state || null,
-                  p_search_terms: termGroup,
-                  p_biz_type: bizType || 'all',
-                  p_limit_val: plan.pageSize,
-                  p_offset_val: offset,
-                }).then((r: any) => ({ ...r, pageIdx: page + i }))
-              );
-            }
+          if (!r.data || r.data.length === 0) {
+            exhausted = true;
+            break;
+          }
 
-            const results = await Promise.all(batch);
+          for (const company of r.data) {
+            if (seenIds.has(company.id)) continue;
+            seenIds.add(company.id);
+            bestResults.push(company);
+            if (bestResults.length >= targetPerSegment) break;
+          }
 
-            for (const r of results) {
-              if (r.error) {
-                const message = r.error.message || 'unknown error';
-                console.error(`❌ DB error seg "${seg}" plan ${plan.label} page ${r.pageIdx}:`, message);
-                exhausted = true;
-                if (message.toLowerCase().includes('statement timeout')) {
-                  planTimedOut = true;
-                } else {
-                  planHadHardError = true;
-                }
-                break;
-              }
-
-              if (!r.data || r.data.length === 0) {
-                exhausted = true;
-                break;
-              }
-
-              for (const company of r.data) {
-                if (seenIds.has(company.id)) continue;
-                seenIds.add(company.id);
-                bestResults.push(company);
-                if (bestResults.length >= targetPerSegment) break;
-              }
-
-              if (r.data.length < plan.pageSize || bestResults.length >= targetPerSegment) {
-                exhausted = true;
-                break;
-              }
-            }
-
-            page += plan.parallelPages;
+          if (r.data.length < PAGE_SIZE || bestResults.length >= targetPerSegment) {
+            exhausted = true;
+            break;
           }
         }
 
-        console.log(`📊 Segment "${seg}" plan ${plan.label}: ${bestResults.length} acumulados`);
+        page += PARALLEL_PAGES;
+      }
 
-        if (bestResults.length > 0) break;
-        if (!planTimedOut && !planHadHardError) break;
+      // Plan B fallback: if timed out, try single terms with smaller pages
+      if (timedOut && bestResults.length === 0) {
+        console.log(`🔄 Fallback to single-term queries for "${seg}"`);
+        for (const term of terms.slice(0, 3)) {
+          if (isNearTimeout() || bestResults.length >= targetPerSegment) break;
+          const { data, error } = await adminClient.rpc('search_companies', {
+            p_city: city || null,
+            p_state: state || null,
+            p_search_terms: [term],
+            p_biz_type: bizType || 'all',
+            p_limit_val: 2000,
+            p_offset_val: 0,
+          });
+          if (!error && data) {
+            for (const company of data) {
+              if (seenIds.has(company.id)) continue;
+              seenIds.add(company.id);
+              bestResults.push(company);
+            }
+          }
+        }
       }
 
       console.log(`📊 Segment "${seg}": ${bestResults.length} results`);
