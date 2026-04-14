@@ -1360,7 +1360,7 @@ serve(async (req) => {
               p_biz_type: bizType || 'all',
               p_limit_val: Math.min(targetPerSegment, 10000),
               p_offset_val: 0,
-            });
+            }).limit(Math.min(targetPerSegment, 10000));
             if (!fallbackError && fallbackData) {
               for (const company of fallbackData) {
                 if (!seenIds.has(company.id)) {
