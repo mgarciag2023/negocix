@@ -1243,24 +1243,29 @@ serve(async (req) => {
         const rs = normalizeText(c.razao_social || '').toLowerCase();
         const nameText = `${nf} ${rs}`;
         
-        // Check if at least one search term's significant words all appear in the NAME
         for (const seg of segments) {
           const terms = generateSearchTerms(seg);
-          // First check: at least one core keyword from first 5 terms must be in name
+          const termSets = terms.map(t => {
+            const words = t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+              .split(/\s+/).filter((w: string) => w.length >= 4 && !stopWords.has(w));
+            return words;
+          }).filter(ws => ws.length > 0);
+
+          const multiWordSets = termSets.filter(ws => ws.length >= 2);
+          const singleWordSets = termSets.filter(ws => ws.length === 1);
+
+          // Core keyword check
           const coreWords: string[] = [];
-          for (const term of terms.slice(0, 5)) {
-            const words = term.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-              .split(/\s+/).filter((w: string) => w.length >= 4 && !stopWords.has(w));
-            for (const w of words) if (!coreWords.includes(w)) coreWords.push(w);
-          }
+          for (const ws of termSets) for (const w of ws) if (!coreWords.includes(w)) coreWords.push(w);
           if (coreWords.length > 0 && !coreWords.some((w: string) => nameText.includes(w))) continue;
-          
-          for (const term of terms) {
-            const words = term.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-              .split(/\s+/).filter((w: string) => w.length >= 4 && !stopWords.has(w));
-            if (words.length === 0) continue;
-            if (words.every((w: string) => nameText.includes(w))) return true;
+
+          // Prefer multi-word matches for specificity
+          if (multiWordSets.length > 0) {
+            if (multiWordSets.some(words => words.every(w => nameText.includes(w)))) return true;
+            if (multiWordSets.length <= 2 && singleWordSets.some(words => words.every(w => nameText.includes(w)))) return true;
+            continue;
           }
+          if (singleWordSets.some(words => words.every(w => nameText.includes(w)))) return true;
         }
         return false;
       });
