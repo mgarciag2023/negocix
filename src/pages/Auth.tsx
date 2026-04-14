@@ -390,11 +390,37 @@ const Auth = () => {
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                {errors.password && (
+              {errors.password && (
                   <p className="text-sm text-destructive flex items-center gap-1">
                     <span className="inline-block w-1 h-1 rounded-full bg-destructive" />
                     {errors.password}
                   </p>
+                )}
+                {isLogin && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!email.trim()) {
+                        toast({ title: "Informe seu email", description: "Digite seu email acima para receber o link de redefinição.", variant: "destructive" });
+                        return;
+                      }
+                      try {
+                        const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+                          redirectTo: `${window.location.origin}/reset-password`,
+                        });
+                        if (error) {
+                          toast({ title: "Erro", description: error.message, variant: "destructive" });
+                        } else {
+                          toast({ title: "Email enviado!", description: "Verifique sua caixa de entrada para redefinir sua senha." });
+                        }
+                      } catch {
+                        toast({ title: "Erro", description: "Erro inesperado. Tente novamente.", variant: "destructive" });
+                      }
+                    }}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Esqueceu sua senha?
+                  </button>
                 )}
               </div>
 
