@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,13 +6,48 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Lock, Building, Building2, Target, TrendingUp, Zap, Users, Package, ArrowRight, Star, CheckCircle2, Sparkles, MessageSquare } from "lucide-react";
+import { Search, Lock, Building, Building2, Target, TrendingUp, Zap, Users, Package, ArrowRight, Star, CheckCircle2, Sparkles, MessageSquare, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import TrialNavbar from "@/components/TrialNavbar";
 import TrialLeadCard from "@/components/TrialLeadCard";
 import { customerTypes, countries, brazilianStates } from "@/data/searchConstants";
 import StatsCard from "@/components/StatsCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+
+const TrialAdminPanel = lazy(() => import("@/components/TrialAdminPanel"));
+
+const TRIAL_ADMIN_PASSWORD = "negocix2025";
+
+const getDeviceId = (): string => {
+  let id = localStorage.getItem("negocix_device_id");
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem("negocix_device_id", id);
+  }
+  return id;
+};
+
+const trackTrialEvent = async (eventType: string, searchConfig: Record<string, any> = {}, resultsCount = 0) => {
+  try {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    await fetch(`${supabaseUrl}/rest/v1/trial_analytics`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`,
+        Prefer: "return=minimal",
+      },
+      body: JSON.stringify({
+        event_type: eventType,
+        search_config: searchConfig,
+        results_count: resultsCount,
+        device_id: getDeviceId(),
+      }),
+    });
+  } catch {}
+};
 
 const PAYMENT_URL = "https://compraseguraonline.org.ua/c/d8cd080117";
 const TRIAL_KEY = "negocix_trial_used";
@@ -80,7 +115,21 @@ const TrialSearch = () => {
   });
 
   const [showLockDialog, setShowLockDialog] = useState(false);
+  const [showAdminDialog, setShowAdminDialog] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [adminUnlocked, setAdminUnlocked] = useState(false);
+  const [adminError, setAdminError] = useState(false);
   const alreadyUsed = localStorage.getItem(TRIAL_KEY) === "true";
+
+  const handleAdminLogin = () => {
+    if (adminPassword === TRIAL_ADMIN_PASSWORD) {
+      setAdminUnlocked(true);
+      setShowAdminDialog(false);
+      setAdminError(false);
+    } else {
+      setAdminError(true);
+    }
+  };
 
   // Prevent back button from navigating away from /teste
   useEffect(() => {
@@ -207,6 +256,16 @@ const TrialSearch = () => {
         localStorage.setItem(TRIAL_KEY, "true");
         localStorage.setItem(TRIAL_RESULTS_KEY, JSON.stringify(preview));
         localStorage.setItem("negocix_trial_total", String(total));
+        
+        // Track search event
+        const region = city && state ? `${city}, ${state}` : state || city || "";
+        trackTrialEvent("search", {
+          segment: selectedCustomers.join(", "),
+          products,
+          region,
+          businessType,
+        }, total);
+        
         setStep("results");
       } else {
         toast({ title: "Nenhum resultado", description: "Tente outro segmento ou localização", variant: "destructive" });
@@ -245,7 +304,7 @@ const TrialSearch = () => {
         <Button
           size="default"
           className="w-full bg-gradient-primary hover:opacity-90 text-sm h-11 rounded-xl shadow-primary mt-1"
-          onClick={() => window.open(PAYMENT_URL, "_blank")}
+          onClick={() => { trackTrialEvent("checkout_click"); window.open(PAYMENT_URL, "_blank"); }}
         >
           <Sparkles className="mr-2 h-4 w-4" />
           Desbloquear Acesso
@@ -432,6 +491,51 @@ const TrialSearch = () => {
               </div>
             </div>
           </div>
+
+          {/* Admin access button */}
+          <div className="mt-12 flex justify-center">
+            {!adminUnlocked ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground/40 hover:text-muted-foreground/60"
+                onClick={() => setShowAdminDialog(true)}
+              >
+                <Settings className="h-3 w-3 mr-1" />
+                Painel
+              </Button>
+            ) : null}
+          </div>
+
+          {/* Admin Panel */}
+          {adminUnlocked && (
+            <div className="mt-8">
+              <Suspense fallback={<div className="flex justify-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" /></div>}>
+                <TrialAdminPanel />
+              </Suspense>
+            </div>
+          )}
+
+          {/* Admin Password Dialog */}
+          <Dialog open={showAdminDialog} onOpenChange={setShowAdminDialog}>
+            <DialogContent className="w-[90vw] max-w-xs">
+              <DialogHeader>
+                <DialogTitle className="text-base">Acesso Restrito</DialogTitle>
+                <DialogDescription className="text-sm">Digite a senha para acessar o painel.</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-3">
+                <Input
+                  type="password"
+                  placeholder="Senha"
+                  value={adminPassword}
+                  onChange={(e) => { setAdminPassword(e.target.value); setAdminError(false); }}
+                  onKeyDown={(e) => e.key === "Enter" && handleAdminLogin()}
+                />
+                {adminError && <p className="text-xs text-destructive">Senha incorreta</p>}
+                <Button className="w-full" onClick={handleAdminLogin}>Entrar</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </main>
       </div>
     );

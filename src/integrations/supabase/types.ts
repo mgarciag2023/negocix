@@ -437,6 +437,33 @@ export type Database = {
         }
         Relationships: []
       }
+      trial_analytics: {
+        Row: {
+          created_at: string
+          device_id: string | null
+          event_type: string
+          id: string
+          results_count: number | null
+          search_config: Json | null
+        }
+        Insert: {
+          created_at?: string
+          device_id?: string | null
+          event_type?: string
+          id?: string
+          results_count?: number | null
+          search_config?: Json | null
+        }
+        Update: {
+          created_at?: string
+          device_id?: string | null
+          event_type?: string
+          id?: string
+          results_count?: number | null
+          search_config?: Json | null
+        }
+        Relationships: []
+      }
       user_lead_limits: {
         Row: {
           created_at: string
