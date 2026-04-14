@@ -1,0 +1,1 @@
+UPDATE user_lead_limits SET leads_per_search = 50000, updated_at = now() WHERE id = '3b32f91c-4ef3-4ffa-b62d-68e92b1967a4';
