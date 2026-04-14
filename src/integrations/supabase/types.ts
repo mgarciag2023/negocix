@@ -75,6 +75,7 @@ export type Database = {
           porte: string | null
           qualificacao_socio: string | null
           razao_social: string | null
+          search_vector: unknown
           simples: string | null
           situacao_cadastral: string | null
           telefone_1: string | null
@@ -107,6 +108,7 @@ export type Database = {
           porte?: string | null
           qualificacao_socio?: string | null
           razao_social?: string | null
+          search_vector?: unknown
           simples?: string | null
           situacao_cadastral?: string | null
           telefone_1?: string | null
@@ -139,6 +141,7 @@ export type Database = {
           porte?: string | null
           qualificacao_socio?: string | null
           razao_social?: string | null
+          search_vector?: unknown
           simples?: string | null
           situacao_cadastral?: string | null
           telefone_1?: string | null
@@ -563,6 +566,7 @@ export type Database = {
           porte: string | null
           qualificacao_socio: string | null
           razao_social: string | null
+          search_vector: unknown
           simples: string | null
           situacao_cadastral: string | null
           telefone_1: string | null
