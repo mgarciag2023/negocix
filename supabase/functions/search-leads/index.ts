@@ -1224,6 +1224,12 @@ serve(async (req) => {
       const seenCnpj = new Set<string>();
       const filtered = allCompanies.filter((c: any) => {
         if (!isPhoneValid(c.telefone_1) && !isPhoneValid(c.telefone_2)) return false;
+        // Exclude MEIs without meaningful business name
+        const nf = (c.nome_fantasia || '').trim();
+        if (!nf || nf.length < 3 || /^\*+$/.test(nf)) {
+          const rs = (c.razao_social || '').trim();
+          if (/^\d/.test(rs)) return false;
+        }
         const cnpj = c.cnpj || '';
         if (cnpj && seenCnpj.has(cnpj)) return false;
         if (cnpj) seenCnpj.add(cnpj);
