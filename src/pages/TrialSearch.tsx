@@ -304,7 +304,7 @@ const TrialSearch = () => {
         <Button
           size="default"
           className="w-full bg-gradient-primary hover:opacity-90 text-sm h-11 rounded-xl shadow-primary mt-1"
-          onClick={() => window.open(PAYMENT_URL, "_blank")}
+          onClick={() => { trackTrialEvent("checkout_click"); window.open(PAYMENT_URL, "_blank"); }}
         >
           <Sparkles className="mr-2 h-4 w-4" />
           Desbloquear Acesso
