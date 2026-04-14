@@ -45,6 +45,25 @@ const TrialLeadCard = ({
   onRequestUnlock,
 }: TrialLeadCardProps) => {
 
+  // Format text: Title Case for names/addresses, lowercase for emails
+  const toTitleCase = (str: string) => {
+    if (!str) return str;
+    const stateAbbreviations = /\b([A-Z]{2})\b/g;
+    const states: string[] = [];
+    str.replace(stateAbbreviations, (match) => { states.push(match); return match; });
+    const result = str.toLowerCase().replace(/(?:^|\s|,\s*)\S/g, (char) => char.toUpperCase());
+    // Restore state abbreviations (SP, RJ, etc.)
+    return result.replace(/\b[A-Z][a-z]\b/g, (match) => {
+      const upper = match.toUpperCase();
+      return states.includes(upper) ? upper : match;
+    });
+  };
+
+  const formattedName = toTitleCase(name);
+  const formattedAddress = address ? toTitleCase(address) : address;
+  const formattedEmail = email ? email.toLowerCase() : email;
+  const formattedResponsible = responsible ? toTitleCase(responsible) : responsible;
+
   const handleUnlock = () => {
     if (onRequestUnlock) onRequestUnlock();
   };
