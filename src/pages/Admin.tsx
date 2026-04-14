@@ -504,7 +504,17 @@ const Admin = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {profiles.map((profile) => (
+                {profiles
+                  .filter((p) => {
+                    if (!searchQuery.trim()) return true;
+                    const q = searchQuery.toLowerCase();
+                    return (
+                      p.email.toLowerCase().includes(q) ||
+                      (p.full_name && p.full_name.toLowerCase().includes(q)) ||
+                      (p.phone && p.phone.includes(q))
+                    );
+                  })
+                  .map((profile) => (
                     <TableRow key={profile.id}>
                       <TableCell className="font-medium">{profile.email}</TableCell>
                       <TableCell>{profile.full_name || <span className="text-muted-foreground text-sm">—</span>}</TableCell>
