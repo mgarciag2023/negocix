@@ -758,41 +758,6 @@ const TrialSearch = () => {
                   </div>
                 </div>
 
-                {/* Revenue Range */}
-                <div>
-                  <Label className="text-base font-semibold mb-4 block" translate="no">Faixa de faturamento:</Label>
-                  <RadioGroup value={revenueRange} onValueChange={setRevenueRange}>
-                    <div className="flex items-center space-x-2" translate="no"><RadioGroupItem value="micro" id="trial-micro" /><Label htmlFor="trial-micro" className="font-normal cursor-pointer" translate="no">Microempresa (até R$ 360 mil/ano)</Label></div>
-                    <div className="flex items-center space-x-2" translate="no"><RadioGroupItem value="small-business" id="trial-small-business" /><Label htmlFor="trial-small-business" className="font-normal cursor-pointer" translate="no">Pequena empresa (R$ 360 mil - R$ 4,8 milhões/ano)</Label></div>
-                    <div className="flex items-center space-x-2" translate="no"><RadioGroupItem value="medium-business" id="trial-medium-business" /><Label htmlFor="trial-medium-business" className="font-normal cursor-pointer" translate="no">Média empresa (R$ 4,8M - R$ 300M/ano)</Label></div>
-                    <div className="flex items-center space-x-2" translate="no"><RadioGroupItem value="large-business" id="trial-large-business" /><Label htmlFor="trial-large-business" className="font-normal cursor-pointer" translate="no">Grande empresa (+R$ 300M/ano)</Label></div>
-                    <div className="flex items-center space-x-2" translate="no"><RadioGroupItem value="all" id="trial-all-revenue" /><Label htmlFor="trial-all-revenue" className="font-normal cursor-pointer" translate="no">Todas as faixas</Label></div>
-                  </RadioGroup>
-                </div>
-
-                {/* Digital Presence */}
-                <div>
-                  <Label className="text-base font-semibold mb-4 block" translate="no">Presença Digital (Site):</Label>
-                  <RadioGroup value={digitalPresence} onValueChange={setDigitalPresence}>
-                    <div className="flex items-center space-x-2" translate="no"><RadioGroupItem value="no-site" id="trial-no-site" /><Label htmlFor="trial-no-site" className="font-normal cursor-pointer" translate="no">Não possui site</Label></div>
-                    <div className="flex items-center space-x-2" translate="no"><RadioGroupItem value="basic-site" id="trial-basic-site" /><Label htmlFor="trial-basic-site" className="font-normal cursor-pointer" translate="no">Possui site básico / institucional</Label></div>
-                    <div className="flex items-center space-x-2" translate="no"><RadioGroupItem value="structured-site" id="trial-structured-site" /><Label htmlFor="trial-structured-site" className="font-normal cursor-pointer" translate="no">Possui site estruturado</Label></div>
-                    <div className="flex items-center space-x-2" translate="no"><RadioGroupItem value="all" id="trial-all-presence" /><Label htmlFor="trial-all-presence" className="font-normal cursor-pointer" translate="no">Todos</Label></div>
-                  </RadioGroup>
-                  <p className="text-xs text-muted-foreground mt-2">Filtre empresas pela presença de site institucional</p>
-                </div>
-
-                {/* Digital Activity */}
-                <div>
-                  <Label className="text-base font-semibold mb-4 block" translate="no">Nível de Atividade Digital:</Label>
-                  <RadioGroup value={digitalActivity} onValueChange={setDigitalActivity}>
-                    <div className="flex items-center space-x-2" translate="no"><RadioGroupItem value="low" id="trial-low-activity" /><Label htmlFor="trial-low-activity" className="font-normal cursor-pointer" translate="no">Baixa ou inexistente</Label></div>
-                    <div className="flex items-center space-x-2" translate="no"><RadioGroupItem value="basic" id="trial-basic-activity" /><Label htmlFor="trial-basic-activity" className="font-normal cursor-pointer" translate="no">Básica</Label></div>
-                    <div className="flex items-center space-x-2" translate="no"><RadioGroupItem value="active" id="trial-active-activity" /><Label htmlFor="trial-active-activity" className="font-normal cursor-pointer" translate="no">Ativa</Label></div>
-                    <div className="flex items-center space-x-2" translate="no"><RadioGroupItem value="all" id="trial-all-activity" /><Label htmlFor="trial-all-activity" className="font-normal cursor-pointer" translate="no">Todos os níveis</Label></div>
-                  </RadioGroup>
-                  <p className="text-xs text-muted-foreground mt-2">Filtre pelo nível de engajamento digital da empresa</p>
-                </div>
 
                 {/* Submit */}
                 <Button type="submit" className="w-full gap-2 text-base py-6" size="lg" disabled={alreadyUsed}>
