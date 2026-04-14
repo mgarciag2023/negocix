@@ -1561,26 +1561,14 @@ serve(async (req) => {
         if (!seg.includes('distribuidor') && !seg.includes('distribuidora')) return true;
 
         const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
-        const cnae = normalizeText(c.descricao_cnae || '').toLowerCase();
         const rs = normalizeText(c.razao_social || '').toLowerCase();
-        const combined = `${nf} ${cnae} ${rs}`;
+        const combined = `${nf} ${rs}`;
 
         // Step 1: Must be a distributor/atacadista
         const isDistributor = distributorKeywords.some(kw => combined.includes(kw));
         if (!isDistributor) return false;
 
-        // Step 2: Reject generic CNAE "sem predominância de alimentos" when searching food segments
-        if (cnae.includes('sem predominancia de alimentos') || cnae.includes('sem predominancia de')) {
-          // Only keep if the company NAME explicitly mentions the product
-          const productKws = segmentProductKeywords[seg];
-          if (productKws && productKws.length > 0) {
-            const nameAndRs = `${nf} ${rs}`;
-            return productKws.some(pk => nameAndRs.includes(pk));
-          }
-          return false;
-        }
-
-        // Step 3: Must match the product segment in name, CNAE, or razao_social
+        // Step 2: Must match the product segment in name or razao_social
         const productKws = segmentProductKeywords[seg];
         if (productKws && productKws.length > 0) {
           return productKws.some(pk => combined.includes(pk));
@@ -1646,9 +1634,8 @@ serve(async (req) => {
         if (!isIndustrySeg) return true;
 
         const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
-        const cnae = normalizeText(c.descricao_cnae || '').toLowerCase();
         const rs = normalizeText(c.razao_social || '').toLowerCase();
-        const combined = `${nf} ${cnae} ${rs}`;
+        const combined = `${nf} ${rs}`;
 
         // Must be an actual industry/factory
         const isIndustry = industryKeywords.some(kw => combined.includes(kw));
