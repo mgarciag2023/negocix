@@ -32,13 +32,19 @@ export default function TrialAdminPanel() {
         .order("created_at", { ascending: false })
         .limit(500);
 
-      if (!error && data) {
-        setEvents(data as unknown as TrialEvent[]);
+      if (error) {
+        console.error("Error fetching trial analytics:", error);
+        setEvents([]);
+        return;
       }
+
+      setEvents((data ?? []) as unknown as TrialEvent[]);
     } catch (e) {
       console.error("Error fetching trial analytics:", e);
+      setEvents([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   if (loading) {
