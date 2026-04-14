@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users, Settings, Ban, CheckCircle, Loader2, Save, Target, History, KeyRound, Trash2, Search } from "lucide-react";
+import { Shield, Users, Ban, CheckCircle, Loader2, Save, KeyRound, Trash2, Search } from "lucide-react";
 import SearchLogsTable from "@/components/admin/SearchLogsTable";
 import {
   Table,
