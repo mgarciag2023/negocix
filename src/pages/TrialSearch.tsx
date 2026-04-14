@@ -115,7 +115,21 @@ const TrialSearch = () => {
   });
 
   const [showLockDialog, setShowLockDialog] = useState(false);
+  const [showAdminDialog, setShowAdminDialog] = useState(false);
+  const [adminPassword, setAdminPassword] = useState("");
+  const [adminUnlocked, setAdminUnlocked] = useState(false);
+  const [adminError, setAdminError] = useState(false);
   const alreadyUsed = localStorage.getItem(TRIAL_KEY) === "true";
+
+  const handleAdminLogin = () => {
+    if (adminPassword === TRIAL_ADMIN_PASSWORD) {
+      setAdminUnlocked(true);
+      setShowAdminDialog(false);
+      setAdminError(false);
+    } else {
+      setAdminError(true);
+    }
+  };
 
   // Prevent back button from navigating away from /teste
   useEffect(() => {
