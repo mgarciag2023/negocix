@@ -45,6 +45,25 @@ const TrialLeadCard = ({
   onRequestUnlock,
 }: TrialLeadCardProps) => {
 
+  // Format text: Title Case for names/addresses, lowercase for emails
+  const toTitleCase = (str: string) => {
+    if (!str) return str;
+    const stateAbbreviations = /\b([A-Z]{2})\b/g;
+    const states: string[] = [];
+    str.replace(stateAbbreviations, (match) => { states.push(match); return match; });
+    const result = str.toLowerCase().replace(/(?:^|\s|,\s*)\S/g, (char) => char.toUpperCase());
+    // Restore state abbreviations (SP, RJ, etc.)
+    return result.replace(/\b[A-Z][a-z]\b/g, (match) => {
+      const upper = match.toUpperCase();
+      return states.includes(upper) ? upper : match;
+    });
+  };
+
+  const formattedName = toTitleCase(name);
+  const formattedAddress = address ? toTitleCase(address) : address;
+  const formattedEmail = email ? email.toLowerCase() : email;
+  const formattedResponsible = responsible ? toTitleCase(responsible) : responsible;
+
   const handleUnlock = () => {
     if (onRequestUnlock) onRequestUnlock();
   };
@@ -86,11 +105,11 @@ const TrialLeadCard = ({
     <Card className="p-4 md:p-6 hover:shadow-card-hover transition-all duration-300 relative">
       <div className="flex items-start justify-between mb-4 gap-2">
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg md:text-xl font-bold text-foreground mb-1 truncate pr-8">{name}</h3>
+          <h3 className="text-lg md:text-xl font-bold text-foreground mb-1 truncate pr-8">{formattedName}</h3>
           <Badge variant="secondary" className="mb-2 text-xs">{category}</Badge>
           <div className="flex items-start text-muted-foreground text-xs md:text-sm">
             <MapPin className="h-3 w-3 md:h-4 md:w-4 mr-1 mt-0.5 flex-shrink-0" />
-            <span className="line-clamp-2">{address}</span>
+            <span className="line-clamp-2">{formattedAddress}</span>
           </div>
         </div>
         
@@ -182,9 +201,9 @@ const TrialLeadCard = ({
           <div className="flex items-center gap-2 text-xs md:text-sm">
             <Mail className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
             {isEmailBlocked ? (
-              <BlockedField>{email}</BlockedField>
+              <BlockedField>{formattedEmail}</BlockedField>
             ) : (
-              <span className="text-primary truncate">{email}</span>
+              <span className="text-primary truncate">{formattedEmail}</span>
             )}
           </div>
         )}
@@ -209,7 +228,7 @@ const TrialLeadCard = ({
         {responsible && (
           <div className="flex items-center gap-2 text-xs md:text-sm">
             <User className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
-            <span className="text-foreground truncate">{responsible}</span>
+            <span className="text-foreground truncate">{formattedResponsible}</span>
           </div>
         )}
       </div>
