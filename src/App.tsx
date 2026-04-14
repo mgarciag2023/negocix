@@ -22,6 +22,7 @@ import Admin from "./pages/Admin";
 import SearchHistory from "./pages/SearchHistory";
 import NotFound from "./pages/NotFound";
 import TrialSearch from "./pages/TrialSearch";
+import TrialAdmin from "./pages/TrialAdmin";
 
 const queryClient = new QueryClient();
 
