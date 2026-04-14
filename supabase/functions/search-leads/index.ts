@@ -1277,75 +1277,15 @@ serve(async (req) => {
       });
     }
 
-    // For industry searches, no limit - find ALL
+    // Find ALL matching results - no artificial caps
     const hasIndustrySegment = segments.some((s: string) => {
       const l = s.toLowerCase();
       return l.includes('indústria') || l.includes('industria') || l.includes('fábrica') || l.includes('fabrica');
     });
-    const MAX_LEADS = hasIndustrySegment ? 999999 : (userMaxLeads || (isStateOnly ? 6000 : 3000));
+    const MAX_LEADS = hasIndustrySegment ? 999999 : (userMaxLeads || (isStateOnly ? 50000 : 30000));
     const leadsPerSegment = Math.ceil(MAX_LEADS / segments.length);
 
     // ===== CHECK DB CACHE =====
-    const { data: cachedData } = await adminClient
-      .from("cached_search_results")
-      .select("results, results_count, created_at, expires_at, search_config")
-      .eq("cache_key", dbCacheKey)
-      .gt("expires_at", new Date().toISOString())
-      .maybeSingle();
-
-    if (cachedData && cachedData.results_count > 0) {
-      const cachedLeads = Array.isArray(cachedData.results) ? cachedData.results as any[] : [];
-      const cachedResultsCount = typeof cachedData.results_count === 'number' ? cachedData.results_count : cachedLeads.length;
-      const cachedSearchConfig = cachedData.search_config && typeof cachedData.search_config === 'object'
-        ? cachedData.search_config as Record<string, any>
-        : {};
-      const cachedMaxLeads = Number(cachedSearchConfig.maxLeads || 0);
-      const cacheLooksCapped = cachedResultsCount < MAX_LEADS && [500, 1000, 3000, 6000].includes(cachedResultsCount);
-      const cacheWasBuiltForSmallerLimit = cachedMaxLeads > 0 && cachedMaxLeads < MAX_LEADS && cachedResultsCount >= cachedMaxLeads;
-
-      if (!cacheLooksCapped && !cacheWasBuiltForSmallerLimit) {
-        console.log(`✅ DB CACHE HIT: ${cachedResultsCount} leads`);
-        return new Response(JSON.stringify({ leads: cachedLeads, fromCache: true }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      console.log(`↩️ Ignoring stale DB cache (${cachedResultsCount}/${MAX_LEADS}) and rerunning search`);
-    } else {
-      console.log('💾 DB CACHE MISS - searching local database');
-    }
-
-    // ===== QUERY LOCAL DATABASE (PARALLEL) =====
-    let allCompanies: any[] = [];
-
-    // Fetch a single segment's data with parallel page batching
-    async function fetchSegment(seg: string): Promise<any[]> {
-      const segLower = seg.toLowerCase();
-      const isIndustrySearch = segLower.includes('indústria') || segLower.includes('industria') || segLower.includes('fábrica') || segLower.includes('fabrica');
-      const maxTerms = isIndustrySearch ? 20 : 10;
-      const terms = generateSearchTerms(seg).slice(0, maxTerms);
-      console.log(`📤 Segment "${seg}" search terms (${terms.length}):`, terms);
-
-      const maxPages = isIndustrySearch ? 50 : 6;
-      const targetPerSegment = isIndustrySearch ? 50000 : Math.min(leadsPerSegment * 2, 5000);
-      const isBroadStateSearch = isStateOnly && !isIndustrySearch;
-
-      const queryPlans = [
-        {
-          label: isBroadStateSearch ? 'state-safe' : 'default',
-          termGroups: isBroadStateSearch ? chunkArray(terms, 3) : [terms],
-          pageSize: isBroadStateSearch ? 1000 : 3000,
-          parallelPages: isBroadStateSearch ? 1 : 3,
-          planMaxPages: maxPages,
-        },
-        {
-          label: 'fallback-single-term',
-          termGroups: chunkArray(terms, 1),
-          pageSize: isBroadStateSearch ? 500 : 1000,
-          parallelPages: 1,
-          planMaxPages: Math.min(maxPages, isBroadStateSearch ? 4 : 2),
-        },
-      ];
 
       let bestResults: any[] = [];
       const seenIds = new Set<string>();
