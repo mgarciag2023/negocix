@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users, Settings, Ban, CheckCircle, Loader2, Save, Target, History, KeyRound, Trash2 } from "lucide-react";
+import { Shield, Users, Settings, Ban, CheckCircle, Loader2, Save, Target, History, KeyRound, Trash2, Search } from "lucide-react";
 import SearchLogsTable from "@/components/admin/SearchLogsTable";
 import {
   Table,
@@ -78,6 +78,7 @@ const Admin = () => {
   const [newPassword, setNewPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   useEffect(() => {
     checkAdminAccess();
   }, []);
@@ -477,6 +478,15 @@ const Admin = () => {
             <CardDescription>
               Visualize e gerencie o acesso dos usuários
             </CardDescription>
+            <div className="relative mt-3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome, email ou telefone..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="rounded-md border">
@@ -494,7 +504,17 @@ const Admin = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {profiles.map((profile) => (
+                {profiles
+                  .filter((p) => {
+                    if (!searchQuery.trim()) return true;
+                    const q = searchQuery.toLowerCase();
+                    return (
+                      p.email.toLowerCase().includes(q) ||
+                      (p.full_name && p.full_name.toLowerCase().includes(q)) ||
+                      (p.phone && p.phone.includes(q))
+                    );
+                  })
+                  .map((profile) => (
                     <TableRow key={profile.id}>
                       <TableCell className="font-medium">{profile.email}</TableCell>
                       <TableCell>{profile.full_name || <span className="text-muted-foreground text-sm">—</span>}</TableCell>
