@@ -1,4 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { clearStoredAuthSession } from "@/lib/auth-session";
 import { Building2, Settings, Users, Package, Menu, LogIn, LogOut, User, Shield, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
