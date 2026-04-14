@@ -15,7 +15,6 @@ import { customerTypes, countries, brazilianStates } from "@/data/searchConstant
 import StatsCard from "@/components/StatsCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
-const TRIAL_ADMIN_PASSWORD = "negocix2025";
 
 const getDeviceId = (): string => {
   let id = localStorage.getItem("negocix_device_id");
