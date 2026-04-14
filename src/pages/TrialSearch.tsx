@@ -256,6 +256,16 @@ const TrialSearch = () => {
         localStorage.setItem(TRIAL_KEY, "true");
         localStorage.setItem(TRIAL_RESULTS_KEY, JSON.stringify(preview));
         localStorage.setItem("negocix_trial_total", String(total));
+        
+        // Track search event
+        const region = city && state ? `${city}, ${state}` : state || city || "";
+        trackTrialEvent("search", {
+          segment: selectedCustomers.join(", "),
+          products,
+          region,
+          businessType,
+        }, total);
+        
         setStep("results");
       } else {
         toast({ title: "Nenhum resultado", description: "Tente outro segmento ou localização", variant: "destructive" });
