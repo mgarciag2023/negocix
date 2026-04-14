@@ -51,12 +51,19 @@ const Navbar = () => {
   const isActive = (path: string) => location.pathname === path;
   
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.error("Sign out error:", e);
+    }
+    // Always clear session and redirect, even if signOut fails
+    clearStoredAuthSession();
+    setUser(null);
     toast({
       title: "Até logo!",
       description: "Você saiu da sua conta",
     });
-    navigate("/");
+    navigate("/auth", { replace: true });
   };
   
   const navItems = [
