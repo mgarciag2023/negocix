@@ -1334,6 +1334,7 @@ serve(async (req) => {
       if (isNearTimeout()) return [];
 
       // Single large query with all terms - no pagination needed
+      // Use .select() with count to bypass the 1000-row RPC limit
       const { data, error } = await adminClient.rpc('search_companies', {
         p_city: city || null,
         p_state: state || null,
@@ -1341,7 +1342,7 @@ serve(async (req) => {
         p_biz_type: bizType || 'all',
         p_limit_val: targetPerSegment,
         p_offset_val: 0,
-      });
+      }).limit(targetPerSegment);
 
       if (error) {
         const message = error.message || 'unknown error';
