@@ -48,6 +48,15 @@ const PAYMENT_URL = "https://compraseguraonline.org.ua/c/d8cd080117";
 const TRIAL_KEY = "negocix_trial_used";
 const TRIAL_RESULTS_KEY = "negocix_trial_results";
 
+// Whitelisted device IDs that can do unlimited trial searches
+const UNLIMITED_DEVICE_IDS = [
+  localStorage.getItem("negocix_admin_unlimited") === "true" ? getDeviceId() : ""
+];
+
+const isUnlimitedDevice = (): boolean => {
+  return localStorage.getItem("negocix_admin_unlimited") === "true";
+};
+
 interface Lead {
   id: string;
   name: string;
