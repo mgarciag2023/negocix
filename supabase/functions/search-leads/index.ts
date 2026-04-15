@@ -1319,7 +1319,9 @@ serve(async (req) => {
       });
 
       const leads = trialRelevant.slice(0, MAX_LEADS).map((c: any, i: number) => {
-        const rawName = c.nome_fantasia || c.razao_social || 'Empresa';
+        const nfTrial = (c.nome_fantasia || '').trim();
+        const isWeirdTrial = !nfTrial || /^\*+$/.test(nfTrial) || /^[^a-zA-Z0-9À-ÿ\s]{2,}/.test(nfTrial) || /[@#*]{2,}/.test(nfTrial) || !/[a-zA-ZÀ-ÿ]{2,}/.test(nfTrial);
+        const rawName = isWeirdTrial ? (c.razao_social || 'Empresa') : nfTrial;
         const phone = c.telefone_1 || c.telefone_2 || '';
         const phoneInfo = validatePhone(phone);
         const matchScore = calculateMatchScore(c);
@@ -1819,8 +1821,10 @@ serve(async (req) => {
     let leads = allCompanies.map((c: any, index: number) => {
       const phone1 = isPhoneValid(c.telefone_1) ? c.telefone_1 : (c.telefone_2 || '');
       const phoneValidation = validatePhone(phone1);
-      // Format name: title case, filter out asterisks-only names
-      let rawName = c.nome_fantasia && c.nome_fantasia.trim() !== '' && !(/^\*+$/.test(c.nome_fantasia.trim())) ? c.nome_fantasia : c.razao_social || 'Empresa';
+      // Format name: title case, filter out weird names (symbols, @, asterisks)
+      const nfRaw = (c.nome_fantasia || '').trim();
+      const isWeirdName = !nfRaw || /^\*+$/.test(nfRaw) || /^[^a-zA-Z0-9À-ÿ\s]{2,}/.test(nfRaw) || /[@#*]{2,}/.test(nfRaw) || !/[a-zA-ZÀ-ÿ]{2,}/.test(nfRaw);
+      let rawName = isWeirdName ? (c.razao_social || 'Empresa') : nfRaw;
       // Convert from ALL CAPS to Title Case
       const name = rawName.replace(/[^\s]+/g, (w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
       const addressParts = [c.endereco, c.bairro, c.cidade, c.estado, c.cep].filter(Boolean);
