@@ -1319,7 +1319,9 @@ serve(async (req) => {
       });
 
       const leads = trialRelevant.slice(0, MAX_LEADS).map((c: any, i: number) => {
-        const rawName = c.nome_fantasia || c.razao_social || 'Empresa';
+        const nfTrial = (c.nome_fantasia || '').trim();
+        const isWeirdTrial = !nfTrial || /^\*+$/.test(nfTrial) || /^[^a-zA-Z0-9À-ÿ\s]{2,}/.test(nfTrial) || /[@#*]{2,}/.test(nfTrial) || !/[a-zA-ZÀ-ÿ]{2,}/.test(nfTrial);
+        const rawName = isWeirdTrial ? (c.razao_social || 'Empresa') : nfTrial;
         const phone = c.telefone_1 || c.telefone_2 || '';
         const phoneInfo = validatePhone(phone);
         const matchScore = calculateMatchScore(c);
