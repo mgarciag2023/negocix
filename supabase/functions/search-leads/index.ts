@@ -881,6 +881,27 @@ function generateSearchTerms(segment: string): string[] {
 
     // ===== CENTRAL CEASA =====
     'central de abastecimento (ceasa)': ['ceasa', 'central de abastecimento', 'hortifruti atacado'],
+
+    // ===== CATEGORIAS COMPLEMENTARES =====
+    'choperias': ['choperia', 'chopp', 'chope', 'bar de chopp'],
+    'distribuidoras de frios': ['distribuidora de frios', 'frios e embutidos', 'frios atacado', 'atacadista de frios'],
+    'distribuidoras de laticínios': ['distribuidora de laticinios', 'laticinios atacado', 'atacadista de laticinios'],
+    'distribuidoras de pescados': ['distribuidora de pescados', 'pescado atacado', 'frutos do mar atacado', 'peixe atacado'],
+    'distribuidoras de chocolates': ['distribuidora de chocolates', 'chocolates atacado', 'chocolate atacado'],
+    'distribuidoras de cosméticos': ['distribuidora de cosmeticos', 'cosmeticos atacado', 'atacadista de cosmeticos'],
+    'distribuidoras de perfumes': ['distribuidora de perfumes', 'perfumes atacado', 'atacadista de perfumes'],
+    'distribuidoras de higiene e limpeza': ['distribuidora de higiene', 'limpeza atacado', 'produtos de limpeza atacado', 'higiene e limpeza'],
+    'distribuidoras de material de construção': ['distribuidora de material de construcao', 'material de construcao atacado', 'atacadista de construcao'],
+    'distribuidoras de ferragens': ['distribuidora de ferragens', 'ferragens atacado', 'parafusos atacado'],
+    'distribuidoras de combustíveis': ['distribuidora de combustiveis', 'combustiveis', 'posto de combustivel', 'gasolina atacado'],
+    'distribuidoras de epi': ['distribuidora de epi', 'epi atacado', 'equipamento de protecao atacado'],
+    'distribuidoras de material de escritório': ['distribuidora de material de escritorio', 'papelaria atacado', 'material de escritorio'],
+    'distribuidoras de equipamentos médicos': ['distribuidora de equipamentos medicos', 'equipamentos medicos', 'aparelhos medicos'],
+    'distribuidoras de utilidades domésticas': ['distribuidora de utilidades domesticas', 'utilidades domesticas atacado', 'utensilios atacado'],
+    'distribuidoras de madeiras': ['distribuidora de madeiras', 'madeireira', 'madeira atacado', 'deposito de madeira'],
+    'distribuidoras de material elétrico': ['distribuidora de material eletrico', 'material eletrico atacado', 'eletrica atacado'],
+    'distribuidoras de papel': ['distribuidora de papel', 'papel atacado', 'papelao atacado'],
+    'empresas de manutenção industrial': ['manutencao industrial', 'manutencao de maquinas', 'manutencao preventiva', 'manutencao corretiva'],
   };
 
   let searchTerms = categoryTerms[term] || null;
