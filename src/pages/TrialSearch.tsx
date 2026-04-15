@@ -186,11 +186,20 @@ const TrialSearch = () => {
   };
 
   const handleCustomerToggle = (customer: string) => {
-    setSelectedCustomers(prev =>
-      prev.includes(customer)
-        ? prev.filter(c => c !== customer)
-        : [...prev, customer]
-    );
+    setSelectedCustomers(prev => {
+      if (prev.includes(customer)) {
+        return prev.filter(c => c !== customer);
+      }
+      if (prev.length >= 1) {
+        toast({
+          title: "🔒 Recurso exclusivo",
+          description: "Seleção múltipla disponível apenas no acesso completo. Desbloqueie agora!",
+          variant: "destructive",
+        });
+        return prev;
+      }
+      return [customer];
+    });
   };
 
   const handleLockedClick = () => {
@@ -568,7 +577,7 @@ const TrialSearch = () => {
                 {/* Customer Types (Segments) */}
                 <div>
                   <Label className="text-base font-semibold mb-2 block" translate="no">
-                    Para quem você vende: * <span className="text-sm font-normal text-muted-foreground">({selectedCustomers.length} selecionados)</span>
+                    Para quem você vende: * <span className="text-sm font-normal text-muted-foreground">({selectedCustomers.length}/1 — <Lock className="inline h-3 w-3" /> múltiplos no acesso completo)</span>
                   </Label>
                   <Input
                     placeholder="Buscar segmento..."
