@@ -132,7 +132,7 @@ const TrialSearch = () => {
   });
 
   const [showLockDialog, setShowLockDialog] = useState(false);
-  const alreadyUsed = localStorage.getItem(TRIAL_KEY) === "true";
+  const alreadyUsed = !isUnlimitedDevice() && localStorage.getItem(TRIAL_KEY) === "true";
 
   // Track page view and time on page
   useEffect(() => {
