@@ -48,6 +48,15 @@ const PAYMENT_URL = "https://compraseguraonline.org.ua/c/d8cd080117";
 const TRIAL_KEY = "negocix_trial_used";
 const TRIAL_RESULTS_KEY = "negocix_trial_results";
 
+// Whitelisted device IDs that can do unlimited trial searches
+const UNLIMITED_DEVICE_IDS = [
+  localStorage.getItem("negocix_admin_unlimited") === "true" ? getDeviceId() : ""
+];
+
+const isUnlimitedDevice = (): boolean => {
+  return localStorage.getItem("negocix_admin_unlimited") === "true";
+};
+
 interface Lead {
   id: string;
   name: string;
@@ -73,6 +82,7 @@ const TrialSearch = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [step, setStep] = useState<TrialStep>(() => {
+    if (isUnlimitedDevice()) return "home";
     const saved = localStorage.getItem(TRIAL_RESULTS_KEY);
     if (saved) return "results";
     if (localStorage.getItem(TRIAL_KEY)) return "results";
@@ -123,7 +133,7 @@ const TrialSearch = () => {
   });
 
   const [showLockDialog, setShowLockDialog] = useState(false);
-  const alreadyUsed = localStorage.getItem(TRIAL_KEY) === "true";
+  const alreadyUsed = !isUnlimitedDevice() && localStorage.getItem(TRIAL_KEY) === "true";
 
   // Track page view and time on page
   useEffect(() => {
@@ -281,7 +291,9 @@ const TrialSearch = () => {
         const preview = filteredLeads.slice(0, 6);
         setLeads(preview);
         setTotalFound(inflatedTotal);
-        localStorage.setItem(TRIAL_KEY, "true");
+        if (!isUnlimitedDevice()) {
+          localStorage.setItem(TRIAL_KEY, "true");
+        }
         localStorage.setItem(TRIAL_RESULTS_KEY, JSON.stringify(preview));
         localStorage.setItem("negocix_trial_total", String(inflatedTotal));
         localStorage.setItem("negocix_trial_inflated", "true");
