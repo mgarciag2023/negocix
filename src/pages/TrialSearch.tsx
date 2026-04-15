@@ -325,16 +325,14 @@ const TrialSearch = () => {
     </Dialog>
   );
 
-  const renderAdminButton = (wrapperClassName = "pt-2") => (
+  const renderAdminDot = (wrapperClassName = "pt-2") => (
     <div className={`flex justify-center ${wrapperClassName}`}>
       <button
         type="button"
         onClick={() => navigate("/teste/admin")}
-        className="px-5 py-2 rounded-full border border-border bg-card text-sm font-medium text-foreground shadow-sm hover:bg-muted transition-colors"
+        className="w-3 h-3 rounded-full bg-blue-900 hover:bg-blue-700 transition-colors cursor-pointer"
         aria-label="Abrir painel admin"
-      >
-        Painel admin
-      </button>
+      />
     </div>
   );
 
