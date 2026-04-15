@@ -510,7 +510,7 @@ const TrialSearch = () => {
             </div>
           </div>
 
-          {renderAdminButton("pt-6")}
+          {renderAdminDot("pt-6")}
 
         </main>
       </div>
@@ -706,7 +706,7 @@ const TrialSearch = () => {
                   </div>
                 )}
 
-                {renderAdminButton()}
+                {renderAdminDot()}
               </div>
             </Card>
           </form>
