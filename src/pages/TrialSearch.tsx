@@ -499,16 +499,6 @@ const TrialSearch = () => {
             </div>
           </div>
 
-          {/* Discrete admin button */}
-          <div className="mt-16 mb-4 flex justify-center">
-            <button
-              onClick={() => navigate("/teste/admin")}
-              className="px-5 py-2 rounded-full border border-border bg-card text-sm font-medium text-foreground shadow-sm hover:bg-muted transition-colors"
-              aria-label="Abrir painel admin"
-            >
-              Painel admin
-            </button>
-          </div>
         </main>
       </div>
     );
@@ -702,6 +692,17 @@ const TrialSearch = () => {
                     </Button>
                   </div>
                 )}
+
+                <div className="flex justify-center pt-2">
+                  <button
+                    type="button"
+                    onClick={() => navigate("/teste/admin")}
+                    className="px-5 py-2 rounded-full border border-border bg-card text-sm font-medium text-foreground shadow-sm hover:bg-muted transition-colors"
+                    aria-label="Abrir painel admin"
+                  >
+                    Painel admin
+                  </button>
+                </div>
               </div>
             </Card>
           </form>
