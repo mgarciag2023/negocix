@@ -235,8 +235,11 @@ const Admin = () => {
           </div>
         </div>
 
+        {/* Analytics */}
+        <AdminAnalytics />
+
         {/* Stats Card */}
-        <Card>
+        <Card className="mt-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
@@ -261,6 +264,11 @@ const Admin = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Search Logs */}
+        <div className="mt-6">
+          <SearchLogsTable />
+        </div>
 
         {/* Users Table */}
         <Card className="mt-6">
@@ -457,16 +465,6 @@ const Admin = () => {
             </div>
           </CardContent>
         </Card>
-
-        {/* Analytics */}
-        <div className="mt-6">
-          <AdminAnalytics />
-        </div>
-
-        {/* Search Logs */}
-        <div className="mt-6">
-          <SearchLogsTable />
-        </div>
 
 
         {/* Password Reset Dialog */}
