@@ -560,7 +560,19 @@ const TrialSearch = () => {
             <Card className="p-4 md:p-8 shadow-card">
               <div className="space-y-6 md:space-y-8">
 
-                {/* Products field removed - not used by search engine */}
+                {/* Products */}
+                <div>
+                  <Label htmlFor="products" className="text-base font-semibold" translate="no">Produtos específicos que vendo: *</Label>
+                  <Input
+                    id="products"
+                    value={products}
+                    onChange={(e) => setProducts(e.target.value)}
+                    placeholder='Ex: "Refrigerantes, sucos, energéticos"'
+                    className="mt-2"
+                    translate="no"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Descreva os produtos ou serviços que você oferece</p>
+                </div>
 
                 {/* Customer Types (Segments) */}
                 <div>
