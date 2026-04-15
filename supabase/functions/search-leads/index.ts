@@ -344,6 +344,12 @@ function generateSearchTerms(segment: string): string[] {
     'editoras': ['editora', 'editorial', 'publicacao'],
     'cartonagem': ['cartonagem', 'caixas de papelao', 'embalagens de papelao'],
 
+    // ===== TÊXTIL E MALHARIAS =====
+    'malharias': ['malharia', 'malha', 'malhacao', 'tricot', 'trico', 'confeccao de malha', 'malhas', 'tecido de malha', 'industria de malha'],
+    'ateliês de costura': ['atelie de costura', 'atelie', 'costura', 'costureira', 'alfaiataria', 'alta costura'],
+    'lojas de aviamentos': ['aviamentos', 'armarinho', 'aviamento', 'botoes', 'linhas', 'tecidos'],
+    'fábricas de uniformes': ['fabrica de uniformes', 'uniformes', 'confeccao de uniformes', 'uniformes profissionais'],
+
     // ===== METALURGIA E SIDERURGIA =====
     'metalúrgicas': ['metalurgica', 'metalurgia', 'fundicao', 'usinagem', 'caldeiraria', 'serralheria'],
     'siderúrgicas': ['siderurgica', 'siderurgia', 'aco', 'ferro gusa', 'laminacao'],

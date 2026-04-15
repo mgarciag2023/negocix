@@ -207,8 +207,8 @@ const TrialSearch = () => {
   };
 
   const handleSearch = async () => {
-    if (!products || selectedCustomers.length === 0 || (!state && !city)) {
-      toast({ title: "Campos obrigatórios", description: "Preencha pelo menos produto, segmento e estado ou cidade", variant: "destructive" });
+    if (selectedCustomers.length === 0 || (!state && !city)) {
+      toast({ title: "Campos obrigatórios", description: "Preencha pelo menos segmento e estado ou cidade", variant: "destructive" });
       return;
     }
 
@@ -560,19 +560,7 @@ const TrialSearch = () => {
             <Card className="p-4 md:p-8 shadow-card">
               <div className="space-y-6 md:space-y-8">
 
-                {/* Products */}
-                <div>
-                  <Label htmlFor="products" className="text-base font-semibold" translate="no">Produtos específicos que vendo: *</Label>
-                  <Input
-                    id="products"
-                    value={products}
-                    onChange={(e) => setProducts(e.target.value)}
-                    placeholder='Ex: "Refrigerantes, sucos, energéticos"'
-                    className="mt-2"
-                    translate="no"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">Descreva os produtos ou serviços que você oferece</p>
-                </div>
+                {/* Products field removed - not used by search engine */}
 
                 {/* Customer Types (Segments) */}
                 <div>
