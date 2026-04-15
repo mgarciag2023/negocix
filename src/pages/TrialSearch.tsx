@@ -277,13 +277,16 @@ const TrialSearch = () => {
         localStorage.setItem("negocix_trial_total", String(inflatedTotal));
         localStorage.setItem("negocix_trial_inflated", "true");
         
-        // Track search event
+        // Track search event with full details
         const region = city && state ? `${city}, ${state}` : state || city || "";
         trackTrialEvent("search", {
           segment: selectedCustomers.join(", "),
           products,
           region,
           businessType,
+          realCount: total,
+          inflatedCount: inflatedTotal,
+          previewCount: preview.length,
         }, total);
         
         setStep("results");
