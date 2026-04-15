@@ -1334,7 +1334,7 @@ serve(async (req) => {
           hasWhatsApp: phoneInfo.isWhatsApp,
           cnpj: c.cnpj || null,
           ...sizeInfo,
-          openedDate: formatTimeSinceOpening(c.data_abertura),
+          openedDate: c.data_abertura || '',
           responsible: c.nome_socio || 'Gerente',
         };
       });
@@ -1836,7 +1836,7 @@ serve(async (req) => {
         employeeCount,
         companySize,
         revenue,
-        openedDate: formatTimeSinceOpening(c.data_abertura),
+        openedDate: c.data_abertura || '',
         reasons,
         isMatriz,
         digitalPresence: 'unknown',
