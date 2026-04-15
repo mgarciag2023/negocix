@@ -503,9 +503,11 @@ const TrialSearch = () => {
           <div className="mt-16 mb-4 flex justify-center">
             <button
               onClick={() => navigate("/teste/admin")}
-              className="w-3 h-3 rounded-full bg-primary/30 hover:bg-primary/60 transition-colors"
+              className="px-4 py-1.5 rounded-full text-xs text-muted-foreground/40 hover:text-muted-foreground/70 hover:bg-muted/30 transition-colors"
               aria-label="Admin"
-            />
+            >
+              •••
+            </button>
           </div>
         </main>
       </div>
