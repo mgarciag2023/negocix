@@ -1817,7 +1817,7 @@ serve(async (req) => {
         employeeCount,
         companySize,
         revenue,
-        openedDate: c.data_abertura || '',
+        openedDate: formatTimeSinceOpening(c.data_abertura),
         reasons,
         isMatriz,
         digitalPresence: 'unknown',
