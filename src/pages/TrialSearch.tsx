@@ -106,7 +106,19 @@ const TrialSearch = () => {
   const [totalFound, setTotalFound] = useState(() => {
     try {
       const saved = localStorage.getItem("negocix_trial_total");
-      return saved ? parseInt(saved) : 0;
+      if (saved) {
+        const val = parseInt(saved);
+        // Check if inflation was already applied (flag)
+        const inflated = localStorage.getItem("negocix_trial_inflated");
+        if (!inflated && val > 0) {
+          const newVal = Math.ceil(val * 1.30);
+          localStorage.setItem("negocix_trial_total", String(newVal));
+          localStorage.setItem("negocix_trial_inflated", "true");
+          return newVal;
+        }
+        return val;
+      }
+      return 0;
     } catch { return 0; }
   });
 
