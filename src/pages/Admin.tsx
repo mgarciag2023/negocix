@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Shield, Users, Ban, CheckCircle, Loader2, Save, KeyRound, Trash2, Search } from "lucide-react";
 import SearchLogsTable from "@/components/admin/SearchLogsTable";
+import AdminAnalytics from "@/components/admin/AdminAnalytics";
 import {
   Table,
   TableBody,
@@ -456,6 +457,11 @@ const Admin = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Analytics */}
+        <div className="mt-6">
+          <AdminAnalytics />
+        </div>
 
         {/* Search Logs */}
         <div className="mt-6">
