@@ -290,7 +290,9 @@ const TrialSearch = () => {
         const preview = filteredLeads.slice(0, 6);
         setLeads(preview);
         setTotalFound(inflatedTotal);
-        localStorage.setItem(TRIAL_KEY, "true");
+        if (!isUnlimitedDevice()) {
+          localStorage.setItem(TRIAL_KEY, "true");
+        }
         localStorage.setItem(TRIAL_RESULTS_KEY, JSON.stringify(preview));
         localStorage.setItem("negocix_trial_total", String(inflatedTotal));
         localStorage.setItem("negocix_trial_inflated", "true");
