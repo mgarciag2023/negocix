@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Loader2, CalendarIcon, BarChart3, Users, Search, MapPin, TrendingUp, Clock } from "lucide-react";
+import { Loader2, CalendarIcon, BarChart3, Users, Search, MapPin, TrendingUp, Clock, Wifi } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -43,10 +43,30 @@ export default function AdminAnalytics() {
   const [metrics, setMetrics] = useState<DayMetrics | null>(null);
   const [loading, setLoading] = useState(false);
   const [loginsByDay, setLoginsByDay] = useState<number>(0);
+  const [activeNow, setActiveNow] = useState<string[]>([]);
 
   useEffect(() => {
     fetchMetrics(selectedDate);
   }, [selectedDate]);
+
+  // Poll active users every 30s
+  useEffect(() => {
+    fetchActiveUsers();
+    const interval = setInterval(fetchActiveUsers, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchActiveUsers = async () => {
+    const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    const { data } = await supabase
+      .from("search_logs")
+      .select("user_email")
+      .gte("created_at", fifteenMinAgo);
+    if (data) {
+      const unique = [...new Set(data.map((d) => d.user_email))];
+      setActiveNow(unique);
+    }
+  };
 
   const fetchMetrics = async (date: Date) => {
     setLoading(true);
@@ -137,6 +157,22 @@ export default function AdminAnalytics() {
 
   return (
     <Card>
+      {/* Active Now Banner */}
+      <div className="p-4 rounded-lg border border-primary/30 bg-primary/5 flex items-center gap-3 mb-4">
+        <div className="relative">
+          <Wifi className="h-5 w-5 text-primary" />
+          <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse" />
+        </div>
+        <div>
+          <p className="font-semibold text-sm">
+            {activeNow.length} usuário{activeNow.length !== 1 ? "s" : ""} ativo{activeNow.length !== 1 ? "s" : ""} agora
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {activeNow.length > 0 ? activeNow.join(", ") : "Nenhuma atividade nos últimos 15 min"}
+          </p>
+        </div>
+      </div>
+
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <BarChart3 className="h-5 w-5" />
