@@ -115,11 +115,26 @@ function DeviceRow({ session }: { session: DeviceSession }) {
                     {new Date(ev.created_at).toLocaleString("pt-BR")}
                   </span>
                   {ev.event_type === "search" && (
-                    <>
-                      <span className="font-medium">{ev.search_config?.segment || "—"}</span>
-                      <span className="text-muted-foreground">em {ev.search_config?.region || "—"}</span>
-                      <Badge variant="outline" className="text-[9px]">{ev.results_count} resultados</Badge>
-                    </>
+                    <div className="flex flex-col gap-0.5 ml-1">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="font-medium">{ev.search_config?.products || "—"}</span>
+                        <span className="text-muted-foreground">→</span>
+                        <span className="font-medium">{ev.search_config?.segment || "—"}</span>
+                        <span className="text-muted-foreground">em</span>
+                        <span className="font-semibold">{ev.search_config?.region || "—"}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[10px]">
+                        <Badge variant="outline" className="text-[9px]">
+                          🔍 {ev.search_config?.realCount ?? ev.results_count ?? "?"} encontrados
+                        </Badge>
+                        <Badge variant="outline" className="text-[9px]">
+                          📊 {ev.search_config?.inflatedCount ?? "?"} exibido como total
+                        </Badge>
+                        <Badge variant="outline" className="text-[9px]">
+                          👁 {ev.search_config?.previewCount ?? 6} mostrados
+                        </Badge>
+                      </div>
+                    </div>
                   )}
                   {ev.event_type === "time_on_page" && (
                     <span className="font-medium">{formatDuration(ev.search_config?.seconds || 0)}</span>
