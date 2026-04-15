@@ -325,6 +325,19 @@ const TrialSearch = () => {
     </Dialog>
   );
 
+  const renderAdminButton = (wrapperClassName = "pt-2") => (
+    <div className={`flex justify-center ${wrapperClassName}`}>
+      <button
+        type="button"
+        onClick={() => navigate("/teste/admin")}
+        className="px-5 py-2 rounded-full border border-border bg-card text-sm font-medium text-foreground shadow-sm hover:bg-muted transition-colors"
+        aria-label="Abrir painel admin"
+      >
+        Painel admin
+      </button>
+    </div>
+  );
+
   // ==================== HOME STEP ====================
   if (step === "home") {
     return (
@@ -498,6 +511,8 @@ const TrialSearch = () => {
               </div>
             </div>
           </div>
+
+          {renderAdminButton("pt-6")}
 
         </main>
       </div>
@@ -693,16 +708,7 @@ const TrialSearch = () => {
                   </div>
                 )}
 
-                <div className="flex justify-center pt-2">
-                  <button
-                    type="button"
-                    onClick={() => navigate("/teste/admin")}
-                    className="px-5 py-2 rounded-full border border-border bg-card text-sm font-medium text-foreground shadow-sm hover:bg-muted transition-colors"
-                    aria-label="Abrir painel admin"
-                  >
-                    Painel admin
-                  </button>
-                </div>
+                {renderAdminButton()}
               </div>
             </Card>
           </form>
