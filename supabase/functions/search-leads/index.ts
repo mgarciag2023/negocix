@@ -1495,10 +1495,23 @@ serve(async (req) => {
     // ===== FILTER: exclude companies without meaningful business name =====
     {
       const beforeNameFilter = allCompanies.length;
+      // Blacklisted names (exact normalized matches) - known irrelevant results
+      const BLACKLISTED_NAMES = new Set([
+        '@amigos@', 'amigos', 'a pizza', 'a pizza x',
+      ]);
       allCompanies = allCompanies.filter(c => {
         const nf = (c.nome_fantasia || '').trim();
-        if (nf && nf.length >= 3 && !/^\*+$/.test(nf)) return true;
         const rs = (c.razao_social || '').trim();
+        
+        // Check blacklist (normalized)
+        const nfNorm = nf.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+        const rsNorm = rs.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+        if (BLACKLISTED_NAMES.has(nfNorm) || BLACKLISTED_NAMES.has(rsNorm)) return false;
+        
+        // Reject names that are only special characters (e.g. @amigos@, ***) 
+        if (nf && /^[^a-zA-Z0-9À-ÿ]*$/.test(nf) && /^[^a-zA-Z0-9À-ÿ]*$/.test(rs)) return false;
+        
+        if (nf && nf.length >= 3 && !/^\*+$/.test(nf)) return true;
         if (/^\d/.test(rs)) return false;
         const hasBusinessIndicator = /\b(ltda|eireli|epp|s\.?a\.?|s\/a|me\b|micro empresa|industria|comercio|servic|loja|restaurante|bar |padaria|mercado|oficina|clinica|consultorio|distribui|fabrica|hotel|pousada|academia|escola|instituto)/i.test(rs);
         return hasBusinessIndicator;
