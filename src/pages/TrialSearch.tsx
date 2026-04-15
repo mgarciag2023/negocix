@@ -186,11 +186,20 @@ const TrialSearch = () => {
   };
 
   const handleCustomerToggle = (customer: string) => {
-    setSelectedCustomers(prev =>
-      prev.includes(customer)
-        ? prev.filter(c => c !== customer)
-        : [...prev, customer]
-    );
+    setSelectedCustomers(prev => {
+      if (prev.includes(customer)) {
+        return prev.filter(c => c !== customer);
+      }
+      if (prev.length >= 1) {
+        toast({
+          title: "🔒 Recurso exclusivo",
+          description: "Seleção múltipla disponível apenas no acesso completo. Desbloqueie agora!",
+          variant: "destructive",
+        });
+        return prev;
+      }
+      return [customer];
+    });
   };
 
   const handleLockedClick = () => {
