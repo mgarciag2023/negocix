@@ -1174,7 +1174,11 @@ function generateReasons(company: any, category: string, matchScore: number): st
 
 // ===== DB CACHE =====
 function generateDbCacheKey(segment: string, region: string): string {
-  const s = segment.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+  // Normalize and SORT segments so order doesn't matter for cache hits
+  const segments = segment.split(',').map(s => 
+    s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim()
+  ).filter(s => s.length > 0).sort();
+  const s = segments.join(',');
   const r = region.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
   return `local|${s}|${r}`;
 }
