@@ -1334,6 +1334,8 @@ serve(async (req) => {
           hasWhatsApp: phoneInfo.isWhatsApp,
           cnpj: c.cnpj || null,
           ...sizeInfo,
+          openedDate: formatTimeSinceOpening(c.data_abertura),
+          responsible: c.nome_socio || 'Gerente',
         };
       });
 
