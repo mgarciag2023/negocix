@@ -1174,7 +1174,11 @@ function generateReasons(company: any, category: string, matchScore: number): st
 
 // ===== DB CACHE =====
 function generateDbCacheKey(segment: string, region: string): string {
-  const s = segment.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
+  // Normalize and SORT segments so order doesn't matter for cache hits
+  const segments = segment.split(',').map(s => 
+    s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim()
+  ).filter(s => s.length > 0).sort();
+  const s = segments.join(',');
   const r = region.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
   return `local|${s}|${r}`;
 }
@@ -1526,19 +1530,20 @@ serve(async (req) => {
     });
     console.log(`📊 After phone dedup: ${allCompanies.length}`);
 
-    // ===== DEDUPLICATE by nome_fantasia + cidade (same name in same city) =====
-    const seenNameCity = new Set<string>();
+    // ===== DEDUPLICATE by nome_fantasia + cidade (same name in same city AND same segment) =====
+    const seenNameCitySeg = new Set<string>();
     allCompanies = allCompanies.filter(c => {
       const nf = (c.nome_fantasia || '').trim().toUpperCase();
       const cid = (c.cidade || '').trim().toUpperCase();
+      const seg = (c._segment || '').trim().toUpperCase();
       if (nf && cid) {
-        const key = `${nf}|${cid}`;
-        if (seenNameCity.has(key)) return false;
-        seenNameCity.add(key);
+        const key = `${nf}|${cid}|${seg}`;
+        if (seenNameCitySeg.has(key)) return false;
+        seenNameCitySeg.add(key);
       }
       return true;
     });
-    console.log(`📊 After name+city dedup: ${allCompanies.length}`);
+    console.log(`📊 After name+city+segment dedup: ${allCompanies.length}`);
 
     // ===== STRICT RELEVANCE FILTER FOR DISTRIBUTORS =====
     // When searching for "distribuidores/distribuidoras", ensure companies are:
