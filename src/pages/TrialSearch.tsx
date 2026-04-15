@@ -275,6 +275,7 @@ const TrialSearch = () => {
         localStorage.setItem(TRIAL_KEY, "true");
         localStorage.setItem(TRIAL_RESULTS_KEY, JSON.stringify(preview));
         localStorage.setItem("negocix_trial_total", String(inflatedTotal));
+        localStorage.setItem("negocix_trial_inflated", "true");
         
         // Track search event
         const region = city && state ? `${city}, ${state}` : state || city || "";
