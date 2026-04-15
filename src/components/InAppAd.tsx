@@ -40,11 +40,11 @@ const ADS: Ad[] = [
     icon: <Award className="h-10 w-10" />,
     accentColor: "from-amber-500 to-orange-600",
     glowColor: "shadow-amber-500/30",
-    title: "Método para Representantes Comerciais",
+    title: "Método MCV – Como Converter Contatos em Vendas",
     description:
-      "Aprenda o método completo de como aumentar suas vendas, se destacar como representante e conquistar mais clientes.",
+      "Aprenda o método completo para transformar contatos em clientes e aumentar suas vendas como representante comercial.",
     ctaLabel: "Conhecer o método",
-    ctaUrl: "#",
+    ctaUrl: "https://compraseguraonline.org.ua/c/470e4f044d",
   },
 ];
 
