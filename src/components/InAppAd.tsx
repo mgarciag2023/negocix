@@ -179,7 +179,7 @@ export default function InAppAd() {
             <div className="flex justify-center mt-5">
               <button
                 onClick={handleHideForever}
-                className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                className="text-sm text-foreground hover:text-foreground/70 transition-colors"
               >
                 Não mostrar novamente
               </button>
