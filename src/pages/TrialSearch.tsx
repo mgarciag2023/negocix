@@ -207,8 +207,8 @@ const TrialSearch = () => {
   };
 
   const handleSearch = async () => {
-    if (selectedCustomers.length === 0 || (!state && !city)) {
-      toast({ title: "Campos obrigatórios", description: "Preencha pelo menos segmento e estado ou cidade", variant: "destructive" });
+    if (!products || selectedCustomers.length === 0 || (!state && !city)) {
+      toast({ title: "Campos obrigatórios", description: "Preencha pelo menos produto, segmento e estado ou cidade", variant: "destructive" });
       return;
     }
 
