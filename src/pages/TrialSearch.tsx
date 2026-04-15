@@ -577,7 +577,7 @@ const TrialSearch = () => {
                 {/* Customer Types (Segments) */}
                 <div>
                   <Label className="text-base font-semibold mb-2 block" translate="no">
-                    Para quem você vende: * <span className="text-sm font-normal text-muted-foreground">({selectedCustomers.length} selecionados)</span>
+                    Para quem você vende: * <span className="text-sm font-normal text-muted-foreground">({selectedCustomers.length}/1 — <Lock className="inline h-3 w-3" /> múltiplos no acesso completo)</span>
                   </Label>
                   <Input
                     placeholder="Buscar segmento..."
