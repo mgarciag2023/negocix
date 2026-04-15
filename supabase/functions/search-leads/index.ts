@@ -1821,10 +1821,13 @@ serve(async (req) => {
     let leads = allCompanies.map((c: any, index: number) => {
       const phone1 = isPhoneValid(c.telefone_1) ? c.telefone_1 : (c.telefone_2 || '');
       const phoneValidation = validatePhone(phone1);
-      // Format name: title case, filter out weird names (symbols, @, asterisks)
+      // Format name: use razao_social if nome_fantasia is weird, too short, or too generic
       const nfRaw = (c.nome_fantasia || '').trim();
+      const nfWords = nfRaw.split(/\s+/).filter(Boolean);
       const isWeirdName = !nfRaw || /^\*+$/.test(nfRaw) || /^[^a-zA-Z0-9À-ÿ\s]{2,}/.test(nfRaw) || /[@#*]{2,}/.test(nfRaw) || !/[a-zA-ZÀ-ÿ]{2,}/.test(nfRaw);
-      let rawName = isWeirdName ? (c.razao_social || 'Empresa') : nfRaw;
+      const isTooShort = nfRaw.length < 5 || (nfWords.length === 1 && nfRaw.length < 8);
+      const hasRazaoSocial = c.razao_social && c.razao_social.trim().length > 3;
+      let rawName = (isWeirdName || (isTooShort && hasRazaoSocial)) ? (c.razao_social || 'Empresa') : nfRaw;
       // Convert from ALL CAPS to Title Case
       const name = rawName.replace(/[^\s]+/g, (w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
       const addressParts = [c.endereco, c.bairro, c.cidade, c.estado, c.cep].filter(Boolean);
