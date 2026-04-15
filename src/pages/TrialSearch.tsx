@@ -106,7 +106,19 @@ const TrialSearch = () => {
   const [totalFound, setTotalFound] = useState(() => {
     try {
       const saved = localStorage.getItem("negocix_trial_total");
-      return saved ? parseInt(saved) : 0;
+      if (saved) {
+        const val = parseInt(saved);
+        // Check if inflation was already applied (flag)
+        const inflated = localStorage.getItem("negocix_trial_inflated");
+        if (!inflated && val > 0) {
+          const newVal = Math.ceil(val * 1.30);
+          localStorage.setItem("negocix_trial_total", String(newVal));
+          localStorage.setItem("negocix_trial_inflated", "true");
+          return newVal;
+        }
+        return val;
+      }
+      return 0;
     } catch { return 0; }
   });
 
@@ -263,6 +275,7 @@ const TrialSearch = () => {
         localStorage.setItem(TRIAL_KEY, "true");
         localStorage.setItem(TRIAL_RESULTS_KEY, JSON.stringify(preview));
         localStorage.setItem("negocix_trial_total", String(inflatedTotal));
+        localStorage.setItem("negocix_trial_inflated", "true");
         
         // Track search event
         const region = city && state ? `${city}, ${state}` : state || city || "";
@@ -325,16 +338,14 @@ const TrialSearch = () => {
     </Dialog>
   );
 
-  const renderAdminButton = (wrapperClassName = "pt-2") => (
+  const renderAdminDot = (wrapperClassName = "pt-2") => (
     <div className={`flex justify-center ${wrapperClassName}`}>
       <button
         type="button"
         onClick={() => navigate("/teste/admin")}
-        className="px-5 py-2 rounded-full border border-border bg-card text-sm font-medium text-foreground shadow-sm hover:bg-muted transition-colors"
+        className="w-3 h-3 rounded-full bg-blue-900 hover:bg-blue-700 transition-colors cursor-pointer"
         aria-label="Abrir painel admin"
-      >
-        Painel admin
-      </button>
+      />
     </div>
   );
 
@@ -512,7 +523,7 @@ const TrialSearch = () => {
             </div>
           </div>
 
-          {renderAdminButton("pt-6")}
+          {renderAdminDot("pt-6")}
 
         </main>
       </div>
@@ -708,7 +719,7 @@ const TrialSearch = () => {
                   </div>
                 )}
 
-                {renderAdminButton()}
+                {renderAdminDot()}
               </div>
             </Card>
           </form>
