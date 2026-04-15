@@ -33,7 +33,7 @@ const ADS: Ad[] = [
     description:
       "Descubra as técnicas de abordagem que mais convertem e aumente suas vendas como representante comercial.",
     ctaLabel: "Saber mais",
-    ctaUrl: "#",
+    ctaUrl: "https://compraseguraonline.org.ua/c/60799d35b3",
   },
   {
     id: "metodo-representante",
