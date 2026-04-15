@@ -1128,6 +1128,23 @@ function calculateMatchScore(company: any): number {
   return Math.min(score, 100);
 }
 
+function formatTimeSinceOpening(dataAbertura: string | null): string {
+  if (!dataAbertura) return '';
+  try {
+    const opened = new Date(dataAbertura);
+    if (isNaN(opened.getTime())) return '';
+    const now = new Date();
+    const diffMs = now.getTime() - opened.getTime();
+    const totalMonths = Math.floor(diffMs / (1000 * 60 * 60 * 24 * 30.44));
+    if (totalMonths < 1) return 'Menos de 1 mês';
+    if (totalMonths < 12) return `${totalMonths} ${totalMonths === 1 ? 'mês' : 'meses'}`;
+    const years = Math.floor(totalMonths / 12);
+    const months = totalMonths % 12;
+    if (months === 0) return `${years} ${years === 1 ? 'ano' : 'anos'}`;
+    return `${years} ${years === 1 ? 'ano' : 'anos'} e ${months} ${months === 1 ? 'mês' : 'meses'}`;
+  } catch { return ''; }
+}
+
 function estimateCompanySize(company: any): { employeeCount: string; companySize: string; revenue: string } {
   const porte = (company.porte || '').toUpperCase();
   const capital = company.capital_social || 0;
@@ -1317,6 +1334,8 @@ serve(async (req) => {
           hasWhatsApp: phoneInfo.isWhatsApp,
           cnpj: c.cnpj || null,
           ...sizeInfo,
+          openedDate: formatTimeSinceOpening(c.data_abertura),
+          responsible: c.nome_socio || 'Gerente',
         };
       });
 
@@ -1817,7 +1836,7 @@ serve(async (req) => {
         employeeCount,
         companySize,
         revenue,
-        openedDate: c.data_abertura || '',
+        openedDate: formatTimeSinceOpening(c.data_abertura),
         reasons,
         isMatriz,
         digitalPresence: 'unknown',
