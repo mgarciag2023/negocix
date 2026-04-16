@@ -174,7 +174,7 @@ function generateSearchTerms(segment: string): string[] {
     // ===== CONSTRUÇÃO CIVIL =====
     'materiais de construção': ['material de construcao', 'home center', 'deposito de construcao', 'material de construção', 'casa de construcao'],
     'depósitos de materiais de construção': ['deposito de construcao', 'deposito de materiais', 'material de construcao'],
-    'construtoras': ['construtora', 'construcoes', 'construcao civil', 'empreiteira', 'incorporadora', 'engenharia civil', 'engenharia e construcao', 'obras e servicos', 'edificacoes', 'construtora e incorporadora', 'construcao e incorporacao', 'obras civis'],
+    'construtoras': ['construtora', 'construtoras', 'construcoes', 'construcao civil', 'empreiteira', 'empreiteiras', 'incorporadora', 'incorporadoras', 'engenharia civil', 'engenharia e construcao', 'obras e servicos', 'edificacoes', 'construtora e incorporadora', 'construcao e incorporacao', 'obras civis', 'construcao e engenharia', 'engenharia e empreendimentos', 'empreendimentos imobiliarios', 'empreendimentos e construcoes', 'incorporacao imobiliaria', 'incorporacao e construcao', 'projetos e obras', 'projetos e construcoes', 'obras e edificacoes', 'construtora e empreendimentos', 'engenharia construcao', 'obra civil', 'reformas e construcoes', 'reforma e construcao', 'predial', 'predios', 'edificios', 'urbanismo', 'loteadora', 'loteamentos'],
     'empreiteiras': ['empreiteira', 'construcao civil', 'obra'],
     'incorporadoras': ['incorporadora', 'incorporacao', 'empreendimento imobiliario'],
     'lojas de revestimentos': ['revestimentos', 'porcelanato', 'pisos', 'ceramica'],
@@ -255,7 +255,7 @@ function generateSearchTerms(segment: string): string[] {
 
     // ===== CASA E DECORAÇÃO =====
     'móveis': ['moveis', 'moveis planejados', 'marcenaria', 'loja de moveis'],
-    'lojas de cama, mesa e banho': ['cama mesa banho', 'cama mesa e banho', 'enxoval', 'enxovais', 'toalhas', 'lencois', 'jogo de cama', 'jogos de cama', 'roupa de cama', 'roupas de cama', 'colchas', 'edredons', 'edredom', 'fronhas', 'travesseiros', 'cortinas', 'tapetes', 'artigos para o lar', 'artigos do lar', 'casa e decoracao', 'enxoval para noivas'],
+    'lojas de cama, mesa e banho': ['cama mesa banho', 'cama mesa e banho', 'cama e mesa', 'mesa e banho', 'enxoval', 'enxovais', 'enxoval para noivas', 'enxoval de noiva', 'enxoval de bebe', 'enxoval infantil', 'toalhas', 'toalha de banho', 'toalhas de banho', 'toalhas de mesa', 'lencois', 'lencol', 'jogo de cama', 'jogos de cama', 'jogo de toalha', 'jogo americano', 'roupa de cama', 'roupas de cama', 'roupa de banho', 'roupa de mesa', 'colchas', 'colcha', 'edredons', 'edredom', 'protetores de colchao', 'fronhas', 'fronha', 'travesseiros', 'travesseiro', 'almofadas', 'capas de almofada', 'cortinas', 'cortina', 'persianas', 'tapetes', 'tapete', 'passadeiras', 'mantas', 'cobertores', 'cobertor', 'mantas e cobertores', 'colchoes e enxovais', 'artigos para o lar', 'artigos do lar', 'artigos para casa', 'casa e decoracao', 'cama mesa banho e decoracao', 'roupas de cama mesa e banho', 'enxoval para casa', 'lar e decoracao', 'tudo para casa'],
     'lojas de utilidades domésticas': ['utilidades domesticas', 'artigos para casa', 'utensilios domesticos'],
     'lojas de utilidades': ['utilidades', 'bazar', 'variedades', 'presentes'],
     'lojas de decoração': ['decoracao', 'loja de decoracao', 'artigos decorativos'],
