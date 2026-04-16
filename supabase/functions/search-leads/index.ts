@@ -1480,12 +1480,13 @@ serve(async (req) => {
 
       // Phase 2: Paginate terms that returned full pages (they have more data)
       if (bestResults.length < targetPerSegment && termsWithMore.length > 0) {
-        const MAX_EXTRA_PAGES = 10; // up to 10 more pages per term
+        // Heavy multi-segment searches: fewer extra pages so we don't blow the time budget
+        const MAX_EXTRA_PAGES = isHeavySearch ? 2 : 10;
         
         for (const { term } of termsWithMore) {
-          if (bestResults.length >= targetPerSegment || isNearTimeout()) break;
+          if (bestResults.length >= targetPerSegment || isNearSoftTimeout()) break;
           
-          // Fetch pages 2-11 with concurrency limit for this term
+          // Fetch pages 2-N with concurrency limit for this term
           const pageNums = Array.from({ length: MAX_EXTRA_PAGES }, (_, i) => i + 1);
           const pages = await runPool(pageNums, async (p: number) => {
             const r = await rpcWithRetry({
