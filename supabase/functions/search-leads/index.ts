@@ -150,6 +150,52 @@ function getCnaesForSegment(segment: string): string[] {
     'distribuidoras de alimentos': ['4639701', '4639702'],
     'distribuidoras de doces': ['4637107', '4639701'],
     'distribuidoras de congelados': ['4634603', '4639701'],
+
+    // ========================================================================
+    // LOTE 2 — SAÚDE & BEM-ESTAR
+    // ========================================================================
+    'clínicas': ['8630501', '8630502', '8630503', '8630504'],
+    'clínicas médicas': ['8630501', '8630503'],
+    'clínicas odontológicas': ['8630504', '8650003'],
+    'clínicas médicas e odontológicas': ['8630501', '8630504'],
+    'hospitais': ['8610101', '8610102'],
+    'hospitais e pronto-atendimentos': ['8610101', '8610102', '8621601'],
+    'laboratórios': ['8640202', '8640203'],
+    'laboratórios e centros de diagnóstico': ['8640202', '8640203', '8640205', '8640206'],
+    'clínicas de fisioterapia': ['8650004'],
+    'clínicas de fisioterapia e reabilitação': ['8650004', '8690999'],
+    'ortopedias': ['4773300', '3250707'],
+    'ortopedias e lojas de produtos ortopédicos': ['4773300', '3250707'],
+    'clínicas de estética': ['9602502', '8690999'],
+    'clínicas de psicologia': ['8650001'],
+    'nutricionistas': ['8650002'],
+    'fonoaudiólogos': ['8650005'],
+    'planos de saúde': ['6550200', '6541300'],
+    'home care': ['8712300', '8711502'],
+    'spas': ['9602502', '9609204'],
+    'farmácias': ['4771701', '4771702', '4771703'],
+    'farmácias e drogarias': ['4771701', '4771702'],
+    'drogarias': ['4771701'],
+    'farmácias de manipulação': ['4771702'],
+
+    // Pet (saúde / serviços ligados)
+    'clínicas veterinárias': ['7500100'],
+    'pet shop': ['4789005', '7500100'],
+    'pet shops': ['4789005', '7500100'],
+    'loja de ração pet': ['4623108', '4789005'],
+    'banho e tosa': ['9609206'],
+    'hotéis pet': ['9609206'],
+    'creches pet': ['9609206'],
+    'adestramento de animais': ['9609206'],
+    'fabricantes de ração pet': ['1066000'],
+    'indústrias de produtos pet': ['1066000', '4623108'],
+
+    // Beleza
+    'salões de beleza': ['9602501'],
+    'barbearias': ['9602501'],
+    'estúdios de tatuagem': ['9609205'],
+    'perfumarias': ['4772500'],
+    'lojas de cosméticos': ['4772500', '4646002'],
   };
   return cnaeMap[seg] || [];
 }
