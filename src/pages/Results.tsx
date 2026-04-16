@@ -209,10 +209,11 @@ const Results = () => {
       });
       columnWidths = new Array(Object.keys(excelData[0] || {}).length).fill(0).map(() => ({ wch: 22 }));
     } else {
-      excelData = leads.map((lead) => {
+      excelData = leads.map((lead: any) => {
         const { cidade, estado } = extractCityState(lead.address);
         return {
           'Nome': lead.name,
+          'CNPJ': formatCnpj(lead.cnpj || ''),
           'Cidade': cidade,
           'Estado': estado,
           'Endereço': lead.address,
@@ -227,7 +228,7 @@ const Results = () => {
         };
       });
       columnWidths = [
-        { wch: 30 }, { wch: 20 }, { wch: 8 }, { wch: 40 },
+        { wch: 30 }, { wch: 20 }, { wch: 20 }, { wch: 8 }, { wch: 40 },
         { wch: 15 }, { wch: 30 }, { wch: 20 }, { wch: 25 },
         { wch: 15 }, { wch: 12 }, { wch: 15 }, { wch: 12 },
       ];
