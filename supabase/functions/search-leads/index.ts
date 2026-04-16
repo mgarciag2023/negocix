@@ -1265,21 +1265,7 @@ serve(async (req) => {
       const MAX_LEADS = 50;
       console.log(`🧪 TRIAL MODE: limiting to ${MAX_LEADS} leads`);
 
-      // Check cache first for trial too
-      const { data: cachedData } = await adminClient
-        .from("cached_search_results")
-        .select("results, results_count")
-        .eq("cache_key", dbCacheKey)
-        .gt("expires_at", new Date().toISOString())
-        .maybeSingle();
-
-      if (cachedData && cachedData.results_count > 0) {
-        const cachedLeads = Array.isArray(cachedData.results) ? cachedData.results as any[] : [];
-        console.log(`✅ TRIAL CACHE HIT: returning ${Math.min(cachedLeads.length, MAX_LEADS)} of ${cachedLeads.length} cached leads`);
-        return new Response(JSON.stringify({ leads: cachedLeads.slice(0, MAX_LEADS) }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+      // 🚫 CACHE DESABILITADO: toda pesquisa trial também é executada ao vivo
       
       // Quick single query - use only first term and small limit
       let allCompanies: any[] = [];
@@ -1395,35 +1381,9 @@ serve(async (req) => {
     const MAX_LEADS = 999999;
     const leadsPerSegment = Math.ceil(MAX_LEADS / segments.length);
 
-    // ===== CHECK DB CACHE =====
-    const { data: cachedData } = await adminClient
-      .from("cached_search_results")
-      .select("results, results_count, created_at, expires_at, search_config")
-      .eq("cache_key", dbCacheKey)
-      .gt("expires_at", new Date().toISOString())
-      .maybeSingle();
-
-    if (cachedData && cachedData.results_count > 0) {
-      const cachedLeads = Array.isArray(cachedData.results) ? cachedData.results as any[] : [];
-      const cachedResultsCount = typeof cachedData.results_count === 'number' ? cachedData.results_count : cachedLeads.length;
-      const cachedSearchConfig = cachedData.search_config && typeof cachedData.search_config === 'object'
-        ? cachedData.search_config as Record<string, any>
-        : {};
-      const cachedMaxLeads = Number(cachedSearchConfig.maxLeads || 0);
-      const cacheLooksCapped = cachedResultsCount < MAX_LEADS && [500, 1000, 3000, 6000].includes(cachedResultsCount);
-      const cacheWasBuiltForSmallerLimit = cachedMaxLeads > 0 && cachedMaxLeads < MAX_LEADS && cachedResultsCount >= cachedMaxLeads;
-
-      if (!cacheLooksCapped && !cacheWasBuiltForSmallerLimit) {
-        console.log(`✅ DB CACHE HIT: ${cachedResultsCount} leads`);
-        return new Response(JSON.stringify({ leads: cachedLeads, fromCache: true }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      console.log(`↩️ Ignoring stale DB cache (${cachedResultsCount}/${MAX_LEADS}) and rerunning search`);
-    } else {
-      console.log('💾 DB CACHE MISS - searching local database');
-    }
+    // 🚫 CACHE DESABILITADO: toda pesquisa é executada ao vivo na base local
+    // para garantir que melhorias e ajustes (keywords, filtros, etc.) sejam aplicados imediatamente.
+    console.log('🔴 CACHE OFF - executando busca ao vivo na base local');
 
     // ===== QUERY LOCAL DATABASE (PARALLEL) =====
     let allCompanies: any[] = [];
@@ -2051,29 +2011,8 @@ serve(async (req) => {
       });
     }
 
-    // ===== SAVE TO DB CACHE (skip if near timeout) =====
-    if (!isNearTimeout()) {
-      try {
-        await adminClient.from("cached_search_results").upsert({
-          cache_key: dbCacheKey,
-          search_type: 'leads',
-          search_config: {
-            segment,
-            region: region.trim(),
-            businessType: bizType,
-            whatsappOnly: filterWhatsappOnly,
-            maxLeads: MAX_LEADS,
-            hitLimit: leads.length >= MAX_LEADS,
-          },
-          results: leads,
-          results_count: leads.length,
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        }, { onConflict: 'cache_key' });
-        console.log(`💾 Cached ${leads.length} leads`);
-      } catch (e) { console.error("⚠️ Cache save error:", e); }
-    } else {
-      console.log('⏰ Skipping cache save due to time pressure');
-    }
+    // 🚫 CACHE DESABILITADO: não gravamos mais resultados em cache
+    // Toda pesquisa será sempre executada ao vivo na próxima vez.
 
     // ===== LOG SEARCH (skip if near timeout) =====
     // Use cached userId/email captured at start - avoids re-reading req.headers after client disconnect
