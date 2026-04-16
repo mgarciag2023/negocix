@@ -240,7 +240,7 @@ function generateSearchTerms(segment: string): string[] {
 
     // ===== MODA E VESTUÁRIO =====
     'lojas de roupas': ['roupas', 'vestuario', 'boutique', 'moda', 'confeccao', 'loja de roupas'],
-    'lojas de moda infantil': ['moda infantil', 'roupas infantis', 'roupa de bebe', 'roupa infantil', 'enxoval infantil', 'enxoval bebe', 'bebe', 'kids', 'infantil', 'loja infantil', 'gestante', 'maternidade'],
+    'lojas de moda infantil': ['moda infantil', 'moda infanto juvenil', 'roupas infantis', 'roupa infantil', 'roupa de bebe', 'roupas de bebe', 'enxoval infantil', 'enxoval bebe', 'enxoval para bebe', 'bebe', 'baby', 'kids', 'infantil', 'loja infantil', 'loja de bebe', 'artigos infantis', 'artigos para bebe', 'gestante', 'maternidade', 'puericultura', 'baby kids', 'mundo infantil', 'mundo do bebe'],
     'lojas de calçados': ['calcados', 'sapatos', 'tenis', 'sapataria'],
     'lojas de bolsas e acessórios': ['bolsas', 'acessorios', 'malas', 'carteiras'],
     'joalherias': ['joalheria', 'joias', 'relojoaria', 'bijuteria', 'ourivesaria'],
@@ -266,7 +266,7 @@ function generateSearchTerms(segment: string): string[] {
     'colchoarias': ['colchoaria', 'colchoes', 'cama e colchao'],
     'distribuidores de colchões': ['distribuidora de colchoes', 'colchoes atacado'],
     'lojas de colchões terapêuticos': ['colchao terapeutico', 'colchao ortopedico', 'colchao magnetico'],
-    'lojas de artigos para piscina': ['artigos para piscina', 'piscinas', 'tratamento de agua'],
+    'lojas de artigos para piscina': ['artigos para piscina', 'artigos para piscinas', 'piscina', 'piscinas', 'piscinaria', 'tratamento de agua', 'tratamento de piscina', 'produtos para piscina', 'produtos quimicos para piscina', 'aquecedor de piscina', 'capa de piscina', 'manutencao de piscinas', 'limpeza de piscinas', 'piscineiro', 'mundo da piscina', 'casa da piscina', 'cloro'],
     'lojas de eletrodomésticos': ['eletrodomesticos', 'eletro', 'magazine'],
 
     // ===== JARDINAGEM E FLORICULTURA =====
@@ -311,7 +311,7 @@ function generateSearchTerms(segment: string): string[] {
     'hortifrútis': ['hortifruti', 'hortifrutigranjeiro', 'frutas', 'verduras', 'sacolao'],
 
     // ===== CESTAS BÁSICAS =====
-    'cestas básicas': ['cestas basicas', 'cesta basica'],
+    'cestas básicas': ['cestas basicas', 'cesta basica', 'cestas de alimentos', 'cesta de alimentos', 'distribuidora de cestas', 'distribuidora de alimentos', 'atacado de alimentos', 'kits de alimentos', 'cestas natalinas', 'cesta natalina', 'fornecedor de cestas', 'cestas corporativas', 'cesta corporativa', 'cestas de natal', 'cesta de natal'],
 
     // ===== EDUCAÇÃO =====
     'escolas': ['escola', 'colegio', 'ensino', 'centro educacional', 'instituto educacional'],
@@ -529,7 +529,7 @@ function generateSearchTerms(segment: string): string[] {
     'lojas de epi': ['epi', 'equipamento de protecao', 'seguranca do trabalho'],
     'lojas de sinalização': ['sinalizacao', 'placas', 'comunicacao visual'],
     'artigos de caça, pesca e camping': ['caca e pesca', 'camping', 'pesca esportiva', 'artigos de pesca'],
-    'lojas de artigos para piscina': ['artigos para piscina', 'piscinas', 'tratamento de agua'],
+    'lojas de artigos para piscina': ['artigos para piscina', 'artigos para piscinas', 'piscina', 'piscinas', 'piscinaria', 'tratamento de agua', 'tratamento de piscina', 'produtos para piscina', 'produtos quimicos para piscina', 'aquecedor de piscina', 'capa de piscina', 'manutencao de piscinas', 'limpeza de piscinas', 'piscineiro', 'mundo da piscina', 'casa da piscina', 'cloro'],
     'lojas de revestimentos': ['revestimentos', 'porcelanato', 'pisos', 'ceramica'],
 
     // ===== E-COMMERCE =====
@@ -1954,18 +1954,26 @@ serve(async (req) => {
     console.log(`✅ FINAL: ${leads.length} leads (elapsed: ${Date.now() - FUNCTION_START}ms)`);
 
     // ===== GET USER ID FOR LOGGING (skip if near timeout) =====
+    // Capture auth header EARLY (before request body might be closed by client disconnect)
+    let cachedAuthHeader: string | null = null;
+    let cachedUserEmail: string | null = null;
+    try { cachedAuthHeader = req.headers.get('authorization'); } catch { /* request closed */ }
+
     let userId: string | null = null;
-    if (!isNearTimeout()) {
+    if (!isNearTimeout() && cachedAuthHeader) {
       try {
-        const authHeader = req.headers.get('authorization');
-        if (authHeader) {
-          const supabaseAuth = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || "", {
-            global: { headers: { Authorization: authHeader } }
-          });
-          const { data: { user } } = await supabaseAuth.auth.getUser();
-          if (user) userId = user.id;
+        const supabaseAuth = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || "", {
+          global: { headers: { Authorization: cachedAuthHeader } }
+        });
+        const { data: { user } } = await supabaseAuth.auth.getUser();
+        if (user) { userId = user.id; cachedUserEmail = user.email || ''; }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        // Silence "request closed" noise (user closed tab) - not a real error
+        if (!msg.includes('request closed') && !msg.includes('connection closed')) {
+          console.error("⚠️ Auth error:", msg);
         }
-      } catch (e) { console.error("⚠️ Auth error:", e); }
+      }
     }
 
     if (leads.length === 0) {
@@ -1999,26 +2007,23 @@ serve(async (req) => {
     }
 
     // ===== LOG SEARCH (skip if near timeout) =====
-    if (!isNearTimeout()) {
+    // Use cached userId/email captured at start - avoids re-reading req.headers after client disconnect
+    if (!isNearTimeout() && userId) {
       try {
-        const authHeader = req.headers.get('authorization');
-        if (authHeader && userId) {
-          const supabaseAuth = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || "", {
-            global: { headers: { Authorization: authHeader } }
-          });
-          const { data: { user } } = await supabaseAuth.auth.getUser();
-          if (user) {
-            await adminClient.from("search_logs").insert({
-              user_id: user.id,
-              user_email: user.email || '',
-              search_type: 'leads',
-              search_config: { segment, region: region.trim(), businessType: bizType },
-              results_count: leads.length,
-              results: leads,
-            });
-          }
+        await adminClient.from("search_logs").insert({
+          user_id: userId,
+          user_email: cachedUserEmail || '',
+          search_type: 'leads',
+          search_config: { segment, region: region.trim(), businessType: bizType },
+          results_count: leads.length,
+          results: leads,
+        });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (!msg.includes('request closed') && !msg.includes('connection closed')) {
+          console.error("⚠️ Search log error:", msg);
         }
-      } catch (e) { console.error("⚠️ Search log error:", e); }
+      }
     }
 
     return new Response(JSON.stringify({ leads }), {
