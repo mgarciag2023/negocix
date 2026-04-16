@@ -1564,6 +1564,42 @@ serve(async (req) => {
         }
       }
 
+      // ===== CNAE-BASED SEARCH (paralelo ao tsquery) =====
+      // Para nichos onde o nome da empresa não contém a palavra-chave (ex: DAJU LTDA),
+      // buscamos diretamente por CNAEs oficiais. Esses resultados pulam o filtro de relevância.
+      const cnaes = getCnaesForSegment(seg);
+      if (cnaes.length > 0) {
+        console.log(`🏷️ CNAE search "${seg}": ${cnaes.length} CNAEs - ${cnaes.join(', ')}`);
+        try {
+          let q = adminClient
+            .from('companies')
+            .select('*')
+            .in('cnae_principal', cnaes)
+            .eq('situacao_cadastral', 'ATIVA')
+            .not('telefone_1', 'is', null);
+          if (city) q = q.eq('cidade', city);
+          if (state) q = q.eq('estado', state);
+          if (bizType === 'matriz') q = q.eq('matriz_filial', 'MATRIZ');
+          if (bizType === 'filial') q = q.eq('matriz_filial', 'FILIAL');
+          const { data: cnaeData, error: cnaeErr } = await q.limit(5000);
+          if (cnaeErr) {
+            console.error(`❌ CNAE search error "${seg}":`, cnaeErr.message);
+          } else if (cnaeData) {
+            let added = 0;
+            for (const c of cnaeData) {
+              if (!seenIds.has(c.id)) {
+                seenIds.add(c.id);
+                bestResults.push({ ...c, _viaCnae: true });
+                added++;
+              }
+            }
+            console.log(`🏷️ CNAE search "${seg}": +${added} novos (total CNAE: ${cnaeData.length})`);
+          }
+        } catch (e) {
+          console.error(`❌ CNAE search exception "${seg}":`, (e as Error).message);
+        }
+      }
+
       console.log(`📊 Segment "${seg}": ${bestResults.length} total results`);
       return bestResults.map((c: any) => ({ ...c, _segment: seg }));
     }
