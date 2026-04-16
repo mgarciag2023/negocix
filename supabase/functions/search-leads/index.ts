@@ -1255,8 +1255,33 @@ serve(async (req) => {
     console.log(`📍 Parsed region: city=${city}, state=${state}, isStateOnly=${isStateOnly}`);
 
     // ===== PARSE SEGMENTS =====
-    const segments = segment.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0);
-    console.log(`📋 Segments: ${segments.join(', ')}`);
+    // Algumas categorias contêm vírgula no nome (ex: "Lojas de Cama, Mesa e Banho").
+    // Protegemos essas categorias antes de fazer split por vírgula.
+    const COMMA_CATEGORIES = [
+      'lojas de cama, mesa e banho',
+      'cama, mesa e banho',
+    ];
+    let segmentToSplit = segment;
+    const placeholders: { token: string; original: string }[] = [];
+    COMMA_CATEGORIES.forEach((cat, idx) => {
+      const re = new RegExp(cat.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+      const matches = segmentToSplit.match(re);
+      if (matches) {
+        matches.forEach((m, i) => {
+          const token = `__CAT_${idx}_${i}__`;
+          placeholders.push({ token, original: m });
+          segmentToSplit = segmentToSplit.replace(m, token);
+        });
+      }
+    });
+    const segments = segmentToSplit.split(',')
+      .map((s: string) => {
+        let v = s.trim();
+        placeholders.forEach(p => { v = v.replace(p.token, p.original); });
+        return v;
+      })
+      .filter((s: string) => s.length > 0);
+    console.log(`📋 Segments: ${segments.join(' | ')}`);
 
     // No per-user limits - search all available leads
 
