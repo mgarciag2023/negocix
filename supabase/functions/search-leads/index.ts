@@ -1406,22 +1406,51 @@ serve(async (req) => {
       const seenIds = new Set<string>();
       let bestResults: any[] = [];
 
-      // Strategy: query each term individually in parallel, then paginate the top terms
-      // This avoids combining many OR terms in a single tsquery which overwhelms the DB
+      // Strategy: query each term individually with limited concurrency + retry on timeout
+      // This avoids overwhelming the DB connection pool
       
-      // Phase 1: First page of each term in parallel (fast discovery)
-      const firstPagePromises = terms.map(term => 
-        adminClient.rpc('search_companies', {
+      const TERM_CONCURRENCY = 4; // max parallel DB queries per segment
+      
+      // Helper: run RPC with retry on timeout/pool errors
+      const rpcWithRetry = async (params: any, attempts = 3): Promise<any> => {
+        for (let i = 0; i < attempts; i++) {
+          const r = await adminClient.rpc('search_companies', params);
+          if (!r.error) return r;
+          const msg = String(r.error?.message || '').toLowerCase();
+          const retriable = msg.includes('timeout') || msg.includes('connection pool') || msg.includes('502') || msg.includes('bad gateway');
+          if (!retriable || i === attempts - 1) return r;
+          // exponential backoff: 500ms, 1500ms
+          await new Promise(res => setTimeout(res, 500 * Math.pow(3, i)));
+        }
+      };
+      
+      // Helper: run promises with concurrency limit
+      const runPool = async <T>(items: any[], fn: (item: any) => Promise<T>, concurrency: number): Promise<T[]> => {
+        const results: T[] = new Array(items.length);
+        let idx = 0;
+        const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+          while (true) {
+            const myIdx = idx++;
+            if (myIdx >= items.length) break;
+            results[myIdx] = await fn(items[myIdx]);
+          }
+        });
+        await Promise.all(workers);
+        return results;
+      };
+      
+      // Phase 1: First page of each term (concurrency-limited)
+      const firstPages = await runPool(terms, async (term: string) => {
+        const r = await rpcWithRetry({
           p_city: city || null,
           p_state: state || null,
           p_search_terms: [term],
           p_biz_type: bizType || 'all',
           p_limit_val: PAGE_SIZE,
           p_offset_val: 0,
-        }).then((r: any) => ({ ...r, term }))
-      );
-
-      const firstPages = await Promise.all(firstPagePromises);
+        });
+        return { ...r, term };
+      }, TERM_CONCURRENCY);
       
       // Collect results and track which terms have more data
       const termsWithMore: { term: string; count: number }[] = [];
