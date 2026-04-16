@@ -1825,20 +1825,32 @@ serve(async (req) => {
       // Stop-words to ignore when checking term matches
       const stopWords = new Set(['para', 'com', 'das', 'dos', 'que', 'por', 'mais', 'uma', 'uns', 'como', 'nao', 'sem', 'loja', 'casa', 'comercio', 'comercial', 'ltda', 'eireli', 'empresa']);
 
+      // Segments where we allow shorter keywords (3+ chars) like "cama", "lar"
+      // because the niche vocabulary is inherently short
+      const SHORT_KEYWORD_SEGMENTS = new Set([
+        'lojas de cama, mesa e banho',
+        'lojas de utilidades domésticas',
+        'lojas de utilidades',
+        'lojas de decoração',
+        'lojas de colchões',
+      ]);
+
       // Parse each search term into its significant words
-      function parseTermWords(term: string): string[] {
+      function parseTermWords(term: string, seg?: string): string[] {
         const normalized = term.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-        return normalized.split(/\s+/).filter(w => w.length >= 4 && !stopWords.has(w));
+        const minLen = seg && SHORT_KEYWORD_SEGMENTS.has(seg.toLowerCase()) ? 3 : 4;
+        return normalized.split(/\s+/).filter(w => w.length >= minLen && !stopWords.has(w));
       }
 
       // For each segment, extract "core keywords" from ALL terms
       // so sub-niches (pizzaria, hamburgueria, sushi) are accepted in broad searches (Restaurantes)
       function extractCoreKeywords(seg: string): string[] {
         const terms = generateSearchTerms(seg);
+        const minLen = SHORT_KEYWORD_SEGMENTS.has(seg.toLowerCase()) ? 3 : 4;
         const coreWords: string[] = [];
         for (const term of terms) {
           const normalized = term.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-          const words = normalized.split(/\s+/).filter(w => w.length >= 4 && !stopWords.has(w));
+          const words = normalized.split(/\s+/).filter(w => w.length >= minLen && !stopWords.has(w));
           for (const w of words) {
             if (!coreWords.includes(w)) coreWords.push(w);
           }
@@ -1851,7 +1863,7 @@ serve(async (req) => {
       const segTermSetsMap = new Map<string, string[][]>();
       for (const seg of segments) {
         const terms = generateSearchTerms(seg);
-        const termSets = terms.map(t => parseTermWords(t)).filter(ws => ws.length > 0);
+        const termSets = terms.map(t => parseTermWords(t, seg)).filter(ws => ws.length > 0);
         segTermSetsMap.set(seg.toLowerCase(), termSets);
         segCoreKeywordsMap.set(seg.toLowerCase(), extractCoreKeywords(seg));
       }

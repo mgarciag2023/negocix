@@ -1,0 +1,1 @@
+DELETE FROM public.cached_search_results WHERE search_config::text ILIKE '%cama%' OR search_config::text ILIKE '%mesa e banho%' OR search_config::text ILIKE '%enxoval%';
