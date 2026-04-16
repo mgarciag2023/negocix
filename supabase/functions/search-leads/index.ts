@@ -1933,6 +1933,28 @@ serve(async (req) => {
         porte: c.porte || '',
         capitalSocial: c.capital_social || 0,
         nomeSocio: c.nome_socio || '',
+        // Full Receita Federal raw fields (for advanced export)
+        razaoSocial: c.razao_social || '',
+        nomeFantasia: c.nome_fantasia || '',
+        telefone1: c.telefone_1 || '',
+        telefone2: c.telefone_2 || '',
+        cnaePrincipal: c.cnae_principal || '',
+        cnaeSecundaria: c.cnae_secundaria || '',
+        naturezaJuridica: c.natureza_juridica || '',
+        situacaoCadastral: c.situacao_cadastral || '',
+        dataSituacaoCadastral: c.data_situacao_cadastral || '',
+        motivoSituacao: c.motivo_situacao || '',
+        matrizFilial: c.matriz_filial || '',
+        mei: c.mei || '',
+        simples: c.simples || '',
+        endereco: c.endereco || '',
+        complemento: c.complemento || '',
+        bairro: c.bairro || '',
+        cidade: c.cidade || '',
+        estado: c.estado || '',
+        cep: c.cep || '',
+        faixaEtariaSocio: c.faixa_etaria_socio || '',
+        qualificacaoSocio: c.qualificacao_socio || '',
       };
     });
 
