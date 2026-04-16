@@ -1919,26 +1919,27 @@ serve(async (req) => {
         segCoreKeywordsMap.set(seg.toLowerCase(), extractCoreKeywords(seg));
       }
 
-      // Política: TODOS os leads precisam ter o nome batendo com algum termo
-      // do segmento. Além disso, para segmentos que possuem CNAE oficial mapeado
-      // (ex: cama/mesa/banho, móveis, colchões), o lead também precisa ter um
-      // CNAE relacionado — assim "Pizzaria da Cama" não passa, mesmo que o nome
-      // contenha "cama".
+      // Política AMPLA: aceita o lead se:
+      //   (a) o CNAE (principal ou secundária) bater com a lista mapeada do segmento, OU
+      //   (b) o nome contiver algum termo relevante do segmento.
+      // Isso captura tanto marcas que não usam a palavra-chave no nome (DAJU)
+      // quanto lojas pequenas que estão fora do CNAE oficial.
       allCompanies = allCompanies.filter(c => {
         const seg = (c._segment || '').trim().toLowerCase();
         const termSets = segTermSetsMap.get(seg);
         const coreKeywords = segCoreKeywordsMap.get(seg);
         if (!termSets || termSets.length === 0) return true;
 
-        // Se o segmento tem CNAE mapeado, exigir CNAE relacionado (principal OU secundária)
+        // (a) CNAE relacionado → aceita direto
         const segCnaes = getCnaesForSegment(seg);
         if (segCnaes.length > 0) {
           const cnaeP = (c.cnae_principal || '').toString();
           const cnaeS = (c.cnae_secundaria || '').toString();
           const hasRelatedCnae = segCnaes.some(code => cnaeP === code || cnaeS.includes(code));
-          if (!hasRelatedCnae) return false;
+          if (hasRelatedCnae) return true;
         }
 
+        // (b) nome bate com termo do segmento
         const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
         const rs = normalizeText(c.razao_social || '').toLowerCase();
         // ONLY check the business NAME, not CNAE
