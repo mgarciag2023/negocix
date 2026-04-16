@@ -174,7 +174,7 @@ function generateSearchTerms(segment: string): string[] {
     // ===== CONSTRUÇÃO CIVIL =====
     'materiais de construção': ['material de construcao', 'home center', 'deposito de construcao', 'material de construção', 'casa de construcao'],
     'depósitos de materiais de construção': ['deposito de construcao', 'deposito de materiais', 'material de construcao'],
-    'construtoras': ['construtora', 'construcao civil', 'empreiteira', 'incorporadora', 'engenharia civil'],
+    'construtoras': ['construtora', 'construcoes', 'construcao civil', 'empreiteira', 'incorporadora', 'engenharia civil', 'engenharia e construcao', 'obras e servicos', 'edificacoes', 'construtora e incorporadora', 'construcao e incorporacao', 'obras civis'],
     'empreiteiras': ['empreiteira', 'construcao civil', 'obra'],
     'incorporadoras': ['incorporadora', 'incorporacao', 'empreendimento imobiliario'],
     'lojas de revestimentos': ['revestimentos', 'porcelanato', 'pisos', 'ceramica'],
@@ -255,7 +255,7 @@ function generateSearchTerms(segment: string): string[] {
 
     // ===== CASA E DECORAÇÃO =====
     'móveis': ['moveis', 'moveis planejados', 'marcenaria', 'loja de moveis'],
-    'lojas de cama, mesa e banho': ['cama mesa banho', 'enxoval', 'toalhas', 'lencois'],
+    'lojas de cama, mesa e banho': ['cama mesa banho', 'cama mesa e banho', 'enxoval', 'enxovais', 'toalhas', 'lencois', 'jogo de cama', 'jogos de cama', 'roupa de cama', 'roupas de cama', 'colchas', 'edredons', 'edredom', 'fronhas', 'travesseiros', 'cortinas', 'tapetes', 'artigos para o lar', 'artigos do lar', 'casa e decoracao', 'enxoval para noivas'],
     'lojas de utilidades domésticas': ['utilidades domesticas', 'artigos para casa', 'utensilios domesticos'],
     'lojas de utilidades': ['utilidades', 'bazar', 'variedades', 'presentes'],
     'lojas de decoração': ['decoracao', 'loja de decoracao', 'artigos decorativos'],
