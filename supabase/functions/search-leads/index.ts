@@ -261,6 +261,43 @@ function getCnaesForSegment(segment: string): string[] {
     'distribuidoras de material elétrico': ['4673700', '4742300'],
     'distribuidoras de papel': ['4647801', '4686902'],
     'empresas de manutenção industrial': ['3314799', '3329599'],
+
+    // ========================================================================
+    // LOTE 4 — AUTOMOTIVO & AGROPECUÁRIA
+    // ========================================================================
+    // Automotivo
+    'autopeças': ['4530703', '4530704', '4530705'],
+    'distribuidores de autopeças': ['4530701', '4530702'],
+    'autopeças de vans e utilitários': ['4530703', '4530704'],
+    'autopeças de importados': ['4530703', '4530704'],
+    'e-commerce de peças automotivas': ['4530705', '4791101'],
+    'oficinas mecânicas': ['4520001'],
+    'funilarias e pinturas': ['4520002'],
+    'auto elétricas': ['4520005'],
+    'borracharias': ['4520007', '4520006'],
+    'lojas de pneus': ['4530706'],
+    'lojas de rodas esportivas': ['4530706', '4530705'],
+    'lava-rápidos': ['4520005', '9601702'],
+    'concessionárias': ['4511101', '4511102'],
+    'postos de combustível': ['4731800'],
+    'guincho e reboque': ['5229099', '4930202'],
+    'lojas de moto': ['4541201', '4541202'],
+    'lojas de carro': ['4511101', '4511105'],
+
+    // Agropecuária
+    'agropecuária': ['4623199', '4789004'],
+    'casas agropecuárias': ['4623199', '4789004'],
+    'cooperativas agrícolas': ['4623199', '0163600'],
+    'revendas de insumos agrícolas': ['4683400', '4623199'],
+    'revendas de máquinas agrícolas': ['4661300'],
+    'tratores e implementos agrícolas': ['4661300', '2833000'],
+    'irrigação': ['4329104', '4221904'],
+    'silos e armazéns': ['5211701', '5211702'],
+    'granjas': ['0151201', '0155501'],
+
+    // Combustível / lubrificantes / oficinas auxiliares
+    'distribuidoras de combustível': ['4681801', '4681802'],
+    'distribuidoras de lubrificantes': ['4681805'],
   };
   return cnaeMap[seg] || [];
 }
