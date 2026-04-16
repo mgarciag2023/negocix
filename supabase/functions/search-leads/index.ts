@@ -196,6 +196,71 @@ function getCnaesForSegment(segment: string): string[] {
     'estúdios de tatuagem': ['9609205'],
     'perfumarias': ['4772500'],
     'lojas de cosméticos': ['4772500', '4646002'],
+
+    // ========================================================================
+    // LOTE 3 — CONSTRUÇÃO, INDÚSTRIA & MATERIAIS
+    // ========================================================================
+    // Construção civil
+    'materiais de construção': ['4744001', '4744002', '4744003', '4744004', '4744005', '4744099', '4679604'],
+    'depósitos de materiais de construção': ['4744099', '4679604'],
+    'construtoras': ['4120400', '4299599'],
+    'empreiteiras': ['4399103', '4120400'],
+    'incorporadoras': ['4110700'],
+    'lojas de revestimentos': ['4744002', '4744099'],
+    'lojas de pisos e azulejos': ['4744002'],
+    'lojas de tintas': ['4741500'],
+    'lojas de portas': ['4744005', '4744099'],
+    'marmorarias': ['2391503', '4744099'],
+    'vidraçarias': ['4743100', '2319200'],
+    'empresas de drywall': ['4330404', '4399103'],
+    'gesseiros': ['4330405'],
+    'empresas de steel frame': ['4120400', '2512800'],
+    'construtoras de pré-moldado': ['2330301', '2330302', '2330303'],
+    'empresas de contêineres e módulos': ['2511000', '4120400'],
+    'sistemas de incêndio': ['4322303', '4669999'],
+    'engenharias': ['7112000'],
+
+    // Ferragens, ferramentas, chaveiros
+    'ferramentas': ['4744003', '4647801'],
+    'ferragens': ['4744003'],
+    'lojas de ferragens': ['4744003'],
+    'lojas de ferramentas': ['4744003', '4647801'],
+    'chaveiros': ['9529105'],
+
+    // Elétrica e energia
+    'lojas de materiais elétricos': ['4742300', '4673700'],
+    'empresas de energia solar': ['4321500', '3511501'],
+    'instaladores elétricos': ['4321500'],
+    'empresas de manutenção elétrica': ['4321500', '3313901'],
+    'empresas de engenharia elétrica': ['7112000', '4321500'],
+    'montadores de painel elétrico': ['2731700', '4321500'],
+    'lojas de iluminação': ['4754799', '4742300'],
+    'lojas de lustres e luminárias': ['4754799'],
+
+    // Móveis e decoração (complemento ao já mapeado)
+    'lojas de utilidades domésticas': ['4759899'],
+    'lojas de utilidades': ['4759899', '4789099'],
+    'lojas de decoração': ['4759899'],
+    'design de interiores': ['7410203'],
+    'revendedores de colchões': ['4754703'],
+    'colchoarias': ['4754703', '3104700'],
+    'distribuidores de colchões': ['4649404'],
+    'lojas de colchões terapêuticos': ['4754703'],
+    'lojas de artigos para piscina': ['4789004', '4744099'],
+    'lojas de eletrodomésticos': ['4753900'],
+
+    // Jardinagem / floricultura
+    'floriculturas': ['4789001'],
+    'garden center': ['4789001'],
+    'garden centers': ['4789001'],
+    'paisagismo e jardinagem': ['8130300'],
+    'empresas de paisagismo e jardinagem': ['8130300'],
+    'viveiros de plantas': ['0142300', '4789001'],
+
+    // Indústrias / atacados gerais (apoio)
+    'distribuidoras de material elétrico': ['4673700', '4742300'],
+    'distribuidoras de papel': ['4647801', '4686902'],
+    'empresas de manutenção industrial': ['3314799', '3329599'],
   };
   return cnaeMap[seg] || [];
 }
