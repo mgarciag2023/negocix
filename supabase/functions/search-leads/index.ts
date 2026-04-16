@@ -1913,6 +1913,10 @@ serve(async (req) => {
       }
 
       allCompanies = allCompanies.filter(c => {
+        // ✅ Empresas encontradas via CNAE oficial são automaticamente qualificadas
+        // (CNAE da Receita Federal já garante que pertencem ao nicho)
+        if (c._viaCnae) return true;
+
         const seg = (c._segment || '').trim().toLowerCase();
         const termSets = segTermSetsMap.get(seg);
         const coreKeywords = segCoreKeywordsMap.get(seg);
