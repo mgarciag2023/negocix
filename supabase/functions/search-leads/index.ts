@@ -1919,24 +1919,12 @@ serve(async (req) => {
         segCoreKeywordsMap.set(seg.toLowerCase(), extractCoreKeywords(seg));
       }
 
-      // Segmentos onde NÃO aplicamos filtro de relevância por nome
-      // (porque o nome da empresa raramente contém a palavra-chave do nicho —
-      // ex: "DAJU LTDA" não tem "cama" no nome, mas é loja de cama, mesa e banho).
-      // Para esses, confiamos no CNAE oficial e nas keywords da busca.
-      const SKIP_NAME_FILTER_SEGMENTS = new Set([
-        'lojas de cama, mesa e banho',
-        'cama, mesa e banho',
-      ]);
-
+      // Política: TODOS os leads precisam ter o nome batendo com algum termo
+      // do segmento. A busca por CNAE serve apenas para AMPLIAR o universo de
+      // candidatos (ex: trazer a DAJU que não aparece no FTS), mas o nome
+      // ainda precisa conter um termo relevante (daju, mmartan, cama, enxoval...).
       allCompanies = allCompanies.filter(c => {
-        // ✅ Empresas encontradas via CNAE oficial são automaticamente qualificadas
-        if (c._viaCnae) return true;
-
         const seg = (c._segment || '').trim().toLowerCase();
-
-        // ✅ Segmentos isentos do filtro de relevância por nome
-        if (SKIP_NAME_FILTER_SEGMENTS.has(seg)) return true;
-
         const termSets = segTermSetsMap.get(seg);
         const coreKeywords = segCoreKeywordsMap.get(seg);
         if (!termSets || termSets.length === 0) return true;
