@@ -61,6 +61,95 @@ function getCnaesForSegment(segment: string): string[] {
     'lojas de colchões': ['4754703'],
     'lojas de móveis': ['4754701', '4754702'],
     'móveis': ['4754701', '4754702', '3101200'],
+
+    // ========================================================================
+    // LOTE 1 — ALIMENTAÇÃO & BEBIDAS
+    // ========================================================================
+    // Restaurantes / lanchonetes / bares
+    'restaurantes': ['5611201', '5611203', '5611204', '5611205'],
+    'restaurantes self-service': ['5611203'],
+    'restaurantes por quilo': ['5611203'],
+    'pizzarias': ['5611201', '5611205'],
+    'hamburguerias': ['5611201', '5611205'],
+    'lanchonetes': ['5611203', '5611205'],
+    'pastelarias': ['5611205'],
+    'esfiharias': ['5611205'],
+    'hot dogs': ['5611205'],
+    'food trucks': ['5611205'],
+    'churrascarias': ['5611201'],
+    'espetarias': ['5611201', '5611205'],
+    'marmitarias': ['5620104', '5620101'],
+    'rotisseries': ['5620104', '4729699'],
+    'restaurantes japoneses': ['5611201'],
+    'sushi bars': ['5611201'],
+    'restaurantes chineses': ['5611201'],
+    'restaurantes italianos': ['5611201'],
+    'restaurantes mexicanos': ['5611201'],
+    'restaurantes árabes': ['5611201'],
+    'restaurantes veganos': ['5611201'],
+    'restaurantes vegetarianos': ['5611201'],
+    'restaurantes fit': ['5611201', '5620104'],
+    'restaurantes orientais': ['5611201'],
+    'restaurantes indianos': ['5611201'],
+    'restaurantes tailandeses': ['5611201'],
+    'restaurantes coreanos': ['5611201'],
+    'restaurantes peruanos': ['5611201'],
+    'restaurantes portugueses': ['5611201'],
+    'restaurantes de frutos do mar': ['5611201'],
+    'restaurantes de comida baiana': ['5611201'],
+    'restaurantes de comida mineira': ['5611201'],
+    'restaurantes de comida nordestina': ['5611201'],
+    'restaurantes de comida gaúcha': ['5611201'],
+    'marisquerias': ['5611201'],
+    'temakerias': ['5611201'],
+    'cozinhas industriais': ['5620101'],
+    'quentinhas e marmitas': ['5620104', '5620101'],
+    'casas de massas': ['5611201', '1094500'],
+    'casas de feijoada': ['5611201'],
+    'casas de fondue': ['5611201'],
+    'catering': ['5620102', '5620101'],
+
+    // Padarias / confeitarias / docerias
+    'padarias': ['1091102', '4721102'],
+    'panificadoras': ['1091102', '4721102'],
+    'confeitarias': ['1091101', '4721102'],
+    'docerias': ['1091101', '4721102'],
+    'chocolaterias': ['1093701', '1093702', '4721104'],
+    'pâtisseries': ['1091101', '4721102'],
+
+    // Sorveterias e bebidas geladas
+    'sorveterias': ['5612100', '1053800'],
+    'gelatarias': ['5612100', '1053800'],
+    'açaiterias': ['5612100', '5611205'],
+    'casas de açaí': ['5612100', '5611205'],
+    'smoothie bars': ['5611205'],
+    'frozen yogurts': ['5612100'],
+    'bubble tea': ['5611205'],
+    'casas de sucos': ['5611205', '4729699'],
+
+    // Cafeterias e bares
+    'cafeterias': ['5611202', '4721104'],
+    'bares': ['5611202'],
+
+    // Supermercados / mercados / mercearias
+    'supermercados': ['4711301', '4711302'],
+    'hipermercados': ['4711301'],
+    'mercados': ['4711302', '4712100'],
+    'mercearias': ['4712100', '4729699'],
+
+    // Açougues e carnes
+    'açougues': ['4722901'],
+    'açouguerias': ['4722901'],
+
+    // Hortifruti / produtos naturais (caso existam no catálogo)
+    'hortifrutis': ['4724500'],
+    'lojas de produtos naturais': ['4729602', '4729601'],
+
+    // Distribuidoras de bebidas / alimentos
+    'distribuidoras de bebidas': ['4635499', '4635401', '4635402'],
+    'distribuidoras de alimentos': ['4639701', '4639702'],
+    'distribuidoras de doces': ['4637107', '4639701'],
+    'distribuidoras de congelados': ['4634603', '4639701'],
   };
   return cnaeMap[seg] || [];
 }
