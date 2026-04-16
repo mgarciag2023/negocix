@@ -84,6 +84,16 @@ const Configuration = () => {
       return;
     }
 
+    // Validate: only ONE city allowed (commas/slashes/semicolons not supported)
+    if (city && /[,;/]| e | & /i.test(city.trim())) {
+      toast({
+        title: "Apenas uma cidade por busca",
+        description: "Digite somente uma cidade no campo. Para buscar em várias cidades, faça uma pesquisa por estado ou repita a busca para cada cidade.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Check if search config actually changed
     const previousConfigStr = localStorage.getItem('leadSearchConfig');
     const newSearchConfig = {
@@ -374,12 +384,12 @@ const Configuration = () => {
                       id="city"
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
-                      placeholder="Ex: São Paulo, Blumenau..."
+                      placeholder="Ex: São Paulo"
                       className="mt-2"
                       translate="no"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Deixe em branco para buscar em todo o estado
+                      Digite apenas <strong>uma cidade</strong>. Para buscar em várias, deixe em branco e pesquise pelo estado inteiro.
                     </p>
                   </div>
                 </div>
