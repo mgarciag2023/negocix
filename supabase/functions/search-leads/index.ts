@@ -1191,8 +1191,10 @@ serve(async (req) => {
 
   // Time guard: track when we started so we can bail before Supabase kills us
   const FUNCTION_START = Date.now();
-  const MAX_EXECUTION_MS = 380_000; // 380s safety margin (Supabase Pro limit ~400s)
+  const MAX_EXECUTION_MS = 395_000; // 395s safety margin (Supabase Pro hard limit ~400s)
+  const SOFT_TIMEOUT_MS = 360_000; // start wrapping up at 360s to ensure response is sent
   const isNearTimeout = () => (Date.now() - FUNCTION_START) > MAX_EXECUTION_MS;
+  const isNearSoftTimeout = () => (Date.now() - FUNCTION_START) > SOFT_TIMEOUT_MS;
 
   try {
     const { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial } = await req.json();
@@ -1391,15 +1393,20 @@ serve(async (req) => {
     // ===== QUERY LOCAL DATABASE (PARALLEL) =====
     let allCompanies: any[] = [];
 
+    // Adaptive limits: heavy multi-segment searches (>5 segments) need stricter caps
+    // to fit inside the ~400s edge-function window
+    const isHeavySearch = segments.length > 5;
+
     // Fetch a single segment using paginated queries (SDK caps RPC at 1000 rows)
     async function fetchSegment(seg: string): Promise<any[]> {
       const segLower = seg.toLowerCase();
       const isIndustrySearch = segLower.includes('indústria') || segLower.includes('industria') || segLower.includes('fábrica') || segLower.includes('fabrica');
       // Broad categories like "restaurantes" have 25+ terms (including sub-niches like pizzaria, hamburgueria, sushi)
       // We need ALL terms to ensure sub-niches appear in parent category searches
-      const maxTerms = isIndustrySearch ? 20 : 30;
+      // For heavy multi-segment searches, cap terms more aggressively to stay within the time budget
+      const maxTerms = isHeavySearch ? 8 : (isIndustrySearch ? 20 : 30);
       const terms = generateSearchTerms(seg).slice(0, maxTerms);
-      console.log(`📤 Segment "${seg}" search terms (${terms.length}):`, terms);
+      console.log(`📤 Segment "${seg}" search terms (${terms.length})${isHeavySearch ? ' [HEAVY MODE]' : ''}:`, terms);
 
       const targetPerSegment = isIndustrySearch ? 50000 : Math.min(leadsPerSegment * 2, 50000);
       const PAGE_SIZE = 1000;
@@ -1473,12 +1480,13 @@ serve(async (req) => {
 
       // Phase 2: Paginate terms that returned full pages (they have more data)
       if (bestResults.length < targetPerSegment && termsWithMore.length > 0) {
-        const MAX_EXTRA_PAGES = 10; // up to 10 more pages per term
+        // Heavy multi-segment searches: fewer extra pages so we don't blow the time budget
+        const MAX_EXTRA_PAGES = isHeavySearch ? 2 : 10;
         
         for (const { term } of termsWithMore) {
-          if (bestResults.length >= targetPerSegment || isNearTimeout()) break;
+          if (bestResults.length >= targetPerSegment || isNearSoftTimeout()) break;
           
-          // Fetch pages 2-11 with concurrency limit for this term
+          // Fetch pages 2-N with concurrency limit for this term
           const pageNums = Array.from({ length: MAX_EXTRA_PAGES }, (_, i) => i + 1);
           const pages = await runPool(pageNums, async (p: number) => {
             const r = await rpcWithRetry({
