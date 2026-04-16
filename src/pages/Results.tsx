@@ -100,7 +100,7 @@ const Results = () => {
   const { restoreScrollPosition } = useScrollPosition();
   const hasRestoredScroll = useRef(false);
 
-  const exportToExcel = () => {
+  const exportToExcel = async () => {
     if (leads.length === 0) {
       toast({
         title: "Nenhum dado para exportar",
@@ -110,14 +110,22 @@ const Results = () => {
       return;
     }
 
-    // Preparar dados para o Excel
-    // Extract city and state from address
+    // Full export (all Receita Federal fields) only for specific user
+    let fullExport = false;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email?.toLowerCase() === 'contatoativarepres@gmail.com') {
+        fullExport = true;
+      }
+    } catch (e) {
+      console.warn('Could not determine user for export mode', e);
+    }
+
     const extractCityState = (address: string) => {
       const parts = address.split(',').map(p => p.trim());
       let cidade = '';
       let estado = '';
       if (parts.length >= 2) {
-        // Look for "Cidade - UF" pattern (case-insensitive)
         for (let i = 0; i < parts.length; i++) {
           const dashMatch = parts[i]?.match(/^(.+?)\s*-\s*([A-Za-z]{2})$/);
           if (dashMatch) {
@@ -126,7 +134,6 @@ const Results = () => {
             break;
           }
         }
-        // Fallback: find standalone 2-letter state code
         if (!estado) {
           for (let i = parts.length - 1; i >= 0; i--) {
             const clean = parts[i]?.replace(/[\d\-\.]/g, '').trim();
@@ -143,38 +150,96 @@ const Results = () => {
       return { cidade, estado };
     };
 
-    const excelData = leads.map((lead) => {
-      const { cidade, estado } = extractCityState(lead.address);
-      return {
-        'Nome': lead.name,
-        'Cidade': cidade,
-        'Estado': estado,
-        'Endereço': lead.address,
-        'Telefone': lead.phone,
-        'Email': lead.email || 'N/A',
-        'Instagram': lead.instagram || 'N/A',
-        'Responsável': lead.responsible,
-        'Categoria': lead.category,
-        'Porte': lead.companySize || 'N/A',
-        'Funcionários': lead.employeeCount || 'N/A',
-        'Score de Match (%)': lead.matchScore,
-      };
-    });
+    const formatCnpj = (cnpj: string) => {
+      const d = (cnpj || '').replace(/\D/g, '');
+      if (d.length !== 14) return cnpj || '';
+      return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8,12)}-${d.slice(12,14)}`;
+    };
+    const formatCapital = (v: any) => {
+      const n = Number(v);
+      if (!isFinite(n) || n <= 0) return '';
+      return n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    };
+
+    let excelData: any[];
+    let columnWidths: { wch: number }[];
+
+    if (fullExport) {
+      excelData = leads.map((lead: any) => {
+        const { cidade, estado } = extractCityState(lead.address);
+        return {
+          'Nome': lead.name,
+          'Razão Social': lead.razaoSocial || '',
+          'Nome Fantasia': lead.nomeFantasia || '',
+          'CNPJ': formatCnpj(lead.cnpj || ''),
+          'Categoria': lead.category,
+          'CNAE Principal': lead.cnaePrincipal || '',
+          'Descrição CNAE': lead.descricaoCnae || '',
+          'CNAE Secundária': lead.cnaeSecundaria || '',
+          'Natureza Jurídica': lead.naturezaJuridica || '',
+          'Situação Cadastral': lead.situacaoCadastral || '',
+          'Data Situação': lead.dataSituacaoCadastral || '',
+          'Motivo Situação': lead.motivoSituacao || '',
+          'Data Abertura': lead.openedDate || '',
+          'Matriz/Filial': lead.matrizFilial || (lead.isMatriz ? 'MATRIZ' : ''),
+          'Porte': lead.porte || lead.companySize || '',
+          'Capital Social': formatCapital(lead.capitalSocial),
+          'Faturamento Estimado': lead.revenue || '',
+          'Funcionários (estimado)': lead.employeeCount || '',
+          'MEI': lead.mei || '',
+          'Simples Nacional': lead.simples || '',
+          'Telefone 1': lead.telefone1 || lead.phone || '',
+          'Telefone 2': lead.telefone2 || '',
+          'WhatsApp': lead.hasWhatsApp ? 'Sim' : 'Não',
+          'Email': lead.email || '',
+          'Website': lead.website || '',
+          'Instagram': lead.instagram || '',
+          'Endereço': lead.endereco || '',
+          'Complemento': lead.complemento || '',
+          'Bairro': lead.bairro || '',
+          'CEP': lead.cep || '',
+          'Cidade': lead.cidade || cidade,
+          'Estado': lead.estado || estado,
+          'Endereço Completo': lead.address,
+          'Sócio': lead.nomeSocio || lead.responsible || '',
+          'Faixa Etária Sócio': lead.faixaEtariaSocio || '',
+          'Qualificação Sócio': lead.qualificacaoSocio || '',
+          'Score de Match (%)': lead.matchScore,
+        };
+      });
+      columnWidths = new Array(Object.keys(excelData[0] || {}).length).fill(0).map(() => ({ wch: 22 }));
+    } else {
+      excelData = leads.map((lead) => {
+        const { cidade, estado } = extractCityState(lead.address);
+        return {
+          'Nome': lead.name,
+          'Cidade': cidade,
+          'Estado': estado,
+          'Endereço': lead.address,
+          'Telefone': lead.phone,
+          'Email': lead.email || 'N/A',
+          'Instagram': lead.instagram || 'N/A',
+          'Responsável': lead.responsible,
+          'Categoria': lead.category,
+          'Porte': lead.companySize || 'N/A',
+          'Funcionários': lead.employeeCount || 'N/A',
+          'Score de Match (%)': lead.matchScore,
+        };
+      });
+      columnWidths = [
+        { wch: 30 }, { wch: 20 }, { wch: 8 }, { wch: 40 },
+        { wch: 15 }, { wch: 30 }, { wch: 20 }, { wch: 25 },
+        { wch: 15 }, { wch: 12 }, { wch: 15 }, { wch: 12 },
+      ];
+    }
 
     const worksheet = XLSX.utils.json_to_sheet(excelData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Leads');
-
-    const columnWidths = [
-      { wch: 30 }, { wch: 20 }, { wch: 8 }, { wch: 40 },
-      { wch: 15 }, { wch: 30 }, { wch: 20 }, { wch: 25 },
-      { wch: 15 }, { wch: 12 }, { wch: 15 }, { wch: 12 },
-    ];
     worksheet['!cols'] = columnWidths;
 
-    // Gerar arquivo e fazer download (compatível com mobile)
     const timestamp = new Date().toISOString().split('T')[0];
-    const fileName = `leads-negocix-${timestamp}.xlsx`;
+    const fileName = `leads-negocix-${fullExport ? 'completo-' : ''}${timestamp}.xlsx`;
     const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const url = URL.createObjectURL(blob);
@@ -188,7 +253,7 @@ const Results = () => {
 
     toast({
       title: "Exportação concluída",
-      description: `${leads.length} leads exportados com sucesso`,
+      description: `${leads.length} leads exportados${fullExport ? ' (modo completo)' : ''}`,
     });
   };
 
