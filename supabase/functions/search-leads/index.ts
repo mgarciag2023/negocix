@@ -42,6 +42,29 @@ function chunkArray<T>(items: T[], size: number): T[][] {
   return chunks;
 }
 
+// ===== CNAE MAPPING POR SEGMENTO =====
+// Para nichos onde o nome da empresa raramente contém a palavra-chave (ex: "DAJU LTDA"
+// não tem "cama"), buscamos também por CNAE oficial da Receita Federal.
+function getCnaesForSegment(segment: string): string[] {
+  const seg = segment.toLowerCase().trim();
+  const cnaeMap: { [key: string]: string[] } = {
+    'lojas de cama, mesa e banho': [
+      '4755503', // Comércio varejista de artigos de cama, mesa e banho
+      '4755502', // Comércio varejista de artigos de armarinho
+      '4755501', // Comércio varejista de tecidos
+      '4641902', // Comércio atacadista de artigos de cama, mesa e banho
+      '1351100', // Fabricação de artefatos têxteis para uso doméstico
+      '1352900', // Fabricação de tecidos especiais
+    ],
+    'cama, mesa e banho': ['4755503', '4755502', '4755501', '4641902', '1351100'],
+    'lojas de tapeçaria, cortinas e persianas': ['4759801'],
+    'lojas de colchões': ['4754703'],
+    'lojas de móveis': ['4754701', '4754702'],
+    'móveis': ['4754701', '4754702', '3101200'],
+  };
+  return cnaeMap[seg] || [];
+}
+
 // ===== CATEGORY SEARCH TERMS MAPPING =====
 // Maps user-facing segment names to search terms for matching against nome_fantasia and descricao_cnae
 function generateSearchTerms(segment: string): string[] {
