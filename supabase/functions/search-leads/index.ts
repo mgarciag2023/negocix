@@ -1393,15 +1393,20 @@ serve(async (req) => {
     // ===== QUERY LOCAL DATABASE (PARALLEL) =====
     let allCompanies: any[] = [];
 
+    // Adaptive limits: heavy multi-segment searches (>5 segments) need stricter caps
+    // to fit inside the ~400s edge-function window
+    const isHeavySearch = segments.length > 5;
+
     // Fetch a single segment using paginated queries (SDK caps RPC at 1000 rows)
     async function fetchSegment(seg: string): Promise<any[]> {
       const segLower = seg.toLowerCase();
       const isIndustrySearch = segLower.includes('indústria') || segLower.includes('industria') || segLower.includes('fábrica') || segLower.includes('fabrica');
       // Broad categories like "restaurantes" have 25+ terms (including sub-niches like pizzaria, hamburgueria, sushi)
       // We need ALL terms to ensure sub-niches appear in parent category searches
-      const maxTerms = isIndustrySearch ? 20 : 30;
+      // For heavy multi-segment searches, cap terms more aggressively to stay within the time budget
+      const maxTerms = isHeavySearch ? 8 : (isIndustrySearch ? 20 : 30);
       const terms = generateSearchTerms(seg).slice(0, maxTerms);
-      console.log(`📤 Segment "${seg}" search terms (${terms.length}):`, terms);
+      console.log(`📤 Segment "${seg}" search terms (${terms.length})${isHeavySearch ? ' [HEAVY MODE]' : ''}:`, terms);
 
       const targetPerSegment = isIndustrySearch ? 50000 : Math.min(leadsPerSegment * 2, 50000);
       const PAGE_SIZE = 1000;
