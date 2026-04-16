@@ -1191,8 +1191,10 @@ serve(async (req) => {
 
   // Time guard: track when we started so we can bail before Supabase kills us
   const FUNCTION_START = Date.now();
-  const MAX_EXECUTION_MS = 380_000; // 380s safety margin (Supabase Pro limit ~400s)
+  const MAX_EXECUTION_MS = 395_000; // 395s safety margin (Supabase Pro hard limit ~400s)
+  const SOFT_TIMEOUT_MS = 360_000; // start wrapping up at 360s to ensure response is sent
   const isNearTimeout = () => (Date.now() - FUNCTION_START) > MAX_EXECUTION_MS;
+  const isNearSoftTimeout = () => (Date.now() - FUNCTION_START) > SOFT_TIMEOUT_MS;
 
   try {
     const { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial } = await req.json();
