@@ -1404,7 +1404,7 @@ serve(async (req) => {
       // Broad categories like "restaurantes" have 25+ terms (including sub-niches like pizzaria, hamburgueria, sushi)
       // We need ALL terms to ensure sub-niches appear in parent category searches
       // For heavy multi-segment searches, cap terms more aggressively to stay within the time budget
-      const maxTerms = isHeavySearch ? 8 : (isIndustrySearch ? 20 : 30);
+      const maxTerms = isHeavySearch ? 12 : (isIndustrySearch ? 20 : 30);
       const terms = generateSearchTerms(seg).slice(0, maxTerms);
       console.log(`📤 Segment "${seg}" search terms (${terms.length})${isHeavySearch ? ' [HEAVY MODE]' : ''}:`, terms);
 
@@ -1413,11 +1413,11 @@ serve(async (req) => {
       const seenIds = new Set<string>();
       let bestResults: any[] = [];
 
-      // Strategy: query each term individually with limited concurrency + retry on timeout
-      // This avoids overwhelming the DB connection pool
-      
-      const TERM_CONCURRENCY = 4; // max parallel DB queries per segment
-      
+      // ===== OPTIMIZATION =====
+      // The RPC `search_companies` builds a combined tsquery with OR over all terms.
+      // Sending ALL terms in ONE call is dramatically faster than N calls (1 GIN scan vs N).
+      // We paginate this single combined query instead of paginating per-term.
+
       // Helper: run RPC with retry on timeout/pool errors
       const rpcWithRetry = async (params: any, attempts = 3): Promise<any> => {
         for (let i = 0; i < attempts; i++) {
@@ -1430,7 +1430,7 @@ serve(async (req) => {
           await new Promise(res => setTimeout(res, 500 * Math.pow(3, i)));
         }
       };
-      
+
       // Helper: run promises with concurrency limit
       const runPool = async <T>(items: any[], fn: (item: any) => Promise<T>, concurrency: number): Promise<T[]> => {
         const results: T[] = new Array(items.length);
@@ -1445,73 +1445,79 @@ serve(async (req) => {
         await Promise.all(workers);
         return results;
       };
-      
-      // Phase 1: First page of each term (concurrency-limited)
-      const firstPages = await runPool(terms, async (term: string) => {
+
+      // Phase 1: Fetch first batch of pages in parallel using the COMBINED query
+      // (all terms OR'd together in a single tsquery — one GIN index scan in Postgres).
+      const PAGE_CONCURRENCY = 5;
+      const INITIAL_PAGES = isHeavySearch ? 3 : 6; // fetch 3-6 pages (3k-6k rows) up front in parallel
+      const initialPageNums = Array.from({ length: INITIAL_PAGES }, (_, i) => i);
+
+      const initialPages = await runPool(initialPageNums, async (p: number) => {
         const r = await rpcWithRetry({
           p_city: city || null,
           p_state: state || null,
-          p_search_terms: [term],
+          p_search_terms: terms,
           p_biz_type: bizType || 'all',
           p_limit_val: PAGE_SIZE,
-          p_offset_val: 0,
+          p_offset_val: p * PAGE_SIZE,
         });
-        return { ...r, term };
-      }, TERM_CONCURRENCY);
-      
-      // Collect results and track which terms have more data
-      const termsWithMore: { term: string; count: number }[] = [];
-      for (const r of firstPages) {
+        return { ...r, pageIdx: p };
+      }, PAGE_CONCURRENCY);
+
+      let lastPageFull = false;
+      let highestPageFetched = -1;
+      for (const r of initialPages.sort((a, b) => a.pageIdx - b.pageIdx)) {
         if (r.error) {
-          console.error(`❌ DB error term "${r.term}":`, r.error.message);
+          console.error(`❌ DB error page ${r.pageIdx} "${seg}":`, r.error.message);
           continue;
         }
-        if (r.data) {
+        if (r.data && r.data.length > 0) {
           for (const c of r.data) {
             if (!seenIds.has(c.id)) { seenIds.add(c.id); bestResults.push(c); }
           }
-          if (r.data.length === PAGE_SIZE) {
-            termsWithMore.push({ term: r.term, count: r.data.length });
-          }
+          highestPageFetched = Math.max(highestPageFetched, r.pageIdx);
+          lastPageFull = r.data.length === PAGE_SIZE;
         }
       }
 
-      console.log(`📊 Phase 1 "${seg}": ${bestResults.length} results from ${terms.length} terms, ${termsWithMore.length} terms have more`);
+      console.log(`📊 Phase 1 "${seg}": ${bestResults.length} results (${INITIAL_PAGES} pages, lastFull=${lastPageFull})`);
 
-      // Phase 2: Paginate terms that returned full pages (they have more data)
-      if (bestResults.length < targetPerSegment && termsWithMore.length > 0) {
-        // Heavy multi-segment searches: fewer extra pages so we don't blow the time budget
-        const MAX_EXTRA_PAGES = isHeavySearch ? 2 : 10;
-        
-        for (const { term } of termsWithMore) {
+      // Phase 2: Continue paginating in parallel batches if last page was full
+      // (means there's likely more data). Stop on soft-timeout, target reached, or empty page.
+      if (lastPageFull && bestResults.length < targetPerSegment) {
+        const MAX_EXTRA_BATCHES = isHeavySearch ? 2 : 6; // each batch = PAGE_CONCURRENCY pages
+        let nextPage = highestPageFetched + 1;
+        let stop = false;
+
+        for (let batch = 0; batch < MAX_EXTRA_BATCHES && !stop; batch++) {
           if (bestResults.length >= targetPerSegment || isNearSoftTimeout()) break;
-          
-          // Fetch pages 2-N with concurrency limit for this term
-          const pageNums = Array.from({ length: MAX_EXTRA_PAGES }, (_, i) => i + 1);
+
+          const pageNums = Array.from({ length: PAGE_CONCURRENCY }, (_, i) => nextPage + i);
+          nextPage += PAGE_CONCURRENCY;
+
           const pages = await runPool(pageNums, async (p: number) => {
             const r = await rpcWithRetry({
               p_city: city || null,
               p_state: state || null,
-              p_search_terms: [term],
+              p_search_terms: terms,
               p_biz_type: bizType || 'all',
               p_limit_val: PAGE_SIZE,
               p_offset_val: p * PAGE_SIZE,
             });
             return { ...r, pageIdx: p };
-          }, TERM_CONCURRENCY);
+          }, PAGE_CONCURRENCY);
 
-          let termExhausted = false;
-          
+          let batchHadFullPage = false;
           for (const r of pages.sort((a, b) => a.pageIdx - b.pageIdx)) {
-            if (termExhausted) break;
-            if (r.error) { termExhausted = true; continue; }
-            if (!r.data || r.data.length === 0) { termExhausted = true; continue; }
-            
+            if (r.error) { stop = true; continue; }
+            if (!r.data || r.data.length === 0) { stop = true; continue; }
             for (const c of r.data) {
               if (!seenIds.has(c.id)) { seenIds.add(c.id); bestResults.push(c); }
             }
-            if (r.data.length < PAGE_SIZE) termExhausted = true;
+            if (r.data.length === PAGE_SIZE) batchHadFullPage = true;
           }
+
+          if (!batchHadFullPage) stop = true;
         }
       }
 
@@ -1519,8 +1525,9 @@ serve(async (req) => {
       return bestResults.map((c: any) => ({ ...c, _segment: seg }));
     }
 
-    // Run segments with concurrency limit (max 3 segments at a time) to protect DB pool
-    const SEGMENT_CONCURRENCY = 3;
+    // Run segments in parallel. Each segment now does ONE combined-tsquery RPC per page,
+    // so we can safely raise segment concurrency without overloading the DB pool.
+    const SEGMENT_CONCURRENCY = 5;
     const segmentResults: any[][] = new Array(segments.length);
     let segIdx = 0;
     const segWorkers = Array.from({ length: Math.min(SEGMENT_CONCURRENCY, segments.length) }, async () => {
