@@ -1525,8 +1525,9 @@ serve(async (req) => {
       return bestResults.map((c: any) => ({ ...c, _segment: seg }));
     }
 
-    // Run segments with concurrency limit (max 3 segments at a time) to protect DB pool
-    const SEGMENT_CONCURRENCY = 3;
+    // Run segments in parallel. Each segment now does ONE combined-tsquery RPC per page,
+    // so we can safely raise segment concurrency without overloading the DB pool.
+    const SEGMENT_CONCURRENCY = 5;
     const segmentResults: any[][] = new Array(segments.length);
     let segIdx = 0;
     const segWorkers = Array.from({ length: Math.min(SEGMENT_CONCURRENCY, segments.length) }, async () => {
