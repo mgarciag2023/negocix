@@ -42,6 +42,29 @@ function chunkArray<T>(items: T[], size: number): T[][] {
   return chunks;
 }
 
+// ===== CNAE MAPPING POR SEGMENTO =====
+// Para nichos onde o nome da empresa raramente contém a palavra-chave (ex: "DAJU LTDA"
+// não tem "cama"), buscamos também por CNAE oficial da Receita Federal.
+function getCnaesForSegment(segment: string): string[] {
+  const seg = segment.toLowerCase().trim();
+  const cnaeMap: { [key: string]: string[] } = {
+    'lojas de cama, mesa e banho': [
+      '4755503', // Comércio varejista de artigos de cama, mesa e banho
+      '4755502', // Comércio varejista de artigos de armarinho
+      '4755501', // Comércio varejista de tecidos
+      '4641902', // Comércio atacadista de artigos de cama, mesa e banho
+      '1351100', // Fabricação de artefatos têxteis para uso doméstico
+      '1352900', // Fabricação de tecidos especiais
+    ],
+    'cama, mesa e banho': ['4755503', '4755502', '4755501', '4641902', '1351100'],
+    'lojas de tapeçaria, cortinas e persianas': ['4759801'],
+    'lojas de colchões': ['4754703'],
+    'lojas de móveis': ['4754701', '4754702'],
+    'móveis': ['4754701', '4754702', '3101200'],
+  };
+  return cnaeMap[seg] || [];
+}
+
 // ===== CATEGORY SEARCH TERMS MAPPING =====
 // Maps user-facing segment names to search terms for matching against nome_fantasia and descricao_cnae
 function generateSearchTerms(segment: string): string[] {
@@ -1541,6 +1564,42 @@ serve(async (req) => {
         }
       }
 
+      // ===== CNAE-BASED SEARCH (paralelo ao tsquery) =====
+      // Para nichos onde o nome da empresa não contém a palavra-chave (ex: DAJU LTDA),
+      // buscamos diretamente por CNAEs oficiais. Esses resultados pulam o filtro de relevância.
+      const cnaes = getCnaesForSegment(seg);
+      if (cnaes.length > 0) {
+        console.log(`🏷️ CNAE search "${seg}": ${cnaes.length} CNAEs - ${cnaes.join(', ')}`);
+        try {
+          let q = adminClient
+            .from('companies')
+            .select('*')
+            .in('cnae_principal', cnaes)
+            .eq('situacao_cadastral', 'ATIVA')
+            .not('telefone_1', 'is', null);
+          if (city) q = q.eq('cidade', city);
+          if (state) q = q.eq('estado', state);
+          if (bizType === 'matriz') q = q.eq('matriz_filial', 'MATRIZ');
+          if (bizType === 'filial') q = q.eq('matriz_filial', 'FILIAL');
+          const { data: cnaeData, error: cnaeErr } = await q.limit(5000);
+          if (cnaeErr) {
+            console.error(`❌ CNAE search error "${seg}":`, cnaeErr.message);
+          } else if (cnaeData) {
+            let added = 0;
+            for (const c of cnaeData) {
+              if (!seenIds.has(c.id)) {
+                seenIds.add(c.id);
+                bestResults.push({ ...c, _viaCnae: true });
+                added++;
+              }
+            }
+            console.log(`🏷️ CNAE search "${seg}": +${added} novos (total CNAE: ${cnaeData.length})`);
+          }
+        } catch (e) {
+          console.error(`❌ CNAE search exception "${seg}":`, (e as Error).message);
+        }
+      }
+
       console.log(`📊 Segment "${seg}": ${bestResults.length} total results`);
       return bestResults.map((c: any) => ({ ...c, _segment: seg }));
     }
@@ -1854,6 +1913,10 @@ serve(async (req) => {
       }
 
       allCompanies = allCompanies.filter(c => {
+        // ✅ Empresas encontradas via CNAE oficial são automaticamente qualificadas
+        // (CNAE da Receita Federal já garante que pertencem ao nicho)
+        if (c._viaCnae) return true;
+
         const seg = (c._segment || '').trim().toLowerCase();
         const termSets = segTermSetsMap.get(seg);
         const coreKeywords = segCoreKeywordsMap.get(seg);
