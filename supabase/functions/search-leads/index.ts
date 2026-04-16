@@ -1478,22 +1478,20 @@ serve(async (req) => {
         for (const { term } of termsWithMore) {
           if (bestResults.length >= targetPerSegment || isNearTimeout()) break;
           
-          // Fetch pages 2-11 in parallel for this term
-          const pagePromises: Promise<any>[] = [];
-          for (let p = 1; p <= MAX_EXTRA_PAGES; p++) {
-            pagePromises.push(
-              adminClient.rpc('search_companies', {
-                p_city: city || null,
-                p_state: state || null,
-                p_search_terms: [term],
-                p_biz_type: bizType || 'all',
-                p_limit_val: PAGE_SIZE,
-                p_offset_val: p * PAGE_SIZE,
-              }).then((r: any) => ({ ...r, pageIdx: p }))
-            );
-          }
+          // Fetch pages 2-11 with concurrency limit for this term
+          const pageNums = Array.from({ length: MAX_EXTRA_PAGES }, (_, i) => i + 1);
+          const pages = await runPool(pageNums, async (p: number) => {
+            const r = await rpcWithRetry({
+              p_city: city || null,
+              p_state: state || null,
+              p_search_terms: [term],
+              p_biz_type: bizType || 'all',
+              p_limit_val: PAGE_SIZE,
+              p_offset_val: p * PAGE_SIZE,
+            });
+            return { ...r, pageIdx: p };
+          }, TERM_CONCURRENCY);
 
-          const pages = await Promise.all(pagePromises);
           let termExhausted = false;
           
           for (const r of pages.sort((a, b) => a.pageIdx - b.pageIdx)) {
@@ -1513,9 +1511,18 @@ serve(async (req) => {
       return bestResults.map((c: any) => ({ ...c, _segment: seg }));
     }
 
-    // Run ALL segments in parallel
-    const segmentPromises = segments.map((seg: string) => fetchSegment(seg));
-    const segmentResults = await Promise.all(segmentPromises);
+    // Run segments with concurrency limit (max 3 segments at a time) to protect DB pool
+    const SEGMENT_CONCURRENCY = 3;
+    const segmentResults: any[][] = new Array(segments.length);
+    let segIdx = 0;
+    const segWorkers = Array.from({ length: Math.min(SEGMENT_CONCURRENCY, segments.length) }, async () => {
+      while (true) {
+        const myIdx = segIdx++;
+        if (myIdx >= segments.length) break;
+        segmentResults[myIdx] = await fetchSegment(segments[myIdx]);
+      }
+    });
+    await Promise.all(segWorkers);
     for (const sr of segmentResults) {
       allCompanies.push(...sr);
     }
