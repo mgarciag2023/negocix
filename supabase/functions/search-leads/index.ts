@@ -1447,8 +1447,10 @@ serve(async (req) => {
       // Broad categories like "restaurantes" have 25+ terms (including sub-niches like pizzaria, hamburgueria, sushi)
       // We need ALL terms to ensure sub-niches appear in parent category searches
       // For heavy multi-segment searches, cap terms more aggressively to stay within the time budget
-      const maxTerms = isHeavySearch ? 12 : (isIndustrySearch ? 20 : 30);
-      const terms = generateSearchTerms(seg).slice(0, maxTerms);
+      // Sem corte artificial: usamos TODOS os termos gerados para o segmento.
+      // Se faltar algum sinônimo/marca importante, ele deve ser adicionado em
+      // generateSearchTerms — não cortado aqui.
+      const terms = generateSearchTerms(seg);
       console.log(`📤 Segment "${seg}" search terms (${terms.length})${isHeavySearch ? ' [HEAVY MODE]' : ''}:`, terms);
 
       const targetPerSegment = isIndustrySearch ? 50000 : Math.min(leadsPerSegment * 2, 50000);
@@ -1571,17 +1573,22 @@ serve(async (req) => {
       if (cnaes.length > 0) {
         console.log(`🏷️ CNAE search "${seg}": ${cnaes.length} CNAEs - ${cnaes.join(', ')}`);
         try {
+          // Busca em duas frentes: CNAE PRINCIPAL e CNAE SECUNDÁRIA
+          // (muitas redes como DAJU registram o varejo de cama/mesa/banho como secundária).
+          const cnaeOrFilter = cnaes
+            .map(code => `cnae_principal.eq.${code},cnae_secundaria.ilike.%${code}%`)
+            .join(',');
           let q = adminClient
             .from('companies')
             .select('*')
-            .in('cnae_principal', cnaes)
+            .or(cnaeOrFilter)
             .eq('situacao_cadastral', 'ATIVA')
             .not('telefone_1', 'is', null);
           if (city) q = q.eq('cidade', city);
           if (state) q = q.eq('estado', state);
           if (bizType === 'matriz') q = q.eq('matriz_filial', 'MATRIZ');
           if (bizType === 'filial') q = q.eq('matriz_filial', 'FILIAL');
-          const { data: cnaeData, error: cnaeErr } = await q.limit(5000);
+          const { data: cnaeData, error: cnaeErr } = await q.limit(10000);
           if (cnaeErr) {
             console.error(`❌ CNAE search error "${seg}":`, cnaeErr.message);
           } else if (cnaeData) {
@@ -1593,7 +1600,7 @@ serve(async (req) => {
                 added++;
               }
             }
-            console.log(`🏷️ CNAE search "${seg}": +${added} novos (total CNAE: ${cnaeData.length})`);
+            console.log(`🏷️ CNAE search "${seg}" (principal+secundária): +${added} novos (total CNAE: ${cnaeData.length})`);
           }
         } catch (e) {
           console.error(`❌ CNAE search exception "${seg}":`, (e as Error).message);
