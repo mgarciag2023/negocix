@@ -70,6 +70,7 @@ export default function SearchHistory() {
     localStorage.setItem("cachedLeads", JSON.stringify(results));
     localStorage.setItem("cachedSearchConfig", configStr);
     localStorage.setItem("leadSearchConfig", configStr);
+    sessionStorage.removeItem('results_scroll_position');
     navigate("/resultados");
   };
 
