@@ -133,6 +133,9 @@ const Configuration = () => {
       description: "Procurando leads compatíveis...",
     });
 
+    // Clear saved scroll position so new search starts at the top
+    sessionStorage.removeItem('results_scroll_position');
+
     setTimeout(() => {
       navigate("/resultados");
     }, 1000);
