@@ -158,6 +158,7 @@ const SearchSuppliers = () => {
     
     localStorage.setItem("supplierSearchConfig", JSON.stringify(supplierSearchConfig));
     localStorage.removeItem("suppliersCache");
+    sessionStorage.removeItem('results_scroll_position');
     
     navigate("/suppliers-results");
   };
