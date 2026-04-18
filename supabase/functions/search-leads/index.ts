@@ -104,8 +104,8 @@ function generateSearchTerms(segment: string): string[] {
 
     // ===== PADARIAS E CONFEITARIAS =====
     // Padarias e confeitarias são praticamente a mesma coisa - termos compartilhados
-    'padarias': ['padaria', 'panificadora', 'panificacao', 'panificio', 'casa de paes', 'casa do pao', 'confeitaria', 'paes', 'bakery', 'pao', 'padoca', 'panetteria', 'panetaria', 'boulangerie', 'pao artesanal', 'pao caseiro', 'forno de pao', 'forneria'],
-    'panificadoras': ['panificadora', 'padaria', 'panificacao', 'panificio', 'paes', 'confeitaria', 'panetteria', 'boulangerie'],
+    'padarias': ['padaria', 'panificadora', 'panificacao', 'panificio', 'casa de pães', 'casa do pão', 'confeitaria', 'pães', 'bakery', 'pão', 'padoca', 'panetteria', 'panetaria', 'boulangerie', 'pão artesanal', 'pão caseiro', 'forno de pão', 'forneria'],
+    'panificadoras': ['panificadora', 'padaria', 'panificacao', 'panificio', 'pães', 'confeitaria', 'panetteria', 'boulangerie'],
     'confeitarias': ['confeitaria', 'bolos', 'cake', 'patisserie', 'padaria', 'panificadora', 'doces', 'tortas', 'bolo artesanal', 'cake shop'],
     'docerias': ['doceria', 'doces', 'brigadeiro', 'bombons', 'candy', 'doces finos', 'doces artesanais'],
     'chocolaterias': ['chocolateria', 'chocolate artesanal', 'bombons', 'chocolate', 'cacau'],
