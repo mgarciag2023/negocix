@@ -67,8 +67,16 @@ export default function SearchHistory() {
     `local|${normalizeCacheKeyPart(segment)}|${normalizeCacheKeyPart(region)}`;
 
   const openResults = (results: any[], configStr: string) => {
-    localStorage.setItem("cachedLeads", JSON.stringify(results));
-    localStorage.setItem("cachedSearchConfig", configStr);
+    try {
+      localStorage.setItem("cachedLeads", JSON.stringify(results));
+      localStorage.setItem("cachedSearchConfig", configStr);
+    } catch (cacheErr) {
+      console.warn("⚠️ Cache pulado (quota excedida):", results.length, "leads");
+      try {
+        localStorage.removeItem("cachedLeads");
+        localStorage.removeItem("cachedSearchConfig");
+      } catch {}
+    }
     localStorage.setItem("leadSearchConfig", configStr);
     sessionStorage.removeItem('results_scroll_position');
     navigate("/resultados");
