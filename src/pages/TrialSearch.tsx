@@ -401,9 +401,9 @@ const TrialSearch = () => {
             </div>
             
             <h1 className="mb-4 text-3xl md:text-5xl font-bold leading-tight text-primary-foreground opacity-0 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-              Descubra Seus{" "}
+              Encontre{" "}
               <span className="relative">
-                <span className="relative z-10">Próximos Clientes</span>
+                <span className="relative z-10">Clientes Qualificados</span>
                 <span className="absolute bottom-1 left-0 right-0 h-3 bg-success-glow/40 -rotate-1 rounded" />
               </span>
             </h1>
