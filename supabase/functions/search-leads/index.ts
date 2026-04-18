@@ -1374,7 +1374,7 @@ serve(async (req) => {
         return false;
       });
 
-      const leads = trialRelevant.slice(0, MAX_LEADS).map((c: any, i: number) => {
+      const leads = trialRelevant.map((c: any, i: number) => {
         const nfTrial = (c.nome_fantasia || '').trim();
         const nfTrialWords = nfTrial.split(/\s+/).filter(Boolean);
         const isWeirdTrial = !nfTrial || /^\*+$/.test(nfTrial) || /^[^a-zA-Z0-9À-ÿ\s]{2,}/.test(nfTrial) || /[@#*]{2,}/.test(nfTrial) || !/[a-zA-ZÀ-ÿ]{2,}/.test(nfTrial);
