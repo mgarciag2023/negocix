@@ -1449,9 +1449,11 @@ serve(async (req) => {
       // We paginate this single combined query instead of paginating per-term.
 
       // Helper: run RPC with retry on timeout/pool errors
+      // Uses search_companies_ilike (trigram-indexed ILIKE) instead of search_vector
+      // to work across all 35M records regardless of indexing status.
       const rpcWithRetry = async (params: any, attempts = 3): Promise<any> => {
         for (let i = 0; i < attempts; i++) {
-          const r = await adminClient.rpc('search_companies', params);
+          const r = await adminClient.rpc('search_companies_ilike', params);
           if (!r.error) return r;
           const msg = String(r.error?.message || '').toLowerCase();
           const retriable = msg.includes('timeout') || msg.includes('connection pool') || msg.includes('502') || msg.includes('bad gateway');
@@ -1479,7 +1481,7 @@ serve(async (req) => {
       // Phase 1: Fetch first batch of pages in parallel using the COMBINED query
       // (all terms OR'd together in a single tsquery — one GIN index scan in Postgres).
       const PAGE_CONCURRENCY = 5;
-      const INITIAL_PAGES = isHeavySearch ? 3 : 6; // fetch 3-6 pages (3k-6k rows) up front in parallel
+      const INITIAL_PAGES = isHeavySearch ? 5 : 10; // 5-10 páginas (5k-10k linhas) em paralelo
       const initialPageNums = Array.from({ length: INITIAL_PAGES }, (_, i) => i);
 
       const initialPages = await runPool(initialPageNums, async (p: number) => {
@@ -1515,7 +1517,7 @@ serve(async (req) => {
       // Phase 2: Continue paginating in parallel batches if last page was full
       // (means there's likely more data). Stop on soft-timeout, target reached, or empty page.
       if (lastPageFull && bestResults.length < targetPerSegment) {
-        const MAX_EXTRA_BATCHES = isHeavySearch ? 2 : 6; // each batch = PAGE_CONCURRENCY pages
+        const MAX_EXTRA_BATCHES = isHeavySearch ? 4 : 20; // até 20 batches × 5 páginas = ~100k linhas/segmento
         let nextPage = highestPageFetched + 1;
         let stop = false;
 

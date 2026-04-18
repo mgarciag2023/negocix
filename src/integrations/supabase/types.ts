@@ -610,6 +610,58 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      search_companies_ilike: {
+        Args: {
+          p_biz_type?: string
+          p_city?: string
+          p_limit_val?: number
+          p_offset_val?: number
+          p_search_terms?: string[]
+          p_state?: string
+        }
+        Returns: {
+          bairro: string | null
+          capital_social: number | null
+          cep: string | null
+          cidade: string | null
+          cnae_principal: string | null
+          cnae_secundaria: string | null
+          cnpj: string | null
+          complemento: string | null
+          created_at: string
+          data_abertura: string | null
+          data_situacao_cadastral: string | null
+          descricao_cnae: string | null
+          email: string | null
+          endereco: string | null
+          estado: string | null
+          faixa_etaria_socio: string | null
+          id: string
+          matriz_filial: string | null
+          mei: string | null
+          motivo_situacao: string | null
+          natureza_juridica: string | null
+          nome_fantasia: string | null
+          nome_socio: string | null
+          porte: string | null
+          qualificacao_socio: string | null
+          razao_social: string | null
+          search_vector: unknown
+          simples: string | null
+          situacao_cadastral: string | null
+          telefone_1: string | null
+          telefone_2: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "companies"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
+      unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "user"
