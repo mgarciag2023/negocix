@@ -1154,6 +1154,75 @@ function parseRegion(region: string): { city: string | null; state: string | nul
   return { city: singleNorm, state: null, isStateOnly: false };
 }
 
+// ===== CITY AUTO-CORRECT =====
+// Corrige automaticamente o nome da cidade comparando com as cidades reais
+// presentes no banco para o estado informado. Usa unaccent + similarity (trigram).
+async function resolveCityName(
+  client: any,
+  cityInput: string | null,
+  state: string | null
+): Promise<string | null> {
+  if (!cityInput || !state) return cityInput;
+
+  const inputNorm = normalizeText(cityInput);
+
+  // 1) Match exato — já tá certo
+  const { data: exact } = await client
+    .from('companies')
+    .select('cidade')
+    .eq('estado', state)
+    .eq('cidade', inputNorm)
+    .limit(1);
+  if (exact && exact.length > 0) return inputNorm;
+
+  // 2) Buscar candidatas distintas do estado e escolher a mais parecida
+  // (faixa razoável: cidades que comecem com a primeira letra ou contenham parte do nome)
+  const firstLetter = inputNorm.charAt(0);
+  const { data: candidates } = await client
+    .from('companies')
+    .select('cidade')
+    .eq('estado', state)
+    .not('cidade', 'is', null)
+    .ilike('cidade', `${firstLetter}%`)
+    .limit(2000);
+
+  if (!candidates || candidates.length === 0) return inputNorm;
+
+  const unique = Array.from(new Set(candidates.map((c: any) => c.cidade).filter(Boolean)));
+
+  // Similaridade simples (Dice) entre bigrams — funciona offline sem RPC
+  const bigrams = (s: string): Set<string> => {
+    const set = new Set<string>();
+    const t = s.replace(/\s+/g, '');
+    for (let i = 0; i < t.length - 1; i++) set.add(t.substring(i, i + 2));
+    return set;
+  };
+  const dice = (a: string, b: string): number => {
+    const A = bigrams(a), B = bigrams(b);
+    if (A.size === 0 || B.size === 0) return 0;
+    let inter = 0;
+    A.forEach(x => { if (B.has(x)) inter++; });
+    return (2 * inter) / (A.size + B.size);
+  };
+
+  let best = inputNorm;
+  let bestScore = 0;
+  for (const c of unique) {
+    const score = dice(inputNorm, c as string);
+    if (score > bestScore) {
+      bestScore = score;
+      best = c as string;
+    }
+  }
+
+  // Aceita se similaridade >= 0.6 (tolera erros de digitação típicos)
+  if (bestScore >= 0.6 && best !== inputNorm) {
+    console.log(`🔤 City auto-correct: "${inputNorm}" → "${best}" (similarity: ${bestScore.toFixed(2)})`);
+    return best;
+  }
+  return inputNorm;
+}
+
 // ===== MATCH SCORING =====
 function calculateMatchScore(company: any): number {
   let score = 50;
