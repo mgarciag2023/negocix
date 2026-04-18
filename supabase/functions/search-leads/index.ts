@@ -2111,7 +2111,7 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ leads }), {
+    return new Response(JSON.stringify({ leads, originalCity, correctedCity }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
