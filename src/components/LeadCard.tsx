@@ -61,7 +61,8 @@ const LeadCard = ({
   const handleSaveLead = () => {
     const lead = {
       id, name, address, phone, email, instagram, website, responsible,
-      matchScore, reasons, revenue, openedDate: openedDate, category, employeeCount, companySize, hasWhatsApp
+      matchScore, reasons, revenue, openedDate: openedDate, category, employeeCount, companySize, hasWhatsApp,
+      cnpj, razaoSocial, nomeFantasia
     };
     saveLead(lead);
   };
