@@ -95,6 +95,7 @@ const Results = () => {
   const [loading, setLoading] = useState(true);
   const [sortOrder, setSortOrder] = useState<'alphabetical' | 'category'>('alphabetical');
   const [visibleCount, setVisibleCount] = useState(LEADS_PER_PAGE);
+  const [cityCorrection, setCityCorrection] = useState<{ original: string; corrected: string } | null>(null);
   const { toast } = useToast();
   const location = useLocation();
   const { restoreScrollPosition } = useScrollPosition();
