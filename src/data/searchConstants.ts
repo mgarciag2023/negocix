@@ -246,6 +246,8 @@ export const customerTypes = [
   "Autopeças de Vans e Utilitários",
   "Autopeças de Importados",
   "E-commerce de Peças Automotivas",
+  "E-commerces de Máquinas e Ferramentas Elétricas",
+  "E-commerces de Máquinas e Ferramentas a Combustão",
   "Lojas de Pneus",
   "Postos de Combustível",
   "Lava-Rápidos",
