@@ -90,6 +90,22 @@ const LeadDetail = () => {
                 <div className="flex-1 min-w-0">
                   <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">{lead.name}</h1>
                   <Badge variant="secondary" className="mb-4 text-xs">{lead.category}</Badge>
+                  {(lead.razaoSocial || lead.nomeFantasia) && (
+                    <div className="mb-3 space-y-1">
+                      {lead.razaoSocial && (
+                        <div className="text-sm">
+                          <span className="text-muted-foreground">Razão Social: </span>
+                          <span className="text-foreground font-medium">{lead.razaoSocial}</span>
+                        </div>
+                      )}
+                      {lead.nomeFantasia && (
+                        <div className="text-sm">
+                          <span className="text-muted-foreground">Nome Fantasia: </span>
+                          <span className="text-foreground font-medium">{lead.nomeFantasia}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <div className="flex items-start text-muted-foreground mb-2">
                     <MapPin className="h-4 w-4 md:h-5 md:w-5 mr-2 mt-0.5 flex-shrink-0" />
                     <span className="text-sm md:text-base">{lead.address}</span>
