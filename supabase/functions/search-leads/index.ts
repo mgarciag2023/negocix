@@ -1449,9 +1449,11 @@ serve(async (req) => {
       // We paginate this single combined query instead of paginating per-term.
 
       // Helper: run RPC with retry on timeout/pool errors
+      // Uses search_companies_ilike (trigram-indexed ILIKE) instead of search_vector
+      // to work across all 35M records regardless of indexing status.
       const rpcWithRetry = async (params: any, attempts = 3): Promise<any> => {
         for (let i = 0; i < attempts; i++) {
-          const r = await adminClient.rpc('search_companies', params);
+          const r = await adminClient.rpc('search_companies_ilike', params);
           if (!r.error) return r;
           const msg = String(r.error?.message || '').toLowerCase();
           const retriable = msg.includes('timeout') || msg.includes('connection pool') || msg.includes('502') || msg.includes('bad gateway');
