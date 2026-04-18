@@ -582,6 +582,8 @@ function generateSearchTerms(segment: string): string[] {
     'e-commerces de perfumaria e casa': ['ecommerce perfumaria', 'perfumes online'],
     'e-commerces de sabonetes': ['ecommerce sabonetes', 'sabonetes artesanais'],
     'e-commerces de presentes finos': ['ecommerce presentes', 'presentes online'],
+    'e-commerces de máquinas e ferramentas elétricas': ['ecommerce ferramentas eletricas', 'ferramentas eletricas online', 'loja virtual ferramentas', 'maquinas eletricas online', 'furadeira online', 'parafusadeira online', 'lixadeira online', 'esmerilhadeira online', 'serra eletrica online', 'ferramentas eletricas ecommerce', 'loja online ferramentas eletricas'],
+    'e-commerces de máquinas e ferramentas a combustão': ['ecommerce ferramentas combustao', 'motosserra online', 'roçadeira online', 'rocadeira online', 'cortador de grama online', 'motopoda online', 'soprador online', 'gerador online', 'maquinas a combustao online', 'ferramentas a gasolina online', 'loja virtual motosserra', 'loja online roçadeira'],
 
     // ===== IMPORTAÇÃO E EXPORTAÇÃO =====
     'importadoras': ['importadora', 'importacao', 'produtos importados', 'trading'],
