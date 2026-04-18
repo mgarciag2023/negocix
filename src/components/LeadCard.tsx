@@ -129,6 +129,18 @@ const LeadCard = ({
       
       {/* Company Info Grid */}
       <div className="grid grid-cols-2 gap-3 md:gap-4 mb-4 p-3 bg-muted/30 rounded-lg">
+        {razaoSocial && (
+          <div className="flex flex-col gap-0.5 text-xs md:text-sm col-span-2">
+            <span className="text-muted-foreground text-[10px]">Razão Social:</span>
+            <span className="text-foreground font-medium">{razaoSocial}</span>
+          </div>
+        )}
+        {nomeFantasia && (
+          <div className="flex flex-col gap-0.5 text-xs md:text-sm col-span-2">
+            <span className="text-muted-foreground text-[10px]">Nome Fantasia:</span>
+            <span className="text-foreground font-medium">{nomeFantasia}</span>
+          </div>
+        )}
         {cnpj && (
           <div className="flex items-center gap-2 text-xs md:text-sm col-span-2">
             <span className="text-muted-foreground text-[10px]">CNPJ:</span>
