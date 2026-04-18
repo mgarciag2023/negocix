@@ -1236,8 +1236,8 @@ serve(async (req) => {
   const FUNCTION_START = Date.now();
   // Plataforma corta em ~150s (IDLE_TIMEOUT). Usamos margem dura de 140s e
   // soft-cutoff de 115s pra GARANTIR que devolvemos o que já temos em vez de 504.
-  const MAX_EXECUTION_MS = 140_000;
-  const SOFT_TIMEOUT_MS = 115_000;
+  const MAX_EXECUTION_MS = 380_000;
+  const SOFT_TIMEOUT_MS = 360_000;
   const isNearTimeout = () => (Date.now() - FUNCTION_START) > MAX_EXECUTION_MS;
   const isNearSoftTimeout = () => (Date.now() - FUNCTION_START) > SOFT_TIMEOUT_MS;
 
@@ -1482,8 +1482,8 @@ serve(async (req) => {
 
       // Phase 1: Fetch first batch of pages in parallel using the COMBINED query
       // (all terms OR'd together in a single tsquery — one GIN index scan in Postgres).
-      const PAGE_CONCURRENCY = 6; // dobrado: mais páginas em paralelo, retorno mais rápido
-      const INITIAL_PAGES = isHeavySearch ? 4 : 6; // 4-6 páginas iniciais (4k-6k linhas)
+      const PAGE_CONCURRENCY = 3; // valor original
+      const INITIAL_PAGES = isHeavySearch ? 2 : 3; // valor original
       const initialPageNums = Array.from({ length: INITIAL_PAGES }, (_, i) => i);
 
       const initialPages = await runPool(initialPageNums, async (p: number) => {
@@ -1520,7 +1520,7 @@ serve(async (req) => {
       // Phase 2: Continue paginating in parallel batches if last page was full
       // (means there's likely more data). Stop on soft-timeout, target reached, or empty page.
       if (lastPageFull && bestResults.length < targetPerSegment && !isNearSoftTimeout()) {
-        const MAX_EXTRA_BATCHES = isHeavySearch ? 3 : 8; // mais batches; o soft-timeout corta antes de explodir
+        const MAX_EXTRA_BATCHES = isHeavySearch ? 2 : 5; // valor original
         let nextPage = highestPageFetched + 1;
         let stop = false;
 
