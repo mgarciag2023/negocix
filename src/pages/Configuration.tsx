@@ -142,10 +142,10 @@ const Configuration = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background" lang="pt-BR">
+    <div className="bg-background" lang="pt-BR">
       <Navbar />
       
-      <main className="container mx-auto px-4 py-6 md:py-8">
+      <main className="container mx-auto px-4 py-6 md:py-8 pb-8">
         <div className="mx-auto max-w-4xl">
           <div className="mb-6 md:mb-8">
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Configure Sua Busca</h1>
