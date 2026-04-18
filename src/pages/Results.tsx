@@ -95,6 +95,7 @@ const Results = () => {
   const [loading, setLoading] = useState(true);
   const [sortOrder, setSortOrder] = useState<'alphabetical' | 'category'>('alphabetical');
   const [visibleCount, setVisibleCount] = useState(LEADS_PER_PAGE);
+  const [cityCorrection, setCityCorrection] = useState<{ original: string; corrected: string } | null>(null);
   const { toast } = useToast();
   const location = useLocation();
   const { restoreScrollPosition } = useScrollPosition();
@@ -360,6 +361,12 @@ const Results = () => {
         if (data?.leads && data.leads.length > 0) {
           const sortedLeads = sortLeadsAlphabetically(data.leads);
           setLeads(sortedLeads);
+          if (data.correctedCity && data.originalCity && data.correctedCity !== data.originalCity) {
+            const toTitle = (s: string) => s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+            setCityCorrection({ original: toTitle(data.originalCity), corrected: toTitle(data.correctedCity) });
+          } else {
+            setCityCorrection(null);
+          }
           // Cache best-effort: localStorage tem limite (~5MB). Se estourar, ignora.
           try {
             localStorage.setItem('cachedLeads', JSON.stringify(data.leads));
@@ -449,6 +456,12 @@ const Results = () => {
             <p className="text-muted-foreground text-base md:text-lg">
               Encontramos {leads.length} leads compatíveis com seu perfil
             </p>
+            {cityCorrection && (
+              <p className="mt-2 text-sm text-primary">
+                Mostrando resultados para <span className="font-semibold">{cityCorrection.corrected}</span>
+                <span className="text-muted-foreground"> (você digitou "{cityCorrection.original}")</span>
+              </p>
+            )}
           </div>
           <div className="flex gap-2 flex-wrap">
             <Button 

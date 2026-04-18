@@ -1332,10 +1332,13 @@ serve(async (req) => {
     console.log(`📍 Parsed region: city=${city}, state=${state}, isStateOnly=${isStateOnly}`);
 
     // ===== CITY AUTO-CORRECT (corrige erros de digitação) =====
+    const originalCity: string | null = city;
+    let correctedCity: string | null = null;
     if (city && state) {
       const corrected = await resolveCityName(adminClient, city, state);
       if (corrected && corrected !== city) {
         console.log(`✅ Cidade corrigida: "${city}" → "${corrected}"`);
+        correctedCity = corrected;
         city = corrected;
       }
     }
@@ -2108,7 +2111,7 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ leads }), {
+    return new Response(JSON.stringify({ leads, originalCity, correctedCity }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
