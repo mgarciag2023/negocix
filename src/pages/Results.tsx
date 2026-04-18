@@ -262,25 +262,13 @@ const Results = () => {
     const fetchLeads = async () => {
       try {
         const searchConfigStr = localStorage.getItem('leadSearchConfig');
-        const cachedLeadsStr = localStorage.getItem('cachedLeads');
-        const cachedConfigStr = localStorage.getItem('cachedSearchConfig');
 
-        // Use cache if the search config hasn't changed
-        if (cachedLeadsStr && cachedConfigStr && cachedConfigStr === searchConfigStr) {
-          try {
-            const cachedLeads = JSON.parse(cachedLeadsStr);
-            if (Array.isArray(cachedLeads) && cachedLeads.length > 0) {
-              console.log('📦 Cache HIT - Using cached leads:', cachedLeads.length);
-              setLeads(sortLeadsAlphabetically(cachedLeads));
-              setLoading(false);
-              return;
-            }
-          } catch {
-            console.error('❌ Error parsing cached leads');
-          }
-        }
-
-        console.log('💾 Cache MISS - Will fetch from API');
+        // Cache desabilitado: toda busca bate na edge function ao vivo
+        try {
+          localStorage.removeItem('cachedLeads');
+          localStorage.removeItem('cachedSearchConfig');
+        } catch {}
+        console.log('🔴 Cache DESABILITADO - Buscando ao vivo na API');
 
         // Get search configuration from localStorage
         if (!searchConfigStr) {
