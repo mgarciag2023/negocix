@@ -268,7 +268,6 @@ const Results = () => {
           localStorage.removeItem('cachedLeads');
           localStorage.removeItem('cachedSearchConfig');
         } catch {}
-        console.log('🔴 Cache DESABILITADO - Buscando ao vivo na API');
 
         // Get search configuration from localStorage
         if (!searchConfigStr) {
