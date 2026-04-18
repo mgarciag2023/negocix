@@ -456,6 +456,12 @@ const Results = () => {
             <p className="text-muted-foreground text-base md:text-lg">
               Encontramos {leads.length} leads compatíveis com seu perfil
             </p>
+            {cityCorrection && (
+              <p className="mt-2 text-sm text-primary">
+                Mostrando resultados para <span className="font-semibold">{cityCorrection.corrected}</span>
+                <span className="text-muted-foreground"> (você digitou "{cityCorrection.original}")</span>
+              </p>
+            )}
           </div>
           <div className="flex gap-2 flex-wrap">
             <Button 
