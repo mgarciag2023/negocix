@@ -48,6 +48,8 @@ const LeadCard = ({
   companySize,
   hasWhatsApp,
   cnpj,
+  razaoSocial,
+  nomeFantasia,
 }: LeadCardProps) => {
   const { saveScrollPosition } = useScrollPosition();
   const { getContactState, setContactStatus, setInterestStatus } = useLeadContactState();
