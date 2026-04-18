@@ -1304,8 +1304,8 @@ serve(async (req) => {
       let allCompanies: any[] = [];
       for (const seg of segments) {
         if (isNearTimeout()) break;
-        const terms = generateSearchTerms(seg).slice(0, 3);
-        console.log(`📤 Trial segment "${seg}" terms:`, terms);
+        const terms = generateSearchTerms(seg);
+        console.log(`📤 Trial segment "${seg}" terms (${terms.length}):`, terms);
         
         const { data, error } = await adminClient.rpc('search_companies', {
           p_city: city,
