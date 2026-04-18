@@ -227,6 +227,15 @@ const TrialSearch = () => {
       return;
     }
 
+    // For unlimited devices, clear previous cached results to force fresh display
+    if (isUnlimitedDevice()) {
+      localStorage.removeItem(TRIAL_RESULTS_KEY);
+      localStorage.removeItem("negocix_trial_total");
+      localStorage.removeItem("negocix_trial_inflated");
+      setLeads([]);
+      setTotalFound(0);
+    }
+
     setStep("loading");
 
     try {
