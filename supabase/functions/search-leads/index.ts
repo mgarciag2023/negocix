@@ -1293,10 +1293,10 @@ serve(async (req) => {
 
     // No per-user limits - search all available leads
 
-    // For trial searches, use very small limits to return fast
+    // Trial searches now return ALL leads found (no artificial cap)
     if (isTrial) {
-      const MAX_LEADS = 50;
-      console.log(`🧪 TRIAL MODE: limiting to ${MAX_LEADS} leads`);
+      const MAX_LEADS = 999999;
+      console.log(`🧪 TRIAL MODE: returning all leads found (no cap)`);
 
       // 🚫 CACHE DESABILITADO: toda pesquisa trial também é executada ao vivo
       
