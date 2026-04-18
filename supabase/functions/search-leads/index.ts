@@ -1519,8 +1519,8 @@ serve(async (req) => {
 
       // Phase 2: Continue paginating in parallel batches if last page was full
       // (means there's likely more data). Stop on soft-timeout, target reached, or empty page.
-      if (lastPageFull && bestResults.length < targetPerSegment) {
-        const MAX_EXTRA_BATCHES = isHeavySearch ? 2 : 6; // até 6 batches × 3 páginas = ~18k extras (volta pro valor seguro até trigram existir)
+      if (lastPageFull && bestResults.length < targetPerSegment && !isNearSoftTimeout()) {
+        const MAX_EXTRA_BATCHES = isHeavySearch ? 3 : 8; // mais batches; o soft-timeout corta antes de explodir
         let nextPage = highestPageFetched + 1;
         let stop = false;
 
@@ -1531,6 +1531,7 @@ serve(async (req) => {
           nextPage += PAGE_CONCURRENCY;
 
           const pages = await runPool(pageNums, async (p: number) => {
+            if (isNearSoftTimeout()) return { data: [], error: null, pageIdx: p, skipped: true };
             const r = await rpcWithRetry({
               p_city: city || null,
               p_state: state || null,
@@ -1545,7 +1546,7 @@ serve(async (req) => {
           let batchHadFullPage = false;
           for (const r of pages.sort((a, b) => a.pageIdx - b.pageIdx)) {
             if (r.error) { stop = true; continue; }
-            if (!r.data || r.data.length === 0) { stop = true; continue; }
+            if (!r.data || r.data.length === 0) { if (!r.skipped) stop = true; continue; }
             for (const c of r.data) {
               if (!seenIds.has(c.id)) { seenIds.add(c.id); bestResults.push(c); }
             }
@@ -1553,6 +1554,7 @@ serve(async (req) => {
           }
 
           if (!batchHadFullPage) stop = true;
+          if (isNearSoftTimeout()) { stop = true; console.log(`⏱️ Soft-timeout: parando paginação de "${seg}" com ${bestResults.length} resultados`); }
         }
       }
 
