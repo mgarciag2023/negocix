@@ -373,9 +373,18 @@ const Results = () => {
         if (data?.leads && data.leads.length > 0) {
           const sortedLeads = sortLeadsAlphabetically(data.leads);
           setLeads(sortedLeads);
-          localStorage.setItem('cachedLeads', JSON.stringify(data.leads));
-          localStorage.setItem('cachedSearchConfig', searchConfigStr || '');
-          console.log('💾 Leads cached successfully:', data.leads.length);
+          // Cache best-effort: localStorage tem limite (~5MB). Se estourar, ignora.
+          try {
+            localStorage.setItem('cachedLeads', JSON.stringify(data.leads));
+            localStorage.setItem('cachedSearchConfig', searchConfigStr || '');
+            console.log('💾 Leads cached successfully:', data.leads.length);
+          } catch (cacheErr) {
+            console.warn('⚠️ Cache pulado (quota excedida):', data.leads.length, 'leads');
+            try {
+              localStorage.removeItem('cachedLeads');
+              localStorage.removeItem('cachedSearchConfig');
+            } catch {}
+          }
         } else if (data?.error) {
           toast({
             title: data.allSeen ? "Leads já exibidos" : "Erro ao buscar leads",
