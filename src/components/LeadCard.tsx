@@ -262,7 +262,8 @@ const LeadCard = ({
               lead: { 
                 id, name, address, phone, email, instagram, website, responsible, 
                 matchScore, reasons, revenue, openedDate, category,
-                employeeCount, companySize, hasWhatsApp
+                employeeCount, companySize, hasWhatsApp,
+                cnpj, razaoSocial, nomeFantasia
               } 
             }}
           >
