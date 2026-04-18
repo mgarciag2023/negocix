@@ -1904,45 +1904,17 @@ serve(async (req) => {
         segCoreKeywordsMap.set(seg.toLowerCase(), extractCoreKeywords(seg));
       }
 
-      // CNAEs genéricos/compartilhados: usados por múltiplos sub-nichos de um setor.
-      // Quando o segmento usa SOMENTE estes CNAEs, NÃO aceitar por CNAE — o nome
-      // precisa bater obrigatoriamente, senão pizzarias retornam pastéis/bares/cafés etc.
-      const GENERIC_SHARED_CNAES = new Set([
-        '5611201', // Restaurantes e similares (genérico: pizzaria, hambúrguer, sushi, churrasco...)
-        '5611203', // Lanchonetes self-service
-        '5611204', // Bares com entretenimento
-        '5611205', // Lanchonetes/casas de chá/sucos/pastel
-        '5612100', // Serviços ambulantes de alimentação (sorvete, açaí, food truck)
-        '4711301', '4711302', // Hipermercados/supermercados (genéricos de varejo alimentar)
-        '4729699', // Comércio varejista de produtos alimentícios n.e.
-        '4789099', // Comércio varejista de outros produtos n.e.
-      ]);
-
-      // Política: aceita o lead se:
-      //   (a) o CNAE bater E não for um CNAE genérico/compartilhado, OU
-      //   (b) o nome contiver algum termo relevante do segmento (sempre obrigatório p/ CNAE genérico).
+      // Política (100% baseada em NOME, sem CNAE):
+      // Aceita o lead apenas se o nome (nome_fantasia/razao_social) contiver
+      // termos relevantes ao segmento.
       allCompanies = allCompanies.filter(c => {
         const seg = (c._segment || '').trim().toLowerCase();
         const termSets = segTermSetsMap.get(seg);
         const coreKeywords = segCoreKeywordsMap.get(seg);
         if (!termSets || termSets.length === 0) return true;
 
-        // (a) CNAE relacionado E NÃO genérico → aceita direto
-        const segCnaes = getCnaesForSegment(seg);
-        const segHasOnlyGenericCnaes = segCnaes.length > 0 && segCnaes.every(code => GENERIC_SHARED_CNAES.has(code));
-        if (segCnaes.length > 0 && !segHasOnlyGenericCnaes) {
-          const cnaeP = (c.cnae_principal || '').toString();
-          const cnaeS = (c.cnae_secundaria || '').toString();
-          const hasRelatedSpecificCnae = segCnaes.some(code => 
-            !GENERIC_SHARED_CNAES.has(code) && (cnaeP === code || cnaeS.includes(code))
-          );
-          if (hasRelatedSpecificCnae) return true;
-        }
-
-        // (b) nome bate com termo do segmento
         const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
         const rs = normalizeText(c.razao_social || '').toLowerCase();
-        // ONLY check the business NAME, not CNAE
         const nameText = `${nf} ${rs}`;
 
         // At least one core keyword must appear in the business name
@@ -1956,13 +1928,9 @@ serve(async (req) => {
         const singleWordSets = termSets.filter(ws => ws.length === 1);
 
         // If multi-word terms exist, PREFER them: require at least one multi-word match
-        // This prevents generic single-word matches (e.g. just "atacado") from passing
-        // when the search is specific (e.g. "distribuidores de doces")
         if (multiWordSets.length > 0) {
           const hasMultiWordMatch = multiWordSets.some(words => words.every(w => nameText.includes(w)));
           if (hasMultiWordMatch) return true;
-          // Fallback: if no multi-word match, only accept if a single-word term matches
-          // AND there are very few multi-word terms (meaning the segment is inherently simple)
           if (multiWordSets.length <= 2 && singleWordSets.length > 0) {
             return singleWordSets.some(words => words.every(w => nameText.includes(w)));
           }
