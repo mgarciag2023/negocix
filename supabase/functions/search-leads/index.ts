@@ -1234,10 +1234,8 @@ serve(async (req) => {
 
   // Time guard: track when we started so we can bail before Supabase kills us
   const FUNCTION_START = Date.now();
-  // Plataforma corta em ~150s (IDLE_TIMEOUT). Usamos margem dura de 140s e
-  // soft-cutoff de 115s pra GARANTIR que devolvemos o que já temos em vez de 504.
-  const MAX_EXECUTION_MS = 380_000;
-  const SOFT_TIMEOUT_MS = 360_000;
+  const MAX_EXECUTION_MS = 395_000; // 395s safety margin (Supabase Pro hard limit ~400s)
+  const SOFT_TIMEOUT_MS = 360_000; // start wrapping up at 360s to ensure response is sent
   const isNearTimeout = () => (Date.now() - FUNCTION_START) > MAX_EXECUTION_MS;
   const isNearSoftTimeout = () => (Date.now() - FUNCTION_START) > SOFT_TIMEOUT_MS;
 
@@ -1451,11 +1449,9 @@ serve(async (req) => {
       // We paginate this single combined query instead of paginating per-term.
 
       // Helper: run RPC with retry on timeout/pool errors
-      // Uses search_companies_ilike (trigram-indexed ILIKE) instead of search_vector
-      // to work across all 35M records regardless of indexing status.
       const rpcWithRetry = async (params: any, attempts = 3): Promise<any> => {
         for (let i = 0; i < attempts; i++) {
-          const r = await adminClient.rpc('search_companies_ilike', params);
+          const r = await adminClient.rpc('search_companies', params);
           if (!r.error) return r;
           const msg = String(r.error?.message || '').toLowerCase();
           const retriable = msg.includes('timeout') || msg.includes('connection pool') || msg.includes('502') || msg.includes('bad gateway');
@@ -1482,12 +1478,11 @@ serve(async (req) => {
 
       // Phase 1: Fetch first batch of pages in parallel using the COMBINED query
       // (all terms OR'd together in a single tsquery — one GIN index scan in Postgres).
-      const PAGE_CONCURRENCY = 3; // valor original
-      const INITIAL_PAGES = isHeavySearch ? 2 : 3; // valor original
+      const PAGE_CONCURRENCY = 5;
+      const INITIAL_PAGES = isHeavySearch ? 3 : 6; // fetch 3-6 pages (3k-6k rows) up front in parallel
       const initialPageNums = Array.from({ length: INITIAL_PAGES }, (_, i) => i);
 
       const initialPages = await runPool(initialPageNums, async (p: number) => {
-        if (isNearSoftTimeout()) return { data: [], error: null, pageIdx: p, skipped: true };
         const r = await rpcWithRetry({
           p_city: city || null,
           p_state: state || null,
@@ -1519,8 +1514,8 @@ serve(async (req) => {
 
       // Phase 2: Continue paginating in parallel batches if last page was full
       // (means there's likely more data). Stop on soft-timeout, target reached, or empty page.
-      if (lastPageFull && bestResults.length < targetPerSegment && !isNearSoftTimeout()) {
-        const MAX_EXTRA_BATCHES = isHeavySearch ? 2 : 5; // valor original
+      if (lastPageFull && bestResults.length < targetPerSegment) {
+        const MAX_EXTRA_BATCHES = isHeavySearch ? 2 : 6; // each batch = PAGE_CONCURRENCY pages
         let nextPage = highestPageFetched + 1;
         let stop = false;
 
@@ -1531,7 +1526,6 @@ serve(async (req) => {
           nextPage += PAGE_CONCURRENCY;
 
           const pages = await runPool(pageNums, async (p: number) => {
-            if (isNearSoftTimeout()) return { data: [], error: null, pageIdx: p, skipped: true };
             const r = await rpcWithRetry({
               p_city: city || null,
               p_state: state || null,
@@ -1546,7 +1540,7 @@ serve(async (req) => {
           let batchHadFullPage = false;
           for (const r of pages.sort((a, b) => a.pageIdx - b.pageIdx)) {
             if (r.error) { stop = true; continue; }
-            if (!r.data || r.data.length === 0) { if (!r.skipped) stop = true; continue; }
+            if (!r.data || r.data.length === 0) { stop = true; continue; }
             for (const c of r.data) {
               if (!seenIds.has(c.id)) { seenIds.add(c.id); bestResults.push(c); }
             }
@@ -1554,7 +1548,6 @@ serve(async (req) => {
           }
 
           if (!batchHadFullPage) stop = true;
-          if (isNearSoftTimeout()) { stop = true; console.log(`⏱️ Soft-timeout: parando paginação de "${seg}" com ${bestResults.length} resultados`); }
         }
       }
 
