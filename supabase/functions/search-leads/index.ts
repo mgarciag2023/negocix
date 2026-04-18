@@ -1517,7 +1517,7 @@ serve(async (req) => {
       // Phase 2: Continue paginating in parallel batches if last page was full
       // (means there's likely more data). Stop on soft-timeout, target reached, or empty page.
       if (lastPageFull && bestResults.length < targetPerSegment) {
-        const MAX_EXTRA_BATCHES = isHeavySearch ? 4 : 20; // até 20 batches × 5 páginas = ~100k linhas/segmento
+        const MAX_EXTRA_BATCHES = isHeavySearch ? 2 : 6; // até 6 batches × 3 páginas = ~18k extras (volta pro valor seguro até trigram existir)
         let nextPage = highestPageFetched + 1;
         let stop = false;
 
