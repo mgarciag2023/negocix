@@ -1481,7 +1481,7 @@ serve(async (req) => {
       // Phase 1: Fetch first batch of pages in parallel using the COMBINED query
       // (all terms OR'd together in a single tsquery — one GIN index scan in Postgres).
       const PAGE_CONCURRENCY = 5;
-      const INITIAL_PAGES = isHeavySearch ? 3 : 6; // fetch 3-6 pages (3k-6k rows) up front in parallel
+      const INITIAL_PAGES = isHeavySearch ? 5 : 10; // 5-10 páginas (5k-10k linhas) em paralelo
       const initialPageNums = Array.from({ length: INITIAL_PAGES }, (_, i) => i);
 
       const initialPages = await runPool(initialPageNums, async (p: number) => {
