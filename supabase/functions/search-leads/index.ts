@@ -1328,8 +1328,17 @@ serve(async (req) => {
     const filterWhatsappOnly = whatsappOnly || false;
 
     // ===== PARSE REGION =====
-    const { city, state, isStateOnly } = parseRegion(region.trim());
+    let { city, state, isStateOnly } = parseRegion(region.trim());
     console.log(`📍 Parsed region: city=${city}, state=${state}, isStateOnly=${isStateOnly}`);
+
+    // ===== CITY AUTO-CORRECT (corrige erros de digitação) =====
+    if (city && state) {
+      const corrected = await resolveCityName(adminClient, city, state);
+      if (corrected && corrected !== city) {
+        console.log(`✅ Cidade corrigida: "${city}" → "${corrected}"`);
+        city = corrected;
+      }
+    }
 
     // ===== PARSE SEGMENTS =====
     // Algumas categorias contêm vírgula no nome (ex: "Lojas de Cama, Mesa e Banho").
