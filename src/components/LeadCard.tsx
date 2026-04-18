@@ -26,6 +26,8 @@ interface LeadCardProps {
   companySize?: string;
   hasWhatsApp?: boolean;
   cnpj?: string;
+  razaoSocial?: string;
+  nomeFantasia?: string;
 }
 
 const LeadCard = ({
