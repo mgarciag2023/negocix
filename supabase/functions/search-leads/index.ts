@@ -1401,6 +1401,39 @@ serve(async (req) => {
 
       console.log(`📊 Phase 1 "${seg}": ${bestResults.length} results (${INITIAL_PAGES} pages, lastFull=${lastPageFull})`);
 
+      // FALLBACK: If tsvector returned 0 (search_vector not populated for this region),
+      // retry with ILIKE-based search which doesn't depend on the materialized vector.
+      if (bestResults.length === 0) {
+        console.log(`🔄 Phase 1 "${seg}" empty — falling back to ILIKE search`);
+        const ilikePages = await runPool(initialPageNums, async (p: number) => {
+          const r = await adminClient.rpc('search_companies_ilike', {
+            p_city: city || null,
+            p_state: state || null,
+            p_search_terms: terms,
+            p_biz_type: bizType || 'all',
+            p_limit_val: PAGE_SIZE,
+            p_offset_val: p * PAGE_SIZE,
+          });
+          return { ...r, pageIdx: p };
+        }, PAGE_CONCURRENCY);
+
+        for (const r of ilikePages.sort((a: any, b: any) => a.pageIdx - b.pageIdx)) {
+          if (r.error) {
+            console.error(`❌ ILIKE fallback error page ${r.pageIdx} "${seg}":`, r.error.message);
+            continue;
+          }
+          if (r.data && r.data.length > 0) {
+            for (const c of r.data) {
+              if (!seenIds.has(c.id)) { seenIds.add(c.id); bestResults.push(c); }
+            }
+            lastPageFull = r.data.length === PAGE_SIZE;
+            highestPageFetched = Math.max(highestPageFetched, r.pageIdx);
+          }
+        }
+        console.log(`🔄 ILIKE fallback "${seg}": ${bestResults.length} results`);
+      }
+
+
       // Phase 2: Continue paginating in parallel batches if last page was full
       // (means there's likely more data). Stop on soft-timeout, target reached, or empty page.
       if (lastPageFull && bestResults.length < targetPerSegment) {
