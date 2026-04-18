@@ -1293,10 +1293,10 @@ serve(async (req) => {
 
     // No per-user limits - search all available leads
 
-    // For trial searches, use very small limits to return fast
+    // Trial searches now return ALL leads found (no artificial cap)
     if (isTrial) {
-      const MAX_LEADS = 50;
-      console.log(`🧪 TRIAL MODE: limiting to ${MAX_LEADS} leads`);
+      const MAX_LEADS = 999999;
+      console.log(`🧪 TRIAL MODE: returning all leads found (no cap)`);
 
       // 🚫 CACHE DESABILITADO: toda pesquisa trial também é executada ao vivo
       
@@ -1304,15 +1304,15 @@ serve(async (req) => {
       let allCompanies: any[] = [];
       for (const seg of segments) {
         if (isNearTimeout()) break;
-        const terms = generateSearchTerms(seg).slice(0, 1); // Only 1 term for speed
-        console.log(`📤 Trial segment "${seg}" term:`, terms);
+        const terms = generateSearchTerms(seg).slice(0, 3);
+        console.log(`📤 Trial segment "${seg}" terms:`, terms);
         
         const { data, error } = await adminClient.rpc('search_companies', {
           p_city: city,
           p_state: state,
           p_search_terms: terms,
           p_biz_type: bizType,
-          p_limit_val: 100,
+          p_limit_val: 1000,
           p_offset_val: 0,
         });
         
@@ -1374,7 +1374,7 @@ serve(async (req) => {
         return false;
       });
 
-      const leads = trialRelevant.slice(0, MAX_LEADS).map((c: any, i: number) => {
+      const leads = trialRelevant.map((c: any, i: number) => {
         const nfTrial = (c.nome_fantasia || '').trim();
         const nfTrialWords = nfTrial.split(/\s+/).filter(Boolean);
         const isWeirdTrial = !nfTrial || /^\*+$/.test(nfTrial) || /^[^a-zA-Z0-9À-ÿ\s]{2,}/.test(nfTrial) || /[@#*]{2,}/.test(nfTrial) || !/[a-zA-ZÀ-ÿ]{2,}/.test(nfTrial);
