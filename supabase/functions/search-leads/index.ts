@@ -1374,6 +1374,12 @@ serve(async (req) => {
         return false;
       });
 
+      // Shuffle to vary results between repeated trial searches
+      for (let i = trialRelevant.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [trialRelevant[i], trialRelevant[j]] = [trialRelevant[j], trialRelevant[i]];
+      }
+
       const leads = trialRelevant.map((c: any, i: number) => {
         const nfTrial = (c.nome_fantasia || '').trim();
         const nfTrialWords = nfTrial.split(/\s+/).filter(Boolean);
