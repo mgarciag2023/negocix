@@ -207,9 +207,8 @@ function generateSearchTerms(segment: string): string[] {
     'chaveiros': ['chaveiro', 'chaves', 'carimbos'],
 
     // ===== ELÉTRICA E ENERGIA =====
-    'lojas de materiais elétricos': ['materiais eletricos', 'material eletrico', 'eletrica', 'componentes eletricos'],
-    'empresas de energia solar': ['energia solar', 'solar fotovoltaica', 'painel solar', 'placa solar'],
-    'instaladores elétricos': ['instalador eletrico', 'eletricista', 'instalacao eletrica'],
+    'lojas de materiais elétricos': ['materiais eletricos', 'materiais elétricos', 'material eletrico', 'material elétrico', 'eletrica', 'elétrica', 'componentes eletricos', 'componentes elétricos', 'loja de material eletrico', 'casa do eletricista', 'casa da eletrica', 'eletro material', 'fios e cabos', 'fios e cabos eletricos', 'iluminacao e eletrica', 'iluminação e elétrica', 'lampadas e luminarias', 'lâmpadas e luminárias', 'disjuntores', 'quadros eletricos', 'tomadas e interruptores', 'distribuidor de material eletrico', 'atacado de material eletrico', 'rede eletrica', 'comercio de eletrica', 'instalacoes eletricas materiais', 'condulete', 'eletroduto'],
+    'instaladores elétricos': ['instalador eletrico', 'instalador elétrico', 'eletricista', 'instalacao eletrica', 'instalação elétrica', 'servicos eletricos', 'serviços elétricos', 'manutencao eletrica', 'manutenção elétrica', 'eletricista predial', 'eletricista industrial', 'eletricista residencial', 'instalador de quadros eletricos', 'instalador de paineis eletricos', 'reparos eletricos', 'projetos eletricos', 'engenharia eletrica', 'engenharia elétrica', 'spda', 'aterramento', 'cabeamento eletrico', 'rede eletrica', 'instalador de geradores', 'instalador de no break', 'eletrotecnico', 'eletrotécnico', 'empresa de eletrica'],
     'empresas de manutenção elétrica': ['manutencao eletrica', 'eletricista', 'manutencao eletrica predial'],
     'empresas de engenharia elétrica': ['engenharia eletrica', 'projeto eletrico', 'instalacoes eletricas'],
     'montadores de painel elétrico': ['painel eletrico', 'quadro eletrico', 'montagem de paineis'],
