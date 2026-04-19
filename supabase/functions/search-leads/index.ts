@@ -582,8 +582,26 @@ function generateSearchTerms(segment: string): string[] {
     'e-commerces de perfumaria e casa': ['ecommerce perfumaria', 'perfumes online'],
     'e-commerces de sabonetes': ['ecommerce sabonetes', 'sabonetes artesanais'],
     'e-commerces de presentes finos': ['ecommerce presentes', 'presentes online'],
-    'e-commerces de máquinas e ferramentas elétricas': ['ecommerce ferramentas eletricas', 'ferramentas eletricas online', 'loja virtual ferramentas', 'maquinas eletricas online', 'furadeira online', 'parafusadeira online', 'lixadeira online', 'esmerilhadeira online', 'serra eletrica online', 'ferramentas eletricas ecommerce', 'loja online ferramentas eletricas'],
-    'e-commerces de máquinas e ferramentas a combustão': ['ecommerce ferramentas combustao', 'motosserra online', 'roçadeira online', 'rocadeira online', 'cortador de grama online', 'motopoda online', 'soprador online', 'gerador online', 'maquinas a combustao online', 'ferramentas a gasolina online', 'loja virtual motosserra', 'loja online roçadeira'],
+    'e-commerces de máquinas e ferramentas elétricas': [
+      'ferramentas eletricas', 'ferramentas elétricas', 'maquinas e ferramentas', 'máquinas e ferramentas',
+      'comercio de ferramentas', 'comércio de ferramentas', 'loja de ferramentas',
+      'ferramentas em geral', 'ferramentas gerais', 'ferramentaria',
+      'furadeira', 'parafusadeira', 'lixadeira', 'esmerilhadeira', 'serra eletrica', 'serra elétrica',
+      'ferramentas industriais', 'ferramentas profissionais', 'distribuidora de ferramentas',
+      'ferramentas e ferragens', 'ferragens e ferramentas',
+      'ecommerce ferramentas', 'ferramentas online', 'loja virtual ferramentas', 'loja online ferramentas',
+    ],
+    'e-commerces de máquinas e ferramentas a combustão': [
+      'motosserra', 'roçadeira', 'rocadeira', 'roçadeiras', 'rocadeiras',
+      'maquinas a combustao', 'máquinas a combustão', 'equipamentos a combustao',
+      'cortador de grama', 'cortadores de grama', 'aparador de grama',
+      'soprador', 'sopradores', 'motopoda', 'motobomba', 'motocultivador',
+      'gerador', 'geradores', 'grupo gerador', 'grupos geradores',
+      'maquinas agricolas', 'máquinas agrícolas', 'equipamentos agricolas', 'equipamentos florestais',
+      'maquinas e equipamentos', 'comercio de maquinas', 'comércio de máquinas',
+      'ferramentas a gasolina', 'equipamentos a gasolina',
+      'ecommerce motosserra', 'motosserra online', 'roçadeira online',
+    ],
 
     // ===== IMPORTAÇÃO E EXPORTAÇÃO =====
     'importadoras': ['importadora', 'importacao', 'produtos importados', 'trading'],
