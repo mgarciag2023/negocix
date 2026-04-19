@@ -630,7 +630,7 @@ function generateSearchTerms(segment: string): string[] {
 
     // ===== MISSING CATEGORIES - SERVIÇOS DIVERSOS =====
     'lojas de aviamentos': ['aviamentos', 'armarinho', 'aviamento', 'botoes', 'ziper', 'linhas'],
-    'lojas de aviamentos e armarinhos': ['aviamentos', 'armarinho', 'botoes', 'ziper'],
+    'lojas de aviamentos e armarinhos': ['aviamentos', 'armarinho', 'armarinhos', 'botoes', 'botões', 'ziper', 'zíper', 'loja de aviamentos', 'loja de armarinhos', 'casa de aviamentos', 'casa de armarinhos', 'aviamentos para costura', 'aviamentos e tecidos', 'aviamentos atacado', 'linhas e agulhas', 'linhas para costura', 'agulhas para costura', 'fitas e cordoes', 'fitas e cordões', 'la para tricô', 'lã para tricô', 'la para crochê', 'lã para crochê', 'apliques bordados', 'paetês', 'paetes', 'rendas e bordados', 'enfeites para roupas', 'aviamentos infantis', 'feltro e EVA', 'galões e fitas', 'cordões e cadarços', 'cordoes e cadarcos', 'tecido e aviamentos'],
     'empresas de gulla': ['gulla', 'gulosices', 'doces', 'guloseimas'],
     'lojas de móveis': ['moveis', 'moveis planejados', 'marcenaria', 'loja de moveis'],
     'casas lotéricas': ['casa loterica', 'loterica', 'loteria'],
