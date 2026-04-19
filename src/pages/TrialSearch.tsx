@@ -421,7 +421,7 @@ const TrialSearch = () => {
                   document.getElementById("o-que-e")?.scrollIntoView({ behavior: "smooth", block: "start" });
                 }}
               >
-                Saiba Mais
+                Ver como funciona
                 <ArrowRight className="ml-2 h-5 w-5 rotate-90 group-hover:translate-y-1 transition-transform" />
               </Button>
             </div>
