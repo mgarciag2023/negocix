@@ -43,6 +43,8 @@ const TrialLeadCard = ({
   companySize,
   hasWhatsApp,
   cnpj,
+  razaoSocial,
+  nomeFantasia,
   index,
   onRequestUnlock,
 }: TrialLeadCardProps) => {
