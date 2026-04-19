@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import TrialNavbar from "@/components/TrialNavbar";
 import TrialLeadCard from "@/components/TrialLeadCard";
+import TrialInfoSections from "@/components/TrialInfoSections";
 import { customerTypes, countries, brazilianStates } from "@/data/searchConstants";
 import StatsCard from "@/components/StatsCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -385,10 +386,10 @@ const TrialSearch = () => {
   // ==================== HOME STEP ====================
   if (step === "home") {
     return (
-      <div className="min-h-screen bg-background overflow-hidden w-full max-w-[100vw] flex flex-col">
+      <div className="min-h-screen bg-background overflow-x-hidden w-full max-w-[100vw] flex flex-col">
         <TrialNavbar />
         {lockDialog}
-        <main className="flex-1 flex items-center justify-center relative">
+        <main className="relative flex items-center justify-center min-h-[calc(100vh-4rem)]">
           {/* Background effects */}
           <div className="absolute inset-0 bg-gradient-hero" />
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-glow/20 rounded-full blur-3xl animate-float" />
@@ -437,6 +438,7 @@ const TrialSearch = () => {
             </div>
           </div>
         </main>
+        <TrialInfoSections />
       </div>
     );
   }
