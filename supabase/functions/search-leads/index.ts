@@ -347,7 +347,7 @@ function generateSearchTerms(segment: string): string[] {
     'torrefadoras de café': ['torrefadora', 'cafe torrado', 'torrefacao'],
 
     // ===== PRODUTOS NATURAIS E SAUDÁVEIS =====
-    'lojas de produtos naturais': ['produtos naturais', 'loja natural', 'naturais', 'organicos'],
+    'lojas de produtos naturais': ['produtos naturais', 'loja natural', 'naturais', 'organicos', 'orgânicos', 'loja de produtos naturais', 'casa de produtos naturais', 'mundo natural', 'casa natural', 'natural shop', 'emporio natural', 'empório natural', 'alimentos saudaveis', 'alimentos saudáveis', 'sem gluten', 'sem glúten', 'sem lactose', 'vegano', 'vegetariano', 'suplementos naturais', 'fitoterapicos', 'fitoterápicos', 'cha e ervas', 'chá e ervas', 'graos e cereais', 'grãos e cereais', 'integral', 'integrais', 'mel e derivados', 'casa de chas', 'casa de chás', 'casa do natural'],
     'lojas de suplementos': ['suplementos', 'whey', 'suplemento alimentar'],
     'lojas veganas': ['vegano', 'vegana', 'produtos veganos'],
     'hortifrútis': ['hortifruti', 'hortifrutigranjeiro', 'frutas', 'verduras', 'sacolao'],
