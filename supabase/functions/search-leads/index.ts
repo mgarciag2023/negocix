@@ -203,7 +203,7 @@ function generateSearchTerms(segment: string): string[] {
     'ferramentas': ['ferramentas', 'ferragem', 'loja de ferramentas'],
     'ferragens': ['ferragem', 'ferragens', 'parafusos', 'dobradicas', 'fechaduras', 'cadeados'],
     'lojas de ferragens': ['ferragens', 'parafusos', 'ferragem'],
-    'lojas de ferramentas': ['ferramentas', 'ferragem', 'loja de ferramentas'],
+    'lojas de ferramentas': ['ferramentas', 'ferragem', 'ferragens', 'loja de ferramentas', 'casa das ferramentas', 'casa de ferramentas', 'ferramentaria', 'loja de ferragens', 'casa do parafuso', 'parafusos e ferragens', 'ferramentas eletricas', 'ferramentas elétricas', 'ferramentas manuais', 'ferramentas profissionais', 'ferramentas industriais', 'ferramentas para construcao', 'ferramentas para construção', 'maquinas e ferramentas', 'máquinas e ferramentas', 'ferramentas pneumaticas', 'ferramentas pneumáticas', 'loja de ferramentas eletricas', 'centro de ferramentas', 'rede ferragens', 'mundo das ferramentas', 'super ferramentas'],
     'chaveiros': ['chaveiro', 'chaves', 'carimbos'],
 
     // ===== ELÉTRICA E ENERGIA =====
