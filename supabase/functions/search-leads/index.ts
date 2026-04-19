@@ -128,10 +128,10 @@ function generateSearchTerms(segment: string): string[] {
     'bares': ['bar', 'bar e', 'bares', 'boteco', 'botequim', 'butiquim', 'pub', 'cervejaria', 'cervejarias', 'choperia', 'chopperia', 'chopp', 'choparia', 'lounge', 'adega', 'adegas', 'petisqueira', 'petiscaria', 'drinkeria', 'drinks', 'gastrobar', 'gastro bar', 'beer', 'beerhouse', 'beer house', 'taberna', 'tasca', 'wine bar', 'whisky', 'whiskeria', 'bar e restaurante', 'bar e lanchonete', 'bar e mercearia', 'esquina', 'sinuca', 'snooker', 'karaoke', 'karaokê'],
 
     // ===== SUPERMERCADOS E MERCADOS =====
-    'supermercados': ['supermercado', 'mercado', 'minimercado', 'mercearia', 'mercadinho', 'hipermercado', 'atacarejo'],
-    'hipermercados': ['hipermercado', 'atacadao', 'atacarejo'],
-    'mercados': ['mercado', 'minimercado', 'mercadinho', 'mercearia'],
-    'mercearias': ['mercearia', 'armazem', 'secos e molhados'],
+    'supermercados': ['supermercado', 'supermercados', 'mercado', 'mercados', 'minimercado', 'mini mercado', 'mercearia', 'mercadinho', 'hipermercado', 'atacarejo', 'atacadao', 'atacadão', 'rede de supermercados', 'super', 'supermarket', 'auto serviço', 'autoservico', 'mercado de bairro', 'mercado popular', 'mercado familiar', 'rede supermercadista', 'cash and carry', 'cash & carry', 'compre bem', 'bom preco', 'bom preço'],
+    'hipermercados': ['hipermercado', 'hipermercados', 'atacadao', 'atacadão', 'atacarejo', 'hiper', 'cash and carry', 'cash & carry', 'mega mercado', 'mega supermercado', 'megastore alimentar', 'rede hiper', 'super atacado', 'atacado e varejo', 'extra hiper', 'carrefour hiper', 'walmart', 'sams club', 'makro', 'assai', 'assaí', 'tenda atacado', 'maxxi atacado', 'roldao', 'roldão'],
+    'mercados': ['mercado', 'mercados', 'minimercado', 'mini mercado', 'mercadinho', 'mercearia', 'supermercado', 'mercado de bairro', 'mercado popular', 'auto serviço', 'autoservico', 'mercado familiar', 'mercado central', 'mercado municipal', 'casa de carnes mercado', 'empório mercado', 'emporio mercado', 'mercado de conveniencia', 'mercado de conveniência', 'conveniencia', 'conveniência', 'lojinha de bairro', 'mercado express', 'mercado 24h', 'mercado e padaria', 'mini mercado e padaria'],
+    'mercearias': ['mercearia', 'mercearias', 'armazem', 'armazém', 'secos e molhados', 'mercadinho', 'minimercado', 'mini mercado', 'venda', 'bodega', 'quitanda', 'mercearia de bairro', 'empório mercearia', 'casa de secos', 'casa de armazem', 'armazem de bairro', 'armarinho mercearia', 'mercearia popular', 'mercearia tradicional', 'mercearia familiar', 'mercearia portuguesa'],
 
     // ===== FARMÁCIAS E DROGARIAS =====
     'farmácias': ['farmacia', 'drogaria', 'farmacia popular', 'farmacia de manipulacao', 'botica'],
