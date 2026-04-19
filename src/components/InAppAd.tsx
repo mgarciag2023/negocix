@@ -22,7 +22,7 @@ const ADS: Ad[] = [
     description:
       "Está enfrentando alguma dificuldade ou gostaria de tirar alguma dúvida? Nossa equipe de suporte está pronta para te ajudar!",
     ctaLabel: "Falar com o suporte",
-    ctaUrl: "https://compraseguraonline.org.ua/c/50ef0bfb5f",
+    ctaUrl: "https://pay.kiwify.com.br/Zmzc9JZ",
   },
   {
     id: "abordagens-representantes",
