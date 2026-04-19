@@ -1292,9 +1292,7 @@ function estimateCompanySize(company: any): { employeeCount: string; companySize
 
 function generateReasons(company: any, category: string, matchScore: number): string[] {
   const reasons: string[] = [];
-  if (matchScore >= 80) reasons.push(`Alta compatibilidade com o segmento ${category}`);
-  else if (matchScore >= 60) reasons.push(`Boa compatibilidade com o segmento ${category}`);
-  else reasons.push(`Compatível com o segmento ${category}`);
+
   
   if (company.email) reasons.push('Possui e-mail de contato');
   if (company.telefone_2 && isPhoneValid(company.telefone_2)) reasons.push('Possui múltiplos telefones');
