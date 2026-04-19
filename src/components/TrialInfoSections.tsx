@@ -8,7 +8,6 @@ const features = [
   { icon: Target, title: "Empresas Filtradas", desc: "Encontre empresas por CNAE, cidade e porte com dados prontos pra prospecção." },
   { icon: Shield, title: "Contatos dos Compradores", desc: "Tenha acesso a WhatsApp, e-mail e telefone de quem realmente compra." },
   { icon: Zap, title: "Abordagem Direta", desc: "Entre em contato com clientes qualificados sem perder tempo com intermediários." },
-  { icon: MessageSquare, title: "Mais Conversões", desc: "Fale com decisores e aumente suas chances de fechar mais negócios." },
 ];
 
 const steps = [
