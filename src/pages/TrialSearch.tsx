@@ -438,7 +438,13 @@ const TrialSearch = () => {
             </div>
           </div>
         </main>
-        <TrialInfoSections />
+        <TrialInfoSections onStart={() => {
+          if (alreadyUsed) {
+            const saved = localStorage.getItem(TRIAL_RESULTS_KEY);
+            if (saved) { setStep("results"); return; }
+          }
+          setStep("config");
+        }} />
       </div>
     );
   }
