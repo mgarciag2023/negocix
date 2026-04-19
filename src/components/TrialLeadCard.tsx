@@ -20,6 +20,8 @@ interface TrialLeadCardProps {
   companySize?: string;
   hasWhatsApp?: boolean;
   cnpj?: string;
+  razaoSocial?: string;
+  nomeFantasia?: string;
   index: number; // used for alternating masking
   onRequestUnlock?: () => void;
 }
