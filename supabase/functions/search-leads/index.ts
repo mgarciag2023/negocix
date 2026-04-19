@@ -1505,18 +1505,27 @@ serve(async (req) => {
       // FALLBACK: If tsvector returned 0 (search_vector not populated for this region),
       // retry with ILIKE-based search which doesn't depend on the materialized vector.
       if (bestResults.length === 0) {
-        console.log(`🔄 Phase 1 "${seg}" empty — falling back to ILIKE search`);
-        const ilikePages = await runPool(initialPageNums, async (p: number) => {
+        // ILIKE fallback é muito caro (varredura sequencial). Limitar termos para evitar timeout.
+        // Priorizar termos curtos/distintivos sem variantes acentuadas (ILIKE não usa unaccent).
+        const ilikeTerms = Array.from(new Set(
+          (terms || [])
+            .map((t: string) => (t || '').trim())
+            .filter((t: string) => t.length >= 4 && !/[áéíóúâêôãõç]/i.test(t))
+        )).slice(0, 8);
+        console.log(`🔄 Phase 1 "${seg}" empty — falling back to ILIKE search (${ilikeTerms.length} terms)`);
+        // Reduzir concorrência e páginas no fallback para não saturar a DB
+        const ilikePageNums = initialPageNums.slice(0, Math.min(2, initialPageNums.length));
+        const ilikePages = await runPool(ilikePageNums, async (p: number) => {
           const r = await adminClient.rpc('search_companies_ilike', {
             p_city: city || null,
             p_state: state || null,
-            p_search_terms: terms,
+            p_search_terms: ilikeTerms,
             p_biz_type: bizType || 'all',
             p_limit_val: PAGE_SIZE,
             p_offset_val: p * PAGE_SIZE,
           });
           return { ...r, pageIdx: p };
-        }, PAGE_CONCURRENCY);
+        }, 1);
 
         for (const r of ilikePages.sort((a: any, b: any) => a.pageIdx - b.pageIdx)) {
           if (r.error) {
