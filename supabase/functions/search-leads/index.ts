@@ -312,7 +312,7 @@ function generateSearchTerms(segment: string): string[] {
     'lojas de eletrodomésticos': ['eletrodomesticos', 'eletro', 'magazine'],
 
     // ===== JARDINAGEM E FLORICULTURA =====
-    'floriculturas': ['floricultura', 'flores', 'garden center', 'plantas', 'arranjos florais'],
+    'floriculturas': ['floricultura', 'floriculturas', 'flores', 'garden center', 'plantas', 'arranjos florais', 'flora', 'casa de flores', 'loja de flores', 'flores e plantas', 'plantas ornamentais', 'jardinagem', 'jardim e plantas', 'paisagismo', 'flores naturais', 'flores artificiais', 'buques de flores', 'buquês de flores', 'coroa de flores', 'coroas funebres', 'coroas fúnebres', 'arranjos para casamento', 'arranjos para festa', 'cesta de flores', 'cestas de flores', 'flores delivery', 'flores online', 'florista', 'arte floral', 'paisagismo e jardinagem', 'mundo das flores'],
     'garden center': ['garden center', 'jardinagem', 'plantas', 'floricultura'],
     'garden centers': ['garden center', 'jardinagem', 'plantas', 'floricultura'],
     'paisagismo e jardinagem': ['paisagismo', 'jardinagem', 'jardim'],
