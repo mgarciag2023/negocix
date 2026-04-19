@@ -256,7 +256,7 @@ function generateSearchTerms(segment: string): string[] {
     'lojas de tecidos': ['tecidos', 'armarinho', 'malhas'],
     'lojas de tecidos para decoração': ['tecidos para decoracao', 'tecidos decorativos'],
     'ateliês de costura': ['atelie de costura', 'costureira', 'modista'],
-    'fábricas de uniformes': ['fabrica de uniformes', 'confeccao de uniformes', 'uniformes'],
+    'fábricas de uniformes': ['fabrica de uniformes', 'fábrica de uniformes', 'confeccao de uniformes', 'confecção de uniformes', 'uniformes', 'uniformes profissionais', 'uniformes industriais', 'uniformes corporativos', 'uniformes empresariais', 'uniformes sociais', 'uniformes escolares', 'uniformes hospitalares', 'uniformes esportivos', 'uniformes para empresas', 'fabricante de uniformes', 'industria de uniformes', 'indústria de uniformes', 'workwear', 'epi vestuario', 'roupa profissional', 'jaleco profissional', 'macacao industrial', 'macacão industrial', 'avental profissional', 'camisaria corporativa', 'camisetas personalizadas uniformes', 'uniformes em malha', 'confeccao para empresas'],
     'malharias': ['malharia', 'malhas', 'tricot'],
     'bordados': ['bordado', 'bordados', 'bordadeira'],
 
