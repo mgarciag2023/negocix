@@ -336,7 +336,7 @@ function generateSearchTerms(segment: string): string[] {
     'delicatessens': ['delicatessen', 'deli', 'emporio', 'frios importados'],
     'empórios': ['emporio', 'emporio', 'delicatessen', 'mercearia gourmet'],
     'empórios gourmet': ['emporio gourmet', 'emporio', 'delicatessen', 'gourmet', 'mercearia gourmet'],
-    'empórios naturais': ['emporio natural', 'produtos naturais', 'organicos'],
+    'empórios naturais': ['emporio natural', 'empório natural', 'emporios naturais', 'empórios naturais', 'produtos naturais', 'organicos', 'orgânicos', 'loja de produtos naturais', 'casa de produtos naturais', 'casa naturalista', 'mundo natural', 'natural shop', 'emporio organico', 'empório orgânico', 'alimentos naturais', 'alimentos saudaveis', 'alimentos saudáveis', 'sem gluten', 'sem glúten', 'sem lactose', 'vegano', 'vegana', 'vegetariano', 'integral', 'integrais', 'graos e cereais', 'grãos e cereais', 'suplementos naturais', 'fitoterapicos', 'fitoterápicos', 'cha e ervas', 'chá e ervas', 'casa do natural'],
 
     // ===== BEBIDAS =====
     'lojas de bebidas': ['loja de bebidas', 'adega', 'distribuidora de bebidas', 'deposito de bebidas'],
