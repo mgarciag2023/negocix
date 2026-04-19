@@ -58,7 +58,7 @@ function generateSearchTerms(segment: string): string[] {
   const categoryTerms: { [key: string]: string[] } = {
     // ===== ALIMENTAÇÃO / RESTAURANTES =====
     // "Restaurantes" é amplo: inclui todos os subtipos (pizzarias, hamburguerias, etc.)
-    'restaurantes': ['restaurante', 'self service', 'bistro', 'comida', 'gastronomia', 'bar e restaurante', 'cantina', 'buffet', 'por quilo', 'grelhados', 'cozinha', 'pizzaria', 'pizza', 'hamburgueria', 'burger', 'lanchonete', 'churrascaria', 'rodizio', 'espetaria', 'marmitaria', 'rotisserie', 'sushi', 'temakeria', 'trattoria', 'taqueria'],
+    'restaurantes': ['restaurante', 'self service', 'bistro', 'comida', 'bar e restaurante', 'cantina', 'buffet', 'por quilo', 'grelhados', 'cozinha', 'pizzaria', 'pizza', 'hamburgueria', 'burger', 'lanchonete', 'churrascaria', 'rodizio', 'espetaria', 'marmitaria', 'rotisserie', 'sushi', 'temakeria', 'trattoria', 'taqueria'],
     // Subtipos específicos: NÃO incluem restaurantes genéricos
     'pizzarias': ['pizzaria', 'pizza', 'pizzas', 'pizzaiolo', 'rodizio de pizza', 'delivery de pizza'],
     'hamburguerias': ['hamburgueria', 'burger', 'hamburguer', 'hamburger', 'burgers', 'smash burger', 'artesanal burger'],
