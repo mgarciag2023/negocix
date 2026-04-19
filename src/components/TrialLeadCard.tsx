@@ -20,6 +20,8 @@ interface TrialLeadCardProps {
   companySize?: string;
   hasWhatsApp?: boolean;
   cnpj?: string;
+  razaoSocial?: string;
+  nomeFantasia?: string;
   index: number; // used for alternating masking
   onRequestUnlock?: () => void;
 }
@@ -41,6 +43,8 @@ const TrialLeadCard = ({
   companySize,
   hasWhatsApp,
   cnpj,
+  razaoSocial,
+  nomeFantasia,
   index,
   onRequestUnlock,
 }: TrialLeadCardProps) => {
@@ -136,6 +140,14 @@ const TrialLeadCard = ({
       
       {/* Company Info Grid */}
       <div className="grid grid-cols-2 gap-3 md:gap-4 mb-4 p-3 bg-muted/30 rounded-lg">
+        <div className="flex flex-col gap-0.5 text-xs md:text-sm col-span-2">
+          <span className="text-muted-foreground text-xs font-semibold">Razão Social:</span>
+          <span className="text-foreground font-medium">{razaoSocial && razaoSocial.trim().length > 0 ? razaoSocial : '—'}</span>
+        </div>
+        <div className="flex flex-col gap-0.5 text-xs md:text-sm col-span-2">
+          <span className="text-muted-foreground text-xs font-semibold">Nome Fantasia:</span>
+          <span className="text-foreground font-medium">{nomeFantasia && nomeFantasia.trim().length > 0 ? nomeFantasia : '—'}</span>
+        </div>
         {cnpj && (
           <div className="flex items-center gap-2 text-xs md:text-sm col-span-2">
             <span className="text-muted-foreground text-[10px]">CNPJ:</span>
