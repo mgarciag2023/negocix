@@ -390,7 +390,7 @@ function generateSearchTerms(segment: string): string[] {
     'malharias': ['malharia', 'malha', 'malhacao', 'tricot', 'trico', 'confeccao de malha', 'malhas', 'tecido de malha', 'industria de malha'],
     'ateliês de costura': ['atelie de costura', 'atelie', 'costura', 'costureira', 'alfaiataria', 'alta costura'],
     'lojas de aviamentos': ['aviamentos', 'armarinho', 'aviamento', 'botoes', 'linhas', 'tecidos'],
-    'fábricas de uniformes': ['fabrica de uniformes', 'uniformes', 'confeccao de uniformes', 'uniformes profissionais'],
+    'fábricas de uniformes': ['fabrica de uniformes', 'fábrica de uniformes', 'uniformes', 'confeccao de uniformes', 'confecção de uniformes', 'uniformes profissionais', 'uniformes industriais', 'uniformes corporativos', 'uniformes empresariais', 'uniformes escolares', 'uniformes hospitalares', 'uniformes esportivos', 'fabricante de uniformes', 'industria de uniformes', 'indústria de uniformes', 'workwear', 'roupa profissional', 'jaleco profissional', 'macacao industrial', 'macacão industrial', 'avental profissional', 'camisaria corporativa', 'uniformes em malha', 'confeccao para empresas', 'fardamento', 'farda industrial', 'roupa de servico'],
 
     // ===== METALURGIA E SIDERURGIA =====
     'metalúrgicas': ['metalurgica', 'metalurgia', 'fundicao', 'usinagem', 'caldeiraria', 'serralheria'],
