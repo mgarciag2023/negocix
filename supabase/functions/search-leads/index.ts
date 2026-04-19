@@ -557,7 +557,7 @@ function generateSearchTerms(segment: string): string[] {
     'tabacarias': ['tabacaria', 'tabaco', 'charutos', 'cachimbos'],
 
     // ===== LOJAS DIVERSAS =====
-    'papelarias': ['papelaria', 'livraria', 'material escolar'],
+    'papelarias': ['papelaria', 'papelarias', 'livraria', 'material escolar', 'material de escritorio', 'material de escritório', 'loja de papelaria', 'casa do papel', 'papel e papelaria', 'papelaria escolar', 'papelaria infantil', 'papelaria criativa', 'papelaria personalizada', 'papelaria fina', 'papelaria gourmet', 'papelaria e presentes', 'papelaria e brinquedos', 'cartorio papelaria', 'cartório papelaria', 'papelaria comercial', 'papelaria empresarial', 'papelaria e copiadora', 'copiadora e papelaria', 'graficas e papelaria', 'gráficas e papelaria', 'papelaria online', 'papelaria delivery', 'papelaria 24h', 'super papelaria', 'mega papelaria', 'rede de papelarias'],
     'livrarias': ['livraria', 'livros', 'livro'],
     'lojas de brinquedos': ['brinquedos', 'brinquedo', 'loja de brinquedos'],
     'lojas de games e videogames': ['games', 'videogames', 'gamer'],
