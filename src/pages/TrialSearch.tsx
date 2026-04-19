@@ -418,11 +418,15 @@ const TrialSearch = () => {
                 size="lg" 
                 className="bg-success hover:bg-success-hover text-success-foreground shadow-success hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group text-lg h-16 px-8 rounded-xl w-full"
                 onClick={() => {
-                  document.getElementById("o-que-e")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  if (alreadyUsed) {
+                    const saved = localStorage.getItem(TRIAL_RESULTS_KEY);
+                    if (saved) { setStep("results"); return; }
+                  }
+                  setStep("config");
                 }}
               >
-                Ver como funciona
-                <ArrowRight className="ml-2 h-5 w-5 rotate-90 group-hover:translate-y-1 transition-transform" />
+                Experimentar Grátis
+                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </div>
 
@@ -433,13 +437,6 @@ const TrialSearch = () => {
             </div>
           </div>
         </main>
-        <TrialInfoSections onStart={() => {
-          if (alreadyUsed) {
-            const saved = localStorage.getItem(TRIAL_RESULTS_KEY);
-            if (saved) { setStep("results"); return; }
-          }
-          setStep("config");
-        }} />
       </div>
     );
   }
