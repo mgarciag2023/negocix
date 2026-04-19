@@ -45,7 +45,7 @@ const trackTrialEvent = async (eventType: string, searchConfig: Record<string, a
   }
 };
 
-const PAYMENT_URL = "https://checkout.alphahubfy.com/checkout/pro-653b5773-804e-4682-8dde-e72b88de60c0";
+const PAYMENT_URL = "https://pay.kiwify.com.br/Zmzc9JZ";
 const TRIAL_KEY = "negocix_trial_used";
 const TRIAL_RESULTS_KEY = "negocix_trial_results_v2";
 
