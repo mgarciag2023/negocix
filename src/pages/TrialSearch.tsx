@@ -296,21 +296,13 @@ const TrialSearch = () => {
           const categoryLC = (lead.category || '').toLowerCase();
           return !accountingTerms.some(term => nameLC.includes(term) || emailLC.includes(term) || categoryLC.includes(term));
         });
-        // Frontend dedup: por CNPJ, telefone (últimos 8) e nome normalizado
+        // Frontend dedup: apenas por CNPJ
         const seenCnpj = new Set<string>();
-        const seenPhone = new Set<string>();
-        const seenName = new Set<string>();
         const dedupedLeads = filteredLeads.filter((lead: any) => {
           const cnpj = (lead.cnpj || '').replace(/\D/g, '');
-          const phoneDigits = (lead.phone || '').replace(/\D/g, '');
-          const phoneTail = phoneDigits.slice(-8);
-          const nameKey = (lead.name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '').slice(0, 30);
-          if (cnpj && seenCnpj.has(cnpj)) return false;
-          if (phoneTail && seenPhone.has(phoneTail)) return false;
-          if (nameKey && seenName.has(nameKey)) return false;
-          if (cnpj) seenCnpj.add(cnpj);
-          if (phoneTail) seenPhone.add(phoneTail);
-          if (nameKey) seenName.add(nameKey);
+          if (!cnpj) return true;
+          if (seenCnpj.has(cnpj)) return false;
+          seenCnpj.add(cnpj);
           return true;
         });
         const total = dedupedLeads.length;
