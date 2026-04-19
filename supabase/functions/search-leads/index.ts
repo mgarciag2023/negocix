@@ -330,7 +330,7 @@ function generateSearchTerms(segment: string): string[] {
     // ===== LATICÍNIOS E QUEIJOS =====
     'laticínios': ['laticinios', 'laticinio', 'leite', 'queijo'],
     'queijarias': ['queijaria', 'queijos', 'queijo artesanal'],
-    'empórios de queijos': ['emporio de queijo', 'emporio', 'queijaria', 'queijos artesanais', 'casa de queijos', 'queijo', 'laticinios', 'laticinio', 'queijos'],
+    'empórios de queijos': ['emporio de queijo', 'empório de queijo', 'emporio de queijos', 'empório de queijos', 'emporio', 'queijaria', 'queijarias', 'queijos artesanais', 'casa de queijos', 'queijo', 'laticinios', 'laticínios', 'laticinio', 'queijos', 'queijos finos', 'queijos especiais', 'queijos importados', 'queijos coloniais', 'queijo minas', 'queijo da serra', 'queijo canastra', 'casa do queijo', 'mundo do queijo', 'rota do queijo', 'frios e queijos', 'embutidos e queijos', 'tabua de frios', 'tábua de frios', 'queijos e vinhos', 'fromagerie', 'queijaria artesanal'],
 
     // ===== EMPÓRIOS E DELICATESSENS =====
     'delicatessens': ['delicatessen', 'deli', 'emporio', 'frios importados'],
