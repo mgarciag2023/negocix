@@ -561,26 +561,28 @@ const TrialSearch = () => {
             </div>
           </div>
 
-          {/* Nova pesquisa */}
-          <div className="flex justify-center mt-8">
-            <Button
-              variant="outline"
-              size="lg"
-              className="h-12 px-6 rounded-xl"
-              onClick={() => {
-                localStorage.removeItem(TRIAL_RESULTS_KEY);
-                localStorage.removeItem("negocix_trial_total");
-                localStorage.removeItem("negocix_trial_inflated");
-                localStorage.removeItem(TRIAL_KEY);
-                setLeads([]);
-                setTotalFound(0);
-                setStep("config");
-              }}
-            >
-              <Search className="mr-2 h-4 w-4" />
-              Fazer nova pesquisa grátis
-            </Button>
-          </div>
+          {/* Nova pesquisa - apenas para device admin/unlimited */}
+          {isUnlimitedDevice() && (
+            <div className="flex justify-center mt-8">
+              <Button
+                variant="outline"
+                size="lg"
+                className="h-12 px-6 rounded-xl"
+                onClick={() => {
+                  localStorage.removeItem(TRIAL_RESULTS_KEY);
+                  localStorage.removeItem("negocix_trial_total");
+                  localStorage.removeItem("negocix_trial_inflated");
+                  localStorage.removeItem(TRIAL_KEY);
+                  setLeads([]);
+                  setTotalFound(0);
+                  setStep("config");
+                }}
+              >
+                <Search className="mr-2 h-4 w-4" />
+                Fazer nova pesquisa (admin)
+              </Button>
+            </div>
+          )}
 
           {renderAdminDot("pt-6")}
 
