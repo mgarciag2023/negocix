@@ -410,7 +410,7 @@ const TrialSearch = () => {
             </h1>
             
             <p className="mb-8 text-base md:text-lg text-primary-foreground/80 opacity-0 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-              Veja na prática como a nossa plataforma encontra leads qualificados para o seu negócio. Uma pesquisa grátis, resultados reais.
+              Veja na prática como a nossa plataforma encontra leads qualificados para o seu negócio.
             </p>
             
             <div className="flex flex-col gap-3 opacity-0 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
@@ -418,19 +418,14 @@ const TrialSearch = () => {
                 size="lg" 
                 className="bg-success hover:bg-success-hover text-success-foreground shadow-success hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group text-base h-14 px-8 rounded-xl w-full"
                 onClick={() => {
-                  if (alreadyUsed) {
-                    const saved = localStorage.getItem(TRIAL_RESULTS_KEY);
-                    if (saved) { setStep("results"); return; }
-                  }
-                  setStep("config");
+                  document.getElementById("o-que-e")?.scrollIntoView({ behavior: "smooth", block: "start" });
                 }}
               >
-                <Search className="mr-2 h-5 w-5" />
-                Experimentar Grátis
-                <ArrowRight className="ml-2 h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                Saiba Mais
+                <ArrowRight className="ml-2 h-4 w-4 rotate-90 group-hover:translate-y-1 transition-transform" />
               </Button>
             </div>
-            
+
             <div className="mt-6 flex items-center justify-center gap-4 text-xs text-primary-foreground/60 opacity-0 animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
               <div className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-success" /><span>Sem cadastro</span></div>
               <div className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-success" /><span>Dados reais</span></div>
