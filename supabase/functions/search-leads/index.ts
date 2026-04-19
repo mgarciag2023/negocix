@@ -106,7 +106,7 @@ function generateSearchTerms(segment: string): string[] {
     // Padarias e confeitarias são praticamente a mesma coisa - termos compartilhados
     'padarias': ['padaria', 'panificadora', 'panificacao', 'panificio', 'casa de pães', 'casa do pão', 'confeitaria', 'bakery', 'padoca', 'panetteria', 'panetaria', 'boulangerie', 'pão artesanal', 'pão caseiro', 'forno de pão', 'forneria'],
     'panificadoras': ['panificadora', 'padaria', 'panificacao', 'panificio', 'confeitaria', 'panetteria', 'boulangerie'],
-    'confeitarias': ['confeitaria', 'bolos', 'cake', 'patisserie', 'padaria', 'panificadora', 'doces', 'tortas', 'bolo artesanal', 'cake shop'],
+    'confeitarias': ['confeitaria', 'bolos', 'cake', 'patisserie', 'doces', 'tortas', 'bolo artesanal', 'cake shop'],
     'docerias': ['doceria', 'doces', 'brigadeiro', 'bombons', 'candy', 'doces finos', 'doces artesanais'],
     'chocolaterias': ['chocolateria', 'chocolate artesanal', 'bombons', 'chocolate', 'cacau'],
     'pâtisseries': ['patisserie', 'doces finos', 'confeitaria fina'],
@@ -140,8 +140,8 @@ function generateSearchTerms(segment: string): string[] {
     'farmácias de manipulação': ['farmacia de manipulacao', 'manipulacao', 'farmacia magistral'],
 
     // ===== PET =====
-    'pet shop': ['pet shop', 'petshop', 'pet center', 'animais', 'agropet', 'banho e tosa', 'racao'],
-    'pet shops': ['pet shop', 'petshop', 'pet center', 'animais', 'agropet', 'banho e tosa', 'racao'],
+    'pet shop': ['pet shop', 'petshop', 'pet center', 'banho e tosa', 'racao pet'],
+    'pet shops': ['pet shop', 'petshop', 'pet center', 'banho e tosa', 'racao pet'],
     'loja de ração pet': ['racao', 'racao pet', 'agropet', 'casa de racao'],
     'banho e tosa': ['banho e tosa', 'tosador', 'pet grooming', 'estetica animal'],
     'hotéis pet': ['hotel pet', 'hotel para caes', 'hospedagem pet'],
@@ -173,15 +173,15 @@ function generateSearchTerms(segment: string): string[] {
     'spas': ['spa', 'day spa', 'spa urbano'],
 
     // ===== BELEZA =====
-    'salões de beleza': ['salao de beleza', 'cabeleireiro', 'barbearia', 'estetica', 'manicure', 'hair'],
+    'salões de beleza': ['salao de beleza', 'cabeleireiro', 'manicure', 'hair', 'instituto de beleza'],
     'barbearias': ['barbearia', 'barbeiro', 'barber shop'],
     'estúdios de tatuagem': ['estudio de tatuagem', 'tatuagem', 'tattoo', 'piercing'],
     'perfumarias': ['perfumaria', 'perfume', 'cosmeticos e perfumes'],
     'lojas de cosméticos': ['cosmeticos', 'maquiagem', 'beleza'],
 
     // ===== CONSTRUÇÃO CIVIL =====
-    'materiais de construção': ['material de construcao', 'material de construção', 'materiais de construcao', 'materiais de construção', 'home center', 'homecenter', 'deposito de construcao', 'depósito de construção', 'casa de construcao', 'casa de construção', 'constrular', 'constru', 'casa do construtor', 'loja de construcao', 'loja de construção', 'ferragem', 'ferragens', 'ferragista', 'cimento', 'tijolo', 'areia', 'brita', 'cal', 'argamassa', 'telha', 'telhas', 'hidraulica', 'hidráulica', 'eletrica e hidraulica', 'tintas', 'loja de tintas', 'acabamentos', 'pisos e revestimentos', 'pisos', 'azulejos', 'ceramica', 'cerâmica', 'madeireira', 'madeiras', 'serralheria'],
-    'depósitos de materiais de construção': ['deposito de construcao', 'depósito de construção', 'deposito de materiais', 'depósito de materiais', 'material de construcao', 'material de construção', 'materiais de construcao', 'materiais de construção', 'home center', 'homecenter', 'casa de construcao', 'casa de construção', 'constrular', 'constru', 'casa do construtor', 'loja de construcao', 'loja de construção', 'ferragem', 'ferragens', 'ferragista', 'cimento', 'tijolo', 'areia', 'brita', 'cal', 'argamassa', 'telha', 'telhas', 'hidraulica', 'hidráulica', 'tintas', 'loja de tintas', 'acabamentos', 'pisos e revestimentos', 'pisos', 'azulejos', 'ceramica', 'cerâmica', 'madeireira', 'madeiras', 'serralheria', 'deposito', 'depósito'],
+    'materiais de construção': ['material de construcao', 'material de construção', 'materiais de construcao', 'materiais de construção', 'home center', 'homecenter', 'deposito de construcao', 'depósito de construção', 'casa de construcao', 'casa de construção', 'constrular', 'casa do construtor', 'loja de construcao', 'loja de construção', 'ferragem', 'ferragens', 'ferragista', 'cimento', 'argamassa', 'telhas', 'tintas', 'loja de tintas', 'pisos e revestimentos', 'azulejos', 'ceramica', 'cerâmica', 'madeireira', 'madeiras'],
+    'depósitos de materiais de construção': ['deposito de construcao', 'depósito de construção', 'deposito de materiais', 'depósito de materiais', 'material de construcao', 'material de construção', 'materiais de construcao', 'materiais de construção', 'home center', 'homecenter', 'casa de construcao', 'casa de construção', 'constrular', 'casa do construtor', 'loja de construcao', 'loja de construção', 'ferragem', 'ferragens', 'ferragista', 'cimento', 'argamassa', 'telhas', 'tintas', 'loja de tintas', 'pisos e revestimentos', 'azulejos', 'ceramica', 'cerâmica', 'madeireira', 'madeiras'],
     'construtoras': ['construtora', 'construtoras', 'construcoes', 'construcao civil', 'empreiteira', 'empreiteiras', 'incorporadora', 'incorporadoras', 'engenharia civil', 'engenharia e construcao', 'obras e servicos', 'edificacoes', 'construtora e incorporadora', 'construcao e incorporacao', 'obras civis', 'construcao e engenharia', 'engenharia e empreendimentos', 'empreendimentos imobiliarios', 'empreendimentos e construcoes', 'incorporacao imobiliaria', 'incorporacao e construcao', 'projetos e obras', 'projetos e construcoes', 'obras e edificacoes', 'construtora e empreendimentos', 'engenharia construcao', 'obra civil', 'reformas e construcoes', 'reforma e construcao', 'predial', 'predios', 'edificios', 'urbanismo', 'loteadora', 'loteamentos'],
     'empreiteiras': ['empreiteira', 'construcao civil', 'obra'],
     'incorporadoras': ['incorporadora', 'incorporacao', 'empreendimento imobiliario'],
@@ -226,7 +226,7 @@ function generateSearchTerms(segment: string): string[] {
     'funilarias e pinturas': ['funilaria', 'pintura automotiva', 'lanternagem'],
     'auto elétricas': ['auto eletrica', 'eletrica automotiva', 'eletricista automotivo'],
     'borracharias': ['borracharia', 'pneus', 'borracheiro'],
-    'lojas de pneus': ['pneus', 'borracharia', 'recapagem', 'recauchutagem'],
+    'lojas de pneus': ['loja de pneus', 'pneus', 'recapagem', 'recauchutagem'],
     'lojas de rodas esportivas': ['rodas esportivas', 'rodas automotivas', 'rodas liga leve'],
     'lava-rápidos': ['lava rapido', 'lava jato', 'lavagem de carros'],
     'concessionárias': ['concessionaria', 'revenda de veiculos', 'veiculos novos'],
@@ -310,7 +310,7 @@ function generateSearchTerms(segment: string): string[] {
     'distribuidores de colchões': ['distribuidora de colchoes', 'colchoes atacado'],
     'lojas de colchões terapêuticos': ['colchao terapeutico', 'colchao ortopedico', 'colchao magnetico'],
     'lojas de artigos para piscina': ['artigos para piscina', 'artigos para piscinas', 'piscina', 'piscinas', 'piscinaria', 'tratamento de agua', 'tratamento de piscina', 'produtos para piscina', 'produtos quimicos para piscina', 'aquecedor de piscina', 'capa de piscina', 'manutencao de piscinas', 'limpeza de piscinas', 'piscineiro', 'mundo da piscina', 'casa da piscina', 'cloro'],
-    'lojas de eletrodomésticos': ['eletrodomesticos', 'eletro', 'magazine'],
+    'lojas de eletrodomésticos': ['eletrodomesticos', 'loja de eletrodomesticos', 'eletro'],
 
     // ===== JARDINAGEM E FLORICULTURA =====
     'floriculturas': ['floricultura', 'flores', 'garden center', 'plantas', 'arranjos florais'],
@@ -331,7 +331,7 @@ function generateSearchTerms(segment: string): string[] {
     // ===== LATICÍNIOS E QUEIJOS =====
     'laticínios': ['laticinios', 'laticinio', 'leite', 'queijo'],
     'queijarias': ['queijaria', 'queijos', 'queijo artesanal'],
-    'empórios de queijos': ['emporio de queijo', 'emporio', 'queijaria', 'queijos artesanais', 'casa de queijos', 'queijo', 'laticinios', 'laticinio', 'queijos'],
+    'empórios de queijos': ['emporio de queijo', 'emporio de queijos', 'queijaria', 'queijos artesanais', 'casa de queijos'],
 
     // ===== EMPÓRIOS E DELICATESSENS =====
     'delicatessens': ['delicatessen', 'deli', 'emporio', 'frios importados'],
@@ -340,7 +340,7 @@ function generateSearchTerms(segment: string): string[] {
     'empórios naturais': ['emporio natural', 'produtos naturais', 'organicos'],
 
     // ===== BEBIDAS =====
-    'lojas de bebidas': ['loja de bebidas', 'adega', 'distribuidora de bebidas', 'deposito de bebidas'],
+    'lojas de bebidas': ['loja de bebidas', 'adega', 'deposito de bebidas'],
     'lojas de vinhos': ['loja de vinhos', 'wine', 'adega', 'enoteca'],
     'cervejarias': ['cervejaria', 'cerveja artesanal', 'brewpub'],
     'vinícolas': ['vinicola', 'vinho', 'vitinica'],
@@ -912,7 +912,7 @@ function generateSearchTerms(segment: string): string[] {
     'fábricas de polpas': ['fabrica de polpas', 'polpa de fruta', 'polpas'],
     'fábricas de salgados congelados': ['fabrica de salgados', 'salgados congelados', 'salgados'],
     'fábricas de tortas': ['fabrica de tortas', 'tortas', 'bolos'],
-    'pubs': ['pub', 'bar', 'cervejaria'],
+    'pubs': ['pub', 'irish pub', 'english pub'],
 
     // ===== MODA FALTANTES =====
     'ateliês de noiva': ['atelie de noiva', 'vestido de noiva', 'noiva'],
