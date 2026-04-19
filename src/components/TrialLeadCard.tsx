@@ -72,11 +72,11 @@ const TrialLeadCard = ({
     if (onRequestUnlock) onRequestUnlock();
   };
 
-  // Alternating mask pattern based on index
-  const isPhoneBlocked = index % 4 === 0;
-  const isEmailBlocked = index % 4 === 1;
-  const isWhatsAppBlocked = index % 4 === 2;
-  const isCnpjBlocked = index % 4 === 3;
+  // Alternating mask pattern based on index (CNPJ never blocked - public info)
+  const isPhoneBlocked = index % 3 === 0;
+  const isEmailBlocked = index % 3 === 1;
+  const isWhatsAppBlocked = index % 3 === 2;
+  const isCnpjBlocked = false;
 
   const getScoreColor = (score: number) => {
     if (score >= 85) return "bg-success text-success-foreground";
