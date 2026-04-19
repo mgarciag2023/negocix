@@ -122,7 +122,7 @@ const TrialSearch = () => {
         // Check if inflation was already applied (flag)
         const inflated = localStorage.getItem("negocix_trial_inflated");
         if (!inflated && val > 0) {
-          const newVal = Math.ceil(val * 1.30);
+          const newVal = Math.ceil(val * 1.40);
           localStorage.setItem("negocix_trial_total", String(newVal));
           localStorage.setItem("negocix_trial_inflated", "true");
           return newVal;
@@ -306,7 +306,7 @@ const TrialSearch = () => {
           return true;
         });
         const total = dedupedLeads.length;
-        const inflatedTotal = Math.ceil(total * 1.30); // Show 30% more to encourage signup
+        const inflatedTotal = Math.ceil(total * 1.40); // Show 30% more to encourage signup
         const preview = dedupedLeads.slice(0, 6);
         setLeads(preview);
         setTotalFound(inflatedTotal);
