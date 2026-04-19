@@ -479,8 +479,8 @@ function generateSearchTerms(segment: string): string[] {
     'distribuidores de pêssegos': ['pessego', 'pessegos', 'distribuidor de pessegos', 'fruta'],
 
     // ===== TRANSPORTES E LOGÍSTICA =====
-    'transportadoras': ['transportadora', 'transporte', 'logistica', 'frete', 'mudancas', 'caminhao'],
-    'empresas de logística': ['logistica', 'operador logistico', 'armazenagem', 'centro de distribuicao'],
+    'transportadoras': ['transportadora', 'transportadoras', 'transporte', 'logistica', 'logística', 'frete', 'mudancas', 'mudanças', 'caminhao', 'caminhão', 'transporte de cargas', 'transporte rodoviario', 'transporte rodoviário', 'frete de cargas', 'transportador autonomo', 'transportadora de cargas', 'logistica de transporte', 'transportadora rodoviaria', 'transportadora rodoviária', 'transporte fracionado', 'transporte de carga seca', 'transporte refrigerado', 'transporte de carga viva', 'transporte de produtos perigosos', 'cooperativa de transportes', 'transportadora intermunicipal', 'transportadora interestadual', 'frete dedicado', 'transporte expresso', 'transporte de mudancas', 'fretamento de caminhoes'],
+    'empresas de logística': ['logistica', 'logística', 'operador logistico', 'operador logístico', 'armazenagem', 'centro de distribuicao', 'centro de distribuição', 'empresa de logistica', 'empresa de logística', 'logistica integrada', 'logística integrada', 'logistica reversa', 'logística reversa', '4pl', '3pl', 'gestao de armazem', 'gestão de armazém', 'cross docking', 'fulfillment', 'last mile', 'transporte e logistica', 'distribuicao logistica', 'distribuição logística', 'roteirizacao', 'roteirização', 'wms', 'tms', 'operadora logistica', 'operadora logística', 'logistica de armazenagem', 'logistica de transporte', 'logística de transporte', 'logistica e-commerce'],
     'locadoras de veículos': ['locadora de veiculos', 'aluguel de carros', 'rent a car'],
     'empresas de motoboy': ['motoboy', 'motofrete', 'entrega moto'],
     'frotistas': ['frotista', 'frota', 'gestao de frota'],
