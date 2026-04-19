@@ -506,6 +506,8 @@ const TrialSearch = () => {
                 companySize={lead.companySize}
                 hasWhatsApp={lead.hasWhatsApp}
                 cnpj={(lead as any).cnpj}
+                razaoSocial={(lead as any).razaoSocial}
+                nomeFantasia={(lead as any).nomeFantasia}
                 index={i}
                 onRequestUnlock={() => { trackTrialEvent("card_click", { lead_name: lead.name }); setShowLockDialog(true); }}
               />
