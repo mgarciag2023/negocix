@@ -396,12 +396,12 @@ const TrialSearch = () => {
           <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }} />
 
           <div className="relative z-10 text-center px-6 max-w-lg mx-auto">
-            <div className="inline-flex items-center gap-2 mb-5 px-4 py-2 rounded-full bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/20 animate-fade-in-down">
-              <Star className="h-4 w-4 text-warning" fill="currentColor" />
-              <span className="text-sm text-primary-foreground/90 font-medium">Experimente Agora</span>
+            <div className="inline-flex items-center gap-2 mb-5 px-5 py-2.5 rounded-full bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/20 animate-fade-in-down">
+              <Star className="h-5 w-5 text-warning" fill="currentColor" />
+              <span className="text-base text-primary-foreground/90 font-medium">Experimente Agora</span>
             </div>
             
-            <h1 className="mb-4 text-3xl md:text-5xl font-bold leading-tight text-primary-foreground opacity-0 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+            <h1 className="mb-4 text-4xl md:text-6xl font-bold leading-tight text-primary-foreground opacity-0 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
               Encontre{" "}
               <span className="relative">
                 <span className="relative z-10">Clientes Qualificados</span>
@@ -409,27 +409,27 @@ const TrialSearch = () => {
               </span>
             </h1>
             
-            <p className="mb-8 text-base md:text-lg text-primary-foreground/80 opacity-0 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
+            <p className="mb-8 text-lg md:text-xl text-primary-foreground/80 opacity-0 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
               Veja na prática como a nossa plataforma encontra leads qualificados para o seu negócio.
             </p>
             
             <div className="flex flex-col gap-3 opacity-0 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
               <Button 
                 size="lg" 
-                className="bg-success hover:bg-success-hover text-success-foreground shadow-success hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group text-base h-14 px-8 rounded-xl w-full"
+                className="bg-success hover:bg-success-hover text-success-foreground shadow-success hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group text-lg h-16 px-8 rounded-xl w-full"
                 onClick={() => {
                   document.getElementById("o-que-e")?.scrollIntoView({ behavior: "smooth", block: "start" });
                 }}
               >
                 Saiba Mais
-                <ArrowRight className="ml-2 h-4 w-4 rotate-90 group-hover:translate-y-1 transition-transform" />
+                <ArrowRight className="ml-2 h-5 w-5 rotate-90 group-hover:translate-y-1 transition-transform" />
               </Button>
             </div>
 
-            <div className="mt-6 flex items-center justify-center gap-4 text-xs text-primary-foreground/60 opacity-0 animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
-              <div className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-success" /><span>Sem cadastro</span></div>
-              <div className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-success" /><span>Dados reais</span></div>
-              <div className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-success" /><span>100% grátis</span></div>
+            <div className="mt-6 flex items-center justify-center gap-4 text-sm text-primary-foreground/60 opacity-0 animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
+              <div className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-success" /><span>Sem cadastro</span></div>
+              <div className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-success" /><span>Dados reais</span></div>
+              <div className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-success" /><span>100% grátis</span></div>
             </div>
           </div>
         </main>
