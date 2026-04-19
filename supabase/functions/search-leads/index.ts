@@ -225,7 +225,7 @@ function generateSearchTerms(segment: string): string[] {
     'funilarias e pinturas': ['funilaria', 'pintura automotiva', 'lanternagem'],
     'auto elétricas': ['auto eletrica', 'eletrica automotiva', 'eletricista automotivo'],
     'borracharias': ['borracharia', 'pneus', 'borracheiro'],
-    'lojas de pneus': ['pneus', 'borracharia', 'recapagem', 'recauchutagem'],
+    'lojas de pneus': ['pneus', 'borracharia', 'borracharias', 'recapagem', 'recauchutagem', 'loja de pneus', 'centro de pneus', 'pneu', 'pneus novos', 'pneus usados', 'pneus remoldados', 'pneus para carros', 'pneus para caminhao', 'pneus para caminhão', 'pneus para motos', 'centro automotivo de pneus', 'auto pneus', 'super pneus', 'distribuidora de pneus', 'comercio de pneus', 'comércio de pneus', 'rede de pneus', 'pneus michelin', 'pneus pirelli', 'pneus goodyear', 'pneus continental', 'pneus bridgestone', 'alinhamento balanceamento pneus', 'troca de pneus', 'instalacao de pneus'],
     'lojas de rodas esportivas': ['rodas esportivas', 'rodas automotivas', 'rodas liga leve'],
     'lava-rápidos': ['lava rapido', 'lava jato', 'lavagem de carros'],
     'concessionárias': ['concessionaria', 'revenda de veiculos', 'veiculos novos'],
