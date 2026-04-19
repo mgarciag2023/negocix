@@ -569,7 +569,7 @@ function generateSearchTerms(segment: string): string[] {
     'lojas de veículos elétricos': ['veiculos eletricos', 'patinete eletrico', 'bicicleta eletrica'],
     'lojas de epi': ['epi', 'equipamento de protecao', 'seguranca do trabalho'],
     'lojas de sinalização': ['sinalizacao', 'placas', 'comunicacao visual'],
-    'artigos de caça, pesca e camping': ['caca e pesca', 'camping', 'pesca esportiva', 'artigos de pesca'],
+    'artigos de caça, pesca e camping': ['caca e pesca', 'caça e pesca', 'camping', 'pesca esportiva', 'artigos de pesca', 'loja de pesca', 'casa do pescador', 'pesca e camping', 'artigos esportivos pesca', 'pesca amadora', 'pesca profissional', 'iscas e anzóis', 'iscas e anzois', 'varas de pesca', 'molinetes', 'carretilhas', 'kit pesca', 'casa de camping', 'loja de camping', 'artigos para camping', 'barracas de camping', 'fogareiro camping', 'lanternas camping', 'sleeping bag', 'mochilao trilha', 'mochilão trilha', 'trekking', 'aventura outdoor', 'casa do caçador', 'artigos de caca', 'artigos de caça', 'arcos e flechas', 'munição', 'municao', 'embarcacoes para pesca', 'embarcações para pesca'],
     'lojas de artigos para piscina': ['artigos para piscina', 'artigos para piscinas', 'piscina', 'piscinas', 'piscinaria', 'tratamento de agua', 'tratamento de piscina', 'produtos para piscina', 'produtos quimicos para piscina', 'aquecedor de piscina', 'capa de piscina', 'manutencao de piscinas', 'limpeza de piscinas', 'piscineiro', 'mundo da piscina', 'casa da piscina', 'cloro'],
     'lojas de revestimentos': ['revestimentos', 'porcelanato', 'pisos', 'ceramica'],
 
