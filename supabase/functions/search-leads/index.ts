@@ -67,7 +67,7 @@ function generateSearchTerms(segment: string): string[] {
     'esfiharias': ['esfiharia', 'esfiha', 'comida arabe', 'esfihas'],
     'hot dogs': ['hot dog', 'cachorro quente', 'hotdog'],
     'food trucks': ['food truck', 'food park', 'foodtruck'],
-    'churrascarias': ['churrascaria', 'churrasco', 'rodizio', 'espetaria', 'rodizio de carnes'],
+    'churrascarias': ['churrascaria', 'churrascarias', 'churrasco', 'churrascaria gaucha', 'churrascaria gaúcha', 'rodizio', 'rodízio', 'rodizio de carnes', 'rodízio de carnes', 'espetaria', 'espeto corrido', 'casa de carnes', 'casa de carne', 'parrilla', 'parrillada', 'churrascaria rodizio', 'churrasco a la carte', 'churrasco à la carte', 'restaurante de carnes', 'steakhouse', 'steak house', 'grill', 'grelhados', 'churrascaria premium', 'churrascaria premium rodizio', 'rancho do churrasco', 'churrasqueira', 'casa do churrasco'],
     'espetarias': ['espetaria', 'espeto', 'espetinho', 'espetos'],
     'marmitarias': ['marmitaria', 'marmita', 'marmitex', 'quentinha'],
     'rotisseries': ['rotisserie', 'rotisseria', 'frango assado', 'assados'],
