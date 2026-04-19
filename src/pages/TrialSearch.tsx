@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import TrialNavbar from "@/components/TrialNavbar";
 import TrialLeadCard from "@/components/TrialLeadCard";
+import TrialInfoSections from "@/components/TrialInfoSections";
 import { customerTypes, countries, brazilianStates } from "@/data/searchConstants";
 import StatsCard from "@/components/StatsCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
