@@ -437,6 +437,7 @@ const TrialSearch = () => {
             </div>
           </div>
         </main>
+        <TrialInfoSections />
       </div>
     );
   }
