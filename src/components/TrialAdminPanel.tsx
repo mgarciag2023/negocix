@@ -287,8 +287,36 @@ export default function TrialAdminPanel() {
 
   return (
     <div className="space-y-6">
-      {/* Refresh */}
-      <div className="flex justify-end">
+      {/* Refresh + ações rápidas */}
+      <div className="flex flex-wrap justify-end gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2"
+          onClick={() => {
+            localStorage.removeItem("negocix_trial_results_v2");
+            localStorage.removeItem("negocix_trial_total");
+            localStorage.removeItem("negocix_trial_inflated");
+            localStorage.removeItem("negocix_trial_used");
+            window.location.href = "/teste";
+          }}
+        >
+          <Search className="h-3 w-3" /> Fazer nova pesquisa
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2"
+          onClick={() => {
+            localStorage.removeItem("negocix_trial_results_v2");
+            localStorage.removeItem("negocix_trial_total");
+            localStorage.removeItem("negocix_trial_inflated");
+            localStorage.removeItem("negocix_trial_used");
+            window.location.href = "/teste";
+          }}
+        >
+          <Eye className="h-3 w-3" /> Ver Home
+        </Button>
         <Button variant="outline" size="sm" onClick={fetchEvents} className="gap-2">
           <RefreshCw className="h-3 w-3" /> Atualizar
         </Button>
