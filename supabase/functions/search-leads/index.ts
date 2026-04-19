@@ -125,7 +125,7 @@ function generateSearchTerms(segment: string): string[] {
     'cafeterias': ['cafeteria', 'cafe', 'coffee', 'coffee shop'],
 
     // ===== BARES =====
-    'bares': ['bar', 'bar e', 'bares', 'boteco', 'botequim', 'butiquim', 'pub', 'cervejaria', 'cervejarias', 'choperia', 'chopperia', 'chopp', 'choparia', 'lounge', 'adega', 'adegas', 'petisqueira', 'petiscaria', 'drinkeria', 'drinks', 'gastrobar', 'gastro bar', 'beer', 'beerhouse', 'beer house', 'taberna', 'tasca', 'wine bar', 'whisky', 'whiskeria', 'distribuidora de bebidas', 'bar e restaurante', 'bar e lanchonete', 'bar e mercearia', 'esquina', 'sinuca', 'snooker', 'karaoke', 'karaokê'],
+    'bares': ['bar', 'bar e', 'bares', 'boteco', 'botequim', 'butiquim', 'pub', 'cervejaria', 'cervejarias', 'choperia', 'chopperia', 'chopp', 'choparia', 'lounge', 'adega', 'adegas', 'petisqueira', 'petiscaria', 'drinkeria', 'drinks', 'gastrobar', 'gastro bar', 'beer', 'beerhouse', 'beer house', 'taberna', 'tasca', 'wine bar', 'whisky', 'whiskeria', 'bar e restaurante', 'bar e lanchonete', 'bar e mercearia', 'esquina', 'sinuca', 'snooker', 'karaoke', 'karaokê'],
 
     // ===== SUPERMERCADOS E MERCADOS =====
     'supermercados': ['supermercado', 'mercado', 'minimercado', 'mercearia', 'mercadinho', 'hipermercado', 'atacarejo'],
