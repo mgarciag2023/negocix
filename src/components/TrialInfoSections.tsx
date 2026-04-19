@@ -75,7 +75,7 @@ const TrialInfoSections = ({ onStart }: TrialInfoSectionsProps) => {
   return (
     <div className="bg-background w-full">
       {/* 1. O que é a Negocix */}
-      <section className="py-16 md:py-20 bg-gradient-to-b from-primary/5 to-background">
+      <section id="o-que-e" className="py-16 md:py-20 bg-gradient-to-b from-primary/5 to-background scroll-mt-20">
         <div className="container mx-auto px-4 max-w-5xl">
           <Reveal>
             <div className="text-center mb-10">
