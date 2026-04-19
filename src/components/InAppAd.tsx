@@ -33,7 +33,7 @@ const ADS: Ad[] = [
     description:
       "Descubra as técnicas de abordagem que mais convertem e aumente suas vendas como representante comercial.",
     ctaLabel: "Saber mais",
-    ctaUrl: "https://compraseguraonline.org.ua/c/60799d35b3",
+    ctaUrl: "https://pay.kiwify.com.br/Zmzc9JZ",
   },
   {
     id: "metodo-representante",
@@ -44,7 +44,7 @@ const ADS: Ad[] = [
     description:
       "Aprenda o método completo para transformar contatos em clientes e aumentar suas vendas como representante comercial.",
     ctaLabel: "Conhecer o método",
-    ctaUrl: "https://compraseguraonline.org.ua/c/470e4f044d",
+    ctaUrl: "https://pay.kiwify.com.br/Zmzc9JZ",
   },
 ];
 
