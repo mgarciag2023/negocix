@@ -235,7 +235,7 @@ function generateSearchTerms(segment: string): string[] {
     'lojas de carro': ['carro', 'automovel', 'revenda de veiculos'],
 
     // ===== AGROPECUÁRIA =====
-    'agropecuária': ['agropecuaria', 'produtos rurais', 'agropecuaria', 'casa agropecuaria', 'insumos agricolas'],
+    'agropecuária': ['agropecuaria', 'agropecuária', 'agropecuarias', 'produtos rurais', 'casa agropecuaria', 'casa agropecuária', 'insumos agricolas', 'insumos agrícolas', 'loja agropecuaria', 'loja agropecuária', 'agro', 'agro center', 'agronegocio', 'agronegócio', 'casa do produtor rural', 'casa do agricultor', 'agro veterinaria', 'agro veterinária', 'agro insumos', 'agroquimicos', 'agroquímicos', 'sementes e insumos', 'fertilizantes e defensivos', 'racao animal', 'ração animal', 'medicamentos veterinarios', 'medicamentos veterinários', 'agropet', 'rural shop', 'casa rural', 'comercio agricola', 'comércio agrícola', 'cooperativa agropecuaria', 'distribuidora agropecuaria'],
     'casas agropecuárias': ['agropecuaria', 'casa agropecuaria', 'produtos rurais'],
     'cooperativas agrícolas': ['cooperativa agricola', 'cooperativa rural'],
     'revendas de insumos agrícolas': ['revenda de insumos', 'defensivos agricolas', 'agroquimicos'],
