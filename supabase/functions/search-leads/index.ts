@@ -1526,42 +1526,43 @@ serve(async (req) => {
       // FALLBACK: If tsvector returned 0 (search_vector not populated for this region),
       // retry with ILIKE-based search which doesn't depend on the materialized vector.
       if (bestResults.length === 0) {
-        // ILIKE fallback é muito caro (varredura sequencial). Limitar termos para evitar timeout.
+        // ILIKE fallback é muito caro (varredura sequencial). Limitar termos agressivamente.
         // Priorizar termos curtos/distintivos sem variantes acentuadas (ILIKE não usa unaccent).
         const ilikeTerms = Array.from(new Set(
           (terms || [])
             .map((t: string) => (t || '').trim())
             .filter((t: string) => t.length >= 4 && !/[áéíóúâêôãõç]/i.test(t))
-        )).slice(0, 8);
+        )).slice(0, 5); // Reduzido de 8→5 para evitar timeout em estados grandes
         console.log(`🔄 Phase 1 "${seg}" empty — falling back to ILIKE search (${ilikeTerms.length} terms)`);
-        // Reduzir concorrência e páginas no fallback para não saturar a DB
-        const ilikePageNums = initialPageNums.slice(0, Math.min(2, initialPageNums.length));
-        const ilikePages = await runPool(ilikePageNums, async (p: number) => {
-          const r = await adminClient.rpc('search_companies_ilike', {
-            p_city: city || null,
-            p_state: state || null,
-            p_search_terms: ilikeTerms,
-            p_biz_type: bizType || 'all',
-            p_limit_val: PAGE_SIZE,
-            p_offset_val: p * PAGE_SIZE,
-          });
-          return { ...r, pageIdx: p };
-        }, 1);
-
-        for (const r of ilikePages.sort((a: any, b: any) => a.pageIdx - b.pageIdx)) {
-          if (r.error) {
-            console.error(`❌ ILIKE fallback error page ${r.pageIdx} "${seg}":`, r.error.message);
-            continue;
-          }
-          if (r.data && r.data.length > 0) {
-            for (const c of r.data) {
-              if (!seenIds.has(c.id)) { seenIds.add(c.id); bestResults.push(c); }
+        
+        // Timeout interno: se já se passaram 90s, pular ILIKE para não dar 504
+        const elapsedMs = Date.now() - FUNCTION_START;
+        if (elapsedMs > 90_000) {
+          console.log(`⚠️ Skipping ILIKE fallback — already ${Math.round(elapsedMs/1000)}s elapsed`);
+        } else {
+          // Uma única página no fallback para minimizar carga
+          try {
+            const ilikeResult = await adminClient.rpc('search_companies_ilike', {
+              p_city: city || null,
+              p_state: state || null,
+              p_search_terms: ilikeTerms,
+              p_biz_type: bizType || 'all',
+              p_limit_val: 500, // Reduzido de PAGE_SIZE para retornar rápido
+              p_offset_val: 0,
+            });
+            if (ilikeResult.error) {
+              console.error(`❌ ILIKE fallback error "${seg}":`, ilikeResult.error.message);
+            } else if (ilikeResult.data && ilikeResult.data.length > 0) {
+              for (const c of ilikeResult.data) {
+                if (!seenIds.has(c.id)) { seenIds.add(c.id); bestResults.push(c); }
+              }
+              lastPageFull = ilikeResult.data.length === 500;
             }
-            lastPageFull = r.data.length === PAGE_SIZE;
-            highestPageFetched = Math.max(highestPageFetched, r.pageIdx);
+          } catch (e) {
+            console.error(`❌ ILIKE fallback exception "${seg}":`, (e as Error).message);
           }
+          console.log(`🔄 ILIKE fallback "${seg}": ${bestResults.length} results`);
         }
-        console.log(`🔄 ILIKE fallback "${seg}": ${bestResults.length} results`);
       }
 
 
