@@ -638,7 +638,7 @@ function generateSearchTerms(segment: string): string[] {
     'despachantes': ['despachante', 'despachante veicular', 'detran'],
     'estacionamentos': ['estacionamento', 'garagem', 'parking', 'vaga'],
     'funerárias': ['funeraria', 'velorio', 'servicos funerarios', 'cemiterio', 'crematorio'],
-    'casas de repouso': ['casa de repouso', 'asilo', 'lar de idosos', 'residencial senior'],
+    'casas de repouso': ['casa de repouso', 'casas de repouso', 'asilo', 'asilos', 'lar de idosos', 'lares de idosos', 'lar dos idosos', 'residencial senior', 'residencial sênior', 'residencial para idosos', 'residencial geriatrico', 'residencial geriátrico', 'clinica geriatrica', 'clínica geriátrica', 'clinica de repouso', 'clínica de repouso', 'instituicao de longa permanencia', 'instituição de longa permanência', 'ilpi', 'cuidados com idosos', 'cuidador de idosos empresa', 'lar geriatrico', 'lar geriátrico', 'casa de cuidados', 'casa de convivencia', 'casa de convivência', 'centro dia idoso', 'centro-dia para idosos', 'recanto dos idosos', 'recanto do idoso', 'pousada para idosos', 'hospedagem para idosos', 'lar terceira idade', 'casa terceira idade', 'cuidados especiais para idosos', 'home care para idosos', 'casa de retiro para idosos', 'residencia para idosos', 'residência para idosos', 'morada do idoso'],
     'creches e berçários': ['creche', 'bercario', 'educacao infantil', 'maternal'],
     'escolas particulares': ['escola particular', 'colegio particular', 'escola privada'],
     'faculdades e universidades': ['faculdade', 'universidade', 'centro universitario', 'instituicao de ensino superior'],
