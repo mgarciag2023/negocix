@@ -22,24 +22,26 @@ Deno.serve(async (req) => {
       targetState = body?.estado || null;
     } catch { /* no body */ }
 
+    // Process smallest states first
     const estados = targetState 
       ? [targetState]
-      : ['AP','MS','SE','TO','RO','AL','PI','RN','PB','AM','ES','MA','DF','PA','MT','GO','CE','PE','BA','SC','RS','PR','MG','RJ','SP'];
+      : ['AP','RR','AC','MS','SE','TO','RO','AL','PI','RN','PB','AM','ES','MA','DF','PA','MT','GO','CE','PE','BA','SC','RS','PR','MG','RJ','SP'];
     
     let grandTotal = 0;
     const startTime = Date.now();
-    const MAX_RUNTIME_MS = 20000; // 20s safe margin
+    const MAX_RUNTIME_MS = 45000; // 45s
 
     for (const estado of estados) {
       if (Date.now() - startTime > MAX_RUNTIME_MS) break;
 
-      // Multiple small batches per state
-      for (let i = 0; i < 10; i++) {
+      let stateTotal = 0;
+      // Many small batches of 500
+      for (let i = 0; i < 200; i++) {
         if (Date.now() - startTime > MAX_RUNTIME_MS) break;
 
         const { data, error } = await supabase.rpc('populate_search_vector_batch', {
           p_estado: estado,
-          p_batch_size: 2000
+          p_batch_size: 500
         });
 
         if (error) {
@@ -48,13 +50,14 @@ Deno.serve(async (req) => {
         }
 
         const updated = data as number;
+        stateTotal += updated;
         grandTotal += updated;
         
-        if (updated === 0) break; // state done
+        if (updated === 0) break;
       }
 
-      if (grandTotal > 0) {
-        console.log(`Progress: ${estado} (grand total: ${grandTotal})`);
+      if (stateTotal > 0) {
+        console.log(`${estado}: +${stateTotal} (grand total: ${grandTotal})`);
       }
     }
 
