@@ -12,43 +12,37 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { estado, batch_size = 50000 } = await req.json();
-    
-    if (!estado) {
-      return new Response(JSON.stringify({ error: "estado is required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    let total = 0;
-    let keepGoing = true;
+    const estados = ['RR','AP','AC','MS','SE','TO','RO','PI','AL','RN','PB','AM','ES','MA','DF','PA','MT','GO','CE','PE','BA','SC','RS','PR','MG','RJ','SP'];
+    
+    let grandTotal = 0;
+    const startTime = Date.now();
+    const MAX_RUNTIME_MS = 25000; // 25 seconds max to avoid timeout
 
-    while (keepGoing) {
+    for (const estado of estados) {
+      if (Date.now() - startTime > MAX_RUNTIME_MS) break;
+
       const { data, error } = await supabase.rpc('populate_search_vector_batch', {
         p_estado: estado,
-        p_batch_size: batch_size
+        p_batch_size: 10000
       });
 
       if (error) {
         console.error(`Error for ${estado}:`, error.message);
-        return new Response(JSON.stringify({ error: error.message, processed_so_far: total }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        continue;
       }
 
       const updated = data as number;
-      total += updated;
-      console.log(`${estado}: +${updated} (total: ${total})`);
-      if (updated === 0) keepGoing = false;
+      grandTotal += updated;
+      console.log(`${estado}: +${updated} (grand total: ${grandTotal})`);
+      
+      if (Date.now() - startTime > MAX_RUNTIME_MS) break;
     }
 
-    return new Response(JSON.stringify({ success: true, estado, total }), {
+    return new Response(JSON.stringify({ success: true, total: grandTotal }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
