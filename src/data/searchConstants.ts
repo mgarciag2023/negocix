@@ -314,6 +314,7 @@ export const customerTypes = [
   "Antiquários",
   "Brechós",
   "Artigos de Caça, Pesca e Camping",
+  "Loja de Caça e Pesca",
 
   // Serviços
   "Academias",
