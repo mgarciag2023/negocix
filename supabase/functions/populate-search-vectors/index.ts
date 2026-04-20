@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
 
       const { data, error } = await supabase.rpc('populate_search_vector_batch', {
         p_estado: estado,
-        p_batch_size: 5000
+        p_batch_size: 2000
       });
 
       if (error) {
