@@ -1665,6 +1665,63 @@ serve(async (req) => {
 
     console.log(`📊 Total raw companies: ${allCompanies.length} (elapsed: ${Date.now() - FUNCTION_START}ms)`);
 
+    // ===== EMERGENCY EARLY RETURN: if near timeout, return what we have =====
+    // This helper transforms raw companies into leads quickly (no heavy filters)
+    const buildQuickLeads = (companies: any[]) => {
+      // Quick phone filter
+      let filtered = companies.filter(c => isPhoneValid(c.telefone_1) || isPhoneValid(c.telefone_2));
+      // Quick CNPJ dedup
+      const seen = new Set<string>();
+      filtered = filtered.filter(c => { if (!c.cnpj) return true; if (seen.has(c.cnpj)) return false; seen.add(c.cnpj); return true; });
+      // Transform to lead format
+      return filtered.map((c: any, index: number) => {
+        const phone1 = isPhoneValid(c.telefone_1) ? c.telefone_1 : (c.telefone_2 || '');
+        const phoneValidation = validatePhone(phone1);
+        const nfRaw = (c.nome_fantasia || '').trim();
+        const isWeirdName = !nfRaw || /^\*+$/.test(nfRaw) || /^[^a-zA-Z0-9À-ÿ\s]{2,}/.test(nfRaw) || !/[a-zA-ZÀ-ÿ]{2,}/.test(nfRaw);
+        const hasRazaoSocial = c.razao_social && c.razao_social.trim().length > 3;
+        let rawName = isWeirdName ? (c.razao_social || 'Empresa') : nfRaw;
+        const name = rawName.replace(/[^\s]+/g, (w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+        const addressParts = [c.endereco, c.bairro, c.cidade, c.estado, c.cep].filter(Boolean);
+        const address = addressParts.map((p: string) => p.replace(/[^\s]+/g, (w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())).join(', ');
+        const { employeeCount, companySize, revenue } = estimateCompanySize(c);
+        return {
+          id: `db-${c.id}-${index}`, name, address: address || 'Endereço não disponível',
+          phone: phoneValidation.valid ? phoneValidation.normalized : phone1, phoneValid: phoneValidation.valid,
+          email: c.email ? c.email.toLowerCase() : '', website: null, instagram: '', facebook: '',
+          hasWhatsApp: phoneValidation.isWhatsApp, placeId: c.id, cnpj: c.cnpj || '',
+          category: c._segment || segment, rating: 0, reviews: 0,
+          matchScore: 70, confidenceScore: 70, source: 'receita_federal',
+          responsible: c.nome_socio || 'Gerente', employeeCount, companySize, revenue,
+          openedDate: c.data_abertura || '', reasons: ['Encontrado na base da Receita Federal'],
+          isMatriz: (c.matriz_filial || '').toUpperCase() === 'MATRIZ',
+          digitalPresence: 'unknown', digitalActivity: 'unknown',
+          dataQuality: { hasValidPhone: phoneValidation.valid, hasSocialMedia: false, hasWhatsApp: phoneValidation.isWhatsApp, hasWebsite: false, fromGoogleMaps: false, fromReceitaFederal: true },
+          needsReview: false, descricaoCnae: c.descricao_cnae || '', porte: c.porte || '',
+          capitalSocial: c.capital_social || 0, nomeSocio: c.nome_socio || '',
+          razaoSocial: c.razao_social || '', nomeFantasia: c.nome_fantasia || '',
+          telefone1: c.telefone_1 || '', telefone2: c.telefone_2 || '',
+          cnaePrincipal: c.cnae_principal || '', cnaeSecundaria: c.cnae_secundaria || '',
+          naturezaJuridica: c.natureza_juridica || '', situacaoCadastral: c.situacao_cadastral || '',
+          dataSituacaoCadastral: c.data_situacao_cadastral || '', motivoSituacao: c.motivo_situacao || '',
+          matrizFilial: c.matriz_filial || '', mei: c.mei || '', simples: c.simples || '',
+          endereco: c.endereco || '', complemento: c.complemento || '', bairro: c.bairro || '',
+          cidade: c.cidade || '', estado: c.estado || '', cep: c.cep || '',
+          faixaEtariaSocio: c.faixa_etaria_socio || '', qualificacaoSocio: c.qualificacao_socio || '',
+        };
+      });
+    };
+
+    if (isNearSoftTimeout() && allCompanies.length > 0) {
+      console.log(`⚠️ NEAR TIMEOUT — returning ${allCompanies.length} partial results without full filtering`);
+      const quickLeads = buildQuickLeads(allCompanies);
+      if (quickLeads.length > 0) {
+        return new Response(JSON.stringify({ leads: quickLeads, partial: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
+
     // ===== FILTER: valid phone required (check both telefone_1 and telefone_2) =====
     allCompanies = allCompanies.filter(c => isPhoneValid(c.telefone_1) || isPhoneValid(c.telefone_2));
     console.log(`📞 After phone filter: ${allCompanies.length}`);
