@@ -47,8 +47,8 @@ function chunkArray<T>(items: T[], size: number): T[][] {
 function getCnaesForSegment(segment: string): string[] {
   const seg = segment.toLowerCase();
   const cnaeMap: { [key: string]: string[] } = {
-    'loja de caça e pesca': ['4789009'], // Comércio varejista de armas e munições
-    'artigos de caça, pesca e camping': ['4789009'],
+    'loja de caça e pesca': ['4763604', '4789009', '9319101', '4763601', '4789099'], // 4763604=caça/pesca/camping, 4789009=armas/munições
+    'artigos de caça, pesca e camping': ['4763604', '4789009', '9319101', '4763601', '4789099'],
   };
   return cnaeMap[seg] || [];
 }
