@@ -557,6 +557,13 @@ export type Database = {
         Returns: boolean
       }
       is_user_blocked: { Args: { _user_id: string }; Returns: boolean }
+      populate_all_search_vectors: {
+        Args: { p_batch_size?: number }
+        Returns: {
+          estado_done: string
+          rows_updated: number
+        }[]
+      }
       populate_search_vector_batch: {
         Args: { p_batch_size?: number; p_estado: string }
         Returns: number

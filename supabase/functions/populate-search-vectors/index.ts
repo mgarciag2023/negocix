@@ -16,24 +16,30 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Process states from smallest to largest remaining
-    const estados = ['AP','MS','SE','TO','RO','AL','PI','RN','PB','AM','ES','MA','DF','PA','MT','GO','CE','PE','BA','SC','RS','PR','MG','RJ','SP'];
+    let targetState: string | null = null;
+    try {
+      const body = await req.json();
+      targetState = body?.estado || null;
+    } catch { /* no body */ }
+
+    const estados = targetState 
+      ? [targetState]
+      : ['AP','MS','SE','TO','RO','AL','PI','RN','PB','AM','ES','MA','DF','PA','MT','GO','CE','PE','BA','SC','RS','PR','MG','RJ','SP'];
     
     let grandTotal = 0;
     const startTime = Date.now();
-    const MAX_RUNTIME_MS = 50000; // 50 seconds
+    const MAX_RUNTIME_MS = 20000; // 20s safe margin
 
     for (const estado of estados) {
       if (Date.now() - startTime > MAX_RUNTIME_MS) break;
 
-      // Try multiple batches per state within time limit
-      let stateUpdated = 0;
-      for (let i = 0; i < 5; i++) {
+      // Multiple small batches per state
+      for (let i = 0; i < 10; i++) {
         if (Date.now() - startTime > MAX_RUNTIME_MS) break;
 
         const { data, error } = await supabase.rpc('populate_search_vector_batch', {
           p_estado: estado,
-          p_batch_size: 10000
+          p_batch_size: 2000
         });
 
         if (error) {
@@ -42,14 +48,13 @@ Deno.serve(async (req) => {
         }
 
         const updated = data as number;
-        stateUpdated += updated;
         grandTotal += updated;
         
-        if (updated === 0) break; // state is done
+        if (updated === 0) break; // state done
       }
 
-      if (stateUpdated > 0) {
-        console.log(`${estado}: +${stateUpdated} (grand total: ${grandTotal})`);
+      if (grandTotal > 0) {
+        console.log(`Progress: ${estado} (grand total: ${grandTotal})`);
       }
     }
 
