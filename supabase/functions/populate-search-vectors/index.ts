@@ -12,41 +12,43 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const { estado, batch_size = 50000 } = await req.json();
+    
+    if (!estado) {
+      return new Response(JSON.stringify({ error: "estado is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const estados = ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO'];
-    
-    const results: Record<string, number> = {};
-    let grandTotal = 0;
+    let total = 0;
+    let keepGoing = true;
 
-    for (const estado of estados) {
-      let stateTotal = 0;
-      let keepGoing = true;
+    while (keepGoing) {
+      const { data, error } = await supabase.rpc('populate_search_vector_batch', {
+        p_estado: estado,
+        p_batch_size: batch_size
+      });
 
-      while (keepGoing) {
-        const { data, error } = await supabase.rpc('populate_search_vector_batch', {
-          p_estado: estado,
-          p_batch_size: 50000
+      if (error) {
+        console.error(`Error for ${estado}:`, error.message);
+        return new Response(JSON.stringify({ error: error.message, processed_so_far: total }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
-
-        if (error) {
-          console.error(`Error for ${estado}:`, error.message);
-          keepGoing = false;
-        } else {
-          const updated = data as number;
-          stateTotal += updated;
-          grandTotal += updated;
-          console.log(`${estado}: +${updated} (state total: ${stateTotal}, grand total: ${grandTotal})`);
-          if (updated === 0) keepGoing = false;
-        }
       }
 
-      results[estado] = stateTotal;
+      const updated = data as number;
+      total += updated;
+      console.log(`${estado}: +${updated} (total: ${total})`);
+      if (updated === 0) keepGoing = false;
     }
 
-    return new Response(JSON.stringify({ success: true, total: grandTotal, by_state: results }), {
+    return new Response(JSON.stringify({ success: true, estado, total }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
