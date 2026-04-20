@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     // Process smallest states first
     const estados = targetState 
       ? [targetState]
-      : ['SC','AP','RR','AC','MS','SE','TO','RO','AL','PI','RN','PB','AM','ES','MA','DF','PA','MT','GO','CE','PE','BA','RS','PR','MG','RJ','SP'];
+      : ['SC','MA','AP','RR','AC','MS','SE','TO','RO','AL','PI','RN','PB','AM','ES','DF','PA','MT','GO','CE','PE','BA','RS','PR','MG','RJ','SP'];
     
     let grandTotal = 0;
     const startTime = Date.now();
