@@ -43,11 +43,14 @@ function chunkArray<T>(items: T[], size: number): T[][] {
 }
 
 // ===== CNAE MAPPING DESATIVADO =====
-// O mapeamento por CNAE foi removido por gerar muitos falsos positivos
-// (CNAEs genéricos como "Restaurantes" cobriam pizzarias, bares, cafés, pastéis...).
-// A busca agora é 100% baseada em termos no nome da empresa (nome_fantasia / razao_social).
-function getCnaesForSegment(_segment: string): string[] {
-  return [];
+// CNAE mapping - only for highly specific segments where CNAE is a reliable indicator
+function getCnaesForSegment(segment: string): string[] {
+  const seg = segment.toLowerCase();
+  const cnaeMap: { [key: string]: string[] } = {
+    'loja de caça e pesca': ['4789009'], // Comércio varejista de armas e munições
+    'artigos de caça, pesca e camping': ['4789009'],
+  };
+  return cnaeMap[seg] || [];
 }
 
 // ===== CATEGORY SEARCH TERMS MAPPING =====
