@@ -35,13 +35,13 @@ Deno.serve(async (req) => {
       if (Date.now() - startTime > MAX_RUNTIME_MS) break;
 
       let stateTotal = 0;
-      // Many small batches of 500
+      // Larger batches of 3000
       for (let i = 0; i < 200; i++) {
         if (Date.now() - startTime > MAX_RUNTIME_MS) break;
 
         const { data, error } = await supabase.rpc('populate_search_vector_batch', {
           p_estado: estado,
-          p_batch_size: 500
+          p_batch_size: 3000
         });
 
         if (error) {
