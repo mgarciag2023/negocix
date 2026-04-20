@@ -47,8 +47,9 @@ function chunkArray<T>(items: T[], size: number): T[][] {
 function getCnaesForSegment(segment: string): string[] {
   const seg = segment.toLowerCase();
   const cnaeMap: { [key: string]: string[] } = {
-    'loja de caça e pesca': ['4763604', '4789009', '9319101', '4763601', '4789099'], // 4763604=caça/pesca/camping, 4789009=armas/munições
+    'loja de caça e pesca': ['4763604', '4789009', '9319101', '4763601', '4789099'],
     'artigos de caça, pesca e camping': ['4763604', '4789009', '9319101', '4763601', '4789099'],
+    'academias': ['9313100', '9319199'], // 9313100=condicionamento físico, 9319199=outras atividades esportivas
   };
   return cnaeMap[seg] || [];
 }
@@ -1964,6 +1965,9 @@ serve(async (req) => {
       // Aceita o lead apenas se o nome (nome_fantasia/razao_social) contiver
       // termos relevantes ao segmento.
       allCompanies = allCompanies.filter(c => {
+        // Results found via official CNAE code always pass relevance filter
+        if (c._viaCnae) return true;
+
         const seg = (c._segment || '').trim().toLowerCase();
         const termSets = segTermSetsMap.get(seg);
         const coreKeywords = segCoreKeywordsMap.get(seg);
@@ -1987,8 +1991,10 @@ serve(async (req) => {
         if (multiWordSets.length > 0) {
           const hasMultiWordMatch = multiWordSets.some(words => words.every(w => nameText.includes(w)));
           if (hasMultiWordMatch) return true;
-          if (multiWordSets.length <= 2 && singleWordSets.length > 0) {
-            return singleWordSets.some(words => words.every(w => nameText.includes(w)));
+          // If a core keyword is already in the name, accept via single-word match
+          if (singleWordSets.length > 0) {
+            const hasSingleWordMatch = singleWordSets.some(words => words.every(w => nameText.includes(w)));
+            if (hasSingleWordMatch) return true;
           }
           return false;
         }
