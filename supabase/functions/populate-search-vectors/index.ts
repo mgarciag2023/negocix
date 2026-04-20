@@ -16,40 +16,39 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Process states from smallest to largest remaining
-    const estados = ['AP','MS','SE','TO','RO','AL','PI','RN','PB','AM','ES','MA','DF','PA','MT','GO','CE','PE','BA','SC','RS','PR','MG','RJ','SP'];
+    // Parse optional state filter
+    let targetState: string | null = null;
+    try {
+      const body = await req.json();
+      targetState = body?.estado || null;
+    } catch { /* no body */ }
+
+    const estados = targetState 
+      ? [targetState]
+      : ['AP','MS','SE','TO','RO','AL','PI','RN','PB','AM','ES','MA','DF','PA','MT','GO','CE','PE','BA','SC','RS','PR','MG','RJ','SP'];
     
     let grandTotal = 0;
     const startTime = Date.now();
-    const MAX_RUNTIME_MS = 50000; // 50 seconds
+    const MAX_RUNTIME_MS = 25000; // 25 seconds to stay under gateway timeout
 
     for (const estado of estados) {
       if (Date.now() - startTime > MAX_RUNTIME_MS) break;
 
-      // Try multiple batches per state within time limit
-      let stateUpdated = 0;
-      for (let i = 0; i < 5; i++) {
-        if (Date.now() - startTime > MAX_RUNTIME_MS) break;
+      const { data, error } = await supabase.rpc('populate_search_vector_batch', {
+        p_estado: estado,
+        p_batch_size: 5000
+      });
 
-        const { data, error } = await supabase.rpc('populate_search_vector_batch', {
-          p_estado: estado,
-          p_batch_size: 10000
-        });
-
-        if (error) {
-          console.error(`Error ${estado}:`, error.message);
-          break;
-        }
-
-        const updated = data as number;
-        stateUpdated += updated;
-        grandTotal += updated;
-        
-        if (updated === 0) break; // state is done
+      if (error) {
+        console.error(`Error ${estado}:`, error.message);
+        continue;
       }
 
-      if (stateUpdated > 0) {
-        console.log(`${estado}: +${stateUpdated} (grand total: ${grandTotal})`);
+      const updated = data as number;
+      grandTotal += updated;
+      
+      if (updated > 0) {
+        console.log(`${estado}: +${updated} (total: ${grandTotal})`);
       }
     }
 
