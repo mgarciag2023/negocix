@@ -16,7 +16,6 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Parse optional state filter
     let targetState: string | null = null;
     try {
       const body = await req.json();
@@ -29,26 +28,33 @@ Deno.serve(async (req) => {
     
     let grandTotal = 0;
     const startTime = Date.now();
-    const MAX_RUNTIME_MS = 25000; // 25 seconds to stay under gateway timeout
+    const MAX_RUNTIME_MS = 20000; // 20s safe margin
 
     for (const estado of estados) {
       if (Date.now() - startTime > MAX_RUNTIME_MS) break;
 
-      const { data, error } = await supabase.rpc('populate_search_vector_batch', {
-        p_estado: estado,
-        p_batch_size: 2000
-      });
+      // Multiple small batches per state
+      for (let i = 0; i < 10; i++) {
+        if (Date.now() - startTime > MAX_RUNTIME_MS) break;
 
-      if (error) {
-        console.error(`Error ${estado}:`, error.message);
-        continue;
+        const { data, error } = await supabase.rpc('populate_search_vector_batch', {
+          p_estado: estado,
+          p_batch_size: 2000
+        });
+
+        if (error) {
+          console.error(`Error ${estado}:`, error.message);
+          break;
+        }
+
+        const updated = data as number;
+        grandTotal += updated;
+        
+        if (updated === 0) break; // state done
       }
 
-      const updated = data as number;
-      grandTotal += updated;
-      
-      if (updated > 0) {
-        console.log(`${estado}: +${updated} (total: ${grandTotal})`);
+      if (grandTotal > 0) {
+        console.log(`Progress: ${estado} (grand total: ${grandTotal})`);
       }
     }
 
