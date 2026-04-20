@@ -16,30 +16,41 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const estados = ['RR','AP','AC','MS','SE','TO','RO','PI','AL','RN','PB','AM','ES','MA','DF','PA','MT','GO','CE','PE','BA','SC','RS','PR','MG','RJ','SP'];
+    // Process states from smallest to largest remaining
+    const estados = ['AP','MS','SE','TO','RO','AL','PI','RN','PB','AM','ES','MA','DF','PA','MT','GO','CE','PE','BA','SC','RS','PR','MG','RJ','SP'];
     
     let grandTotal = 0;
     const startTime = Date.now();
-    const MAX_RUNTIME_MS = 25000; // 25 seconds max to avoid timeout
+    const MAX_RUNTIME_MS = 50000; // 50 seconds
 
     for (const estado of estados) {
       if (Date.now() - startTime > MAX_RUNTIME_MS) break;
 
-      const { data, error } = await supabase.rpc('populate_search_vector_batch', {
-        p_estado: estado,
-        p_batch_size: 10000
-      });
+      // Try multiple batches per state within time limit
+      let stateUpdated = 0;
+      for (let i = 0; i < 5; i++) {
+        if (Date.now() - startTime > MAX_RUNTIME_MS) break;
 
-      if (error) {
-        console.error(`Error for ${estado}:`, error.message);
-        continue;
+        const { data, error } = await supabase.rpc('populate_search_vector_batch', {
+          p_estado: estado,
+          p_batch_size: 10000
+        });
+
+        if (error) {
+          console.error(`Error ${estado}:`, error.message);
+          break;
+        }
+
+        const updated = data as number;
+        stateUpdated += updated;
+        grandTotal += updated;
+        
+        if (updated === 0) break; // state is done
       }
 
-      const updated = data as number;
-      grandTotal += updated;
-      console.log(`${estado}: +${updated} (grand total: ${grandTotal})`);
-      
-      if (Date.now() - startTime > MAX_RUNTIME_MS) break;
+      if (stateUpdated > 0) {
+        console.log(`${estado}: +${stateUpdated} (grand total: ${grandTotal})`);
+      }
     }
 
     return new Response(JSON.stringify({ success: true, total: grandTotal }), {
