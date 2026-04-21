@@ -124,19 +124,27 @@ const SavedLeads = () => {
       <Navbar />
       
       <main className="container mx-auto px-4 py-6 md:py-8">
-        <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Leads Salvos</h1>
-          <p className="text-muted-foreground text-sm md:text-base">
-            {sortedLeads.length > 0 
-              ? `${sortedLeads.length} lead${sortedLeads.length > 1 ? 's' : ''} interessado${sortedLeads.length > 1 ? 's' : ''}`
-              : 'Leads que demonstraram interesse'
-            }
-            {overdueCount > 0 && (
-              <span className="text-destructive ml-2">
-                • {overdueCount} follow-up{overdueCount > 1 ? 's' : ''} vencido{overdueCount > 1 ? 's' : ''}
-              </span>
-            )}
-          </p>
+        <div className="flex items-start justify-between mb-6 md:mb-8">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Leads Salvos</h1>
+            <p className="text-muted-foreground text-sm md:text-base">
+              {sortedLeads.length > 0 
+                ? `${sortedLeads.length} lead${sortedLeads.length > 1 ? 's' : ''} interessado${sortedLeads.length > 1 ? 's' : ''}`
+                : 'Leads que demonstraram interesse'
+              }
+              {overdueCount > 0 && (
+                <span className="text-destructive ml-2">
+                  • {overdueCount} follow-up{overdueCount > 1 ? 's' : ''} vencido{overdueCount > 1 ? 's' : ''}
+                </span>
+              )}
+            </p>
+          </div>
+          {filteredLeads.length > 0 && (
+            <Button variant="outline" onClick={exportToExcel} className="gap-2 shrink-0">
+              <Download className="h-4 w-4" />
+              Exportar Excel
+            </Button>
+          )}
         </div>
 
         {/* Filters Bar */}
