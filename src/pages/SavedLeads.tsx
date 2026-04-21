@@ -119,7 +119,7 @@ const SavedLeads = () => {
     URL.revokeObjectURL(url);
   };
 
-
+  return (
     <div className="min-h-screen bg-background">
       <Navbar />
       
