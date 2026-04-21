@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Users, ArrowUpDown, Filter, Search, Loader2 } from 'lucide-react';
+import { Users, ArrowUpDown, Filter, Search, Loader2, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -78,25 +79,72 @@ const SavedLeads = () => {
     if (!lead.next_follow_up_date) return false;
     return new Date(lead.next_follow_up_date) < new Date();
   }).length;
+  const exportToExcel = () => {
+    if (filteredLeads.length === 0) {
+      return;
+    }
+    const excelData = filteredLeads.map((lead) => ({
+      'Nome': lead.name,
+      'Categoria': lead.category,
+      'Endereço': lead.address,
+      'Telefone': lead.phone,
+      'Email': lead.email || '',
+      'Instagram': lead.instagram || '',
+      'Website': lead.website || '',
+      'WhatsApp': lead.has_whatsapp ? 'Sim' : 'Não',
+      'Etapa': lead.lead_stage,
+      'Status Contato': lead.contact_status,
+      'Interesse': lead.interest_status,
+      'Responsável': lead.responsible || '',
+      'Notas': lead.notes || '',
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Leads Salvos');
+    worksheet['!cols'] = [
+      { wch: 30 }, { wch: 20 }, { wch: 40 }, { wch: 18 }, { wch: 30 },
+      { wch: 20 }, { wch: 30 }, { wch: 10 }, { wch: 18 }, { wch: 18 },
+      { wch: 15 }, { wch: 20 }, { wch: 30 },
+    ];
+    const timestamp = new Date().toISOString().split('T')[0];
+    const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `leads-salvos-negocix-${timestamp}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       
       <main className="container mx-auto px-4 py-6 md:py-8">
-        <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Leads Salvos</h1>
-          <p className="text-muted-foreground text-sm md:text-base">
-            {sortedLeads.length > 0 
-              ? `${sortedLeads.length} lead${sortedLeads.length > 1 ? 's' : ''} interessado${sortedLeads.length > 1 ? 's' : ''}`
-              : 'Leads que demonstraram interesse'
-            }
-            {overdueCount > 0 && (
-              <span className="text-destructive ml-2">
-                • {overdueCount} follow-up{overdueCount > 1 ? 's' : ''} vencido{overdueCount > 1 ? 's' : ''}
-              </span>
-            )}
-          </p>
+        <div className="flex items-start justify-between mb-6 md:mb-8">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Leads Salvos</h1>
+            <p className="text-muted-foreground text-sm md:text-base">
+              {sortedLeads.length > 0 
+                ? `${sortedLeads.length} lead${sortedLeads.length > 1 ? 's' : ''} interessado${sortedLeads.length > 1 ? 's' : ''}`
+                : 'Leads que demonstraram interesse'
+              }
+              {overdueCount > 0 && (
+                <span className="text-destructive ml-2">
+                  • {overdueCount} follow-up{overdueCount > 1 ? 's' : ''} vencido{overdueCount > 1 ? 's' : ''}
+                </span>
+              )}
+            </p>
+          </div>
+          {filteredLeads.length > 0 && (
+            <Button variant="outline" onClick={exportToExcel} className="gap-2 shrink-0">
+              <Download className="h-4 w-4" />
+              Exportar Excel
+            </Button>
+          )}
         </div>
 
         {/* Filters Bar */}
