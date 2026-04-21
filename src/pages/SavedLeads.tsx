@@ -79,8 +79,47 @@ const SavedLeads = () => {
     if (!lead.next_follow_up_date) return false;
     return new Date(lead.next_follow_up_date) < new Date();
   }).length;
+  const exportToExcel = () => {
+    if (filteredLeads.length === 0) {
+      return;
+    }
+    const excelData = filteredLeads.map((lead) => ({
+      'Nome': lead.name,
+      'Categoria': lead.category,
+      'Endereço': lead.address,
+      'Telefone': lead.phone,
+      'Email': lead.email || '',
+      'Instagram': lead.instagram || '',
+      'Website': lead.website || '',
+      'WhatsApp': lead.has_whatsapp ? 'Sim' : 'Não',
+      'Etapa': lead.lead_stage,
+      'Status Contato': lead.contact_status,
+      'Interesse': lead.interest_status,
+      'Responsável': lead.responsible || '',
+      'Notas': lead.notes || '',
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Leads Salvos');
+    worksheet['!cols'] = [
+      { wch: 30 }, { wch: 20 }, { wch: 40 }, { wch: 18 }, { wch: 30 },
+      { wch: 20 }, { wch: 30 }, { wch: 10 }, { wch: 18 }, { wch: 18 },
+      { wch: 15 }, { wch: 20 }, { wch: 30 },
+    ];
+    const timestamp = new Date().toISOString().split('T')[0];
+    const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `leads-salvos-negocix-${timestamp}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
-  return (
+
     <div className="min-h-screen bg-background">
       <Navbar />
       
