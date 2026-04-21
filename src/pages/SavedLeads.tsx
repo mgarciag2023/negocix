@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Users, ArrowUpDown, Filter, Search, Loader2 } from 'lucide-react';
+import { Users, ArrowUpDown, Filter, Search, Loader2, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
