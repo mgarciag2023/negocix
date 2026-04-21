@@ -63,9 +63,9 @@ export const customerTypes = [
   "Lojas Veganas",
   "Cestas Básicas",
 
-  // Distribuidores - Alimentos
-  "Distribuidores de Alimentos",
-  "Distribuidores de Food Service",
+  // Distribuidoras - Alimentos
+  "Distribuidoras de Alimentos",
+  "Distribuidoras de Food Service",
   "Distribuidoras de Carnes",
   "Distribuidoras de Congelados",
   "Distribuidoras de Frios",
@@ -80,11 +80,11 @@ export const customerTypes = [
   "Distribuidoras de Hortifrúti",
   "Distribuidoras de Doces",
   "Distribuidoras de Chocolates",
-  "Distribuidores de Água",
-  "Distribuidores de Refrigerantes",
-  "Distribuidores de Cervejas",
+  "Distribuidoras de Água",
+  "Distribuidoras de Refrigerantes",
+  "Distribuidoras de Cervejas",
 
-  // Distribuidores - Outros
+  // Distribuidoras - Outros
   "Distribuidoras de Cosméticos",
   "Distribuidoras de Perfumes",
   "Distribuidoras de Higiene e Limpeza",
@@ -92,12 +92,12 @@ export const customerTypes = [
   "Distribuidoras de Ferragens",
   "Distribuidoras de Embalagens",
   "Distribuidoras de Ração Animal",
-  "Distribuidores de Autopeças",
+  "Distribuidoras de Autopeças",
   "Distribuidoras de Produtos Hospitalares",
   "Distribuidoras de Produtos Odontológicos",
   "Distribuidoras de Gases Industriais",
   "Distribuidoras de Eletrônicos",
-  "Distribuidores de Aço e Ferro",
+  "Distribuidoras de Aço e Ferro",
   "Distribuidoras de Combustíveis",
   "Distribuidoras de EPI",
   "Distribuidoras de Material de Escritório",
