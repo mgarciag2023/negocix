@@ -160,6 +160,36 @@ export default function RepresentativesResults() {
     }
   };
 
+  const exportToExcel = () => {
+    if (representatives.length === 0) {
+      toast({ title: "Nenhum dado para exportar", variant: "destructive" });
+      return;
+    }
+    const excelData = representatives.map((r) => ({
+      'Nome': r.name,
+      'Telefone': r.phone || '',
+      'WhatsApp': r.whatsapp || '',
+      'Endereço': r.address,
+      'Website': r.website || '',
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Representantes');
+    worksheet['!cols'] = [{ wch: 35 }, { wch: 18 }, { wch: 18 }, { wch: 40 }, { wch: 30 }];
+    const timestamp = new Date().toISOString().split('T')[0];
+    const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `representantes-negocix-${timestamp}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast({ title: "Exportação concluída", description: `${representatives.length} representante(s) exportados` });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
