@@ -1961,6 +1961,123 @@ serve(async (req) => {
         segCoreKeywordsMap.set(seg.toLowerCase(), extractCoreKeywords(seg));
       }
 
+      // ===== DISTRIBUTOR-SPECIFIC STRICT FILTER =====
+      // For distributor segments, the name MUST contain BOTH:
+      // 1) A distributor indicator (distribuidora, distribuidor, atacado, atacadista, deposito, depósito, fornecedor)
+      // 2) A product-specific keyword matching the segment type
+      const distributorIndicators = ['distribuidora', 'distribuidor', 'distribuidores', 'distribuidoras', 'atacado', 'atacadista', 'deposito', 'depósito', 'fornecedor', 'fornecedora'];
+      
+      const distributorProductKeywords: Record<string, string[]> = {
+        'frios': ['frio', 'frios', 'embutido', 'embutidos', 'presunto', 'mortadela', 'salame', 'salsicha', 'linguica', 'linguiça', 'bacon', 'queijo', 'queijos', 'laticinio', 'laticinios', 'laticínio', 'laticínios', 'iogurte', 'manteiga', 'margarina', 'leite', 'requeijao', 'requeijão', 'mussarela', 'muçarela', 'provolone', 'parmesao', 'parmesão', 'cheddar', 'cream cheese', 'nata', 'creme de leite'],
+        'carnes': ['carne', 'carnes', 'frigorifico', 'frigorífico', 'boi', 'bovino', 'bovinos', 'suino', 'suíno', 'suinos', 'suínos', 'frango', 'aves', 'cortes', 'charque', 'jerked', 'picanha', 'alcatra', 'costela', 'acougue', 'açougue'],
+        'bebidas': ['bebida', 'bebidas', 'cerveja', 'refrigerante', 'suco', 'agua', 'água', 'drink', 'drinks', 'vinho', 'destilado', 'energetico', 'energético', 'refri'],
+        'congelados': ['congelado', 'congelados', 'frigorifico', 'frigorífico', 'frozen', 'gelo', 'sorvete'],
+        'sorvetes': ['sorvete', 'sorvetes', 'gelato', 'picole', 'picolé', 'acai', 'açaí', 'frozen'],
+        'acai': ['acai', 'açaí', 'polpa', 'polpas'],
+        'polpas de frutas': ['polpa', 'polpas', 'fruta', 'frutas', 'suco', 'sucos'],
+        'ovos': ['ovo', 'ovos', 'granja', 'galinha', 'caipira', 'poedeira'],
+        'queijos': ['queijo', 'queijos', 'laticinio', 'laticinios', 'laticínio', 'laticínios', 'mussarela', 'provolone', 'parmesao', 'parmesão'],
+        'peixes': ['peixe', 'peixes', 'pescado', 'pescados', 'frutos do mar', 'camarao', 'camarão', 'lagosta', 'bacalhau', 'tilapia', 'tilápia', 'salmao', 'salmão'],
+        'embutidos': ['embutido', 'embutidos', 'linguica', 'linguiça', 'salsicha', 'presunto', 'mortadela', 'salame', 'bacon', 'frios'],
+        'doces': ['doce', 'doces', 'bala', 'balas', 'chocolate', 'chocolates', 'bombom', 'bombons', 'pirulito', 'chiclete', 'guloseima', 'guloseimas', 'paçoca', 'pacoca', 'biscoito', 'wafer', 'confeitaria', 'salgadinho'],
+        'chocolates': ['chocolate', 'chocolates', 'bombom', 'bombons', 'cacau', 'trufa', 'trufas'],
+        'cosmeticos': ['cosmetico', 'cosmético', 'cosmeticos', 'cosméticos', 'beleza', 'maquiagem', 'perfume', 'perfumaria', 'capilar', 'cabelo', 'unha', 'esmalte', 'creme', 'hidratante', 'shampoo'],
+        'perfumes': ['perfume', 'perfumes', 'perfumaria', 'fragrancia', 'fragrância', 'essencia', 'essência', 'colonia', 'colônia'],
+        'higiene e limpeza': ['higiene', 'limpeza', 'detergente', 'sabao', 'sabão', 'desinfetante', 'papel higienico', 'papel higiênico', 'produto de limpeza', 'quimico', 'químico'],
+        'material de construcao': ['construcao', 'construção', 'cimento', 'argamassa', 'tijolo', 'telha', 'areia', 'pedra', 'ferragem', 'obra'],
+        'ferragens': ['ferragem', 'ferragens', 'parafuso', 'porca', 'arruela', 'chumbador', 'fixador', 'dobradica', 'dobradiça', 'trinco', 'fechadura'],
+        'embalagens': ['embalagem', 'embalagens', 'descartavel', 'descartáveis', 'plastico', 'plástico', 'papelao', 'papelão', 'sacola', 'saco', 'caixa', 'bobina', 'filme', 'stretch'],
+        'racao animal': ['racao', 'ração', 'racoes', 'rações', 'pet', 'animal', 'animais', 'agropecuaria', 'agropecuária', 'agropet'],
+        'autopecas': ['autopeca', 'autopeça', 'autopecas', 'autopeças', 'peca automotiva', 'peça automotiva', 'pecas', 'peças', 'automotivo', 'automotiva', 'veiculo', 'veículo', 'carro', 'caminhao', 'caminhão', 'moto', 'filtro', 'oleo', 'óleo', 'lubrificante'],
+        'aco e ferro': ['aco', 'aço', 'ferro', 'metalon', 'vergalhao', 'vergalhão', 'tubo', 'chapa', 'perfil', 'metalurgia', 'siderurgia', 'steel'],
+        'alimentos': ['alimento', 'alimentos', 'alimenticio', 'alimentício', 'food', 'comida', 'genero', 'gênero', 'mantimento', 'cesta basica', 'cesta básica', 'mercearia', 'cereal', 'massa', 'molho', 'oleo', 'óleo'],
+        'food service': ['food service', 'food', 'restaurante', 'padaria', 'bar', 'hotel', 'lanchonete', 'horeca', 'cozinha industrial', 'refeicao', 'refeição'],
+        'agua': ['agua', 'água', 'mineral', 'galao', 'galão'],
+        'refrigerantes': ['refrigerante', 'refrigerantes', 'refri', 'coca', 'guarana', 'guaraná', 'soda'],
+        'cervejas': ['cerveja', 'cervejas', 'chopp', 'chope', 'artesanal', 'craft'],
+        'gases industriais': ['gas', 'gás', 'gases', 'oxigenio', 'oxigênio', 'acetileno', 'argonio', 'argônio', 'nitrogenio', 'nitrogênio', 'hidrogenio', 'hidrogênio', 'co2', 'industrial'],
+        'eletronicos': ['eletronico', 'eletrônico', 'eletronicos', 'eletrônicos', 'celular', 'smartphone', 'informatica', 'informática', 'computador', 'notebook', 'tablet', 'acessorio', 'acessório', 'tecnologia'],
+        'combustiveis': ['combustivel', 'combustível', 'combustiveis', 'combustíveis', 'gasolina', 'diesel', 'etanol', 'gnv', 'posto', 'petroleo', 'petróleo'],
+        'epi': ['epi', 'equipamento de protecao', 'equipamento de proteção', 'seguranca', 'segurança', 'luva', 'capacete', 'bota', 'oculos', 'óculos', 'mascara', 'máscara'],
+        'material de escritorio': ['escritorio', 'escritório', 'papelaria', 'papel', 'caneta', 'impressora', 'toner', 'cartucho', 'material escolar'],
+        'equipamentos medicos': ['medico', 'médico', 'hospitalar', 'hospital', 'saude', 'saúde', 'equipamento', 'aparelho', 'cirurgico', 'cirúrgico', 'clinica', 'clínica'],
+        'utilidades domesticas': ['utilidade', 'utilidades', 'domestica', 'doméstica', 'domestico', 'doméstico', 'cozinha', 'panela', 'talher', 'prato', 'copo', 'balde', 'vassoura', 'pano'],
+        'material hospitalar': ['hospitalar', 'hospital', 'medico', 'médico', 'insumo', 'descartavel', 'descartável', 'cirurgico', 'cirúrgico', 'saude', 'saúde', 'curativo', 'seringa', 'agulha', 'luva'],
+        'produtos hospitalares': ['hospitalar', 'hospital', 'medico', 'médico', 'farmaceutico', 'farmacêutico', 'saude', 'saúde', 'insumo'],
+        'material medico hospitalar': ['medico', 'médico', 'hospitalar', 'hospital', 'cirurgico', 'cirúrgico', 'ortopedico', 'ortopédico'],
+        'produtos odontologicos': ['odontologico', 'odontológico', 'dental', 'dentista', 'dente', 'ortodontia', 'implante', 'protese', 'prótese'],
+        'laticínios': ['laticinio', 'laticinios', 'laticínio', 'laticínios', 'queijo', 'leite', 'iogurte', 'manteiga', 'requeijao', 'requeijão', 'nata', 'creme'],
+        'material eletrico': ['eletrico', 'elétrico', 'eletrica', 'elétrica', 'fio', 'cabo', 'disjuntor', 'tomada', 'interruptor', 'lampada', 'lâmpada', 'luminaria', 'luminária'],
+        'madeiras': ['madeira', 'madeiras', 'compensado', 'mdf', 'osb', 'tábua', 'tabua', 'caibro', 'ripa', 'viga', 'sarrafo'],
+        'papel': ['papel', 'papeis', 'papéis', 'celulose', 'bobina', 'sulfite', 'offset', 'kraft', 'reciclado'],
+        'colchoes': ['colchao', 'colchão', 'colchoes', 'colchões', 'cama', 'box', 'espuma', 'ortopedico', 'ortopédico'],
+        'suinos': ['suino', 'suíno', 'suinos', 'suínos', 'porco', 'leitao', 'leitão', 'pernil', 'lombo', 'costela suina'],
+        'frango': ['frango', 'frangos', 'ave', 'aves', 'avicola', 'avícola', 'galinha', 'chester', 'peru'],
+        'hortifruti': ['hortifruti', 'hortifrúti', 'hortifrutigranjeiro', 'fruta', 'frutas', 'verdura', 'verduras', 'legume', 'legumes', 'feira', 'ceasa', 'sacolao', 'sacolão'],
+        'organicos': ['organico', 'orgânico', 'organicos', 'orgânicos', 'natural', 'naturais', 'integral', 'integrais', 'saudavel', 'saudável'],
+        'carnes nobres': ['carne', 'carnes', 'nobre', 'nobres', 'angus', 'wagyu', 'prime', 'premium', 'maturada', 'dry aged', 'picanha', 'ancho', 'chorizo', 'tomahawk', 'rib eye'],
+        'frutas tropicais': ['fruta', 'frutas', 'tropical', 'tropicais', 'manga', 'mamao', 'mamão', 'abacaxi', 'maracuja', 'maracujá', 'goiaba', 'acerola', 'caju'],
+        'adubo': ['adubo', 'adubos', 'fertilizante', 'fertilizantes', 'substrato', 'terra', 'composto', 'npk', 'ureia', 'calcario', 'calcário', 'defensivo'],
+        'pessegos': ['pessego', 'pêssego', 'pessegos', 'pêssegos', 'fruta', 'conserva'],
+      };
+
+      // Normalize segment to find product keywords
+      function getDistributorProductType(seg: string): string[] | null {
+        const segNorm = seg.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        // Try to match "distribuid* de X" pattern
+        const match = segNorm.match(/distribuid\w+\s+(?:de\s+|para\s+)?(.+)/);
+        if (!match) return null;
+        const productType = match[1].trim();
+        
+        // Find matching product keywords
+        for (const [key, keywords] of Object.entries(distributorProductKeywords)) {
+          const keyNorm = key.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          if (productType.includes(keyNorm) || keyNorm.includes(productType)) {
+            return keywords;
+          }
+        }
+        // Fallback: use the product type words themselves
+        const words = productType.split(/\s+/).filter(w => w.length >= 3);
+        return words.length > 0 ? words : null;
+      }
+
+      // Apply distributor-specific filter BEFORE the universal filter
+      const isDistributorSegment = segments.some((s: string) => 
+        s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes('distribuid')
+      );
+      
+      if (isDistributorSegment) {
+        const beforeDistFilter = allCompanies.length;
+        allCompanies = allCompanies.filter(c => {
+          if (c._viaCnae) return true;
+          const seg = (c._segment || '').trim().toLowerCase();
+          if (!seg.includes('distribuid')) return true; // Not a distributor segment, skip
+          
+          const productKeywords = getDistributorProductType(seg);
+          if (!productKeywords) return true; // Can't determine product type, keep
+          
+          const nf = (c.nome_fantasia || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          const rs = (c.razao_social || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          const descCnae = (c.descricao_cnae || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          const nameText = `${nf} ${rs}`;
+          const fullText = `${nameText} ${descCnae}`;
+          
+          // Must have a distributor indicator
+          const hasDistIndicator = distributorIndicators.some(ind => nameText.includes(ind));
+          
+          // Must have at least one product keyword (in name OR CNAE description)
+          const hasProductMatch = productKeywords.some(pk => fullText.includes(pk));
+          
+          // If has distributor indicator, REQUIRE product match
+          // If no distributor indicator but has product match in name, accept (e.g. "Frios Silva Atacado")
+          if (hasDistIndicator) return hasProductMatch;
+          
+          // No distributor indicator - check if name has product keywords
+          return productKeywords.some(pk => nameText.includes(pk));
+        });
+        console.log(`🏪 Distributor strict filter: ${allCompanies.length} (removed ${beforeDistFilter - allCompanies.length} off-type distributors)`);
+      }
+
       // Política (100% baseada em NOME, sem CNAE):
       // Aceita o lead apenas se o nome (nome_fantasia/razao_social) contiver
       // termos relevantes ao segmento.
