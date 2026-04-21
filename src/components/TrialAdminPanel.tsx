@@ -5,12 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Loader2, Search, MousePointerClick, TrendingUp, MapPin, Users, Clock,
-  Percent, Eye, Timer, Unlock, ChevronDown, ChevronUp, RefreshCw, BarChart3,
+  Search, MousePointerClick, TrendingUp, MapPin, Users, Clock,
+  Percent, Eye, Timer, Unlock, RefreshCw, BarChart3, Loader2,
+  ChevronDown, ChevronUp, ShoppingCart,
 } from "lucide-react";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
 import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
@@ -37,6 +35,20 @@ interface DeviceSession {
   timeOnPage: number;
 }
 
+// ─── Helpers ───
+
+const timeAgo = (iso: string) => {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "agora";
+  if (mins < 60) return `${mins}min atrás`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h atrás`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return "ontem";
+  return `${days}d atrás`;
+};
+
 const formatDuration = (seconds: number) => {
   if (seconds < 60) return `${seconds}s`;
   const m = Math.floor(seconds / 60);
@@ -46,142 +58,143 @@ const formatDuration = (seconds: number) => {
   return `${h}h ${m % 60}m`;
 };
 
-const formatDate = (iso: string) =>
+const formatDateShort = (iso: string) =>
   new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 
-const formatDateFull = (iso: string) =>
-  new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+const formatWeekday = (dateStr: string) => {
+  const d = new Date(dateStr + "T12:00:00");
+  const today = new Date().toISOString().slice(0, 10);
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  if (dateStr === today) return "Hoje";
+  if (dateStr === yesterday) return "Ontem";
+  return d.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" });
+};
 
-const eventLabel: Record<string, string> = {
+const eventLabels: Record<string, string> = {
   search: "Pesquisa",
   checkout_click: "Checkout",
   unlock_click: "Desbloquear",
-  card_click: "Clique Card",
+  card_click: "Clique",
   page_view: "Visita",
   time_on_page: "Tempo",
 };
 
-const eventIcon: Record<string, typeof Search> = {
-  search: Search,
-  checkout_click: MousePointerClick,
-  unlock_click: Unlock,
-  card_click: Eye,
-  page_view: Eye,
-  time_on_page: Timer,
-};
-
-const eventBadgeClass: Record<string, string> = {
-  search: "bg-blue-500/15 text-blue-400 border-blue-500/30",
-  checkout_click: "bg-green-500/15 text-green-400 border-green-500/30",
-  unlock_click: "bg-amber-500/15 text-amber-400 border-amber-500/30",
-  card_click: "bg-purple-500/15 text-purple-400 border-purple-500/30",
-  page_view: "bg-slate-500/15 text-slate-400 border-slate-500/30",
-  time_on_page: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
+const eventColors: Record<string, string> = {
+  search: "text-blue-400 bg-blue-500/15",
+  checkout_click: "text-green-400 bg-green-500/15",
+  unlock_click: "text-amber-400 bg-amber-500/15",
+  card_click: "text-purple-400 bg-purple-500/15",
+  page_view: "text-slate-400 bg-slate-500/15",
+  time_on_page: "text-cyan-400 bg-cyan-500/15",
 };
 
 // ─── Stat Card ───
 function StatCard({ icon: Icon, label, value, sub }: { icon: any; label: string; value: string | number; sub?: string }) {
   return (
     <Card className="border-border/50">
-      <CardContent className="p-4">
-        <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1.5">
-          <Icon className="h-3.5 w-3.5" />
+      <CardContent className="p-3">
+        <div className="flex items-center gap-1.5 text-muted-foreground text-[10px] mb-1">
+          <Icon className="h-3 w-3" />
           <span>{label}</span>
         </div>
-        <p className="text-2xl font-bold tracking-tight">{value}</p>
-        {sub && <p className="text-[10px] text-muted-foreground mt-0.5">{sub}</p>}
+        <p className="text-xl font-bold">{value}</p>
+        {sub && <p className="text-[10px] text-muted-foreground">{sub}</p>}
       </CardContent>
     </Card>
   );
 }
 
-// ─── Event Timeline Item ───
-function EventItem({ ev }: { ev: TrialEvent }) {
-  const Icon = eventIcon[ev.event_type] || Eye;
-  return (
-    <div className="flex items-start gap-3 py-2 border-b border-border/30 last:border-0">
-      <div className={`mt-0.5 flex items-center justify-center h-6 w-6 rounded-full shrink-0 ${eventBadgeClass[ev.event_type] || "bg-muted"}`}>
-        <Icon className="h-3 w-3" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <Badge variant="outline" className={`text-[10px] ${eventBadgeClass[ev.event_type] || ""}`}>
-            {eventLabel[ev.event_type] || ev.event_type}
-          </Badge>
-          <span className="text-[10px] text-muted-foreground">{formatDateFull(ev.created_at)}</span>
-        </div>
-        {ev.event_type === "search" && (
-          <div className="mt-1 space-y-0.5">
-            <p className="text-xs">
-              <span className="font-medium">{ev.search_config?.products || "—"}</span>
-              <span className="text-muted-foreground mx-1">→</span>
-              <span className="font-medium">{ev.search_config?.segment || "—"}</span>
-              <span className="text-muted-foreground mx-1">em</span>
-              <span className="font-semibold">{ev.search_config?.region || "—"}</span>
-            </p>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <Badge variant="outline" className="text-[9px]">🔍 {ev.search_config?.realCount ?? ev.results_count ?? "?"} reais</Badge>
-              <Badge variant="outline" className="text-[9px]">📊 {ev.search_config?.inflatedCount ?? "?"} exibido</Badge>
-              <Badge variant="outline" className="text-[9px]">👁 {ev.search_config?.previewCount ?? 6} mostrados</Badge>
-            </div>
-          </div>
-        )}
-        {ev.event_type === "time_on_page" && (
-          <p className="text-xs mt-0.5 font-medium">{formatDuration(ev.search_config?.seconds || 0)}</p>
-        )}
-        {ev.event_type === "card_click" && ev.search_config?.lead_name && (
-          <p className="text-xs mt-0.5 text-muted-foreground truncate">{ev.search_config.lead_name}</p>
-        )}
-        {ev.event_type === "checkout_click" && (
-          <p className="text-xs mt-0.5 text-green-400 font-semibold">💰 Foi pro checkout!</p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Device Session Row ───
-function DeviceRow({ session }: { session: DeviceSession }) {
+// ─── Visitor Card (mobile-friendly session view) ───
+function VisitorCard({ session, index }: { session: DeviceSession; index: number }) {
   const [open, setOpen] = useState(false);
-  const hasConversion = session.checkouts > 0;
+  const hasCheckout = session.checkouts > 0;
+  const hasUnlock = session.unlockClicks > 0;
+
+  const searchEvents = session.events.filter(e => e.event_type === "search");
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger asChild>
-        <TableRow className={`cursor-pointer hover:bg-muted/50 ${hasConversion ? "bg-green-500/5" : ""}`}>
-          <TableCell className="font-mono text-[11px]">{session.device_id?.slice(0, 8)}…</TableCell>
-          <TableCell className="text-[11px]">{formatDate(session.firstSeen)}</TableCell>
-          <TableCell className="text-[11px]">{formatDate(session.lastSeen)}</TableCell>
-          <TableCell className="text-center"><Badge variant="secondary" className="text-[10px]">{session.pageViews}</Badge></TableCell>
-          <TableCell className="text-center"><Badge variant="secondary" className="text-[10px]">{session.searches}</Badge></TableCell>
-          <TableCell className="text-center">
-            <Badge variant={session.unlockClicks > 0 ? "default" : "secondary"} className="text-[10px]">{session.unlockClicks}</Badge>
-          </TableCell>
-          <TableCell className="text-center">
-            <Badge variant={session.checkouts > 0 ? "default" : "secondary"} className={`text-[10px] ${hasConversion ? "bg-green-600" : ""}`}>
-              {session.checkouts}
-            </Badge>
-          </TableCell>
-          <TableCell className="text-[11px] text-right">{session.timeOnPage > 0 ? formatDuration(session.timeOnPage) : "—"}</TableCell>
-          <TableCell>{open ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}</TableCell>
-        </TableRow>
-      </CollapsibleTrigger>
-      <CollapsibleContent asChild>
-        <tr>
-          <td colSpan={9} className="p-0">
-            <div className="bg-muted/20 border-y px-4 py-3">
-              {session.events
-                .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-                .map(ev => <EventItem key={ev.id} ev={ev} />)}
+    <Card className={`border-border/50 ${hasCheckout ? "ring-1 ring-green-500/30" : ""}`}>
+      <Collapsible open={open} onOpenChange={setOpen}>
+        <CollapsibleTrigger asChild>
+          <CardContent className="p-3 cursor-pointer">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold ${hasCheckout ? "bg-green-500/20 text-green-400" : "bg-muted text-muted-foreground"}`}>
+                  {index + 1}
+                </div>
+                <div>
+                  <p className="text-xs font-medium">
+                    Visitante #{index + 1}
+                    {hasCheckout && <span className="ml-1.5 text-green-400">💰</span>}
+                    {hasUnlock && !hasCheckout && <span className="ml-1.5 text-amber-400">🔓</span>}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">{timeAgo(session.lastSeen)}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex gap-2 text-[10px]">
+                  <span title="Pesquisas" className="flex items-center gap-0.5">🔍 {session.searches}</span>
+                  <span title="Tempo" className="flex items-center gap-0.5">⏱ {session.timeOnPage > 0 ? formatDuration(session.timeOnPage) : "—"}</span>
+                </div>
+                {open ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
+              </div>
             </div>
-          </td>
-        </tr>
-      </CollapsibleContent>
-    </Collapsible>
+
+            {/* Quick stats row */}
+            <div className="flex gap-2 flex-wrap">
+              <Badge variant="secondary" className="text-[9px] gap-1"><Eye className="h-2.5 w-2.5" />{session.pageViews} visitas</Badge>
+              <Badge variant="secondary" className="text-[9px] gap-1"><Search className="h-2.5 w-2.5" />{session.searches} pesquisas</Badge>
+              {session.unlockClicks > 0 && <Badge className="text-[9px] gap-1 bg-amber-500/15 text-amber-400 border-amber-500/30"><Unlock className="h-2.5 w-2.5" />{session.unlockClicks}</Badge>}
+              {session.checkouts > 0 && <Badge className="text-[9px] gap-1 bg-green-600"><ShoppingCart className="h-2.5 w-2.5" />{session.checkouts} checkout</Badge>}
+            </div>
+          </CardContent>
+        </CollapsibleTrigger>
+
+        <CollapsibleContent>
+          <div className="border-t border-border/30 px-3 py-2 space-y-1.5 bg-muted/10">
+            <p className="text-[10px] text-muted-foreground font-medium mb-1">
+              Entrada: {formatDateShort(session.firstSeen)} · Última ação: {formatDateShort(session.lastSeen)}
+            </p>
+            {session.events
+              .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+              .map(ev => (
+                <div key={ev.id} className="flex items-start gap-2 py-1 border-b border-border/20 last:border-0">
+                  <div className={`mt-0.5 h-5 w-5 rounded-full flex items-center justify-center shrink-0 ${eventColors[ev.event_type] || "bg-muted"}`}>
+                    <span className="text-[8px]">
+                      {ev.event_type === "search" ? "🔍" : ev.event_type === "checkout_click" ? "💰" : ev.event_type === "unlock_click" ? "🔓" : ev.event_type === "card_click" ? "👁" : ev.event_type === "time_on_page" ? "⏱" : "📄"}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-medium">{eventLabels[ev.event_type] || ev.event_type}</span>
+                      <span className="text-[9px] text-muted-foreground">{timeAgo(ev.created_at)}</span>
+                    </div>
+                    {ev.event_type === "search" && (
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {ev.search_config?.segment || "—"} em {ev.search_config?.region || "—"}
+                        {" · "}{ev.search_config?.realCount ?? ev.results_count ?? "?"} resultados
+                      </p>
+                    )}
+                    {ev.event_type === "time_on_page" && (
+                      <p className="text-[10px] text-muted-foreground">{formatDuration(ev.search_config?.seconds || 0)}</p>
+                    )}
+                    {ev.event_type === "card_click" && ev.search_config?.lead_name && (
+                      <p className="text-[10px] text-muted-foreground truncate">{ev.search_config.lead_name}</p>
+                    )}
+                    {ev.event_type === "checkout_click" && (
+                      <p className="text-[10px] text-green-400 font-semibold">Foi pro checkout!</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+    </Card>
   );
 }
 
-// ─── Bar visualization ───
+// ─── Bar Stat ───
 function BarStat({ label, count, total }: { label: string; count: number; total: number }) {
   const pct = total > 0 ? (count / total) * 100 : 0;
   return (
@@ -296,185 +309,120 @@ export default function TrialAdminPanel() {
     };
   });
 
-  // Recent events sorted by newest first
-  const recentEvents = [...events].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 50);
-
   return (
-    <div className="space-y-6">
-      {/* ── Header Actions ── */}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-medium text-muted-foreground">
-          {events.length} eventos • {uniqueDevices} dispositivos
-        </h2>
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">{uniqueDevices} visitantes · {events.length} eventos</p>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => {
+          <Button variant="outline" size="sm" className="text-[10px] h-7 px-2" onClick={() => {
             localStorage.removeItem("negocix_trial_results_v2");
             localStorage.removeItem("negocix_trial_total");
             localStorage.removeItem("negocix_trial_inflated");
             localStorage.removeItem("negocix_trial_used");
             window.location.href = "/teste";
           }}>
-            <Search className="h-3 w-3" /> Testar Demo
+            Testar
           </Button>
-          <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={fetchEvents}>
-            <RefreshCw className="h-3 w-3" /> Atualizar
+          <Button variant="outline" size="sm" className="text-[10px] h-7 px-2 gap-1" onClick={fetchEvents}>
+            <RefreshCw className="h-3 w-3" />
           </Button>
         </div>
       </div>
 
-      {/* ── KPI Cards ── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard icon={Eye} label="Visitas" value={todayPageViews} sub={`Total: ${pageViews.length}`} />
-        <StatCard icon={Search} label="Pesquisas" value={todaySearches} sub={`Ontem: ${yesterdaySearches} · 7d: ${weekSearches}`} />
-        <StatCard icon={MousePointerClick} label="Checkouts" value={checkouts.length} sub={`Hoje: ${todayCheckouts}`} />
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 gap-2">
+        <StatCard icon={Eye} label="Visitas Hoje" value={todayPageViews} sub={`Total: ${pageViews.length}`} />
+        <StatCard icon={Search} label="Pesquisas Hoje" value={todaySearches} sub={`Ontem: ${yesterdaySearches} · 7d: ${weekSearches}`} />
+        <StatCard icon={ShoppingCart} label="Checkouts" value={checkouts.length} sub={`Hoje: ${todayCheckouts}`} />
         <StatCard icon={Percent} label="Conversão" value={`${conversionRate}%`} sub="Checkout / Pesquisas" />
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard icon={Users} label="Visitantes" value={uniqueDevices} sub={`Hoje: ${todayDevices}`} />
-        <StatCard icon={Timer} label="Tempo Médio" value={formatDuration(avgTime)} sub="Na página" />
-        <StatCard icon={Unlock} label="Desbloquear" value={unlocks.length} sub={`Cards: ${cardClicks.length}`} />
-        <StatCard icon={BarChart3} label="Média Resultados" value={avgResults} sub="Por pesquisa" />
+      <div className="grid grid-cols-2 gap-2">
+        <StatCard icon={Users} label="Visitantes Únicos" value={uniqueDevices} sub={`Hoje: ${todayDevices}`} />
+        <StatCard icon={Timer} label="Tempo Médio" value={formatDuration(avgTime)} />
+        <StatCard icon={Unlock} label="Desbloquear" value={unlocks.length} sub={`Cliques card: ${cardClicks.length}`} />
+        <StatCard icon={BarChart3} label="Média Resultados" value={avgResults} />
       </div>
 
-      {/* ── Tabs: Sessões / Timeline / Análise / Diário ── */}
-      <Tabs defaultValue="sessions" className="w-full">
-        <TabsList className="w-full grid grid-cols-4">
-          <TabsTrigger value="sessions" className="text-xs">Sessões</TabsTrigger>
-          <TabsTrigger value="timeline" className="text-xs">Timeline</TabsTrigger>
-          <TabsTrigger value="analysis" className="text-xs">Análise</TabsTrigger>
-          <TabsTrigger value="daily" className="text-xs">Diário</TabsTrigger>
+      {/* Tabs */}
+      <Tabs defaultValue="visitors" className="w-full">
+        <TabsList className="w-full grid grid-cols-3">
+          <TabsTrigger value="visitors" className="text-[11px]">Visitantes</TabsTrigger>
+          <TabsTrigger value="analytics" className="text-[11px]">Análise</TabsTrigger>
+          <TabsTrigger value="daily" className="text-[11px]">Diário</TabsTrigger>
         </TabsList>
 
-        {/* Sessions Tab */}
-        <TabsContent value="sessions" className="mt-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Users className="h-4 w-4" /> Sessões por Dispositivo ({sessions.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-md border overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs">ID</TableHead>
-                      <TableHead className="text-xs">Entrada</TableHead>
-                      <TableHead className="text-xs">Última</TableHead>
-                      <TableHead className="text-xs text-center">👁</TableHead>
-                      <TableHead className="text-xs text-center">🔍</TableHead>
-                      <TableHead className="text-xs text-center">🔓</TableHead>
-                      <TableHead className="text-xs text-center">💰</TableHead>
-                      <TableHead className="text-xs text-right">⏱</TableHead>
-                      <TableHead className="text-xs w-6"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sessions.map(s => <DeviceRow key={s.device_id} session={s} />)}
-                    {sessions.length === 0 && (
-                      <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhuma sessão</TableCell></TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Visitors Tab - card-based, mobile friendly */}
+        <TabsContent value="visitors" className="mt-3 space-y-2">
+          {sessions.length === 0 && (
+            <p className="text-center text-muted-foreground py-8 text-sm">Nenhum visitante</p>
+          )}
+          {sessions.map((s, i) => (
+            <VisitorCard key={s.device_id} session={s} index={i} />
+          ))}
         </TabsContent>
 
-        {/* Timeline Tab - all events sorted chronologically */}
-        <TabsContent value="timeline" className="mt-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Clock className="h-4 w-4" /> Últimos 50 Eventos (mais recentes primeiro)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="max-h-[600px] overflow-y-auto">
-                {recentEvents.map(ev => <EventItem key={ev.id} ev={ev} />)}
-                {recentEvents.length === 0 && (
-                  <p className="text-center text-muted-foreground py-8 text-sm">Nenhum evento</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Analysis Tab */}
-        <TabsContent value="analysis" className="mt-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {topSegments.length > 0 && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4" /> Top Segmentos
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2.5">
-                  {topSegments.map(([seg, count]) => (
-                    <BarStat key={seg} label={seg} count={count} total={searches.length} />
-                  ))}
-                </CardContent>
-              </Card>
-            )}
-            {topRegions.length > 0 && (
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <MapPin className="h-4 w-4" /> Top Regiões
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2.5">
-                  {topRegions.map(([region, count]) => (
-                    <BarStat key={region} label={region} count={count} total={searches.length} />
-                  ))}
-                </CardContent>
-              </Card>
-            )}
-          </div>
+        {/* Analytics Tab */}
+        <TabsContent value="analytics" className="mt-3 space-y-3">
+          {topSegments.length > 0 && (
+            <Card className="border-border/50">
+              <CardHeader className="pb-2 pt-3 px-3">
+                <CardTitle className="text-xs flex items-center gap-1.5">
+                  <TrendingUp className="h-3.5 w-3.5" /> Top Segmentos Pesquisados
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-3 pb-3 space-y-2">
+                {topSegments.map(([seg, count]) => (
+                  <BarStat key={seg} label={seg} count={count} total={searches.length} />
+                ))}
+              </CardContent>
+            </Card>
+          )}
+          {topRegions.length > 0 && (
+            <Card className="border-border/50">
+              <CardHeader className="pb-2 pt-3 px-3">
+                <CardTitle className="text-xs flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5" /> Top Regiões
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="px-3 pb-3 space-y-2">
+                {topRegions.map(([region, count]) => (
+                  <BarStat key={region} label={region} count={count} total={searches.length} />
+                ))}
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* Daily Tab */}
-        <TabsContent value="daily" className="mt-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Clock className="h-4 w-4" /> Últimos 7 Dias
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-md border overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs">Data</TableHead>
-                      <TableHead className="text-xs text-center">Visitas</TableHead>
-                      <TableHead className="text-xs text-center">Pesquisas</TableHead>
-                      <TableHead className="text-xs text-center">Desbloquear</TableHead>
-                      <TableHead className="text-xs text-center">Checkouts</TableHead>
-                      <TableHead className="text-xs text-center">Conversão</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {dailyBreakdown.map(d => (
-                      <TableRow key={d.date}>
-                        <TableCell className="text-xs font-medium">
-                          {new Date(d.date + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" })}
-                        </TableCell>
-                        <TableCell className="text-xs text-center">{d.views}</TableCell>
-                        <TableCell className="text-xs text-center">{d.searches}</TableCell>
-                        <TableCell className="text-xs text-center">{d.unlocks}</TableCell>
-                        <TableCell className="text-xs text-center">{d.checkouts}</TableCell>
-                        <TableCell className="text-xs text-center">
-                          {d.searches > 0 ? `${((d.checkouts / d.searches) * 100).toFixed(0)}%` : "—"}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+        <TabsContent value="daily" className="mt-3">
+          <div className="space-y-2">
+            {dailyBreakdown.map(d => (
+              <Card key={d.date} className="border-border/50">
+                <CardContent className="p-3">
+                  <p className="text-xs font-semibold mb-2">{formatWeekday(d.date)}</p>
+                  <div className="grid grid-cols-4 gap-2 text-center">
+                    <div>
+                      <p className="text-lg font-bold">{d.views}</p>
+                      <p className="text-[9px] text-muted-foreground">Visitas</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold">{d.searches}</p>
+                      <p className="text-[9px] text-muted-foreground">Pesquisas</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold">{d.unlocks}</p>
+                      <p className="text-[9px] text-muted-foreground">Desbloq.</p>
+                    </div>
+                    <div>
+                      <p className={`text-lg font-bold ${d.checkouts > 0 ? "text-green-400" : ""}`}>{d.checkouts}</p>
+                      <p className="text-[9px] text-muted-foreground">Checkout</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </TabsContent>
       </Tabs>
     </div>
