@@ -6,9 +6,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const DEFAULT_STATES = ['SC','MA','AP','RR','AC','MS','SE','TO','RO','AL','PI','RN','PB','AM','ES','DF','PA','MT','GO','CE','PE','BA','RS','PR','MG','RJ','SP'];
-const DEFAULT_BATCH_SIZE = 12000;
-const MAX_BATCH_SIZE = 30000;
+const DEFAULT_STATES = ['AM','ES','DF','PA','MT','GO','CE','PE','BA','RS','PR','MG','RJ','SP'];
+const DEFAULT_BATCH_SIZE = 25000;
+const MAX_BATCH_SIZE = 50000;
 const DEFAULT_MAX_RUNTIME_MS = 140000;
 const MAX_MAX_RUNTIME_MS = 145000;
 
@@ -35,17 +35,19 @@ Deno.serve(async (req) => {
       // no body
     }
 
-    const batchSize = Math.max(3000, Math.min(requestedBatchSize ?? DEFAULT_BATCH_SIZE, MAX_BATCH_SIZE));
+    const batchSize = Math.max(5000, Math.min(requestedBatchSize ?? DEFAULT_BATCH_SIZE, MAX_BATCH_SIZE));
     const maxRuntimeMs = Math.max(30000, Math.min(requestedMaxRuntimeMs ?? DEFAULT_MAX_RUNTIME_MS, MAX_MAX_RUNTIME_MS));
     const estados = targetState ? [targetState] : DEFAULT_STATES;
 
     let grandTotal = 0;
     const startTime = Date.now();
+    const lockErrors: string[] = [];
 
     for (const estado of estados) {
       if (Date.now() - startTime > maxRuntimeMs) break;
 
       let stateTotal = 0;
+      let consecutiveErrors = 0;
 
       for (let i = 0; i < 500; i++) {
         if (Date.now() - startTime > maxRuntimeMs) break;
@@ -56,15 +58,22 @@ Deno.serve(async (req) => {
         });
 
         if (error) {
+          consecutiveErrors++;
+          if (error.message.includes('lock timeout') || error.message.includes('canceling statement')) {
+            lockErrors.push(estado);
+            if (consecutiveErrors >= 2) break; // skip to next state after 2 consecutive lock errors
+            continue; // retry once
+          }
           console.error(`Error ${estado}:`, error.message);
           break;
         }
 
+        consecutiveErrors = 0;
         const updated = Number(data ?? 0);
         stateTotal += updated;
         grandTotal += updated;
 
-        if (updated < batchSize) break;
+        if (updated < batchSize) break; // state done or nearly done
       }
 
       if (stateTotal > 0) {
@@ -72,7 +81,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ success: true, total: grandTotal, batchSize, maxRuntimeMs }), {
+    return new Response(JSON.stringify({ success: true, total: grandTotal, batchSize, maxRuntimeMs, lockErrors: lockErrors.length }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
