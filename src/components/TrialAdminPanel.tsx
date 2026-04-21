@@ -3,7 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Search, MousePointerClick, TrendingUp, MapPin, Users, Clock, Percent, Eye, Timer, Unlock, PointerIcon, ChevronDown, ChevronUp, RefreshCw, BarChart3 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Loader2, Search, MousePointerClick, TrendingUp, MapPin, Users, Clock,
+  Percent, Eye, Timer, Unlock, ChevronDown, ChevronUp, RefreshCw, BarChart3,
+} from "lucide-react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -30,7 +34,7 @@ interface DeviceSession {
   unlockClicks: number;
   cardClicks: number;
   pageViews: number;
-  timeOnPage: number; // total seconds
+  timeOnPage: number;
 }
 
 const formatDuration = (seconds: number) => {
@@ -42,11 +46,11 @@ const formatDuration = (seconds: number) => {
   return `${h}h ${m % 60}m`;
 };
 
-const formatDate = (iso: string) => {
-  return new Date(iso).toLocaleString("pt-BR", {
-    day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"
-  });
-};
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+
+const formatDateFull = (iso: string) =>
+  new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
 const eventLabel: Record<string, string> = {
   search: "Pesquisa",
@@ -57,96 +61,118 @@ const eventLabel: Record<string, string> = {
   time_on_page: "Tempo",
 };
 
-const eventColor: Record<string, string> = {
-  search: "bg-blue-500/10 text-blue-700 border-blue-200",
-  checkout_click: "bg-green-500/10 text-green-700 border-green-200",
-  unlock_click: "bg-amber-500/10 text-amber-700 border-amber-200",
-  card_click: "bg-purple-500/10 text-purple-700 border-purple-200",
-  page_view: "bg-gray-500/10 text-gray-700 border-gray-200",
-  time_on_page: "bg-cyan-500/10 text-cyan-700 border-cyan-200",
+const eventIcon: Record<string, typeof Search> = {
+  search: Search,
+  checkout_click: MousePointerClick,
+  unlock_click: Unlock,
+  card_click: Eye,
+  page_view: Eye,
+  time_on_page: Timer,
 };
 
+const eventBadgeClass: Record<string, string> = {
+  search: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+  checkout_click: "bg-green-500/15 text-green-400 border-green-500/30",
+  unlock_click: "bg-amber-500/15 text-amber-400 border-amber-500/30",
+  card_click: "bg-purple-500/15 text-purple-400 border-purple-500/30",
+  page_view: "bg-slate-500/15 text-slate-400 border-slate-500/30",
+  time_on_page: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
+};
+
+// ─── Stat Card ───
+function StatCard({ icon: Icon, label, value, sub }: { icon: any; label: string; value: string | number; sub?: string }) {
+  return (
+    <Card className="border-border/50">
+      <CardContent className="p-4">
+        <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1.5">
+          <Icon className="h-3.5 w-3.5" />
+          <span>{label}</span>
+        </div>
+        <p className="text-2xl font-bold tracking-tight">{value}</p>
+        {sub && <p className="text-[10px] text-muted-foreground mt-0.5">{sub}</p>}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─── Event Timeline Item ───
+function EventItem({ ev }: { ev: TrialEvent }) {
+  const Icon = eventIcon[ev.event_type] || Eye;
+  return (
+    <div className="flex items-start gap-3 py-2 border-b border-border/30 last:border-0">
+      <div className={`mt-0.5 flex items-center justify-center h-6 w-6 rounded-full shrink-0 ${eventBadgeClass[ev.event_type] || "bg-muted"}`}>
+        <Icon className="h-3 w-3" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant="outline" className={`text-[10px] ${eventBadgeClass[ev.event_type] || ""}`}>
+            {eventLabel[ev.event_type] || ev.event_type}
+          </Badge>
+          <span className="text-[10px] text-muted-foreground">{formatDateFull(ev.created_at)}</span>
+        </div>
+        {ev.event_type === "search" && (
+          <div className="mt-1 space-y-0.5">
+            <p className="text-xs">
+              <span className="font-medium">{ev.search_config?.products || "—"}</span>
+              <span className="text-muted-foreground mx-1">→</span>
+              <span className="font-medium">{ev.search_config?.segment || "—"}</span>
+              <span className="text-muted-foreground mx-1">em</span>
+              <span className="font-semibold">{ev.search_config?.region || "—"}</span>
+            </p>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <Badge variant="outline" className="text-[9px]">🔍 {ev.search_config?.realCount ?? ev.results_count ?? "?"} reais</Badge>
+              <Badge variant="outline" className="text-[9px]">📊 {ev.search_config?.inflatedCount ?? "?"} exibido</Badge>
+              <Badge variant="outline" className="text-[9px]">👁 {ev.search_config?.previewCount ?? 6} mostrados</Badge>
+            </div>
+          </div>
+        )}
+        {ev.event_type === "time_on_page" && (
+          <p className="text-xs mt-0.5 font-medium">{formatDuration(ev.search_config?.seconds || 0)}</p>
+        )}
+        {ev.event_type === "card_click" && ev.search_config?.lead_name && (
+          <p className="text-xs mt-0.5 text-muted-foreground truncate">{ev.search_config.lead_name}</p>
+        )}
+        {ev.event_type === "checkout_click" && (
+          <p className="text-xs mt-0.5 text-green-400 font-semibold">💰 Foi pro checkout!</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Device Session Row ───
 function DeviceRow({ session }: { session: DeviceSession }) {
   const [open, setOpen] = useState(false);
+  const hasConversion = session.checkouts > 0;
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger asChild>
-        <TableRow className="cursor-pointer hover:bg-muted/50">
-          <TableCell className="font-mono text-[11px]">
-            {session.device_id?.slice(0, 8)}…
-          </TableCell>
+        <TableRow className={`cursor-pointer hover:bg-muted/50 ${hasConversion ? "bg-green-500/5" : ""}`}>
+          <TableCell className="font-mono text-[11px]">{session.device_id?.slice(0, 8)}…</TableCell>
           <TableCell className="text-[11px]">{formatDate(session.firstSeen)}</TableCell>
           <TableCell className="text-[11px]">{formatDate(session.lastSeen)}</TableCell>
+          <TableCell className="text-center"><Badge variant="secondary" className="text-[10px]">{session.pageViews}</Badge></TableCell>
+          <TableCell className="text-center"><Badge variant="secondary" className="text-[10px]">{session.searches}</Badge></TableCell>
           <TableCell className="text-center">
-            <Badge variant="secondary" className="text-[10px]">{session.pageViews}</Badge>
+            <Badge variant={session.unlockClicks > 0 ? "default" : "secondary"} className="text-[10px]">{session.unlockClicks}</Badge>
           </TableCell>
           <TableCell className="text-center">
-            <Badge variant="secondary" className="text-[10px]">{session.searches}</Badge>
-          </TableCell>
-          <TableCell className="text-center">
-            <Badge variant={session.unlockClicks > 0 ? "default" : "secondary"} className="text-[10px]">
-              {session.unlockClicks}
-            </Badge>
-          </TableCell>
-          <TableCell className="text-center">
-            <Badge variant={session.checkouts > 0 ? "default" : "secondary"} className="text-[10px]">
+            <Badge variant={session.checkouts > 0 ? "default" : "secondary"} className={`text-[10px] ${hasConversion ? "bg-green-600" : ""}`}>
               {session.checkouts}
             </Badge>
           </TableCell>
-          <TableCell className="text-[11px] text-right">
-            {session.timeOnPage > 0 ? formatDuration(session.timeOnPage) : "—"}
-          </TableCell>
-          <TableCell>
-            {open ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-          </TableCell>
+          <TableCell className="text-[11px] text-right">{session.timeOnPage > 0 ? formatDuration(session.timeOnPage) : "—"}</TableCell>
+          <TableCell>{open ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}</TableCell>
         </TableRow>
       </CollapsibleTrigger>
       <CollapsibleContent asChild>
         <tr>
           <td colSpan={9} className="p-0">
-            <div className="bg-muted/30 border-y p-3 space-y-1.5">
-              {session.events.map(ev => (
-                <div key={ev.id} className="flex items-center gap-2 text-[11px]">
-                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] border ${eventColor[ev.event_type] || "bg-muted"}`}>
-                    {eventLabel[ev.event_type] || ev.event_type}
-                  </span>
-                  <span className="text-muted-foreground">
-                    {new Date(ev.created_at).toLocaleString("pt-BR")}
-                  </span>
-                  {ev.event_type === "search" && (
-                    <div className="flex flex-col gap-0.5 ml-1">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="font-medium">{ev.search_config?.products || "—"}</span>
-                        <span className="text-muted-foreground">→</span>
-                        <span className="font-medium">{ev.search_config?.segment || "—"}</span>
-                        <span className="text-muted-foreground">em</span>
-                        <span className="font-semibold">{ev.search_config?.region || "—"}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-[10px]">
-                        <Badge variant="outline" className="text-[9px]">
-                          🔍 {ev.search_config?.realCount ?? ev.results_count ?? "?"} encontrados
-                        </Badge>
-                        <Badge variant="outline" className="text-[9px]">
-                          📊 {ev.search_config?.inflatedCount ?? "?"} exibido como total
-                        </Badge>
-                        <Badge variant="outline" className="text-[9px]">
-                          👁 {ev.search_config?.previewCount ?? 6} mostrados
-                        </Badge>
-                      </div>
-                    </div>
-                  )}
-                  {ev.event_type === "time_on_page" && (
-                    <span className="font-medium">{formatDuration(ev.search_config?.seconds || 0)}</span>
-                  )}
-                  {ev.event_type === "card_click" && ev.search_config?.lead_name && (
-                    <span className="text-muted-foreground truncate max-w-[150px]">{ev.search_config.lead_name}</span>
-                  )}
-                  {ev.event_type === "checkout_click" && (
-                    <span className="text-green-600 font-semibold">💰 Foi pro checkout!</span>
-                  )}
-                </div>
-              ))}
+            <div className="bg-muted/20 border-y px-4 py-3">
+              {session.events
+                .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                .map(ev => <EventItem key={ev.id} ev={ev} />)}
             </div>
           </td>
         </tr>
@@ -155,6 +181,23 @@ function DeviceRow({ session }: { session: DeviceSession }) {
   );
 }
 
+// ─── Bar visualization ───
+function BarStat({ label, count, total }: { label: string; count: number; total: number }) {
+  const pct = total > 0 ? (count / total) * 100 : 0;
+  return (
+    <div>
+      <div className="flex justify-between text-xs mb-0.5">
+        <span className="truncate max-w-[200px]">{label}</span>
+        <span className="text-muted-foreground font-medium shrink-0 ml-2">{count} ({pct.toFixed(0)}%)</span>
+      </div>
+      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+        <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${Math.max(pct, 1)}%` }} />
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Panel ───
 export default function TrialAdminPanel() {
   const [events, setEvents] = useState<TrialEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -167,29 +210,16 @@ export default function TrialAdminPanel() {
         .select("*")
         .order("created_at", { ascending: false })
         .limit(1000);
-
-      if (error) {
-        console.error("Error fetching trial analytics:", error);
-        setEvents([]);
-        return;
-      }
+      if (error) { console.error("Error:", error); setEvents([]); return; }
       setEvents((data ?? []) as unknown as TrialEvent[]);
-    } catch (e) {
-      console.error("Error:", e);
-      setEvents([]);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) { console.error("Error:", e); setEvents([]); }
+    finally { setLoading(false); }
   };
 
   useEffect(() => { fetchEvents(); }, []);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      </div>
-    );
+    return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   }
 
   const now = new Date();
@@ -210,32 +240,19 @@ export default function TrialAdminPanel() {
   const todayCheckouts = checkouts.filter(e => e.created_at.slice(0, 10) === today).length;
   const todayPageViews = pageViews.filter(e => e.created_at.slice(0, 10) === today).length;
 
-  // Unique devices
   const uniqueDevices = new Set(events.map(e => e.device_id).filter(Boolean)).size;
   const todayDevices = new Set(events.filter(e => e.created_at.slice(0, 10) === today).map(e => e.device_id).filter(Boolean)).size;
-
-  // Conversion rate
   const conversionRate = searches.length > 0 ? ((checkouts.length / searches.length) * 100).toFixed(1) : "0";
-
-  // Average time on page
   const totalTime = timeEvents.reduce((a, e) => a + (e.search_config?.seconds || 0), 0);
   const avgTime = timeEvents.length > 0 ? Math.round(totalTime / timeEvents.length) : 0;
-
-  // Average results
   const avgResults = searches.length > 0 ? Math.round(searches.reduce((a, e) => a + (e.results_count || 0), 0) / searches.length) : 0;
 
-  // Build device sessions
+  // Device sessions
   const deviceMap: Record<string, DeviceSession> = {};
   events.forEach(ev => {
     const did = ev.device_id || "unknown";
     if (!deviceMap[did]) {
-      deviceMap[did] = {
-        device_id: did,
-        events: [],
-        firstSeen: ev.created_at,
-        lastSeen: ev.created_at,
-        searches: 0, checkouts: 0, unlockClicks: 0, cardClicks: 0, pageViews: 0, timeOnPage: 0,
-      };
+      deviceMap[did] = { device_id: did, events: [], firstSeen: ev.created_at, lastSeen: ev.created_at, searches: 0, checkouts: 0, unlockClicks: 0, cardClicks: 0, pageViews: 0, timeOnPage: 0 };
     }
     const s = deviceMap[did];
     s.events.push(ev);
@@ -249,282 +266,217 @@ export default function TrialAdminPanel() {
     if (ev.event_type === "time_on_page") s.timeOnPage += (ev.search_config?.seconds || 0);
   });
 
-  // Sort sessions: most recent first, prioritize those with checkouts
   const sessions = Object.values(deviceMap).sort((a, b) => {
     if (a.checkouts > 0 && b.checkouts === 0) return -1;
     if (b.checkouts > 0 && a.checkouts === 0) return 1;
     return new Date(b.lastSeen).getTime() - new Date(a.lastSeen).getTime();
   });
 
-  // Segment stats
+  // Segments & regions
   const segmentCounts: Record<string, number> = {};
-  searches.forEach(e => {
-    const seg = e.search_config?.segment || "N/A";
-    segmentCounts[seg] = (segmentCounts[seg] || 0) + 1;
-  });
-  const topSegments = Object.entries(segmentCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
-
-  // Region stats
   const regionCounts: Record<string, number> = {};
   searches.forEach(e => {
+    const seg = e.search_config?.segment || "N/A";
     const region = e.search_config?.region || "N/A";
+    segmentCounts[seg] = (segmentCounts[seg] || 0) + 1;
     regionCounts[region] = (regionCounts[region] || 0) + 1;
   });
+  const topSegments = Object.entries(segmentCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
   const topRegions = Object.entries(regionCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
 
-  // Daily breakdown
-  const dailyBreakdown: { date: string; views: number; searches: number; unlocks: number; checkouts: number }[] = [];
-  for (let i = 0; i < 7; i++) {
+  // Daily breakdown (7 days)
+  const dailyBreakdown = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(now.getTime() - i * 86400000).toISOString().slice(0, 10);
-    dailyBreakdown.push({
+    return {
       date: d,
       views: pageViews.filter(e => e.created_at.slice(0, 10) === d).length,
       searches: searches.filter(e => e.created_at.slice(0, 10) === d).length,
       unlocks: unlocks.filter(e => e.created_at.slice(0, 10) === d).length,
       checkouts: checkouts.filter(e => e.created_at.slice(0, 10) === d).length,
-    });
-  }
+    };
+  });
+
+  // Recent events sorted by newest first
+  const recentEvents = [...events].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 50);
 
   return (
     <div className="space-y-6">
-      {/* Refresh + ações rápidas */}
-      <div className="flex flex-wrap justify-end gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2"
-          onClick={() => {
+      {/* ── Header Actions ── */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-sm font-medium text-muted-foreground">
+          {events.length} eventos • {uniqueDevices} dispositivos
+        </h2>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={() => {
             localStorage.removeItem("negocix_trial_results_v2");
             localStorage.removeItem("negocix_trial_total");
             localStorage.removeItem("negocix_trial_inflated");
             localStorage.removeItem("negocix_trial_used");
             window.location.href = "/teste";
-          }}
-        >
-          <Search className="h-3 w-3" /> Fazer nova pesquisa
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2"
-          onClick={() => {
-            localStorage.removeItem("negocix_trial_results_v2");
-            localStorage.removeItem("negocix_trial_total");
-            localStorage.removeItem("negocix_trial_inflated");
-            localStorage.removeItem("negocix_trial_used");
-            window.location.href = "/teste";
-          }}
-        >
-          <Eye className="h-3 w-3" /> Ver Home
-        </Button>
-        <Button variant="outline" size="sm" onClick={fetchEvents} className="gap-2">
-          <RefreshCw className="h-3 w-3" /> Atualizar
-        </Button>
+          }}>
+            <Search className="h-3 w-3" /> Testar Demo
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={fetchEvents}>
+            <RefreshCw className="h-3 w-3" /> Atualizar
+          </Button>
+        </div>
       </div>
 
-      {/* Main Stats */}
+      {/* ── KPI Cards ── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="p-4">
-          <div className="flex items-center gap-1.5 text-muted-foreground text-[11px] mb-1">
-            <Eye className="h-3 w-3" /> Visitas Hoje
-          </div>
-          <p className="text-2xl font-bold">{todayPageViews}</p>
-          <p className="text-[10px] text-muted-foreground">Total: {pageViews.length}</p>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-1.5 text-muted-foreground text-[11px] mb-1">
-            <Search className="h-3 w-3" /> Pesquisas Hoje
-          </div>
-          <p className="text-2xl font-bold">{todaySearches}</p>
-          <p className="text-[10px] text-muted-foreground">Ontem: {yesterdaySearches} | 7d: {weekSearches}</p>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-1.5 text-muted-foreground text-[11px] mb-1">
-            <MousePointerClick className="h-3 w-3" /> Checkouts
-          </div>
-          <p className="text-2xl font-bold">{checkouts.length}</p>
-          <p className="text-[10px] text-muted-foreground">Hoje: {todayCheckouts}</p>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-1.5 text-muted-foreground text-[11px] mb-1">
-            <Percent className="h-3 w-3" /> Conversão
-          </div>
-          <p className="text-2xl font-bold">{conversionRate}%</p>
-          <p className="text-[10px] text-muted-foreground">Checkout / Pesquisas</p>
-        </Card>
+        <StatCard icon={Eye} label="Visitas" value={todayPageViews} sub={`Total: ${pageViews.length}`} />
+        <StatCard icon={Search} label="Pesquisas" value={todaySearches} sub={`Ontem: ${yesterdaySearches} · 7d: ${weekSearches}`} />
+        <StatCard icon={MousePointerClick} label="Checkouts" value={checkouts.length} sub={`Hoje: ${todayCheckouts}`} />
+        <StatCard icon={Percent} label="Conversão" value={`${conversionRate}%`} sub="Checkout / Pesquisas" />
       </div>
-
-      {/* Secondary Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card className="p-4">
-          <div className="flex items-center gap-1.5 text-muted-foreground text-[11px] mb-1">
-            <Users className="h-3 w-3" /> Visitantes
-          </div>
-          <p className="text-xl font-bold">{uniqueDevices}</p>
-          <p className="text-[10px] text-muted-foreground">Hoje: {todayDevices}</p>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-1.5 text-muted-foreground text-[11px] mb-1">
-            <Timer className="h-3 w-3" /> Tempo Médio
-          </div>
-          <p className="text-xl font-bold">{formatDuration(avgTime)}</p>
-          <p className="text-[10px] text-muted-foreground">Na página</p>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-1.5 text-muted-foreground text-[11px] mb-1">
-            <Unlock className="h-3 w-3" /> Cliques Desbloquear
-          </div>
-          <p className="text-xl font-bold">{unlocks.length}</p>
-          <p className="text-[10px] text-muted-foreground">Cards: {cardClicks.length}</p>
-        </Card>
-        <Card className="p-4">
-          <div className="flex items-center gap-1.5 text-muted-foreground text-[11px] mb-1">
-            <BarChart3 className="h-3 w-3" /> Média Resultados
-          </div>
-          <p className="text-xl font-bold">{avgResults}</p>
-          <p className="text-[10px] text-muted-foreground">Por pesquisa</p>
-        </Card>
+        <StatCard icon={Users} label="Visitantes" value={uniqueDevices} sub={`Hoje: ${todayDevices}`} />
+        <StatCard icon={Timer} label="Tempo Médio" value={formatDuration(avgTime)} sub="Na página" />
+        <StatCard icon={Unlock} label="Desbloquear" value={unlocks.length} sub={`Cards: ${cardClicks.length}`} />
+        <StatCard icon={BarChart3} label="Média Resultados" value={avgResults} sub="Por pesquisa" />
       </div>
 
-      {/* Daily Breakdown */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Clock className="h-4 w-4" /> Últimos 7 Dias
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-xs">Data</TableHead>
-                  <TableHead className="text-xs text-center">Visitas</TableHead>
-                  <TableHead className="text-xs text-center">Pesquisas</TableHead>
-                  <TableHead className="text-xs text-center">Desbloquear</TableHead>
-                  <TableHead className="text-xs text-center">Checkouts</TableHead>
-                  <TableHead className="text-xs text-center">Conversão</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {dailyBreakdown.map(d => (
-                  <TableRow key={d.date}>
-                    <TableCell className="text-xs font-medium">
-                      {new Date(d.date + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" })}
-                    </TableCell>
-                    <TableCell className="text-xs text-center">{d.views}</TableCell>
-                    <TableCell className="text-xs text-center">{d.searches}</TableCell>
-                    <TableCell className="text-xs text-center">{d.unlocks}</TableCell>
-                    <TableCell className="text-xs text-center">{d.checkouts}</TableCell>
-                    <TableCell className="text-xs text-center">
-                      {d.searches > 0 ? `${((d.checkouts / d.searches) * 100).toFixed(0)}%` : "—"}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+      {/* ── Tabs: Sessões / Timeline / Análise / Diário ── */}
+      <Tabs defaultValue="sessions" className="w-full">
+        <TabsList className="w-full grid grid-cols-4">
+          <TabsTrigger value="sessions" className="text-xs">Sessões</TabsTrigger>
+          <TabsTrigger value="timeline" className="text-xs">Timeline</TabsTrigger>
+          <TabsTrigger value="analysis" className="text-xs">Análise</TabsTrigger>
+          <TabsTrigger value="daily" className="text-xs">Diário</TabsTrigger>
+        </TabsList>
 
-      {/* Device Sessions - THE MAIN VIEW */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2">
-            <Users className="h-4 w-4" /> Sessões por Dispositivo ({sessions.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-xs">ID</TableHead>
-                  <TableHead className="text-xs">Primeira visita</TableHead>
-                  <TableHead className="text-xs">Última visita</TableHead>
-                  <TableHead className="text-xs text-center">Visitas</TableHead>
-                  <TableHead className="text-xs text-center">Pesquisas</TableHead>
-                  <TableHead className="text-xs text-center">Desbloquear</TableHead>
-                  <TableHead className="text-xs text-center">Checkout</TableHead>
-                  <TableHead className="text-xs text-right">Tempo</TableHead>
-                  <TableHead className="text-xs w-8"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sessions.map(s => (
-                  <DeviceRow key={s.device_id} session={s} />
-                ))}
-                {sessions.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
-                      Nenhuma sessão registrada
-                    </TableCell>
-                  </TableRow>
+        {/* Sessions Tab */}
+        <TabsContent value="sessions" className="mt-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Users className="h-4 w-4" /> Sessões por Dispositivo ({sessions.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs">ID</TableHead>
+                      <TableHead className="text-xs">Entrada</TableHead>
+                      <TableHead className="text-xs">Última</TableHead>
+                      <TableHead className="text-xs text-center">👁</TableHead>
+                      <TableHead className="text-xs text-center">🔍</TableHead>
+                      <TableHead className="text-xs text-center">🔓</TableHead>
+                      <TableHead className="text-xs text-center">💰</TableHead>
+                      <TableHead className="text-xs text-right">⏱</TableHead>
+                      <TableHead className="text-xs w-6"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {sessions.map(s => <DeviceRow key={s.device_id} session={s} />)}
+                    {sessions.length === 0 && (
+                      <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-8">Nenhuma sessão</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Timeline Tab - all events sorted chronologically */}
+        <TabsContent value="timeline" className="mt-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Clock className="h-4 w-4" /> Últimos 50 Eventos (mais recentes primeiro)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="max-h-[600px] overflow-y-auto">
+                {recentEvents.map(ev => <EventItem key={ev.id} ev={ev} />)}
+                {recentEvents.length === 0 && (
+                  <p className="text-center text-muted-foreground py-8 text-sm">Nenhum evento</p>
                 )}
-              </TableBody>
-            </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Analysis Tab */}
+        <TabsContent value="analysis" className="mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {topSegments.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4" /> Top Segmentos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2.5">
+                  {topSegments.map(([seg, count]) => (
+                    <BarStat key={seg} label={seg} count={count} total={searches.length} />
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+            {topRegions.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <MapPin className="h-4 w-4" /> Top Regiões
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2.5">
+                  {topRegions.map(([region, count]) => (
+                    <BarStat key={region} label={region} count={count} total={searches.length} />
+                  ))}
+                </CardContent>
+              </Card>
+            )}
           </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
 
-      {/* Segments & Regions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {topSegments.length > 0 && (
+        {/* Daily Tab */}
+        <TabsContent value="daily" className="mt-4">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" /> Segmentos Pesquisados
+                <Clock className="h-4 w-4" /> Últimos 7 Dias
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                {topSegments.map(([seg, count]) => {
-                  const pct = searches.length > 0 ? (count / searches.length) * 100 : 0;
-                  return (
-                    <div key={seg}>
-                      <div className="flex justify-between text-xs mb-0.5">
-                        <span className="truncate max-w-[200px]">{seg}</span>
-                        <span className="text-muted-foreground font-medium">{count} ({pct.toFixed(0)}%)</span>
-                      </div>
-                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                        <div className="h-full bg-primary rounded-full" style={{ width: `${pct}%` }} />
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="rounded-md border overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs">Data</TableHead>
+                      <TableHead className="text-xs text-center">Visitas</TableHead>
+                      <TableHead className="text-xs text-center">Pesquisas</TableHead>
+                      <TableHead className="text-xs text-center">Desbloquear</TableHead>
+                      <TableHead className="text-xs text-center">Checkouts</TableHead>
+                      <TableHead className="text-xs text-center">Conversão</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {dailyBreakdown.map(d => (
+                      <TableRow key={d.date}>
+                        <TableCell className="text-xs font-medium">
+                          {new Date(d.date + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" })}
+                        </TableCell>
+                        <TableCell className="text-xs text-center">{d.views}</TableCell>
+                        <TableCell className="text-xs text-center">{d.searches}</TableCell>
+                        <TableCell className="text-xs text-center">{d.unlocks}</TableCell>
+                        <TableCell className="text-xs text-center">{d.checkouts}</TableCell>
+                        <TableCell className="text-xs text-center">
+                          {d.searches > 0 ? `${((d.checkouts / d.searches) * 100).toFixed(0)}%` : "—"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             </CardContent>
           </Card>
-        )}
-
-        {topRegions.length > 0 && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <MapPin className="h-4 w-4" /> Regiões Pesquisadas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {topRegions.map(([region, count]) => {
-                  const pct = searches.length > 0 ? (count / searches.length) * 100 : 0;
-                  return (
-                    <div key={region}>
-                      <div className="flex justify-between text-xs mb-0.5">
-                        <span className="truncate max-w-[200px]">{region}</span>
-                        <span className="text-muted-foreground font-medium">{count} ({pct.toFixed(0)}%)</span>
-                      </div>
-                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                        <div className="h-full bg-primary/70 rounded-full" style={{ width: `${pct}%` }} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
