@@ -207,15 +207,23 @@ export default function RepresentativesResults() {
               Voltar
             </Button>
             
-            <Button
-              variant="outline"
-              onClick={handleRefresh}
-              disabled={isLoading}
-              className="gap-2"
-            >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
-              Atualizar
-            </Button>
+            <div className="flex gap-2">
+              {representatives.length > 0 && (
+                <Button variant="outline" onClick={exportToExcel} className="gap-2">
+                  <Download className="w-4 h-4" />
+                  Exportar Excel
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                onClick={handleRefresh}
+                disabled={isLoading}
+                className="gap-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
+                Atualizar
+              </Button>
+            </div>
           </div>
 
           <div className="text-center mb-8">
