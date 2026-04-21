@@ -12,10 +12,12 @@ import {
   MapPin, 
   Briefcase, 
   MessageCircle,
-  RefreshCw
+  RefreshCw,
+  Download
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import * as XLSX from "xlsx";
 
 interface Representative {
   id: string;
