@@ -1759,6 +1759,17 @@ serve(async (req) => {
     });
     console.log(`📊 After CNPJ dedup: ${allCompanies.length}`);
 
+    // ===== SOFT TIMEOUT CHECK: if near timeout after dedup, skip heavy filters and go straight to lead transform =====
+    if (isNearSoftTimeout()) {
+      console.log(`⚠️ NEAR TIMEOUT after dedup — skipping relevance filters, transforming ${allCompanies.length} leads directly`);
+      const cappedForTransform = allCompanies.length > 10_000 ? allCompanies.slice(0, 10_000) : allCompanies;
+      const quickLeads = buildQuickLeads(cappedForTransform);
+      if (quickLeads.length > 0) {
+        return new Response(JSON.stringify({ leads: quickLeads, partial: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
 
 
     // ===== STRICT RELEVANCE FILTER FOR DISTRIBUTORS =====
