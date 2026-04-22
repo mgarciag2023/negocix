@@ -1686,8 +1686,10 @@ serve(async (req) => {
     // ===== EMERGENCY EARLY RETURN: if near timeout, return what we have =====
     // This helper transforms raw companies into leads quickly (no heavy filters)
     const buildQuickLeads = (companies: any[]) => {
+      // Cap input to avoid CPU time exceeded on transformation
+      const capped = companies.length > 10_000 ? companies.slice(0, 10_000) : companies;
       // Quick phone filter
-      let filtered = companies.filter(c => isPhoneValid(c.telefone_1) || isPhoneValid(c.telefone_2));
+      let filtered = capped.filter(c => isPhoneValid(c.telefone_1) || isPhoneValid(c.telefone_2));
       // Quick CNPJ dedup
       const seen = new Set<string>();
       filtered = filtered.filter(c => { if (!c.cnpj) return true; if (seen.has(c.cnpj)) return false; seen.add(c.cnpj); return true; });
