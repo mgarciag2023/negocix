@@ -1433,6 +1433,10 @@ serve(async (req) => {
     // ===== QUERY LOCAL DATABASE (PARALLEL) =====
     let allCompanies: any[] = [];
 
+    // Hard cap on total raw companies to prevent CPU Time exceeded errors
+    // Edge functions have a strict CPU time limit; processing 100K+ rows will always fail.
+    const MAX_TOTAL_RAW = 20_000;
+
     // Adaptive limits: heavy multi-segment searches (>5 segments) need stricter caps
     // to fit inside the ~400s edge-function window
     const isHeavySearch = segments.length > 5;
