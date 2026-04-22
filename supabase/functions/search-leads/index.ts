@@ -2307,7 +2307,8 @@ serve(async (req) => {
           search_type: 'leads',
           search_config: { segment, region: region.trim(), businessType: bizType },
           results_count: leads.length,
-          results: leads,
+          // Don't store full leads in log — 26K+ leads = 50MB+ JSON which kills CPU on stringify
+          results: [],
         });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
