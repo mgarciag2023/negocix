@@ -1433,6 +1433,10 @@ serve(async (req) => {
     // ===== QUERY LOCAL DATABASE (PARALLEL) =====
     let allCompanies: any[] = [];
 
+    // Hard cap on total raw companies to prevent CPU Time exceeded errors
+    // Edge functions have a strict CPU time limit; processing 100K+ rows will always fail.
+    const MAX_TOTAL_RAW = 20_000;
+
     // Adaptive limits: heavy multi-segment searches (>5 segments) need stricter caps
     // to fit inside the ~400s edge-function window
     const isHeavySearch = segments.length > 5;
@@ -1450,7 +1454,15 @@ serve(async (req) => {
       const terms = generateSearchTerms(seg);
       console.log(`📤 Segment "${seg}" search terms (${terms.length})${isHeavySearch ? ' [HEAVY MODE]' : ''}:`, terms);
 
-      const targetPerSegment = isIndustrySearch ? 50000 : Math.min(leadsPerSegment * 2, 50000);
+      const maxPerSegment = Math.min(
+        isIndustrySearch ? 50000 : Math.min(leadsPerSegment * 2, 50000),
+        Math.max(1000, MAX_TOTAL_RAW - allCompanies.length) // respect global cap
+      );
+      const targetPerSegment = maxPerSegment;
+      if (allCompanies.length >= MAX_TOTAL_RAW) {
+        console.log(`⚠️ Segment "${seg}" skipped — global cap reached (${allCompanies.length})`);
+        return [];
+      }
       const PAGE_SIZE = 1000;
       const seenIds = new Set<string>();
       let bestResults: any[] = [];
@@ -1664,16 +1676,20 @@ serve(async (req) => {
     });
     await Promise.all(segWorkers);
     for (const sr of segmentResults) {
-      allCompanies.push(...sr);
+      const remaining = MAX_TOTAL_RAW - allCompanies.length;
+      if (remaining <= 0) break;
+      allCompanies.push(...sr.slice(0, remaining));
     }
 
-    console.log(`📊 Total raw companies: ${allCompanies.length} (elapsed: ${Date.now() - FUNCTION_START}ms)`);
+    console.log(`📊 Total raw companies: ${allCompanies.length} (capped at ${MAX_TOTAL_RAW}) (elapsed: ${Date.now() - FUNCTION_START}ms)`);
 
     // ===== EMERGENCY EARLY RETURN: if near timeout, return what we have =====
     // This helper transforms raw companies into leads quickly (no heavy filters)
     const buildQuickLeads = (companies: any[]) => {
+      // Cap input to avoid CPU time exceeded on transformation
+      const capped = companies.length > 10_000 ? companies.slice(0, 10_000) : companies;
       // Quick phone filter
-      let filtered = companies.filter(c => isPhoneValid(c.telefone_1) || isPhoneValid(c.telefone_2));
+      let filtered = capped.filter(c => isPhoneValid(c.telefone_1) || isPhoneValid(c.telefone_2));
       // Quick CNPJ dedup
       const seen = new Set<string>();
       filtered = filtered.filter(c => { if (!c.cnpj) return true; if (seen.has(c.cnpj)) return false; seen.add(c.cnpj); return true; });
