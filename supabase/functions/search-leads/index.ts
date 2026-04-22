@@ -1735,7 +1735,9 @@ serve(async (req) => {
 
     if (isNearSoftTimeout() && allCompanies.length > 0) {
       console.log(`⚠️ NEAR TIMEOUT — returning ${allCompanies.length} partial results without full filtering`);
-      const quickLeads = buildQuickLeads(allCompanies);
+      // Cap to 10K to avoid CPU death during transformation
+      const quickInput = allCompanies.length > 10_000 ? allCompanies.slice(0, 10_000) : allCompanies;
+      const quickLeads = buildQuickLeads(quickInput);
       if (quickLeads.length > 0) {
         return new Response(JSON.stringify({ leads: quickLeads, partial: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
