@@ -1454,7 +1454,15 @@ serve(async (req) => {
       const terms = generateSearchTerms(seg);
       console.log(`📤 Segment "${seg}" search terms (${terms.length})${isHeavySearch ? ' [HEAVY MODE]' : ''}:`, terms);
 
-      const targetPerSegment = isIndustrySearch ? 50000 : Math.min(leadsPerSegment * 2, 50000);
+      const maxPerSegment = Math.min(
+        isIndustrySearch ? 50000 : Math.min(leadsPerSegment * 2, 50000),
+        Math.max(1000, MAX_TOTAL_RAW - allCompanies.length) // respect global cap
+      );
+      const targetPerSegment = maxPerSegment;
+      if (allCompanies.length >= MAX_TOTAL_RAW) {
+        console.log(`⚠️ Segment "${seg}" skipped — global cap reached (${allCompanies.length})`);
+        return [];
+      }
       const PAGE_SIZE = 1000;
       const seenIds = new Set<string>();
       let bestResults: any[] = [];
