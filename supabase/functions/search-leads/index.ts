@@ -1434,8 +1434,9 @@ serve(async (req) => {
     let allCompanies: any[] = [];
 
     // Hard cap on total raw companies to prevent CPU Time exceeded errors
-    // Edge functions have a strict CPU time limit; processing 100K+ rows will always fail.
-    const MAX_TOTAL_RAW = 20_000;
+    // Edge functions have a strict 2s CPU time limit; processing 100K+ rows in JS will always fail.
+    // 50K is the safe maximum — covers virtually all real searches while staying under CPU budget.
+    const MAX_TOTAL_RAW = 50_000;
 
     // Adaptive limits: heavy multi-segment searches (>5 segments) need stricter caps
     // to fit inside the ~400s edge-function window
@@ -1734,7 +1735,9 @@ serve(async (req) => {
 
     if (isNearSoftTimeout() && allCompanies.length > 0) {
       console.log(`⚠️ NEAR TIMEOUT — returning ${allCompanies.length} partial results without full filtering`);
-      const quickLeads = buildQuickLeads(allCompanies);
+      // Cap to 10K to avoid CPU death during transformation
+      const quickInput = allCompanies.length > 10_000 ? allCompanies.slice(0, 10_000) : allCompanies;
+      const quickLeads = buildQuickLeads(quickInput);
       if (quickLeads.length > 0) {
         return new Response(JSON.stringify({ leads: quickLeads, partial: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -1756,6 +1759,17 @@ serve(async (req) => {
     });
     console.log(`📊 After CNPJ dedup: ${allCompanies.length}`);
 
+    // ===== SOFT TIMEOUT CHECK: if near timeout after dedup, skip heavy filters and go straight to lead transform =====
+    if (isNearSoftTimeout()) {
+      console.log(`⚠️ NEAR TIMEOUT after dedup — skipping relevance filters, transforming ${allCompanies.length} leads directly`);
+      const cappedForTransform = allCompanies.length > 10_000 ? allCompanies.slice(0, 10_000) : allCompanies;
+      const quickLeads = buildQuickLeads(cappedForTransform);
+      if (quickLeads.length > 0) {
+        return new Response(JSON.stringify({ leads: quickLeads, partial: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
 
 
     // ===== STRICT RELEVANCE FILTER FOR DISTRIBUTORS =====
