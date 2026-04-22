@@ -1676,10 +1676,12 @@ serve(async (req) => {
     });
     await Promise.all(segWorkers);
     for (const sr of segmentResults) {
-      allCompanies.push(...sr);
+      const remaining = MAX_TOTAL_RAW - allCompanies.length;
+      if (remaining <= 0) break;
+      allCompanies.push(...sr.slice(0, remaining));
     }
 
-    console.log(`📊 Total raw companies: ${allCompanies.length} (elapsed: ${Date.now() - FUNCTION_START}ms)`);
+    console.log(`📊 Total raw companies: ${allCompanies.length} (capped at ${MAX_TOTAL_RAW}) (elapsed: ${Date.now() - FUNCTION_START}ms)`);
 
     // ===== EMERGENCY EARLY RETURN: if near timeout, return what we have =====
     // This helper transforms raw companies into leads quickly (no heavy filters)
