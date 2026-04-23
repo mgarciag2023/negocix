@@ -26,8 +26,8 @@ export default function SearchRepresentatives() {
   const handleSearch = async () => {
     if (!state) {
       toast({
-        title: "Selecione um estado",
-        description: "Informe a localização desejada para a busca.",
+        title: "Selecione o estado",
+        description: "Escolha o estado onde deseja buscar representantes comerciais.",
         variant: "destructive",
       });
       return;
