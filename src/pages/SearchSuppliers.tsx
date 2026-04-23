@@ -133,7 +133,7 @@ const SearchSuppliers = () => {
     if (selectedProducts.length === 0) {
       toast({
         title: "Selecione pelo menos um produto",
-        description: "Escolha os tipos de produtos que você procura.",
+        description: "Marque os tipos de produtos que você deseja encontrar fornecedores.",
         variant: "destructive",
       });
       return;
@@ -141,8 +141,8 @@ const SearchSuppliers = () => {
 
     if (!state) {
       toast({
-        title: "Estado obrigatório",
-        description: "Selecione o estado onde deseja buscar.",
+        title: "Selecione o estado",
+        description: "Escolha o estado onde deseja buscar fornecedores.",
         variant: "destructive",
       });
       return;

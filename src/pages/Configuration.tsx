@@ -75,10 +75,37 @@ const Configuration = () => {
       region = city || state || "";
     }
     
-    if (!products || selectedCustomers.length === 0 || (!state && !city) || (country === "OTHER" && !customCountry)) {
+    if (!products) {
       toast({
-        title: "Campos obrigatórios",
-        description: "Por favor, preencha pelo menos país e estado ou cidade",
+        title: "Informe os produtos que você vende",
+        description: "Preencha o campo de produtos para que possamos encontrar os melhores leads.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (selectedCustomers.length === 0) {
+      toast({
+        title: "Selecione pelo menos um tipo de cliente",
+        description: "Escolha os segmentos de clientes que deseja prospectar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (country === "OTHER" && !customCountry) {
+      toast({
+        title: "Informe o país de busca",
+        description: "Digite o nome do país onde deseja buscar leads.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!state && !city) {
+      toast({
+        title: "Informe a localização da busca",
+        description: "Selecione um estado ou digite uma cidade para a pesquisa.",
         variant: "destructive",
       });
       return;
