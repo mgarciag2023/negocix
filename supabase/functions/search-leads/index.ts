@@ -780,7 +780,7 @@ function generateSearchTerms(segment: string): string[] {
     'estúdios de pilates': ['estudio de pilates', 'pilates', 'studio pilates'],
     'estúdios de yoga': ['estudio de yoga', 'yoga', 'ioga'],
     'arenas de futebol society': ['futebol society', 'society', 'quadra de futebol'],
-    'quadras de padel': ['padel', 'quadra de padel'],
+    'quadras de padel': ['padel', 'quadra de padel', 'quadras de padel', 'arena de padel', 'arena padel', 'centro de padel', 'clube de padel', 'academia de padel', 'escola de padel', 'aulas de padel', 'professor de padel', 'instrutor de padel', 'padel indoor', 'padel outdoor', 'padel arena', 'arena padel club', 'padel center', 'padel club', 'complexo de padel', 'centro esportivo padel', 'aluguel quadra padel', 'reserva quadra padel', 'arena multiuso padel', 'padel beach', 'padel academy', 'padel pro', 'padel sport', 'arenas padel', 'quadra padel coberta', 'quadra padel descoberta', 'racket club padel', 'padel & beach', 'arena indoor padel'],
     'quadras poliesportivas': ['quadra poliesportiva', 'ginasio', 'centro esportivo'],
     'baladas e casas noturnas': ['balada', 'casa noturna', 'boate', 'nightclub'],
     'casas de show': ['show', 'casa de show', 'casa de espetaculos', 'espaco de shows', 'espaço de shows', 'palco para eventos', 'casa de eventos musicais', 'venue musical', 'venue de eventos', 'espaco musical', 'espaço musical'],
