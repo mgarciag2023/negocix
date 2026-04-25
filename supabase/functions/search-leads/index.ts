@@ -386,7 +386,7 @@ function generateSearchTerms(segment: string): string[] {
 
     // ===== HOSPEDAGEM =====
     'hotéis': ['hotel', 'pousada', 'hospedagem', 'resort', 'apart hotel', 'hostel'],
-    'hotéis e pousadas': ['hotel', 'pousada', 'hospedagem'],
+    'hotéis e pousadas': ['hotel', 'hoteis', 'hotéis', 'pousada', 'pousadas', 'hospedagem', 'hospedaria', 'hotel boutique', 'hotel fazenda', 'hotel pousada', 'hotel resort', 'resort', 'eco hotel', 'eco pousada', 'pousada charme', 'pousada de charme', 'hotel executivo', 'hotel de praia', 'pousada de praia', 'hotel rural', 'pousada rural', 'hotel design', 'hotel familia', 'hotel família', 'pousada familiar', 'pousada chales', 'pousada chalés', 'chales para temporada', 'apart hotel', 'apart-hotel', 'flat', 'flat servico', 'hotel cinco estrelas', 'hotel quatro estrelas', 'pousada serra', 'pousada montanha', 'hotel turistico', 'hotel turístico', 'pousada economica', 'pousada econômica', 'pousada hotel'],
 
     // ===== GRÁFICA E COMUNICAÇÃO VISUAL =====
     'gráficas': ['grafica', 'comunicacao visual', 'impressao', 'offset', 'digital'],
