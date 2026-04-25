@@ -340,7 +340,7 @@ function generateSearchTerms(segment: string): string[] {
 
     // ===== LATICÍNIOS E QUEIJOS =====
     'laticínios': ['laticinios', 'laticinio', 'leite', 'queijo'],
-    'queijarias': ['queijaria', 'queijos', 'queijo artesanal'],
+    'queijarias': ['queijaria', 'queijarias', 'queijos', 'queijo artesanal', 'queijos artesanais', 'casa do queijo', 'casa de queijos', 'mundo do queijo', 'rota do queijo', 'queijo da serra', 'queijo canastra', 'queijo minas', 'queijo serrano', 'queijo colonial', 'queijos coloniais', 'queijo provolone', 'queijo mussarela artesanal', 'queijo prato artesanal', 'queijo parmesao', 'queijo parmesão', 'queijo gorgonzola', 'queijo gouda artesanal', 'queijo brie', 'queijos finos', 'queijos especiais', 'queijos premium', 'fromagerie', 'fromageria', 'queijaria artesanal', 'queijaria gourmet', 'queijaria boutique', 'producao de queijos', 'produção de queijos', 'fabrica de queijos', 'fábrica de queijos', 'laticinio queijaria'],
     'empórios de queijos': ['emporio de queijo', 'empório de queijo', 'emporio de queijos', 'empório de queijos', 'emporio', 'queijaria', 'queijarias', 'queijos artesanais', 'casa de queijos', 'queijo', 'laticinios', 'laticínios', 'laticinio', 'queijos', 'queijos finos', 'queijos especiais', 'queijos importados', 'queijos coloniais', 'queijo minas', 'queijo da serra', 'queijo canastra', 'casa do queijo', 'mundo do queijo', 'rota do queijo', 'frios e queijos', 'embutidos e queijos', 'tabua de frios', 'tábua de frios', 'queijos e vinhos', 'fromagerie', 'queijaria artesanal'],
 
     // ===== EMPÓRIOS E DELICATESSENS =====
