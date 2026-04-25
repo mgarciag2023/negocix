@@ -788,7 +788,7 @@ function generateSearchTerms(segment: string): string[] {
     'parques aquáticos': ['parque aquatico', 'toboagua', 'piscinas'],
     'parques de diversões': ['parque', 'parque de diversoes', 'parque tematico', 'parque de aventuras', 'parque recreativo', 'entretenimento familiar', 'diversao familiar', 'diversão familiar', 'parque recreativo infantil'],
     'pesque e pague': ['pesque e pague', 'pesqueiro', 'pesca'],
-    'bowling': ['bowling', 'boliche'],
+    'bowling': ['bowling', 'boliche', 'casa de boliche', 'casa de bowling', 'pista de boliche', 'pista de bowling', 'pistas de boliche', 'pistas de bowling', 'centro de boliche', 'centro de bowling', 'bowling center', 'bowling club', 'clube de boliche', 'clube de bowling', 'arena de boliche', 'arena de bowling', 'shopping bowling', 'salão de boliche', 'salao de boliche', 'bolicheria', 'bowling alley', 'bowling lounge', 'bowling bar', 'boliche e diversao', 'boliche e diversão', 'boliche family', 'boliche kids', 'boliche infantil', 'jogos de boliche', 'aluguel de pista de boliche', 'centro de entretenimento bowling', 'cosmic bowling', 'bowling neon', 'bowling festas', 'casa de festa boliche', 'bowling profissional'],
     'karting': ['karting', 'kart', 'kartódromo'],
     'escape rooms': ['escape', 'escape room', 'sala de fuga', 'sala de escape', 'jogo de fuga', 'escape game', 'adventure room', 'jogo de escape', 'mystery room', 'sala de enigmas'],
 
