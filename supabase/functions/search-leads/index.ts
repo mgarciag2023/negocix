@@ -397,11 +397,7 @@ function generateSearchTerms(segment: string): string[] {
     'editoras': ['editora', 'editorial', 'publicacao'],
     'cartonagem': ['cartonagem', 'caixas de papelao', 'embalagens de papelao'],
 
-    // ===== TÊXTIL E MALHARIAS =====
-    'malharias': ['malharia', 'malha', 'malhacao', 'tricot', 'trico', 'confeccao de malha', 'malhas', 'tecido de malha', 'industria de malha'],
-    'ateliês de costura': ['atelie de costura', 'atelie', 'costura', 'costureira', 'alfaiataria', 'alta costura'],
-    'lojas de aviamentos': ['aviamentos', 'armarinho', 'aviamento', 'botoes', 'linhas', 'tecidos'],
-    'fábricas de uniformes': ['fabrica de uniformes', 'fábrica de uniformes', 'uniformes', 'confeccao de uniformes', 'confecção de uniformes', 'uniformes profissionais', 'uniformes industriais', 'uniformes corporativos', 'uniformes empresariais', 'uniformes escolares', 'uniformes hospitalares', 'uniformes esportivos', 'fabricante de uniformes', 'industria de uniformes', 'indústria de uniformes', 'workwear', 'roupa profissional', 'jaleco profissional', 'macacao industrial', 'macacão industrial', 'avental profissional', 'camisaria corporativa', 'uniformes em malha', 'confeccao para empresas', 'fardamento', 'farda industrial', 'roupa de servico'],
+    // ===== TÊXTIL E MALHARIAS (extras já cobertos acima) =====
 
     // ===== METALURGIA E SIDERURGIA =====
     'metalúrgicas': ['metalurgica', 'metalúrgica', 'metalurgicas', 'metalurgia', 'fundicao', 'fundição', 'usinagem', 'caldeiraria', 'serralheria', 'industria metalurgica', 'indústria metalúrgica', 'fabrica metalurgica', 'fábrica metalúrgica', 'metalmecanica', 'metalmecânica', 'industria metalmecanica', 'indústria metalmecânica', 'estamparia', 'estampagem', 'corte e dobra de metais', 'usinagem cnc', 'torno mecanico', 'torno mecânico', 'fresagem', 'solda industrial', 'solda mig mag', 'tratamento termico', 'tratamento térmico', 'galvanoplastia', 'pintura industrial metalurgica', 'inox industria', 'industria de aco', 'indústria de aço'],
