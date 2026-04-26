@@ -49,7 +49,24 @@ function getCnaesForSegment(segment: string): string[] {
   const cnaeMap: { [key: string]: string[] } = {
     'loja de caça e pesca': ['4763604', '4789009', '9319101', '4763601', '4789099'],
     'artigos de caça, pesca e camping': ['4763604', '4789009', '9319101', '4763601', '4789099'],
-    'academias': ['9313100', '9319199'], // 9313100=condicionamento físico, 9319199=outras atividades esportivas
+    'academias': ['9313100', '9319199'],
+    // Açougues - CNAE oficial 4722-9/01
+    'açougues': ['4722901'],
+    'acougues': ['4722901'],
+    'açouguerias': ['4722901'],
+    'casas de carnes': ['4722901', '4634601'],
+    // Restaurantes e similares - CNAEs 5611
+    'restaurantes': ['5611201', '5611202'],
+    'lanchonetes': ['5611203', '5612100'],
+    'bares': ['5611204', '5611205'],
+    'pizzarias': ['5611201'],
+    'hamburguerias': ['5611201', '5611203'],
+    'churrascarias': ['5611201'],
+    'pastelarias': ['5611203'],
+    'sorveterias': ['5612100', '1053800'],
+    'padarias': ['1091102', '4721102'],
+    'confeitarias': ['1091102', '4721102'],
+    'cafeterias': ['5611203', '5611202'],
   };
   return cnaeMap[seg] || [];
 }
