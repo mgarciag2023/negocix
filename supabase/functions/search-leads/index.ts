@@ -2158,6 +2158,22 @@ serve(async (req) => {
       console.log(`🎯 Universal relevance filter (name-only): ${allCompanies.length} (removed ${beforeUniversalFilter - allCompanies.length} irrelevant results)`);
     }
 
+    // ===== PADARIAS: exclude leads with "mercado" in the name =====
+    const hasPadariasSegment = segments.some((s: string) => {
+      const n = normalizeText(s).toLowerCase();
+      return n === 'padarias' || n === 'padaria';
+    });
+    if (hasPadariasSegment) {
+      const beforePadFilter = allCompanies.length;
+      allCompanies = allCompanies.filter(c => {
+        const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
+        const rs = normalizeText(c.razao_social || '').toLowerCase();
+        const combined = `${nf} ${rs}`;
+        return !/\bmercad/i.test(combined);
+      });
+      console.log(`🥖 Padarias name filter (excluding "mercado"): ${allCompanies.length} (removed ${beforePadFilter - allCompanies.length})`);
+    }
+
     // ===== TRANSFORM TO LEAD FORMAT =====
     const segmentDisplayNames: { [key: string]: string } = {};
     segments.forEach((seg: string) => {
