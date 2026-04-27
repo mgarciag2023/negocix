@@ -1673,7 +1673,7 @@ serve(async (req) => {
           }
           if (r.data && r.data.length > 0) {
             for (const c of r.data) {
-              if (!seenIds.has(c.id)) { seenIds.add(c.id); bestResults.push(c); }
+              if (!seenIds.has(c.id) && matchesNeighborhood(c)) { seenIds.add(c.id); bestResults.push(c); }
             }
             lastPageFull = r.data.length === PAGE_SIZE;
             highestPageFetched = Math.max(highestPageFetched, r.pageIdx);
