@@ -133,6 +133,27 @@ function getCnaesForSegment(segment: string): string[] {
     'distribuidoras de embalagens': ['4686902', '4649408'],
     'distribuidoras de autopeças': ['4530701'],
     'distribuidoras de autopecas': ['4530701'],
+    // ===== FRIOS / QUEIJOS / LATICÍNIOS (ATACADO) =====
+    // 4634-6/01 carnes e derivados, 4634-6/02 aves/ovos, 4634-6/99 outros, 4637-1/04 leite/laticínios atacado,
+    // 4637-1/07 chocolates/confeitos atacado, 4639-7/01 prod alim em geral, 4639-7/02 prod alim especializado,
+    // 4691-5/00 atacado mercadorias em geral alim, 4631-1/00 leite e laticínios atacado, 1052-0/00 fab laticinios
+    'distribuidores de queijo': ['4634601', '4634699', '4637104', '4631100', '4639701', '4639702', '4691500', '1052000'],
+    'distribuidores de queijos': ['4634601', '4634699', '4637104', '4631100', '4639701', '4639702', '4691500', '1052000'],
+    'distribuidoras de queijo': ['4634601', '4634699', '4637104', '4631100', '4639701', '4639702', '4691500', '1052000'],
+    'distribuidoras de queijos': ['4634601', '4634699', '4637104', '4631100', '4639701', '4639702', '4691500', '1052000'],
+    'distribuidores de frios': ['4634601', '4634602', '4634699', '4637104', '4631100', '4639701', '4639702', '4691500'],
+    'distribuidoras de frios': ['4634601', '4634602', '4634699', '4637104', '4631100', '4639701', '4639702', '4691500'],
+    'distribuidores de embutidos': ['4634601', '4634699', '4639701', '4639702', '4691500'],
+    'distribuidoras de embutidos': ['4634601', '4634699', '4639701', '4639702', '4691500'],
+    'distribuidores de laticínios': ['4637104', '4631100', '4639701', '4691500', '1052000'],
+    'distribuidoras de laticínios': ['4637104', '4631100', '4639701', '4691500', '1052000'],
+    'distribuidores de laticinios': ['4637104', '4631100', '4639701', '4691500', '1052000'],
+    'distribuidoras de laticinios': ['4637104', '4631100', '4639701', '4691500', '1052000'],
+    'laticínios': ['1052000', '4637104', '4631100'],
+    'laticinios': ['1052000', '4637104', '4631100'],
+    'queijarias': ['1052000', '4634601', '4721104'],
+    'distribuidores de food service': ['4634601', '4634699', '4637104', '4639701', '4639702', '4691500', '4631100'],
+    'distribuidoras de food service': ['4634601', '4634699', '4637104', '4639701', '4639702', '4691500', '4631100'],
   };
   return cnaeMap[seg] || [];
 }
