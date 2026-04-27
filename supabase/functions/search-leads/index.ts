@@ -1742,6 +1742,7 @@ serve(async (req) => {
             .not('telefone_1', 'is', null);
           if (city) q = q.eq('cidade', city);
           if (state) q = q.eq('estado', state);
+          if (neighborhoodFilter) q = q.ilike('bairro', `%${neighborhoodFilter}%`);
           if (bizType === 'matriz') q = q.eq('matriz_filial', 'MATRIZ');
           if (bizType === 'filial') q = q.eq('matriz_filial', 'FILIAL');
           const { data: cnaeData, error: cnaeErr } = await q.limit(10000);
@@ -1750,7 +1751,7 @@ serve(async (req) => {
           } else if (cnaeData) {
             let added = 0;
             for (const c of cnaeData) {
-              if (!seenIds.has(c.id)) {
+              if (!seenIds.has(c.id) && matchesNeighborhood(c)) {
                 seenIds.add(c.id);
                 bestResults.push({ ...c, _viaCnae: true });
                 added++;
