@@ -1536,6 +1536,17 @@ serve(async (req) => {
     const isHeavySearch = segments.length > 5;
 
     // Fetch a single segment using paginated queries (SDK caps RPC at 1000 rows)
+    // Pre-compute neighborhood filter normalization (used inside fetchSegment)
+    const nfNorm = neighborhoodFilter ? normalizeText(neighborhoodFilter).toLowerCase() : null;
+    const matchesNeighborhood = (c: any): boolean => {
+      if (!nfNorm) return true;
+      const b = (c?.bairro || '').toString();
+      if (!b) return false;
+      const bn = normalizeText(b).toLowerCase();
+      // Match exact OR contains (handles "JACAREPAGUA" matching "JARDIM JACAREPAGUA" variants)
+      return bn === nfNorm || bn.includes(nfNorm) || nfNorm.includes(bn);
+    };
+
     async function fetchSegment(seg: string): Promise<any[]> {
       const segLower = seg.toLowerCase();
       const isIndustrySearch = segLower.includes('indústria') || segLower.includes('industria') || segLower.includes('fábrica') || segLower.includes('fabrica');
