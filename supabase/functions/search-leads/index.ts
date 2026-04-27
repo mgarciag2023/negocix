@@ -67,6 +67,69 @@ function getCnaesForSegment(segment: string): string[] {
     'padarias': ['1091102', '4721102'],
     'confeitarias': ['1091102', '4721102'],
     'cafeterias': ['5611203', '5611202'],
+    // ===== CONSTRUÇÃO CIVIL =====
+    // Comércio varejista de mat. de construção em geral: 4744-0/05 / depósitos: 4744-0/01..04
+    // Atacado de mat. constr.: 4679-6/01..04, 4671-1/00 (madeira), 4672-9/00 (ferragens)
+    'materiais de construção': ['4744005', '4744001', '4744002', '4744003', '4744004', '4744099', '4679604', '4679603', '4679602', '4679601', '4671100', '4672900', '4744006'],
+    'materiais de construcao': ['4744005', '4744001', '4744002', '4744003', '4744004', '4744099', '4679604', '4679603', '4679602', '4679601', '4671100', '4672900', '4744006'],
+    'depósitos de materiais de construção': ['4744005', '4744001', '4744002', '4744003', '4744004', '4744099', '4679604', '4671100', '4672900'],
+    'depositos de materiais de construcao': ['4744005', '4744001', '4744002', '4744003', '4744004', '4744099', '4679604', '4671100', '4672900'],
+    'distribuidoras de material de construção': ['4679604', '4679603', '4679602', '4679601', '4671100', '4672900', '4744005', '4744099'],
+    'distribuidoras de material de construcao': ['4679604', '4679603', '4679602', '4679601', '4671100', '4672900', '4744005', '4744099'],
+    'distribuidoras de materiais de construção': ['4679604', '4679603', '4679602', '4679601', '4671100', '4672900', '4744005', '4744099'],
+    'distribuidoras de materiais de construcao': ['4679604', '4679603', '4679602', '4679601', '4671100', '4672900', '4744005', '4744099'],
+    'lojas de tintas': ['4741500', '4744002'],
+    'lojas de pisos e azulejos': ['4744001'],
+    'lojas de revestimentos': ['4744001'],
+    'lojas de materiais hidráulicos': ['4744003'],
+    'lojas de materiais hidraulicos': ['4744003'],
+    'lojas de ferragens': ['4744003', '4672900'],
+    'lojas de materiais elétricos': ['4742300', '4673700'],
+    'lojas de materiais eletricos': ['4742300', '4673700'],
+    'lojas de iluminação': ['4754701', '4742300'],
+    'lojas de iluminacao': ['4754701', '4742300'],
+    'lojas de decoração': ['4759801'],
+    'lojas de decoracao': ['4759801'],
+    'marmorarias': ['2391503', '4789004'],
+    'vidraçarias': ['2319200', '4743100'],
+    'vidracarias': ['2319200', '4743100'],
+    'serralherias': ['2542000', '2512800'],
+    'construtoras': ['4120400', '4299599'],
+    'empreiteiras': ['4120400', '4299599'],
+    'incorporadoras': ['4110700'],
+    // ===== AUTOMOTIVO =====
+    'autopeças': ['4530703', '4530702', '4530705', '4530701'],
+    'autopecas': ['4530703', '4530702', '4530705', '4530701'],
+    'oficinas mecânicas': ['4520001', '4520005'],
+    'oficinas mecanicas': ['4520001', '4520005'],
+    'lojas de pneus': ['4530704', '4520006'],
+    'borracharias': ['4520006'],
+    'concessionárias': ['4511101', '4511102'],
+    'concessionarias': ['4511101', '4511102'],
+    // ===== AGRO =====
+    'agropecuária': ['4789004', '4623108', '4623109', '4789099'],
+    'agropecuaria': ['4789004', '4623108', '4623109', '4789099'],
+    'casas agropecuárias': ['4789004', '4623108'],
+    'casas agropecuarias': ['4789004', '4623108'],
+    // ===== PET =====
+    'pet shops': ['4789004', '7500100'],
+    'pet shop': ['4789004', '7500100'],
+    'clínicas veterinárias': ['7500100'],
+    'clinicas veterinarias': ['7500100'],
+    // ===== SAÚDE / FARMA =====
+    'farmácias': ['4771701', '4771702', '4771703'],
+    'farmacias': ['4771701', '4771702', '4771703'],
+    'drogarias': ['4771701'],
+    'farmácias de manipulação': ['4771702'],
+    'farmacias de manipulacao': ['4771702'],
+    // ===== DISTRIBUIDORAS COMUNS =====
+    'distribuidoras de alimentos': ['4639701', '4639702', '4691500'],
+    'distribuidoras de bebidas': ['4635499', '4635401', '4635402', '4635403'],
+    'distribuidoras de cosméticos': ['4646002', '4646001'],
+    'distribuidoras de cosmeticos': ['4646002', '4646001'],
+    'distribuidoras de embalagens': ['4686902', '4649408'],
+    'distribuidoras de autopeças': ['4530701'],
+    'distribuidoras de autopecas': ['4530701'],
   };
   return cnaeMap[seg] || [];
 }
@@ -1382,12 +1445,36 @@ serve(async (req) => {
     // ===== CITY AUTO-CORRECT (corrige erros de digitação) =====
     const originalCity: string | null = city;
     let correctedCity: string | null = null;
+    let neighborhoodFilter: string | null = null; // se "cidade" é na verdade bairro
     if (city && state) {
       const corrected = await resolveCityName(adminClient, city, state);
       if (corrected && corrected !== city) {
         console.log(`✅ Cidade corrigida: "${city}" → "${corrected}"`);
         correctedCity = corrected;
         city = corrected;
+      }
+
+      // ===== NEIGHBORHOOD FALLBACK =====
+      // Se a "cidade" informada não existe na base CNPJ (ex: Jacarepaguá é bairro do RJ),
+      // verifica se existe como BAIRRO. Se sim, libera busca no estado todo e filtra por bairro depois.
+      const { data: cityCheck } = await adminClient
+        .from('companies')
+        .select('id')
+        .eq('estado', state)
+        .eq('cidade', city)
+        .limit(1);
+      if (!cityCheck || cityCheck.length === 0) {
+        const { data: bairroCheck } = await adminClient
+          .from('companies')
+          .select('id')
+          .eq('estado', state)
+          .ilike('bairro', city)
+          .limit(1);
+        if (bairroCheck && bairroCheck.length > 0) {
+          console.log(`🏘️ "${city}" detectado como BAIRRO (não cidade). Buscando no estado ${state} todo e filtrando por bairro.`);
+          neighborhoodFilter = city;
+          city = null; // remove filtro de cidade — busca no estado todo
+        }
       }
     }
 
@@ -1754,6 +1841,17 @@ serve(async (req) => {
     // ===== FILTER: valid phone required (check both telefone_1 and telefone_2) =====
     allCompanies = allCompanies.filter(c => isPhoneValid(c.telefone_1) || isPhoneValid(c.telefone_2));
     console.log(`📞 After phone filter: ${allCompanies.length}`);
+
+    // ===== NEIGHBORHOOD FILTER (when "city" was actually a neighborhood) =====
+    if (neighborhoodFilter) {
+      const nf = normalizeText(neighborhoodFilter).toLowerCase();
+      const before = allCompanies.length;
+      allCompanies = allCompanies.filter(c => {
+        const b = (c.bairro || '').toString();
+        return normalizeText(b).toLowerCase() === nf;
+      });
+      console.log(`🏘️ Neighborhood filter "${neighborhoodFilter}": ${before} → ${allCompanies.length}`);
+    }
 
     // ===== DEDUPLICATE by CNPJ (exact same record) =====
     const seenCnpj = new Set<string>();
