@@ -22,7 +22,7 @@ const ADS: Ad[] = [
     description:
       "Está enfrentando alguma dificuldade ou gostaria de tirar alguma dúvida? Nossa equipe de suporte está pronta para te ajudar!",
     ctaLabel: "Falar com o suporte",
-ctaUrl: "https://checkout.paymentscenter.link/pro-ff07fe4f-5394-49aa-b0cb-235ce9245c99",
+ctaUrl: "https://compraseguraonline.org.ua/c/d8cd080117",
   },
   {
     id: "abordagens-representantes",
@@ -33,7 +33,7 @@ ctaUrl: "https://checkout.paymentscenter.link/pro-ff07fe4f-5394-49aa-b0cb-235ce9
     description:
       "Descubra as técnicas de abordagem que mais convertem e aumente suas vendas como representante comercial.",
     ctaLabel: "Saber mais",
-ctaUrl: "https://checkout.paymentscenter.link/pro-ff07fe4f-5394-49aa-b0cb-235ce9245c99",
+ctaUrl: "https://compraseguraonline.org.ua/c/d8cd080117",
   },
   {
     id: "metodo-representante",
@@ -44,7 +44,7 @@ ctaUrl: "https://checkout.paymentscenter.link/pro-ff07fe4f-5394-49aa-b0cb-235ce9
     description:
       "Aprenda o método completo para transformar contatos em clientes e aumentar suas vendas como representante comercial.",
     ctaLabel: "Conhecer o método",
-    ctaUrl: "https://checkout.paymentscenter.link/pro-ff07fe4f-5394-49aa-b0cb-235ce9245c99",
+    ctaUrl: "https://compraseguraonline.org.ua/c/d8cd080117",
   },
 ];
 
