@@ -1445,12 +1445,36 @@ serve(async (req) => {
     // ===== CITY AUTO-CORRECT (corrige erros de digitação) =====
     const originalCity: string | null = city;
     let correctedCity: string | null = null;
+    let neighborhoodFilter: string | null = null; // se "cidade" é na verdade bairro
     if (city && state) {
       const corrected = await resolveCityName(adminClient, city, state);
       if (corrected && corrected !== city) {
         console.log(`✅ Cidade corrigida: "${city}" → "${corrected}"`);
         correctedCity = corrected;
         city = corrected;
+      }
+
+      // ===== NEIGHBORHOOD FALLBACK =====
+      // Se a "cidade" informada não existe na base CNPJ (ex: Jacarepaguá é bairro do RJ),
+      // verifica se existe como BAIRRO. Se sim, libera busca no estado todo e filtra por bairro depois.
+      const { data: cityCheck } = await adminClient
+        .from('companies')
+        .select('id')
+        .eq('estado', state)
+        .eq('cidade', city)
+        .limit(1);
+      if (!cityCheck || cityCheck.length === 0) {
+        const { data: bairroCheck } = await adminClient
+          .from('companies')
+          .select('id')
+          .eq('estado', state)
+          .ilike('bairro', city)
+          .limit(1);
+        if (bairroCheck && bairroCheck.length > 0) {
+          console.log(`🏘️ "${city}" detectado como BAIRRO (não cidade). Buscando no estado ${state} todo e filtrando por bairro.`);
+          neighborhoodFilter = city;
+          city = null; // remove filtro de cidade — busca no estado todo
+        }
       }
     }
 
