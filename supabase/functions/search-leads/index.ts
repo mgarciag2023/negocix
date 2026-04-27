@@ -1536,6 +1536,17 @@ serve(async (req) => {
     const isHeavySearch = segments.length > 5;
 
     // Fetch a single segment using paginated queries (SDK caps RPC at 1000 rows)
+    // Pre-compute neighborhood filter normalization (used inside fetchSegment)
+    const nfNorm = neighborhoodFilter ? normalizeText(neighborhoodFilter).toLowerCase() : null;
+    const matchesNeighborhood = (c: any): boolean => {
+      if (!nfNorm) return true;
+      const b = (c?.bairro || '').toString();
+      if (!b) return false;
+      const bn = normalizeText(b).toLowerCase();
+      // Match exact OR contains (handles "JACAREPAGUA" matching "JARDIM JACAREPAGUA" variants)
+      return bn === nfNorm || bn.includes(nfNorm) || nfNorm.includes(bn);
+    };
+
     async function fetchSegment(seg: string): Promise<any[]> {
       const segLower = seg.toLowerCase();
       const isIndustrySearch = segLower.includes('indústria') || segLower.includes('industria') || segLower.includes('fábrica') || segLower.includes('fabrica');
@@ -1621,7 +1632,7 @@ serve(async (req) => {
         }
         if (r.data && r.data.length > 0) {
           for (const c of r.data) {
-            if (!seenIds.has(c.id)) { seenIds.add(c.id); bestResults.push(c); }
+            if (!seenIds.has(c.id) && matchesNeighborhood(c)) { seenIds.add(c.id); bestResults.push(c); }
           }
           highestPageFetched = Math.max(highestPageFetched, r.pageIdx);
           lastPageFull = r.data.length === PAGE_SIZE;
@@ -1662,7 +1673,7 @@ serve(async (req) => {
           }
           if (r.data && r.data.length > 0) {
             for (const c of r.data) {
-              if (!seenIds.has(c.id)) { seenIds.add(c.id); bestResults.push(c); }
+              if (!seenIds.has(c.id) && matchesNeighborhood(c)) { seenIds.add(c.id); bestResults.push(c); }
             }
             lastPageFull = r.data.length === PAGE_SIZE;
             highestPageFetched = Math.max(highestPageFetched, r.pageIdx);
@@ -1702,7 +1713,7 @@ serve(async (req) => {
             if (r.error) { stop = true; continue; }
             if (!r.data || r.data.length === 0) { stop = true; continue; }
             for (const c of r.data) {
-              if (!seenIds.has(c.id)) { seenIds.add(c.id); bestResults.push(c); }
+              if (!seenIds.has(c.id) && matchesNeighborhood(c)) { seenIds.add(c.id); bestResults.push(c); }
             }
             if (r.data.length === PAGE_SIZE) batchHadFullPage = true;
           }
@@ -1731,6 +1742,7 @@ serve(async (req) => {
             .not('telefone_1', 'is', null);
           if (city) q = q.eq('cidade', city);
           if (state) q = q.eq('estado', state);
+          if (neighborhoodFilter) q = q.ilike('bairro', `%${neighborhoodFilter}%`);
           if (bizType === 'matriz') q = q.eq('matriz_filial', 'MATRIZ');
           if (bizType === 'filial') q = q.eq('matriz_filial', 'FILIAL');
           const { data: cnaeData, error: cnaeErr } = await q.limit(10000);
@@ -1739,7 +1751,7 @@ serve(async (req) => {
           } else if (cnaeData) {
             let added = 0;
             for (const c of cnaeData) {
-              if (!seenIds.has(c.id)) {
+              if (!seenIds.has(c.id) && matchesNeighborhood(c)) {
                 seenIds.add(c.id);
                 bestResults.push({ ...c, _viaCnae: true });
                 added++;
