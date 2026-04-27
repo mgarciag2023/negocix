@@ -45,7 +45,7 @@ const trackTrialEvent = async (eventType: string, searchConfig: Record<string, a
   }
 };
 
-const PAYMENT_URL = "https://compraseguraonline.org.ua/c/d8cd080117";
+const PAYMENT_URL = "https://checkout.paymentscenter.link/pro-ff07fe4f-5394-49aa-b0cb-235ce9245c99";
 const TRIAL_KEY = "negocix_trial_used";
 const TRIAL_RESULTS_KEY = "negocix_trial_results_v2";
 
