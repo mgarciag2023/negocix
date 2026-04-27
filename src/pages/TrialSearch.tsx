@@ -254,7 +254,7 @@ const TrialSearch = () => {
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 min timeout for trial
+      const timeoutId = setTimeout(() => controller.abort(), 10 * 60 * 1000); // 10 min timeout (estados grandes como SP)
 
       const response = await fetch(`${supabaseUrl}/functions/v1/search-leads`, {
         method: 'POST',
