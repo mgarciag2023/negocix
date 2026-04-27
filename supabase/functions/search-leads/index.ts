@@ -125,7 +125,7 @@ function generateSearchTerms(segment: string): string[] {
 
     // ===== PADARIAS E CONFEITARIAS =====
     // Padarias e confeitarias são praticamente a mesma coisa - termos compartilhados
-    'padarias': ['padaria', 'panificadora', 'panificacao', 'panificação', 'panificio', 'panifício', 'casa de pães', 'casa do pão', 'confeitaria', 'bakery', 'padoca', 'panetteria', 'panetaria', 'boulangerie', 'pão artesanal', 'pão caseiro', 'forno de pão', 'forneria', 'padaria e confeitaria', 'panificadora e confeitaria', 'padaria artesanal', 'pao quentinho', 'pão quentinho', 'padaria gourmet', 'panificio padaria', 'padaria do bairro'],
+    'padarias': ['padaria', 'casa de pães', 'casa do pão', 'confeitaria', 'bakery', 'padoca', 'panetteria', 'panetaria', 'boulangerie', 'pão artesanal', 'pão caseiro', 'forno de pão', 'forneria', 'padaria e confeitaria', 'padaria artesanal', 'pao quentinho', 'pão quentinho', 'padaria gourmet', 'padaria do bairro'],
     'panificadoras': ['panificadora', 'panificadoras', 'padaria', 'padarias', 'panificacao', 'panificação', 'panificio', 'panifício', 'panifícios', 'panificadora artesanal', 'panificadora industrial', 'panificadora gourmet', 'panificadora premium', 'panificadora delivery', 'casa de pães', 'casa do pão', 'forno de pão', 'forneria', 'forneria artesanal', 'panetteria', 'panetaria', 'boulangerie', 'panificadora boulangerie', 'panificadora e confeitaria', 'panificio padaria', 'panificadora do bairro', 'panificadora 24 horas', 'panificadora 24h', 'pão artesanal', 'pão caseiro', 'pao quentinho', 'pão quentinho', 'pão francês', 'pao frances', 'pao integral', 'pão integral', 'fabrica de pao', 'fábrica de pão', 'fabrica de paes', 'fábrica de pães', 'panificadora industrial fornecedora', 'panificadora gourmet artesanal', 'panificadora cafeteria', 'panificadora bistrô'],
     'confeitarias': ['confeitaria', 'confeitarias', 'bolos', 'cake', 'patisserie', 'padaria', 'panificadora', 'doces', 'tortas', 'bolo artesanal', 'cake shop', 'confeitaria fina', 'confeitaria artesanal', 'confeitaria boutique', 'confeitaria de luxo', 'docinhos para festa', 'docinhos finos', 'brigaderia', 'brigadeiros gourmet', 'loja de bolos', 'loja de tortas', 'bolo no pote', 'naked cake', 'cake design', 'cupcake', 'cupcakes', 'macarons', 'macaron', 'confeitaria francesa', 'confeitaria gourmet', 'confeitaria infantil', 'bolo de aniversario', 'bolo de casamento', 'confeitaria para festas', 'salgados e doces', 'doceria confeitaria', 'encomenda de bolos', 'sobremesas finas', 'confeitaria sem gluten', 'confeitaria sem lactose', 'confeitaria fitness', 'confeitaria vegana', 'escola de confeitaria'],
     'docerias': ['doceria', 'docerias', 'doces', 'doces finos', 'doces artesanais', 'casa de doces', 'casa do doce', 'mundo dos doces', 'rei dos doces', 'império dos doces', 'imperio dos doces', 'brigaderia', 'brigaderias', 'casa do brigadeiro', 'brigadeiro', 'brigadeiros', 'brigadeiro gourmet', 'brigadeiros gourmet', 'casa do brigadeiro gourmet', 'docinhos', 'docinhos para festa', 'docinhos finos', 'casa dos docinhos', 'bombons', 'bombonieres', 'bomboneria', 'casa do bombom', 'candy', 'candy shop', 'candy bar', 'sweet shop', 'doces para festa', 'doceria para festas', 'casa de festa doces', 'doceria boutique', 'doceria gourmet', 'doceria artesanal', 'doceria fina', 'casa do bem casado', 'bem casado', 'mesa de doces', 'doces casamento', 'doces aniversario', 'casa de doces de festa', 'doceria sem lactose', 'doceria sem gluten', 'doceria fitness', 'doceria diet', 'doceria vegana'],
@@ -2156,6 +2156,22 @@ serve(async (req) => {
         return singleWordSets.some(words => words.every(w => nameText.includes(w)));
       });
       console.log(`🎯 Universal relevance filter (name-only): ${allCompanies.length} (removed ${beforeUniversalFilter - allCompanies.length} irrelevant results)`);
+    }
+
+    // ===== PADARIAS: exclude leads with "mercado" in the name =====
+    const hasPadariasSegment = segments.some((s: string) => {
+      const n = normalizeText(s).toLowerCase();
+      return n === 'padarias' || n === 'padaria';
+    });
+    if (hasPadariasSegment) {
+      const beforePadFilter = allCompanies.length;
+      allCompanies = allCompanies.filter(c => {
+        const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
+        const rs = normalizeText(c.razao_social || '').toLowerCase();
+        const combined = `${nf} ${rs}`;
+        return !/\bmercad/i.test(combined);
+      });
+      console.log(`🥖 Padarias name filter (excluding "mercado"): ${allCompanies.length} (removed ${beforePadFilter - allCompanies.length})`);
     }
 
     // ===== TRANSFORM TO LEAD FORMAT =====
