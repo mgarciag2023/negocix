@@ -1713,7 +1713,7 @@ serve(async (req) => {
             if (r.error) { stop = true; continue; }
             if (!r.data || r.data.length === 0) { stop = true; continue; }
             for (const c of r.data) {
-              if (!seenIds.has(c.id)) { seenIds.add(c.id); bestResults.push(c); }
+              if (!seenIds.has(c.id) && matchesNeighborhood(c)) { seenIds.add(c.id); bestResults.push(c); }
             }
             if (r.data.length === PAGE_SIZE) batchHadFullPage = true;
           }
