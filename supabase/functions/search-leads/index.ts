@@ -2310,24 +2310,27 @@ serve(async (req) => {
       }
     }
 
-    if (leads.length === 0) {
-      return new Response(JSON.stringify({ error: `Nenhum estabelecimento encontrado para "${segment}" em ${region}. Tente outra região ou outro segmento.` }), {
-        status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
     // 🚫 CACHE DESABILITADO: não gravamos mais resultados em cache
     // Toda pesquisa será sempre executada ao vivo na próxima vez.
 
     // ===== LOG SEARCH (skip if near timeout) =====
-    // Use cached userId/email captured at start - avoids re-reading req.headers after client disconnect
+    // Loga TODAS as buscas, inclusive as com 0 resultados — para auditoria e diagnóstico
     if (!isNearTimeout() && userId) {
       try {
         await adminClient.from("search_logs").insert({
           user_id: userId,
           user_email: cachedUserEmail || '',
           search_type: 'leads',
-          search_config: { segment, region: region.trim(), businessType: bizType },
+          search_config: {
+            segment,
+            region: region.trim(),
+            businessType: bizType,
+            whatsappOnly: !!whatsappOnly,
+            receitaFederalOnly: !!receitaFederalOnly,
+            isTrial: !!isTrial,
+            originalCity,
+            correctedCity,
+          },
           results_count: leads.length,
           // Don't store full leads in log — 26K+ leads = 50MB+ JSON which kills CPU on stringify
           results: [],
@@ -2340,7 +2343,15 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ leads, originalCity, correctedCity }), {
+    // Sempre retorna 200 — array vazio quando não há leads (frontend trata 0 resultados)
+    return new Response(JSON.stringify({
+      leads,
+      originalCity,
+      correctedCity,
+      message: leads.length === 0
+        ? `Nenhum estabelecimento encontrado para "${segment}" em ${region}. Tente outra região ou outro segmento.`
+        : undefined,
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
