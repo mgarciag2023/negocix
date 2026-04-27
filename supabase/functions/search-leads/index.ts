@@ -1842,6 +1842,17 @@ serve(async (req) => {
     allCompanies = allCompanies.filter(c => isPhoneValid(c.telefone_1) || isPhoneValid(c.telefone_2));
     console.log(`📞 After phone filter: ${allCompanies.length}`);
 
+    // ===== NEIGHBORHOOD FILTER (when "city" was actually a neighborhood) =====
+    if (neighborhoodFilter) {
+      const nf = normalizeText(neighborhoodFilter).toLowerCase();
+      const before = allCompanies.length;
+      allCompanies = allCompanies.filter(c => {
+        const b = (c.bairro || '').toString();
+        return normalizeText(b).toLowerCase() === nf;
+      });
+      console.log(`🏘️ Neighborhood filter "${neighborhoodFilter}": ${before} → ${allCompanies.length}`);
+    }
+
     // ===== DEDUPLICATE by CNPJ (exact same record) =====
     const seenCnpj = new Set<string>();
     allCompanies = allCompanies.filter(c => {
