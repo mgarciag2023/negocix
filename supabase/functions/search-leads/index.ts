@@ -49,76 +49,29 @@ function getCnaesForSegment(segment: string): string[] {
   const cnaeMap: { [key: string]: string[] } = {
     'loja de caça e pesca': ['4763604', '4789009', '9319101', '4763601', '4789099'],
     'artigos de caça, pesca e camping': ['4763604', '4789009', '9319101', '4763601', '4789099'],
-    'academias': ['9313100', '9319199'],
-    // ===== HIGH-VOLUME FOOD SERVICE / VAREJO COMUM =====
-    // Removidos do CNAE map: pizzarias, padarias, restaurantes, lanchonetes, hamburguerias,
-    // churrascarias, pastelarias, sorveterias, confeitarias, cafeterias, bares, açougues,
-    // pet shops, farmácias, drogarias. Estes segmentos têm volume alto e CNAEs muito amplos
-    // (ex: 5611201 cobre qualquer restaurante/bar/pizzaria/churrascaria), o que polui os
-    // resultados com leads irrelevantes. Para esses, usar APENAS busca FTS por nome.
-    // ===== CONSTRUÇÃO CIVIL =====
-    // Comércio varejista de mat. de construção em geral: 4744-0/05 / depósitos: 4744-0/01..04
-    // Atacado de mat. constr.: 4679-6/01..04, 4671-1/00 (madeira), 4672-9/00 (ferragens)
-    // CNAEs amplos: varejo (4744xxx), atacado (4679xxx), madeira (4671100), ferragens atacado (4672900),
-    // tintas (4741500), elétricos (4742300/4673700), vidros (4743100/4674500), mármore (2391503/4744006),
-    // serralheria/esquadrias (2542000), gesso/drywall (2330303), telhas/lajes (2330301/2330302).
-    'materiais de construção': ['4744005', '4744001', '4744002', '4744003', '4744004', '4744099', '4744006', '4679604', '4679603', '4679602', '4679601', '4671100', '4672900', '4741500', '4742300', '4673700', '4743100', '4674500', '2542000', '2330303'],
-    'materiais de construcao': ['4744005', '4744001', '4744002', '4744003', '4744004', '4744099', '4744006', '4679604', '4679603', '4679602', '4679601', '4671100', '4672900', '4741500', '4742300', '4673700', '4743100', '4674500', '2542000', '2330303'],
-    'depósitos de materiais de construção': ['4744005', '4744001', '4744002', '4744003', '4744004', '4744099', '4744006', '4679604', '4679603', '4679602', '4679601', '4671100', '4672900', '4741500', '4742300', '4673700', '4743100', '4674500'],
-    'depositos de materiais de construcao': ['4744005', '4744001', '4744002', '4744003', '4744004', '4744099', '4744006', '4679604', '4679603', '4679602', '4679601', '4671100', '4672900', '4741500', '4742300', '4673700', '4743100', '4674500'],
-    'distribuidoras de material de construção': ['4679604', '4679603', '4679602', '4679601', '4671100', '4672900', '4744005', '4744099', '4741500', '4673700', '4674500', '4743100', '4685100', '4684201', '4684202', '4669999'],
-    'distribuidoras de material de construcao': ['4679604', '4679603', '4679602', '4679601', '4671100', '4672900', '4744005', '4744099', '4741500', '4673700', '4674500', '4743100', '4685100', '4684201', '4684202', '4669999'],
-    'distribuidoras de materiais de construção': ['4679604', '4679603', '4679602', '4679601', '4671100', '4672900', '4744005', '4744099', '4741500', '4673700', '4674500', '4743100', '4685100', '4684201', '4684202', '4669999'],
-    'distribuidoras de materiais de construcao': ['4679604', '4679603', '4679602', '4679601', '4671100', '4672900', '4744005', '4744099', '4741500', '4673700', '4674500', '4743100', '4685100', '4684201', '4684202', '4669999'],
-    'lojas de tintas': ['4741500', '4744002'],
-    'lojas de pisos e azulejos': ['4744001'],
-    'lojas de revestimentos': ['4744001'],
+    // ===== HIGH-VOLUME / CNAE-AMPLO: removidos do CNAE map (usar APENAS FTS por nome) =====
+    // Removidos: pizzarias, padarias, restaurantes, lanchonetes, hamburguerias, churrascarias,
+    // pastelarias, sorveterias, confeitarias, cafeterias, bares, açougues, pet shops,
+    // farmácias, drogarias, academias, materiais de construção (e variações), lojas de tintas,
+    // pisos/azulejos, revestimentos, ferragens, materiais elétricos, iluminação, decoração,
+    // marmorarias, vidraçarias, serralherias, construtoras, empreiteiras, incorporadoras,
+    // autopeças, oficinas mecânicas, lojas de pneus, borracharias, concessionárias,
+    // agropecuária, casas agropecuárias, distribuidoras de alimentos/bebidas/autopeças,
+    // laticínios, queijarias. Para esses, FTS por nome é mais preciso que CNAE.
+    // ===== ESPECIALIZADOS / NICHO QUE AINDA USAM CNAE =====
+    // Hidráulica - CNAE específico do setor
     'lojas de materiais hidráulicos': ['4744003'],
     'lojas de materiais hidraulicos': ['4744003'],
-    'lojas de ferragens': ['4744003', '4672900'],
-    'lojas de materiais elétricos': ['4742300', '4673700'],
-    'lojas de materiais eletricos': ['4742300', '4673700'],
-    'lojas de iluminação': ['4754701', '4742300'],
-    'lojas de iluminacao': ['4754701', '4742300'],
-    'lojas de decoração': ['4759801'],
-    'lojas de decoracao': ['4759801'],
-    'marmorarias': ['2391503', '4789004'],
-    'vidraçarias': ['2319200', '4743100'],
-    'vidracarias': ['2319200', '4743100'],
-    'serralherias': ['2542000', '2512800'],
-    'construtoras': ['4120400', '4299599'],
-    'empreiteiras': ['4120400', '4299599'],
-    'incorporadoras': ['4110700'],
-    // ===== AUTOMOTIVO =====
-    'autopeças': ['4530703', '4530702', '4530705', '4530701'],
-    'autopecas': ['4530703', '4530702', '4530705', '4530701'],
-    'oficinas mecânicas': ['4520001', '4520005'],
-    'oficinas mecanicas': ['4520001', '4520005'],
-    'lojas de pneus': ['4530704', '4520006'],
-    'borracharias': ['4520006'],
-    'concessionárias': ['4511101', '4511102'],
-    'concessionarias': ['4511101', '4511102'],
-    // ===== AGRO =====
-    'agropecuária': ['4789004', '4623108', '4623109', '4789099'],
-    'agropecuaria': ['4789004', '4623108', '4623109', '4789099'],
-    'casas agropecuárias': ['4789004', '4623108'],
-    'casas agropecuarias': ['4789004', '4623108'],
-    // ===== PET / SAÚDE: removidos do CNAE map (alto volume, FTS por nome é mais preciso) =====
-    // pet shops, pet shop, clínicas veterinárias, farmácias, drogarias usam apenas FTS.
+    // Saúde especializada
     'farmácias de manipulação': ['4771702'],
     'farmacias de manipulacao': ['4771702'],
-    // ===== DISTRIBUIDORAS COMUNS =====
-    'distribuidoras de alimentos': ['4639701', '4639702', '4691500'],
-    'distribuidoras de bebidas': ['4635499', '4635401', '4635402', '4635403'],
+    // Distribuidoras especializadas - nome raramente é descritivo
     'distribuidoras de cosméticos': ['4646002', '4646001'],
     'distribuidoras de cosmeticos': ['4646002', '4646001'],
     'distribuidoras de embalagens': ['4686902', '4649408'],
-    'distribuidoras de autopeças': ['4530701'],
-    'distribuidoras de autopecas': ['4530701'],
     // ===== FRIOS / QUEIJOS / LATICÍNIOS (ATACADO) =====
-    // 4634-6/01 carnes e derivados, 4634-6/02 aves/ovos, 4634-6/99 outros, 4637-1/04 leite/laticínios atacado,
-    // 4637-1/07 chocolates/confeitos atacado, 4639-7/01 prod alim em geral, 4639-7/02 prod alim especializado,
-    // 4691-5/00 atacado mercadorias em geral alim, 4631-1/00 leite e laticínios atacado, 1052-0/00 fab laticinios
+    // Mantidos: distribuidores/atacado de frios, queijos, embutidos, laticínios, food service.
+    // (Apenas o segmento 'laticínios' / 'queijarias' isolado foi removido.)
     'distribuidores de queijo': ['4634601', '4634699', '4637104', '4631100', '4639701', '4639702', '4691500', '1052000'],
     'distribuidores de queijos': ['4634601', '4634699', '4637104', '4631100', '4639701', '4639702', '4691500', '1052000'],
     'distribuidoras de queijo': ['4634601', '4634699', '4637104', '4631100', '4639701', '4639702', '4691500', '1052000'],
@@ -131,9 +84,6 @@ function getCnaesForSegment(segment: string): string[] {
     'distribuidoras de laticínios': ['4637104', '4631100', '4639701', '4691500', '1052000'],
     'distribuidores de laticinios': ['4637104', '4631100', '4639701', '4691500', '1052000'],
     'distribuidoras de laticinios': ['4637104', '4631100', '4639701', '4691500', '1052000'],
-    'laticínios': ['1052000', '4637104', '4631100'],
-    'laticinios': ['1052000', '4637104', '4631100'],
-    'queijarias': ['1052000', '4634601', '4721104'],
     'distribuidores de food service': ['4634601', '4634699', '4637104', '4639701', '4639702', '4691500', '4631100'],
     'distribuidoras de food service': ['4634601', '4634699', '4637104', '4639701', '4639702', '4691500', '4631100'],
   };
