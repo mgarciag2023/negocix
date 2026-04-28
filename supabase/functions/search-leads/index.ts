@@ -103,15 +103,8 @@ function getCnaesForSegment(segment: string): string[] {
     'agropecuaria': ['4789004', '4623108', '4623109', '4789099'],
     'casas agropecuárias': ['4789004', '4623108'],
     'casas agropecuarias': ['4789004', '4623108'],
-    // ===== PET =====
-    'pet shops': ['4789004', '7500100'],
-    'pet shop': ['4789004', '7500100'],
-    'clínicas veterinárias': ['7500100'],
-    'clinicas veterinarias': ['7500100'],
-    // ===== SAÚDE / FARMA =====
-    'farmácias': ['4771701', '4771702', '4771703'],
-    'farmacias': ['4771701', '4771702', '4771703'],
-    'drogarias': ['4771701'],
+    // ===== PET / SAÚDE: removidos do CNAE map (alto volume, FTS por nome é mais preciso) =====
+    // pet shops, pet shop, clínicas veterinárias, farmácias, drogarias usam apenas FTS.
     'farmácias de manipulação': ['4771702'],
     'farmacias de manipulacao': ['4771702'],
     // ===== DISTRIBUIDORAS COMUNS =====
