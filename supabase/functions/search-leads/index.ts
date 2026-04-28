@@ -50,23 +50,12 @@ function getCnaesForSegment(segment: string): string[] {
     'loja de caça e pesca': ['4763604', '4789009', '9319101', '4763601', '4789099'],
     'artigos de caça, pesca e camping': ['4763604', '4789009', '9319101', '4763601', '4789099'],
     'academias': ['9313100', '9319199'],
-    // Açougues - CNAE oficial 4722-9/01
-    'açougues': ['4722901'],
-    'acougues': ['4722901'],
-    'açouguerias': ['4722901'],
-    'casas de carnes': ['4722901', '4634601'],
-    // Restaurantes e similares - CNAEs 5611
-    'restaurantes': ['5611201', '5611202'],
-    'lanchonetes': ['5611203', '5612100'],
-    'bares': ['5611204', '5611205'],
-    'pizzarias': ['5611201'],
-    'hamburguerias': ['5611201', '5611203'],
-    'churrascarias': ['5611201'],
-    'pastelarias': ['5611203'],
-    'sorveterias': ['5612100', '1053800'],
-    'padarias': ['1091102', '4721102'],
-    'confeitarias': ['1091102', '4721102'],
-    'cafeterias': ['5611203', '5611202'],
+    // ===== HIGH-VOLUME FOOD SERVICE / VAREJO COMUM =====
+    // Removidos do CNAE map: pizzarias, padarias, restaurantes, lanchonetes, hamburguerias,
+    // churrascarias, pastelarias, sorveterias, confeitarias, cafeterias, bares, açougues,
+    // pet shops, farmácias, drogarias. Estes segmentos têm volume alto e CNAEs muito amplos
+    // (ex: 5611201 cobre qualquer restaurante/bar/pizzaria/churrascaria), o que polui os
+    // resultados com leads irrelevantes. Para esses, usar APENAS busca FTS por nome.
     // ===== CONSTRUÇÃO CIVIL =====
     // Comércio varejista de mat. de construção em geral: 4744-0/05 / depósitos: 4744-0/01..04
     // Atacado de mat. constr.: 4679-6/01..04, 4671-1/00 (madeira), 4672-9/00 (ferragens)
@@ -114,15 +103,8 @@ function getCnaesForSegment(segment: string): string[] {
     'agropecuaria': ['4789004', '4623108', '4623109', '4789099'],
     'casas agropecuárias': ['4789004', '4623108'],
     'casas agropecuarias': ['4789004', '4623108'],
-    // ===== PET =====
-    'pet shops': ['4789004', '7500100'],
-    'pet shop': ['4789004', '7500100'],
-    'clínicas veterinárias': ['7500100'],
-    'clinicas veterinarias': ['7500100'],
-    // ===== SAÚDE / FARMA =====
-    'farmácias': ['4771701', '4771702', '4771703'],
-    'farmacias': ['4771701', '4771702', '4771703'],
-    'drogarias': ['4771701'],
+    // ===== PET / SAÚDE: removidos do CNAE map (alto volume, FTS por nome é mais preciso) =====
+    // pet shops, pet shop, clínicas veterinárias, farmácias, drogarias usam apenas FTS.
     'farmácias de manipulação': ['4771702'],
     'farmacias de manipulacao': ['4771702'],
     // ===== DISTRIBUIDORAS COMUNS =====
