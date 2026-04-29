@@ -2401,8 +2401,16 @@ serve(async (req) => {
             correctedCity,
           },
           results_count: leads.length,
-          // Don't store full leads in log — 26K+ leads = 50MB+ JSON which kills CPU on stringify
-          results: [],
+          // Store a lightweight sample (up to 300 leads, essential fields) so admin can audit lead quality
+          results: (leads as any[]).slice(0, 300).map((l: any) => ({
+            name: l.name,
+            address: l.address,
+            phone: l.phone,
+            category: l.category,
+            website: l.website,
+            instagram: l.instagram,
+            email: l.email,
+          })),
         });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
