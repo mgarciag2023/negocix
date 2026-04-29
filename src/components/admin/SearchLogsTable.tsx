@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, History, Search, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, History, Search, Users, Eye } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -11,6 +12,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+interface LeadSample {
+  name?: string;
+  address?: string;
+  phone?: string;
+  category?: string;
+  website?: string;
+  instagram?: string;
+  email?: string;
+}
 
 interface SearchLog {
   id: string;
@@ -18,12 +37,14 @@ interface SearchLog {
   search_type: string;
   search_config: Record<string, any>;
   results_count: number;
+  results?: LeadSample[];
   created_at: string;
 }
 
 export default function SearchLogsTable() {
   const [logs, setLogs] = useState<SearchLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<SearchLog | null>(null);
 
   useEffect(() => {
     fetchLogs();
@@ -46,7 +67,6 @@ export default function SearchLogsTable() {
     if (type === "representatives") {
       return [config.state, config.city].filter(Boolean).join(" - ");
     }
-    // leads
     const parts: string[] = [];
     if (config.segment) parts.push(config.segment);
     if (config.region) parts.push(config.region);
@@ -61,6 +81,8 @@ export default function SearchLogsTable() {
     );
   }
 
+  const sample = selected?.results || [];
+
   return (
     <Card>
       <CardHeader>
@@ -68,7 +90,7 @@ export default function SearchLogsTable() {
           <History className="h-5 w-5" />
           Pesquisas dos Usuários
         </CardTitle>
-        <CardDescription>Últimas 100 pesquisas realizadas</CardDescription>
+        <CardDescription>Últimas 100 pesquisas realizadas — clique em "Ver" para auditar os leads retornados</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="rounded-md border">
@@ -80,6 +102,7 @@ export default function SearchLogsTable() {
                 <TableHead>Configuração</TableHead>
                 <TableHead>Resultados</TableHead>
                 <TableHead>Data</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -106,11 +129,17 @@ export default function SearchLogsTable() {
                   <TableCell className="text-sm text-muted-foreground">
                     {new Date(log.created_at).toLocaleString("pt-BR")}
                   </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="outline" size="sm" onClick={() => setSelected(log)}>
+                      <Eye className="h-3 w-3 mr-1" />
+                      Ver
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
               {logs.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                     Nenhuma pesquisa registrada
                   </TableCell>
                 </TableRow>
@@ -119,6 +148,80 @@ export default function SearchLogsTable() {
           </Table>
         </div>
       </CardContent>
+
+      <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
+        <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Detalhes da Pesquisa</DialogTitle>
+            <DialogDescription>
+              {selected?.user_email} — {selected && new Date(selected.created_at).toLocaleString("pt-BR")}
+            </DialogDescription>
+          </DialogHeader>
+
+          <ScrollArea className="flex-1 pr-4">
+            {/* Config completa */}
+            <div className="space-y-3 mb-6">
+              <h3 className="font-semibold text-sm">Configuração da pesquisa</h3>
+              <div className="rounded-md border bg-muted/30 p-3 space-y-2 text-sm">
+                {selected && Object.entries(selected.search_config).map(([key, value]) => {
+                  if (value === null || value === undefined || value === "") return null;
+                  const display = Array.isArray(value)
+                    ? value.join(", ")
+                    : typeof value === "object"
+                    ? JSON.stringify(value)
+                    : String(value);
+                  return (
+                    <div key={key} className="flex flex-col sm:flex-row sm:gap-3">
+                      <span className="font-medium text-muted-foreground min-w-[140px]">{key}:</span>
+                      <span className="break-words whitespace-pre-wrap flex-1">{display}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Leads retornados */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-sm">
+                Leads retornados ({sample.length}
+                {selected && selected.results_count > sample.length && ` de ${selected.results_count} — amostra`})
+              </h3>
+              {sample.length === 0 ? (
+                <p className="text-sm text-muted-foreground italic">
+                  Sem amostra de leads salva (pesquisas anteriores à atualização não armazenavam os resultados).
+                </p>
+              ) : (
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">#</TableHead>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Categoria</TableHead>
+                        <TableHead>Telefone</TableHead>
+                        <TableHead>Endereço</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sample.map((lead, i) => (
+                        <TableRow key={i}>
+                          <TableCell className="text-muted-foreground text-xs">{i + 1}</TableCell>
+                          <TableCell className="font-medium text-sm">{lead.name || "—"}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground">{lead.category || "—"}</TableCell>
+                          <TableCell className="text-xs">{lead.phone || "—"}</TableCell>
+                          <TableCell className="text-xs text-muted-foreground max-w-[260px] truncate">
+                            {lead.address || "—"}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
