@@ -141,7 +141,7 @@ export const customerTypes = [
   "Indústrias Farmacêuticas",
   "Indústrias de Embalagens",
   "Indústrias de Móveis",
-  "Fábrica de Móveis",
+  "Fábricas de Móveis",
   "Indústrias de Calçados",
   "Indústrias de Tintas",
   "Indústrias de Fertilizantes",
