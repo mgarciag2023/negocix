@@ -107,6 +107,15 @@ export default function RepresentativesResults() {
               search_type: "representatives",
               search_config: config,
               results_count: data.representatives.length,
+              results: (data.representatives as any[]).slice(0, 300).map((r: any) => ({
+                name: r.name,
+                address: r.address,
+                phone: r.phone,
+                category: r.category,
+                website: r.website,
+                instagram: r.instagram,
+                email: r.email,
+              })),
             });
           }
         } catch (logErr) {
