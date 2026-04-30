@@ -20,6 +20,7 @@ export default function SearchRepresentatives() {
   const { toast } = useToast();
   
   const [city, setCity] = useState("");
+  const [neighborhood, setNeighborhood] = useState("");
   const [state, setState] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -36,6 +37,7 @@ export default function SearchRepresentatives() {
     const searchConfig = {
       city,
       state,
+      neighborhood: neighborhood.trim(),
     };
 
     localStorage.setItem("representativeSearchConfig", JSON.stringify(searchConfig));
