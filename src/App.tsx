@@ -34,31 +34,36 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     let isMounted = true;
+    let safetyTimer: ReturnType<typeof setTimeout> | null = null;
 
     // Set up listener FIRST so we catch auth events during session restore
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (!isMounted) return;
-
       setSession(nextSession);
       setLoading(false);
     });
 
     const restoreSession = async () => {
       const currentSession = await getSessionSafely();
-
       if (!isMounted) return;
-
-      // Only update if onAuthStateChange hasn't already provided a session
       setSession((prev) => prev ?? currentSession);
       setLoading(false);
     };
 
     void restoreSession();
 
+    // Safety net: never keep the user on the spinner for more than 4s.
+    // If session restore is hanging, fall through (will redirect to /auth if no session).
+    safetyTimer = setTimeout(() => {
+      if (!isMounted) return;
+      setLoading(false);
+    }, 4000);
+
     return () => {
       isMounted = false;
+      if (safetyTimer) clearTimeout(safetyTimer);
       subscription.unsubscribe();
     };
   }, []);
