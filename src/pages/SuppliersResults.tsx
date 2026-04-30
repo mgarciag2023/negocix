@@ -75,6 +75,7 @@ const SuppliersResults = () => {
             products: config.products,
             location: config.location,
             state: config.state,
+            neighborhood: config.neighborhood || '',
           }),
           signal: controller.signal,
         });

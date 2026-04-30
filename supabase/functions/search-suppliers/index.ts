@@ -194,8 +194,17 @@ serve(async (req) => {
   }
 
   try {
-    const { products, location, state } = await req.json();
-    console.log("🔍 Searching suppliers in local DB for:", { products, location, state });
+    const { products, location, state, neighborhood } = await req.json();
+    console.log("🔍 Searching suppliers in local DB for:", { products, location, state, neighborhood });
+    const nfNorm = (neighborhood && typeof neighborhood === 'string' && neighborhood.trim())
+      ? normalizeStr(neighborhood) : null;
+    const matchesNeighborhood = (c: any): boolean => {
+      if (!nfNorm) return true;
+      const b = (c?.bairro || '').toString();
+      if (!b) return false;
+      const bn = normalizeStr(b);
+      return bn === nfNorm || bn.includes(nfNorm) || nfNorm.includes(bn);
+    };
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -261,6 +270,8 @@ serve(async (req) => {
       // Filter out names that are just asterisks
       const nome = (c.nome_fantasia || c.razao_social || '').trim();
       if (!nome || /^\*+$/.test(nome)) return false;
+
+      if (!matchesNeighborhood(c)) return false;
 
       return isLikelySupplier(
         nome,

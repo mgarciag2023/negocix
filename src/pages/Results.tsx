@@ -312,6 +312,7 @@ const Results = () => {
               digitalActivity: searchConfig.digitalActivity || 'all',
               whatsappOnly: searchConfig.whatsappOnly || false,
               receitaFederalOnly: searchConfig.receitaFederalOnly || false,
+              neighborhood: searchConfig.neighborhood || '',
               filters: {
                 category: searchConfig.category,
                 companySizes: searchConfig.companySizes || ['all'],

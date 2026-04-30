@@ -1379,7 +1379,7 @@ serve(async (req) => {
   const isNearSoftTimeout = () => (Date.now() - FUNCTION_START) > SOFT_TIMEOUT_MS;
 
   try {
-    const { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial } = await req.json();
+    const { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial, neighborhood } = await req.json();
     console.log('🔍 LOCAL DB SEARCH v1 - Input:', { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial: !!isTrial });
 
     if (!segment || !region) {
@@ -1404,7 +1404,7 @@ serve(async (req) => {
     // ===== CITY AUTO-CORRECT (corrige erros de digitação) =====
     const originalCity: string | null = city;
     let correctedCity: string | null = null;
-    let neighborhoodFilter: string | null = null; // se "cidade" é na verdade bairro
+    let neighborhoodFilter: string | null = (neighborhood && typeof neighborhood === 'string' && neighborhood.trim()) ? neighborhood.trim() : null; // se "cidade" é na verdade bairro, ou se usuário forneceu bairro explicitamente
     if (city && state) {
       const corrected = await resolveCityName(adminClient, city, state);
       if (corrected && corrected !== city) {

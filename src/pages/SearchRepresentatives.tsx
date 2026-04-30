@@ -20,6 +20,7 @@ export default function SearchRepresentatives() {
   const { toast } = useToast();
   
   const [city, setCity] = useState("");
+  const [neighborhood, setNeighborhood] = useState("");
   const [state, setState] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -36,6 +37,7 @@ export default function SearchRepresentatives() {
     const searchConfig = {
       city,
       state,
+      neighborhood: neighborhood.trim(),
     };
 
     localStorage.setItem("representativeSearchConfig", JSON.stringify(searchConfig));
@@ -93,6 +95,24 @@ export default function SearchRepresentatives() {
                     onChange={(e) => setCity(e.target.value)}
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="neighborhood" className="flex items-center gap-2">
+                  Bairro (opcional)
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-warning/15 text-warning border border-warning/30">
+                    Beta — em testes
+                  </span>
+                </Label>
+                <Input
+                  id="neighborhood"
+                  placeholder="Ex: Centro, Armação..."
+                  value={neighborhood}
+                  onChange={(e) => setNeighborhood(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Funcionalidade experimental — pode não capturar todas as variações de grafia do bairro.
+                </p>
               </div>
 
               <Button
