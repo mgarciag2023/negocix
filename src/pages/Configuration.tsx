@@ -22,6 +22,7 @@ const Configuration = () => {
   const [customCountry, setCustomCountry] = useState("");
   const [state, setState] = useState("");
   const [city, setCity] = useState("");
+  const [neighborhood, setNeighborhood] = useState("");
   const [companySizes, setCompanySizes] = useState<string[]>([]);
   const [revenueRange, setRevenueRange] = useState("all");
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
@@ -130,6 +131,7 @@ const Configuration = () => {
       region,
       state,
       city,
+      neighborhood: neighborhood.trim(),
       country: finalCountry,
       companySizes: companySizes.length > 0 ? companySizes : ['all'],
       revenueRange,
@@ -422,6 +424,27 @@ const Configuration = () => {
                       Digite apenas <strong>uma cidade</strong>. Para buscar em várias, deixe em branco e pesquise pelo estado inteiro.
                     </p>
                   </div>
+                </div>
+
+                {/* Bairro - Beta */}
+                <div>
+                  <Label htmlFor="neighborhood" className="text-base font-semibold flex items-center gap-2" translate="no">
+                    Bairro: (opcional)
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-warning/15 text-warning border border-warning/30">
+                      Beta — em testes
+                    </span>
+                  </Label>
+                  <Input
+                    id="neighborhood"
+                    value={neighborhood}
+                    onChange={(e) => setNeighborhood(e.target.value)}
+                    placeholder="Ex: Centro, Armação..."
+                    className="mt-2"
+                    translate="no"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Filtra leads pelo bairro informado. <strong>Funcionalidade experimental</strong> — pode não capturar todas as variações de grafia do bairro.
+                  </p>
                 </div>
 
                 {/* Company Size - Multiple Selection */}
