@@ -1379,7 +1379,7 @@ serve(async (req) => {
   const isNearSoftTimeout = () => (Date.now() - FUNCTION_START) > SOFT_TIMEOUT_MS;
 
   try {
-    const { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial } = await req.json();
+    const { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial, neighborhood } = await req.json();
     console.log('🔍 LOCAL DB SEARCH v1 - Input:', { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial: !!isTrial });
 
     if (!segment || !region) {
