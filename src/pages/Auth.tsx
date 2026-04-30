@@ -29,23 +29,28 @@ const Auth = () => {
 
   useEffect(() => {
     let isMounted = true;
+    let hasRedirected = false;
+
+    const redirectIfAuthed = (session: Session | null) => {
+      if (hasRedirected) return;
+      if (!session?.user) return;
+      hasRedirected = true;
+      navigate("/", { replace: true });
+    };
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        navigate("/");
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      // Only react to actual sign-in events to avoid loops on TOKEN_REFRESHED / INITIAL_SESSION races
+      if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+        redirectIfAuthed(session);
       }
     });
 
     const restoreSession = async () => {
       const session = await getSessionSafely();
-
       if (!isMounted) return;
-
-      if (session?.user) {
-        navigate("/");
-      }
+      redirectIfAuthed(session);
     };
 
     void restoreSession();
