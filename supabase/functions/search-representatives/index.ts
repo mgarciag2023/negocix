@@ -105,8 +105,17 @@ serve(async (req) => {
   }
 
   try {
-    const { city, state, user_id } = await req.json();
-    console.log("🔍 Searching representatives in local DB:", { city, state });
+    const { city, state, user_id, neighborhood } = await req.json();
+    console.log("🔍 Searching representatives in local DB:", { city, state, neighborhood });
+    const nfNorm = (neighborhood && typeof neighborhood === 'string' && neighborhood.trim())
+      ? normalizeStr(neighborhood) : null;
+    const matchesNeighborhood = (c: any): boolean => {
+      if (!nfNorm) return true;
+      const b = (c?.bairro || '').toString();
+      if (!b) return false;
+      const bn = normalizeStr(b);
+      return bn === nfNorm || bn.includes(nfNorm) || nfNorm.includes(bn);
+    };
 
     if (!state) {
       return new Response(
@@ -167,6 +176,7 @@ serve(async (req) => {
       if (!isPhoneValid(c.telefone_1) && !isPhoneValid(c.telefone_2)) return false;
       const nome = (c.nome_fantasia || c.razao_social || '').trim();
       if (!nome || /^\*+$/.test(nome)) return false;
+      if (!matchesNeighborhood(c)) return false;
       return isRepresentationCompany(nome, c.descricao_cnae || '');
     });
 
