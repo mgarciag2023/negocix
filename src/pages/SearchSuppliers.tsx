@@ -273,25 +273,6 @@ const SearchSuppliers = () => {
                       </Select>
                     </div>
                   </div>
-
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="neighborhood" className="text-sm text-muted-foreground flex items-center gap-2">
-                      Bairro (opcional)
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-warning/15 text-warning border border-warning/30">
-                        Beta — em testes
-                      </span>
-                    </Label>
-                    <Input
-                      id="neighborhood"
-                      placeholder="Ex: Centro, Armação..."
-                      value={neighborhood}
-                      onChange={(e) => setNeighborhood(e.target.value)}
-                      className="h-12 rounded-xl border-border/50 focus:border-primary transition-colors"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Funcionalidade experimental — pode não capturar todas as variações de grafia do bairro.
-                    </p>
-                  </div>
                 </div>
 
                 <Button 
