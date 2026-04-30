@@ -6,7 +6,7 @@ const authStorageKeys = [
   "supabase.auth.token",
 ];
 
-const AUTH_SESSION_TIMEOUT_MS = 10000;
+const AUTH_SESSION_TIMEOUT_MS = 6000;
 
 const isRecoverableAuthError = (error: unknown) => {
   if (!error || typeof error !== "object") return false;
