@@ -1023,6 +1023,25 @@ function generateSearchTerms(segment: string): string[] {
   let searchTerms = categoryTerms[term] || null;
 
   if (!searchTerms) {
+    // Try masculine/feminine gender swap: distribuidoras↔distribuidores, etc.
+    const genderSwaps: [RegExp, string][] = [
+      [/distribuidoras/, 'distribuidores'],
+      [/distribuidores/, 'distribuidoras'],
+      [/fabricantes/, 'fabricante'],
+      [/fabricante/, 'fabricantes'],
+    ];
+    for (const [pattern, replacement] of genderSwaps) {
+      if (pattern.test(term)) {
+        const swapped = term.replace(pattern, replacement);
+        if (categoryTerms[swapped]) {
+          searchTerms = categoryTerms[swapped];
+          break;
+        }
+      }
+    }
+  }
+
+  if (!searchTerms) {
     // Find the LONGEST matching key to prefer specific entries over generic ones
     // e.g. "distribuidoras de congelados" should match before "distribuidoras"
     let bestMatch: string | null = null;
