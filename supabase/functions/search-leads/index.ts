@@ -1229,6 +1229,79 @@ function parseRegion(region: string): { city: string | null; state: string | nul
 // ===== CITY AUTO-CORRECT =====
 // Corrige automaticamente o nome da cidade comparando com as cidades reais
 // presentes no banco para o estado informado. Usa unaccent + similarity (trigram).
+// ===== CITY ALIAS MAP =====
+// Maps common abbreviations, misspellings, and concatenated city names to their correct DB names.
+// Also handles regions that should trigger state-wide search (returns null city).
+const CITY_ALIASES: { [state: string]: { [alias: string]: string | null } } = {
+  'RS': {
+    'CAXIAS': 'CAXIAS DO SUL',
+    'NOVO HAMBURGO': 'NOVO HAMBURGO',
+    'SAO LEOPOLDO': 'SAO LEOPOLDO',
+  },
+  'SP': {
+    'SAOPAULO': 'SAO PAULO',
+    'SAO PAULO CAPITAL': 'SAO PAULO',
+    'SP CAPITAL': 'SAO PAULO',
+    'SAOJOSEDOSCAMPOS': 'SAO JOSE DOS CAMPOS',
+    'SAOBERNARDODOCAMPO': 'SAO BERNARDO DO CAMPO',
+    'RIBEIRAOPRETO': 'RIBEIRAO PRETO',
+    'SAOJOSEDORIOPRETO': 'SAO JOSE DO RIO PRETO',
+    'ABC': null, // region — state-wide search
+    'ABC PAULISTA': null,
+    'GRANDE SAO PAULO': null,
+    'GRANDE SP': null,
+    'BAIXADA SANTISTA': null,
+    'VALE DO PARAIBA': null,
+  },
+  'MG': {
+    'TRIANGULO MINEIRO': null, // region — state-wide
+    'BELOHORIZONTE': 'BELO HORIZONTE',
+    'BH': 'BELO HORIZONTE',
+    'JUIZDEFORA': 'JUIZ DE FORA',
+    'GRANDE BH': null,
+    'REGIAO METROPOLITANA DE BH': null,
+  },
+  'RJ': {
+    'RIODEJANEIRO': 'RIO DE JANEIRO',
+    'RIO': 'RIO DE JANEIRO',
+    'NITEROI': 'NITEROI',
+    'BAIXADA FLUMINENSE': null,
+  },
+  'BA': {
+    'SALVADOR': 'SALVADOR',
+    'FEIRDESANTANA': 'FEIRA DE SANTANA',
+    'FEIRA': 'FEIRA DE SANTANA',
+  },
+  'PR': {
+    'CURITIBA': 'CURITIBA',
+    'LONDRINA': 'LONDRINA',
+    'FOZDEIGUACU': 'FOZ DO IGUACU',
+    'FOZ': 'FOZ DO IGUACU',
+  },
+  'SC': {
+    'FLORIANOPOLIS': 'FLORIANOPOLIS',
+    'FLORIPA': 'FLORIANOPOLIS',
+  },
+  'PE': {
+    'RECIFE': 'RECIFE',
+  },
+  'CE': {
+    'FORTALEZA': 'FORTALEZA',
+  },
+  'GO': {
+    'GOIANIA': 'GOIANIA',
+  },
+  'DF': {
+    'BRASILIA': 'BRASILIA',
+  },
+  'PA': {
+    'BELEM': 'BELEM',
+  },
+  'AM': {
+    'MANAUS': 'MANAUS',
+  },
+};
+
 async function resolveCityName(
   client: any,
   cityInput: string | null,
@@ -1237,6 +1310,20 @@ async function resolveCityName(
   if (!cityInput || !state) return cityInput;
 
   const inputNorm = normalizeText(cityInput);
+
+  // 0) Check city alias map first (handles concatenated names, abbreviations, regions)
+  const stateAliases = CITY_ALIASES[state];
+  if (stateAliases && inputNorm in stateAliases) {
+    const mapped = stateAliases[inputNorm];
+    if (mapped === null) {
+      console.log(`🗺️ "${inputNorm}" is a region, not a city — switching to state-wide search`);
+      return null; // null means search the whole state
+    }
+    if (mapped !== inputNorm) {
+      console.log(`🗺️ City alias: "${inputNorm}" → "${mapped}"`);
+      return mapped;
+    }
+  }
 
   // 1) Match exato — já tá certo
   const { data: exact } = await client
@@ -1277,13 +1364,23 @@ async function resolveCityName(
     return (2 * inter) / (A.size + B.size);
   };
 
+  // Also check if input is a substring of a candidate (handles "CAXIAS" → "CAXIAS DO SUL")
   let best = inputNorm;
   let bestScore = 0;
   for (const c of unique) {
-    const score = dice(inputNorm, c as string);
+    const cStr = c as string;
+    // Bonus: if the candidate starts with the input, give a high score
+    if (cStr.startsWith(inputNorm) && cStr !== inputNorm) {
+      const substringScore = inputNorm.length / cStr.length + 0.3; // e.g. CAXIAS/CAXIAS DO SUL = 0.46 + 0.3 = 0.76
+      if (substringScore > bestScore) {
+        bestScore = substringScore;
+        best = cStr;
+      }
+    }
+    const score = dice(inputNorm, cStr);
     if (score > bestScore) {
       bestScore = score;
-      best = c as string;
+      best = cStr;
     }
   }
 
