@@ -493,7 +493,8 @@ function generateSearchTerms(segment: string): string[] {
 
     // ===== DISTRIBUIDORAS =====
     'distribuidoras de embalagens': ['distribuidora de embalagens', 'distribuidor de embalagens', 'embalagens', 'descartaveis', 'descartáveis', 'atacado de embalagens', 'fornecedor de embalagens', 'embalagens plasticas', 'embalagens plásticas', 'embalagens de papel', 'embalagens de papelao', 'embalagens de papelão', 'embalagens para alimentos', 'embalagens flexiveis', 'embalagens flexíveis', 'embalagens industriais', 'embalagens personalizadas', 'embalagens delivery', 'embalagens take away', 'embalagens biodegradaveis', 'embalagens biodegradáveis', 'embalagens ecologicas', 'embalagens ecológicas', 'sacolas plasticas', 'sacolas plásticas', 'sacos plasticos', 'caixas de papelao', 'caixas de papelão', 'fitas adesivas', 'plastico bolha', 'plástico bolha', 'embalagens hospitalares', 'distribuidores de embalagens', 'distribuidoras de embalagens'],
-    'distribuidores de aço e ferro': ['distribuidora de aco', 'ferro e aco', 'deposito de ferro', 'metalon', 'vergalhao', 'distribuidora de aco e ferro', 'distribuidor de aco e ferro', 'distribuidores de aco e ferro', 'distribuidoras de aco e ferro'],
+    'distribuidores de aço e ferro': ['distribuidora de aco', 'ferro e aco', 'deposito de ferro', 'metalon', 'vergalhao', 'distribuidora de aco e ferro', 'distribuidor de aco e ferro', 'distribuidores de aco e ferro', 'distribuidoras de aco e ferro', 'aco e ferro', 'aço e ferro', 'deposito de aco', 'depósito de aço', 'deposito de ferro e aco', 'siderurgica', 'ferro e aço', 'tubos e conexoes aco', 'comercio de ferro', 'comércio de ferro', 'chapa de aco', 'perfil metalico'],
+    'distribuidoras de aço e ferro': ['distribuidora de aco', 'ferro e aco', 'deposito de ferro', 'metalon', 'vergalhao', 'distribuidora de aco e ferro', 'distribuidor de aco e ferro', 'distribuidores de aco e ferro', 'distribuidoras de aco e ferro', 'aco e ferro', 'aço e ferro', 'deposito de aco', 'depósito de aço', 'deposito de ferro e aco', 'siderurgica', 'ferro e aço', 'tubos e conexoes aco', 'comercio de ferro', 'comércio de ferro', 'chapa de aco', 'perfil metalico'],
     'distribuidores de food service': ['distribuidor de food service', 'distribuidora de food service', 'distribuidores de food service', 'food service distribuidor', 'distribuidor para restaurantes', 'distribuidor para padarias', 'distribuidor para bares', 'distribuidor para hoteis', 'distribuidor para hotéis', 'distribuidor para lanchonetes', 'atacado food service', 'atacadista de food service', 'distribuidor de alimentos para restaurantes', 'distribuidor de alimentos profissionais', 'distribuidor horeca', 'horeca', 'distribuidor de bebidas food service', 'distribuidor de descartaveis food service', 'distribuidor de descartáveis food service', 'distribuidor de produtos institucionais', 'distribuidor de embalagens food service', 'distribuidor de molhos food service', 'distribuidor de carnes food service', 'distribuidor de queijos food service', 'distribuidor de hortifruti food service', 'distribuidor de óleos food service', 'distribuidor de oleos food service', 'distribuidor de produtos congelados food service', 'distribuidor de pre-preparados', 'distribuidor de pré-preparados', 'distribuidor de paneficacao food service', 'distribuidor de salgados', 'distribuidor de produtos de cozinha', 'distribuidor de utensilios food service', 'centro de distribuicao food service', 'centro de distribuição food service', 'distribuidor multiproduto food service', 'distribuidor para coffee shop', 'distribuidor para fast food', 'atacarejo food service', 'distribuidoras de food service'],
     'distribuidores de alimentos': ['distribuidora de alimentos', 'distribuidor de alimentos', 'distribuidoras de alimentos', 'atacado de alimentos', 'atacadista de alimentos', 'distribuidor food service', 'distribuidor de food service', 'distribuidor de produtos alimenticios', 'distribuidor de produtos alimentícios', 'distribuidor de cesta basica', 'distribuidor de cesta básica', 'distribuidor de mercearia', 'distribuidor de bebidas e alimentos', 'distribuidor de congelados', 'distribuidor de carnes', 'distribuidor de laticinios', 'distribuidor de laticínios', 'distribuidor de hortifruti', 'distribuidor de hortifrúti', 'distribuidor de doces', 'distribuidor de matinais', 'distribuidor de cereais', 'distribuidor de oleos', 'distribuidor de óleos', 'distribuidor de massas', 'distribuidor de molhos', 'distribuidor de descartaveis', 'distribuidor de descartáveis', 'atacado de food service', 'distribuidor de produtos secos', 'distribuidor de bebidas', 'depósito de alimentos atacado', 'centro de distribuicao de alimentos', 'centro de distribuição de alimentos', 'distribuidor de produtos para restaurante', 'distribuidor para padarias', 'distribuidor para supermercados', 'atacarejo', 'distribuidores de alimentos'],
     'distribuidores de bebidas': ['distribuidora de bebidas', 'deposito de bebidas', 'atacadista de bebidas', 'atacado de bebidas', 'deposito de bebidas atacado', 'depósito de bebidas atacado', 'atacadista de cerveja', 'distribuidor de cerveja', 'distribuidor de refrigerante', 'atacado de cerveja e refrigerante', 'deposito de cerveja e refri', 'distribuidora de drinks', 'distribuidor de bebidas', 'distribuidores de bebidas', 'distribuidoras de bebidas'],
@@ -1022,6 +1023,25 @@ function generateSearchTerms(segment: string): string[] {
   let searchTerms = categoryTerms[term] || null;
 
   if (!searchTerms) {
+    // Try masculine/feminine gender swap: distribuidoras↔distribuidores, etc.
+    const genderSwaps: [RegExp, string][] = [
+      [/distribuidoras/, 'distribuidores'],
+      [/distribuidores/, 'distribuidoras'],
+      [/fabricantes/, 'fabricante'],
+      [/fabricante/, 'fabricantes'],
+    ];
+    for (const [pattern, replacement] of genderSwaps) {
+      if (pattern.test(term)) {
+        const swapped = term.replace(pattern, replacement);
+        if (categoryTerms[swapped]) {
+          searchTerms = categoryTerms[swapped];
+          break;
+        }
+      }
+    }
+  }
+
+  if (!searchTerms) {
     // Find the LONGEST matching key to prefer specific entries over generic ones
     // e.g. "distribuidoras de congelados" should match before "distribuidoras"
     let bestMatch: string | null = null;
@@ -1229,6 +1249,79 @@ function parseRegion(region: string): { city: string | null; state: string | nul
 // ===== CITY AUTO-CORRECT =====
 // Corrige automaticamente o nome da cidade comparando com as cidades reais
 // presentes no banco para o estado informado. Usa unaccent + similarity (trigram).
+// ===== CITY ALIAS MAP =====
+// Maps common abbreviations, misspellings, and concatenated city names to their correct DB names.
+// Also handles regions that should trigger state-wide search (returns null city).
+const CITY_ALIASES: { [state: string]: { [alias: string]: string | null } } = {
+  'RS': {
+    'CAXIAS': 'CAXIAS DO SUL',
+    'NOVO HAMBURGO': 'NOVO HAMBURGO',
+    'SAO LEOPOLDO': 'SAO LEOPOLDO',
+  },
+  'SP': {
+    'SAOPAULO': 'SAO PAULO',
+    'SAO PAULO CAPITAL': 'SAO PAULO',
+    'SP CAPITAL': 'SAO PAULO',
+    'SAOJOSEDOSCAMPOS': 'SAO JOSE DOS CAMPOS',
+    'SAOBERNARDODOCAMPO': 'SAO BERNARDO DO CAMPO',
+    'RIBEIRAOPRETO': 'RIBEIRAO PRETO',
+    'SAOJOSEDORIOPRETO': 'SAO JOSE DO RIO PRETO',
+    'ABC': null, // region — state-wide search
+    'ABC PAULISTA': null,
+    'GRANDE SAO PAULO': null,
+    'GRANDE SP': null,
+    'BAIXADA SANTISTA': null,
+    'VALE DO PARAIBA': null,
+  },
+  'MG': {
+    'TRIANGULO MINEIRO': null, // region — state-wide
+    'BELOHORIZONTE': 'BELO HORIZONTE',
+    'BH': 'BELO HORIZONTE',
+    'JUIZDEFORA': 'JUIZ DE FORA',
+    'GRANDE BH': null,
+    'REGIAO METROPOLITANA DE BH': null,
+  },
+  'RJ': {
+    'RIODEJANEIRO': 'RIO DE JANEIRO',
+    'RIO': 'RIO DE JANEIRO',
+    'NITEROI': 'NITEROI',
+    'BAIXADA FLUMINENSE': null,
+  },
+  'BA': {
+    'SALVADOR': 'SALVADOR',
+    'FEIRDESANTANA': 'FEIRA DE SANTANA',
+    'FEIRA': 'FEIRA DE SANTANA',
+  },
+  'PR': {
+    'CURITIBA': 'CURITIBA',
+    'LONDRINA': 'LONDRINA',
+    'FOZDEIGUACU': 'FOZ DO IGUACU',
+    'FOZ': 'FOZ DO IGUACU',
+  },
+  'SC': {
+    'FLORIANOPOLIS': 'FLORIANOPOLIS',
+    'FLORIPA': 'FLORIANOPOLIS',
+  },
+  'PE': {
+    'RECIFE': 'RECIFE',
+  },
+  'CE': {
+    'FORTALEZA': 'FORTALEZA',
+  },
+  'GO': {
+    'GOIANIA': 'GOIANIA',
+  },
+  'DF': {
+    'BRASILIA': 'BRASILIA',
+  },
+  'PA': {
+    'BELEM': 'BELEM',
+  },
+  'AM': {
+    'MANAUS': 'MANAUS',
+  },
+};
+
 async function resolveCityName(
   client: any,
   cityInput: string | null,
@@ -1237,6 +1330,20 @@ async function resolveCityName(
   if (!cityInput || !state) return cityInput;
 
   const inputNorm = normalizeText(cityInput);
+
+  // 0) Check city alias map first (handles concatenated names, abbreviations, regions)
+  const stateAliases = CITY_ALIASES[state];
+  if (stateAliases && inputNorm in stateAliases) {
+    const mapped = stateAliases[inputNorm];
+    if (mapped === null) {
+      console.log(`🗺️ "${inputNorm}" is a region, not a city — switching to state-wide search`);
+      return null; // null means search the whole state
+    }
+    if (mapped !== inputNorm) {
+      console.log(`🗺️ City alias: "${inputNorm}" → "${mapped}"`);
+      return mapped;
+    }
+  }
 
   // 1) Match exato — já tá certo
   const { data: exact } = await client
@@ -1277,13 +1384,23 @@ async function resolveCityName(
     return (2 * inter) / (A.size + B.size);
   };
 
+  // Also check if input is a substring of a candidate (handles "CAXIAS" → "CAXIAS DO SUL")
   let best = inputNorm;
   let bestScore = 0;
   for (const c of unique) {
-    const score = dice(inputNorm, c as string);
+    const cStr = c as string;
+    // Bonus: if the candidate starts with the input, give a high score
+    if (cStr.startsWith(inputNorm) && cStr !== inputNorm) {
+      const substringScore = inputNorm.length / cStr.length + 0.3; // e.g. CAXIAS/CAXIAS DO SUL = 0.46 + 0.3 = 0.76
+      if (substringScore > bestScore) {
+        bestScore = substringScore;
+        best = cStr;
+      }
+    }
+    const score = dice(inputNorm, cStr);
     if (score > bestScore) {
       bestScore = score;
-      best = c as string;
+      best = cStr;
     }
   }
 
@@ -1407,7 +1524,13 @@ serve(async (req) => {
     let neighborhoodFilter: string | null = (neighborhood && typeof neighborhood === 'string' && neighborhood.trim()) ? neighborhood.trim() : null; // se "cidade" é na verdade bairro, ou se usuário forneceu bairro explicitamente
     if (city && state) {
       const corrected = await resolveCityName(adminClient, city, state);
-      if (corrected && corrected !== city) {
+      if (corrected === null) {
+        // Region detected (e.g. "Triângulo Mineiro") — switch to state-wide search
+        console.log(`🗺️ "${city}" é uma região — busca estadual em ${state}`);
+        correctedCity = null;
+        city = null;
+        isStateOnly = true;
+      } else if (corrected !== city) {
         console.log(`✅ Cidade corrigida: "${city}" → "${corrected}"`);
         correctedCity = corrected;
         city = corrected;
@@ -1980,6 +2103,10 @@ serve(async (req) => {
             'pao de queijo': ['pao de queijo'],
             'racao animal': ['racao', 'nutricao animal', 'pet'],
             'produtos de limpeza': ['limpeza', 'detergente', 'desinfetante'],
+            'estofados': ['estofad', 'sofa', 'sofá', 'poltrona', 'cadeira', 'movel', 'moveis', 'tapecar', 'espuma'],
+            'colchoes': ['colchao', 'colchão', 'colchoes', 'colchões', 'cama', 'box', 'espuma', 'ortopedico'],
+            'texteis': ['textil', 'têxtil', 'tecelagem', 'fiacao', 'fiação', 'tecido', 'malha', 'algodao'],
+            'construcao metalica': ['metalic', 'estrutura', 'galpao', 'aco', 'aço', 'solda', 'serralheria', 'steel'],
           };
           const mapped = industryProductMap[product];
           if (mapped) productKws.push(...mapped);
@@ -1989,6 +2116,7 @@ serve(async (req) => {
 
       const beforeIndustryFilter = allCompanies.length;
       allCompanies = allCompanies.filter(c => {
+        if (c._viaCnae) return true;
         const seg = (c._segment || '').toLowerCase();
         const isIndustrySeg = seg.includes('industria') || seg.includes('indústria') || seg.includes('fabrica') || seg.includes('fábrica');
         if (!isIndustrySeg) return true;
@@ -1997,17 +2125,25 @@ serve(async (req) => {
         const rs = normalizeText(c.razao_social || '').toLowerCase();
         const combined = `${nf} ${rs}`;
 
-        // Must be an actual industry/factory
-        const isIndustry = industryKeywords.some(kw => combined.includes(kw));
-        if (!isIndustry) return false;
-
-        // Must match the product segment
+        // Must match the product segment in name
         const productKws = industryProductKeywords[seg];
+        if (productKws && productKws.length > 0) {
+          const hasProductMatch = productKws.some(pk => combined.includes(pk));
+          if (!hasProductMatch) return false;
+        }
+
+        // Accept if company has industry indicator OR has the product keyword prominently
+        // (e.g. "Estofados Silva Ltda" is a legitimate estofados industry even without "industria" in the name)
+        const isIndustry = industryKeywords.some(kw => combined.includes(kw));
+        if (isIndustry) return true;
+
+        // If product keywords match the name, accept even without "industria" keyword
+        // This handles "Estofados Silva", "Colchões Brasil", etc.
         if (productKws && productKws.length > 0) {
           return productKws.some(pk => combined.includes(pk));
         }
 
-        return true;
+        return false;
       });
       console.log(`🏭 Industry strict filter: ${allCompanies.length} (removed ${beforeIndustryFilter - allCompanies.length} non-matching industries)`);
     }
