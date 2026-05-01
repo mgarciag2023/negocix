@@ -2103,6 +2103,10 @@ serve(async (req) => {
             'pao de queijo': ['pao de queijo'],
             'racao animal': ['racao', 'nutricao animal', 'pet'],
             'produtos de limpeza': ['limpeza', 'detergente', 'desinfetante'],
+            'estofados': ['estofad', 'sofa', 'sofá', 'poltrona', 'cadeira', 'movel', 'moveis', 'tapecar', 'espuma'],
+            'colchoes': ['colchao', 'colchão', 'colchoes', 'colchões', 'cama', 'box', 'espuma', 'ortopedico'],
+            'texteis': ['textil', 'têxtil', 'tecelagem', 'fiacao', 'fiação', 'tecido', 'malha', 'algodao'],
+            'construcao metalica': ['metalic', 'estrutura', 'galpao', 'aco', 'aço', 'solda', 'serralheria', 'steel'],
           };
           const mapped = industryProductMap[product];
           if (mapped) productKws.push(...mapped);
