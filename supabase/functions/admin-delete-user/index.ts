@@ -17,6 +17,8 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
     const authHeader = req.headers.get('authorization');
+    const isServiceCall = authHeader === `Bearer ${supabaseServiceKey}`;
+
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
         status: 401,
