@@ -450,9 +450,16 @@ const Auth = () => {
                       placeholder="••••••••"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="pl-11 h-12 bg-background/50 border-border/50 focus:border-primary transition-all"
+                      className="pl-11 pr-11 h-12 bg-background/50 border-border/50 focus:border-primary transition-all"
                       required
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
                   {errors.confirmPassword && (
                     <p className="text-sm text-destructive flex items-center gap-1">
