@@ -2093,6 +2093,7 @@ serve(async (req) => {
 
       const beforeIndustryFilter = allCompanies.length;
       allCompanies = allCompanies.filter(c => {
+        if (c._viaCnae) return true;
         const seg = (c._segment || '').toLowerCase();
         const isIndustrySeg = seg.includes('industria') || seg.includes('indústria') || seg.includes('fabrica') || seg.includes('fábrica');
         if (!isIndustrySeg) return true;
@@ -2101,17 +2102,25 @@ serve(async (req) => {
         const rs = normalizeText(c.razao_social || '').toLowerCase();
         const combined = `${nf} ${rs}`;
 
-        // Must be an actual industry/factory
-        const isIndustry = industryKeywords.some(kw => combined.includes(kw));
-        if (!isIndustry) return false;
-
-        // Must match the product segment
+        // Must match the product segment in name
         const productKws = industryProductKeywords[seg];
+        if (productKws && productKws.length > 0) {
+          const hasProductMatch = productKws.some(pk => combined.includes(pk));
+          if (!hasProductMatch) return false;
+        }
+
+        // Accept if company has industry indicator OR has the product keyword prominently
+        // (e.g. "Estofados Silva Ltda" is a legitimate estofados industry even without "industria" in the name)
+        const isIndustry = industryKeywords.some(kw => combined.includes(kw));
+        if (isIndustry) return true;
+
+        // If product keywords match the name, accept even without "industria" keyword
+        // This handles "Estofados Silva", "Colchões Brasil", etc.
         if (productKws && productKws.length > 0) {
           return productKws.some(pk => combined.includes(pk));
         }
 
-        return true;
+        return false;
       });
       console.log(`🏭 Industry strict filter: ${allCompanies.length} (removed ${beforeIndustryFilter - allCompanies.length} non-matching industries)`);
     }
