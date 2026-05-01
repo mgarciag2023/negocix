@@ -1504,7 +1504,13 @@ serve(async (req) => {
     let neighborhoodFilter: string | null = (neighborhood && typeof neighborhood === 'string' && neighborhood.trim()) ? neighborhood.trim() : null; // se "cidade" é na verdade bairro, ou se usuário forneceu bairro explicitamente
     if (city && state) {
       const corrected = await resolveCityName(adminClient, city, state);
-      if (corrected && corrected !== city) {
+      if (corrected === null) {
+        // Region detected (e.g. "Triângulo Mineiro") — switch to state-wide search
+        console.log(`🗺️ "${city}" é uma região — busca estadual em ${state}`);
+        correctedCity = null;
+        city = null;
+        isStateOnly = true;
+      } else if (corrected !== city) {
         console.log(`✅ Cidade corrigida: "${city}" → "${corrected}"`);
         correctedCity = corrected;
         city = corrected;
