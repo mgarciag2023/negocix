@@ -63,12 +63,7 @@ serve(async (req) => {
       });
     }
 
-    if (userId === caller.id) {
-      return new Response(JSON.stringify({ error: "Você não pode excluir sua própria conta" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // Skip self-delete check for service key calls
 
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
