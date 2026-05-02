@@ -7,11 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { getSessionSafely } from "@/lib/auth-session";
-import { Building2, Mail, Lock, ArrowRight, Eye, EyeOff, Sparkles, Target, TrendingUp, Shield, User, Phone } from "lucide-react";
+import { Building2, Mail, Lock, ArrowRight, Eye, EyeOff, Sparkles, Target, TrendingUp, Shield, User, Phone, Check, X } from "lucide-react";
 import { z } from "zod";
 
 const emailSchema = z.string().email("Email inválido").max(255);
-const passwordSchema = z.string().min(6, "Senha deve ter no mínimo 6 caracteres").max(100);
+const passwordSchema = z.string().min(8, "Mínimo 8 caracteres").max(100)
+  .regex(/[A-Z]/, "Deve conter letra maiúscula")
+  .regex(/[0-9]/, "Deve conter número")
+  .regex(/[^A-Za-z0-9]/, "Deve conter símbolo (!@#$...)");
 const nameSchema = z.string().min(2, "Nome deve ter no mínimo 2 caracteres").max(100);
 const phoneSchema = z.string().min(10, "Telefone deve ter no mínimo 10 dígitos").max(20);
 
@@ -420,6 +423,25 @@ const Auth = () => {
                     <span className="inline-block w-1 h-1 rounded-full bg-destructive" />
                     {errors.password}
                   </p>
+                )}
+                {!isLogin && password.length > 0 && (
+                  <div className="space-y-1 mt-1">
+                    {[
+                      { ok: password.length >= 8, label: "Mínimo 8 caracteres" },
+                      { ok: /[A-Z]/.test(password), label: "Letra maiúscula (A-Z)" },
+                      { ok: /[0-9]/.test(password), label: "Número (0-9)" },
+                      { ok: /[^A-Za-z0-9]/.test(password), label: "Símbolo (!@#$...)" },
+                    ].map((r) => (
+                      <div key={r.label} className="flex items-center gap-1.5 text-xs">
+                        {r.ok ? (
+                          <Check className="h-3 w-3 text-green-500" />
+                        ) : (
+                          <X className="h-3 w-3 text-muted-foreground" />
+                        )}
+                        <span className={r.ok ? "text-green-500" : "text-muted-foreground"}>{r.label}</span>
+                      </div>
+                    ))}
+                  </div>
                 )}
                 {isLogin && (
                   <div className="flex justify-end">
