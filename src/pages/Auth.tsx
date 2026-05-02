@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { getSessionSafely } from "@/lib/auth-session";
-import { Building2, Mail, Lock, ArrowRight, Eye, EyeOff, Sparkles, Target, TrendingUp, Shield, User, Phone } from "lucide-react";
+import { Building2, Mail, Lock, ArrowRight, Eye, EyeOff, Sparkles, Target, TrendingUp, Shield, User, Phone, Check, X } from "lucide-react";
 import { z } from "zod";
 
 const emailSchema = z.string().email("Email inválido").max(255);
