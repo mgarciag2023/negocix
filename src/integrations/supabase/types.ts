@@ -149,6 +149,39 @@ export type Database = {
         }
         Relationships: []
       }
+      failed_signup_attempts: {
+        Row: {
+          created_at: string
+          email: string
+          error_code: string | null
+          error_message: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          error_code?: string | null
+          error_message: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          error_code?: string | null
+          error_message?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           blocked_at: string | null
