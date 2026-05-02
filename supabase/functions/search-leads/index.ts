@@ -2029,6 +2029,9 @@ serve(async (req) => {
             'racao animal': ['racao', 'pet', 'animal', 'nutricao animal'],
             'eletronicos': ['eletronico', 'informatica', 'tecnologia'],
             'autopeças': ['autopeca', 'auto peca', 'automotiv', 'veiculo'],
+            'aco e ferro': ['aco', 'ferro', 'siderurg', 'metalon', 'vergalh', 'chapa', 'perfil metalic', 'tubos de aco', 'barras de aco', 'metalurgic', 'ferragens'],
+            'aco': ['aco', 'ferro', 'siderurg', 'metalon', 'vergalh', 'chapa', 'perfil metalic', 'metalurgic'],
+            'ferro': ['ferro', 'aco', 'siderurg', 'metalon', 'vergalh', 'metalurgic', 'ferragens'],
           };
           const normalizedProduct = product.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
           const mapped = productMap[normalizedProduct] || productMap[product];
