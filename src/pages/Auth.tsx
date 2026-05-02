@@ -185,6 +185,18 @@ const Auth = () => {
             errorDesc = "Erro de conexão. Verifique sua internet e tente novamente.";
           }
 
+          // Log failed signup attempt
+          try {
+            await supabase.from("failed_signup_attempts").insert({
+              email: email.trim(),
+              error_code: String(error.status || "unknown"),
+              error_message: error.message,
+              full_name: fullName.trim() || null,
+              phone: phone.replace(/\D/g, "") || null,
+              user_agent: navigator.userAgent,
+            });
+          } catch (_) { /* silently fail logging */ }
+
           toast({
             title: errorTitle,
             description: errorDesc,
