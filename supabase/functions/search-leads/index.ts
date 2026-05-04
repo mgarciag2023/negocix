@@ -2034,6 +2034,19 @@ serve(async (req) => {
             'aco e ferro': ['aco', 'ferro', 'siderurg', 'metalon', 'vergalh', 'chapa', 'perfil metalic', 'tubos de aco', 'barras de aco', 'metalurgic', 'ferragens'],
             'aco': ['aco', 'ferro', 'siderurg', 'metalon', 'vergalh', 'chapa', 'perfil metalic', 'metalurgic'],
             'ferro': ['ferro', 'aco', 'siderurg', 'metalon', 'vergalh', 'metalurgic', 'ferragens'],
+            'material de construcao': ['construcao', 'construcoes', 'materiais', 'material', 'cimento', 'argamassa', 'ferragens', 'ferro', 'aco', 'telha', 'tijolo', 'areia', 'brita', 'cal', 'gesso', 'drywall', 'madeira', 'piso', 'revestimento', 'azulejo', 'porcelanato', 'ceramica', 'hidraulic', 'eletric', 'tintas', 'acabamento', 'esquadria', 'vidro', 'marmore', 'granito', 'aluminio', 'tubos', 'conexoes', 'obra'],
+            'materiais de construcao': ['construcao', 'construcoes', 'materiais', 'material', 'cimento', 'argamassa', 'ferragens', 'ferro', 'aco', 'telha', 'tijolo', 'areia', 'brita', 'cal', 'gesso', 'drywall', 'madeira', 'piso', 'revestimento', 'azulejo', 'porcelanato', 'ceramica', 'hidraulic', 'eletric', 'tintas', 'acabamento', 'esquadria', 'vidro', 'marmore', 'granito', 'aluminio', 'tubos', 'conexoes', 'obra'],
+            'material eletrico': ['eletric', 'eletro', 'fios', 'cabos', 'disjuntor', 'tomada', 'iluminacao', 'lampada', 'led', 'painel eletrico', 'quadro eletrico', 'conduite', 'eletroduto'],
+            'materiais eletricos': ['eletric', 'eletro', 'fios', 'cabos', 'disjuntor', 'tomada', 'iluminacao', 'lampada', 'led', 'painel eletrico', 'quadro eletrico', 'conduite', 'eletroduto'],
+            'material de escritorio': ['escritorio', 'papelaria', 'papel', 'caneta', 'impressora', 'toner', 'cartuchos', 'suprimentos', 'office'],
+            'materiais de escritorio': ['escritorio', 'papelaria', 'papel', 'caneta', 'impressora', 'toner', 'cartuchos', 'suprimentos', 'office'],
+            'material de limpeza': ['limpeza', 'higiene', 'quimic', 'detergente', 'desinfetante', 'sabao', 'produto de limpeza', 'descartav'],
+            'materiais de limpeza': ['limpeza', 'higiene', 'quimic', 'detergente', 'desinfetante', 'sabao', 'produto de limpeza', 'descartav'],
+            'cosmeticos': ['cosmetic', 'beleza', 'perfum', 'maquiagem', 'capilar', 'cabelo', 'estetica', 'skincare', 'pele'],
+            'perfumaria': ['perfum', 'cosmetic', 'beleza', 'fragrancia', 'essencia'],
+            'medicamentos': ['medicament', 'farmac', 'remedio', 'droga', 'farmaceutic', 'saude'],
+            'produtos quimicos': ['quimic', 'reagente', 'solvente', 'acido', 'base', 'produto quimico'],
+            'pecas automotivas': ['autopeca', 'auto peca', 'automotiv', 'veiculo', 'peca', 'motor', 'freio', 'suspensao'],
           };
           const normalizedProduct = product.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
           const mapped = productMap[normalizedProduct] || productMap[product];
