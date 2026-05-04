@@ -1989,8 +1989,14 @@ serve(async (req) => {
         'exportador', 'exportadora',
         'trading', 'supply',
         'logistic', 'logística',
-        'deposito', 'deposito de',
+        'deposito', 'depósito',
         'comercio de ferro', 'comercio de aco',
+        'comercio de material', 'comercio de materiais',
+        'comercial de material', 'comercial de materiais',
+        'comercio de construcao', 'comercio de construção',
+        'home center', 'centro de construcao',
+        'materiais de construcao', 'material de construcao',
+        'materiais para construcao', 'material para construcao',
       ];
 
       // Build product-specific keywords per distributor segment
