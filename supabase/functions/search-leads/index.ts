@@ -1213,6 +1213,33 @@ function parseRegion(region: string): { city: string | null; state: string | nul
   const clean = region.trim();
   const parts = clean.split(/[,\-]+/).map(p => p.trim()).filter(p => p.length > 0);
 
+  // Helper: clean city name by removing parenthesized content, trailing state abbreviations, and short garbage tokens
+  const cleanCityName = (raw: string, detectedState: string | null): string => {
+    let c = raw;
+    // Remove parenthesized content like "(SP)", "(PR)"
+    c = c.replace(/\s*\([^)]*\)\s*/g, ' ');
+    // Normalize to uppercase for processing
+    c = normalizeText(c);
+    // Remove trailing state abbreviation if present (e.g. "CURITIBA PR" -> "CURITIBA")
+    if (detectedState) {
+      const statePattern = new RegExp(`\\s+${detectedState}\\s*$`, 'i');
+      c = c.replace(statePattern, '');
+    }
+    // Also try removing any trailing 2-letter state abbreviation
+    for (const abbr of stateAbbrevs) {
+      const trailingPattern = new RegExp(`\\s+${abbr}\\s*$`);
+      if (trailingPattern.test(c)) {
+        c = c.replace(trailingPattern, '');
+        break;
+      }
+    }
+    // Remove short garbage tokens (1-2 char tokens that aren't part of known city names like "DO", "DE", "DA", "DO", "DOS", "DAS")
+    const keepWords = new Set(['DO', 'DA', 'DE', 'DOS', 'DAS', 'DES', 'DEL', 'EM', 'NO', 'NA', 'NOS', 'NAS', 'E']);
+    const words = c.split(/\s+/).filter(w => w.length > 2 || keepWords.has(w));
+    c = words.join(' ').trim();
+    return c;
+  };
+
   if (parts.length >= 2) {
     const cityRaw = parts[0];
     const stateRaw = parts[parts.length - 1].toUpperCase().trim();
@@ -1226,8 +1253,8 @@ function parseRegion(region: string): { city: string | null; state: string | nul
       state = stateNameMap[normalizedLower] || null;
     }
     
-    const city = normalizeText(cityRaw);
-    return { city, state, isStateOnly: false };
+    const city = cleanCityName(cityRaw, state);
+    return { city: city || normalizeText(cityRaw), state, isStateOnly: false };
   }
 
   // Single value
