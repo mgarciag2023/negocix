@@ -59,6 +59,9 @@ function getCnaesForSegment(segment: string): string[] {
     // agropecuária, casas agropecuárias, distribuidoras de alimentos/bebidas/autopeças,
     // laticínios, queijarias. Para esses, FTS por nome é mais preciso que CNAE.
     // ===== ESPECIALIZADOS / NICHO QUE AINDA USAM CNAE =====
+    // Academias - CNAE específico para condicionamento físico
+    'academias': ['9313100', '9319199'],
+    'academia': ['9313100', '9319199'],
     // Hidráulica - CNAE específico do setor
     'lojas de materiais hidráulicos': ['4744003'],
     'lojas de materiais hidraulicos': ['4744003'],
@@ -1269,6 +1272,19 @@ function parseRegion(region: string): { city: string | null; state: string | nul
     return { city: null, state: stateNameMap[singleLower], isStateOnly: true };
   }
   
+  // Check if single value is a known region name (without state)
+  const regionToState: { [key: string]: string } = {
+    'triangulo mineiro': 'MG', 'abc paulista': 'SP', 'abc': 'SP',
+    'baixada santista': 'SP', 'vale do paraiba': 'SP', 'grande sao paulo': 'SP',
+    'baixada fluminense': 'RJ', 'grande rio': 'RJ', 'regiao dos lagos': 'RJ',
+    'vale do itajai': 'SC', 'serra gaucha': 'RS', 'vale dos sinos': 'RS',
+    'reconcavo baiano': 'BA', 'sul de minas': 'MG', 'zona da mata': 'MG',
+    'norte do parana': 'PR', 'entorno do df': 'GO',
+  };
+  if (regionToState[singleLower]) {
+    return { city: null, state: regionToState[singleLower], isStateOnly: true };
+  }
+
   // Assume it's a city
   return { city: singleNorm, state: null, isStateOnly: false };
 }
@@ -1284,6 +1300,14 @@ const CITY_ALIASES: { [state: string]: { [alias: string]: string | null } } = {
     'CAXIAS': 'CAXIAS DO SUL',
     'NOVO HAMBURGO': 'NOVO HAMBURGO',
     'SAO LEOPOLDO': 'SAO LEOPOLDO',
+    'PORTOALEGRE': 'PORTO ALEGRE',
+    'VALE DO SINOS': null, // region
+    'VALE DOS SINOS': null,
+    'SERRA GAUCHA': null,
+    'SERRA GAÚCHA': null,
+    'REGIAO METROPOLITANA DE PORTO ALEGRE': null,
+    'LITORAL NORTE RS': null,
+    'LITORAL GAUCHO': null,
   },
   'SP': {
     'SAOPAULO': 'SAO PAULO',
@@ -1293,59 +1317,102 @@ const CITY_ALIASES: { [state: string]: { [alias: string]: string | null } } = {
     'SAOBERNARDODOCAMPO': 'SAO BERNARDO DO CAMPO',
     'RIBEIRAOPRETO': 'RIBEIRAO PRETO',
     'SAOJOSEDORIOPRETO': 'SAO JOSE DO RIO PRETO',
-    'ABC': null, // region — state-wide search
+    'SAOCARLOS': 'SAO CARLOS',
+    'SAOVICENTE': 'SAO VICENTE',
+    'PRAIAGRANDE': 'PRAIA GRANDE',
+    'ABC': null,
     'ABC PAULISTA': null,
     'GRANDE SAO PAULO': null,
     'GRANDE SP': null,
     'BAIXADA SANTISTA': null,
     'VALE DO PARAIBA': null,
+    'ALTA PAULISTA': null,
+    'ALTA MOGIANA': null,
+    'REGIAO DE CAMPINAS': null,
+    'REGIAO DE SOROCABA': null,
+    'REGIAO DE RIBEIRAO PRETO': null,
+    'REGIAO METROPOLITANA DE SAO PAULO': null,
   },
   'MG': {
-    'TRIANGULO MINEIRO': null, // region — state-wide
+    'TRIANGULO MINEIRO': null,
     'BELOHORIZONTE': 'BELO HORIZONTE',
     'BH': 'BELO HORIZONTE',
     'JUIZDEFORA': 'JUIZ DE FORA',
     'GRANDE BH': null,
     'REGIAO METROPOLITANA DE BH': null,
+    'REGIAO METROPOLITANA DE BELO HORIZONTE': null,
+    'ZONA DA MATA MINEIRA': null,
+    'ZONA DA MATA': null,
+    'SUL DE MINAS': null,
+    'NORTE DE MINAS': null,
+    'ALTO PARANAIBA': null,
   },
   'RJ': {
     'RIODEJANEIRO': 'RIO DE JANEIRO',
     'RIO': 'RIO DE JANEIRO',
     'NITEROI': 'NITEROI',
     'BAIXADA FLUMINENSE': null,
+    'GRANDE RIO': null,
+    'REGIAO SERRANA': null,
+    'REGIAO DOS LAGOS': null,
+    'COSTA VERDE': null,
   },
   'BA': {
     'SALVADOR': 'SALVADOR',
     'FEIRDESANTANA': 'FEIRA DE SANTANA',
+    'FEIRADESENTANA': 'FEIRA DE SANTANA',
     'FEIRA': 'FEIRA DE SANTANA',
+    'RECÔNCAVO BAIANO': null,
+    'RECONCAVO BAIANO': null,
   },
   'PR': {
     'CURITIBA': 'CURITIBA',
     'LONDRINA': 'LONDRINA',
     'FOZDEIGUACU': 'FOZ DO IGUACU',
     'FOZ': 'FOZ DO IGUACU',
+    'SAOJOSEDOSPINHAIS': 'SAO JOSE DOS PINHAIS',
+    'PONTAGROSSA': 'PONTA GROSSA',
+    'REGIAO METROPOLITANA DE CURITIBA': null,
+    'NORTE DO PARANA': null,
   },
   'SC': {
     'FLORIANOPOLIS': 'FLORIANOPOLIS',
     'FLORIPA': 'FLORIANOPOLIS',
+    'VALE DO ITAJAI': null,
+    'NORTE CATARINENSE': null,
   },
   'PE': {
     'RECIFE': 'RECIFE',
+    'REGIAO METROPOLITANA DE RECIFE': null,
   },
   'CE': {
     'FORTALEZA': 'FORTALEZA',
+    'REGIAO METROPOLITANA DE FORTALEZA': null,
   },
   'GO': {
     'GOIANIA': 'GOIANIA',
+    'ENTORNO DO DF': null,
   },
   'DF': {
     'BRASILIA': 'BRASILIA',
+    'ENTORNO DE BRASILIA': null,
   },
   'PA': {
     'BELEM': 'BELEM',
   },
   'AM': {
     'MANAUS': 'MANAUS',
+  },
+  'MT': {
+    'TRIANGULO MINEIRO': null, // some users confuse states
+    'CUIABA': 'CUIABA',
+  },
+  'MS': {
+    'CAMPOGRANDE': 'CAMPO GRANDE',
+  },
+  'MA': {
+    'SAOLUIS': 'SAO LUIS',
+    'SAO LUIZ': 'SAO LUIS',
   },
 };
 
@@ -1372,6 +1439,11 @@ async function resolveCityName(
     }
   }
 
+  // 0.5) Generic concatenated city name detection
+  // If the input has no spaces and is long (>8 chars), try to split it into words
+  // by matching against known city names in the state
+  const inputHasNoSpaces = !inputNorm.includes(' ') && inputNorm.length > 8;
+
   // 1) Match exato — já tá certo
   const { data: exact } = await client
     .from('companies')
@@ -1380,6 +1452,33 @@ async function resolveCityName(
     .eq('cidade', inputNorm)
     .limit(1);
   if (exact && exact.length > 0) return inputNorm;
+
+  // 1.5) If input has no spaces and no exact match, try ILIKE with wildcards inserted
+  if (inputHasNoSpaces) {
+    // Try common split patterns: "SAOPAULO" → "SAO PAULO", "RIBEIRAOPRETO" → "RIBEIRAO PRETO"
+    // Build a pattern with optional spaces between each char cluster
+    const likePattern = inputNorm.split('').join('%');
+    const { data: concatMatch } = await client
+      .from('companies')
+      .select('cidade')
+      .eq('estado', state)
+      .not('cidade', 'is', null)
+      .ilike('cidade', likePattern)
+      .limit(10);
+    if (concatMatch && concatMatch.length > 0) {
+      const uniqueMatches = Array.from(new Set(concatMatch.map((c: any) => c.cidade).filter(Boolean)));
+      // Pick the one whose characters (without spaces) most closely match input
+      const bestConcat = uniqueMatches.find((c: any) => (c as string).replace(/\s+/g, '') === inputNorm);
+      if (bestConcat) {
+        console.log(`🔤 Concatenated city fixed: "${inputNorm}" → "${bestConcat}"`);
+        return bestConcat as string;
+      }
+      // If no exact char match, take the shortest candidate
+      uniqueMatches.sort((a: any, b: any) => (a as string).length - (b as string).length);
+      console.log(`🔤 Concatenated city best guess: "${inputNorm}" → "${uniqueMatches[0]}"`);
+      return uniqueMatches[0] as string;
+    }
+  }
 
   // 2) Buscar candidatas distintas do estado e escolher a mais parecida
   // (faixa razoável: cidades que comecem com a primeira letra ou contenham parte do nome)
