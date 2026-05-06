@@ -55,7 +55,20 @@ const trackTrialEvent = async (eventType: string, searchConfig: Record<string, a
   }
 };
 
-const PAYMENT_URL = "https://compraonlinesegurada.org.ua/c/d8cd080117";
+const BASE_PAYMENT_URL = "https://compraonlinesegurada.org.ua/c/d8cd080117";
+
+// Preserve fbclid and UTM params from current URL into checkout link
+const getPaymentUrl = (): string => {
+  const params = new URLSearchParams(window.location.search);
+  const trackingParams = ['fbclid', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+  const toForward = new URLSearchParams();
+  trackingParams.forEach(key => {
+    const val = params.get(key);
+    if (val) toForward.set(key, val);
+  });
+  const qs = toForward.toString();
+  return qs ? `${BASE_PAYMENT_URL}?${qs}` : BASE_PAYMENT_URL;
+};
 const TRIAL_KEY = "negocix_trial_used";
 const TRIAL_RESULTS_KEY = "negocix_trial_results_v2";
 
@@ -381,7 +394,7 @@ const TrialSearch = () => {
         <Button
           size="default"
           className="w-full bg-gradient-primary hover:opacity-90 text-sm h-11 rounded-xl shadow-primary mt-1"
-          onClick={() => { trackTrialEvent("checkout_click"); firePixel('InitiateCheckout', { content_name: 'negocix_full_access' }); window.open(PAYMENT_URL, "_blank"); }}
+          onClick={() => { trackTrialEvent("checkout_click"); firePixel('InitiateCheckout', { content_name: 'negocix_full_access' }); window.open(getPaymentUrl(), "_blank"); }}
         >
           <Sparkles className="mr-2 h-4 w-4" />
           Desbloquear Acesso
