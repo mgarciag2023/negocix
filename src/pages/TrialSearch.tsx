@@ -409,46 +409,58 @@ const TrialSearch = () => {
         {!isTestesRoute && <TrialNavbar />}
         {lockDialog}
         {/* Hero */}
-        <div className="relative bg-gradient-hero flex items-center justify-center min-h-screen">
-          <div className="absolute inset-0 bg-gradient-hero" />
-          {/* Subtle background grid/texture overlay */}
-          <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }} />
+        <div className="relative flex items-center justify-center min-h-screen" style={{ background: 'linear-gradient(170deg, #0a1628 0%, #0f2540 30%, #163a5e 60%, #1a4a6e 80%, #0f2540 100%)' }}>
+          {/* Subtle grid overlay like reference */}
+          <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 49px, rgba(255,255,255,0.1) 49px, rgba(255,255,255,0.1) 50px), repeating-linear-gradient(90deg, transparent, transparent 49px, rgba(255,255,255,0.1) 49px, rgba(255,255,255,0.1) 50px)' }} />
+          {/* Faint blue glow on right side like reference */}
+          <div className="absolute top-1/4 right-0 w-64 h-64 bg-sky-500/10 rounded-full blur-[100px]" />
           
-          <div className="relative z-10 text-center px-6 max-w-lg mx-auto flex flex-col items-center">
-            {/* Logo */}
-            <div className="flex items-center gap-2 mb-10 opacity-0 animate-fade-in-up">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm border border-white/20">
-                <Building2 className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-xl font-bold text-white/90">Negocix</span>
+          <div className="relative z-10 text-center px-5 max-w-md mx-auto flex flex-col items-center py-16">
+            {/* Logo — white icon + text like reference */}
+            <div className="flex items-center gap-2.5 mb-12">
+              <svg width="36" height="40" viewBox="0 0 36 40" fill="none" className="flex-shrink-0">
+                <path d="M18 2C10 2 4 8 4 16c0 5 2.5 9 6 12l8 10 8-10c3.5-3 6-7 6-12 0-8-6-14-14-14z" stroke="white" strokeWidth="2" fill="none"/>
+                <circle cx="18" cy="14" r="3" fill="white"/>
+                <circle cx="12" cy="10" r="1.5" fill="white"/>
+                <circle cx="24" cy="10" r="1.5" fill="white"/>
+                <line x1="14" y1="11" x2="16" y2="13" stroke="white" strokeWidth="1.5"/>
+                <line x1="22" y1="11" x2="20" y2="13" stroke="white" strokeWidth="1.5"/>
+              </svg>
+              <span className="text-2xl font-bold text-white tracking-tight">Negocix</span>
             </div>
 
-            <h1 className="mb-6 text-[2.5rem] md:text-6xl font-extrabold leading-[1.1] text-white opacity-0 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-              <span className="text-success">Representante</span>
-              <br />
-              <span className="text-white/90">Comercial!</span>
+            {/* "Representante Comercial!" — italic, huge, teal gradient */}
+            <h1 className="mb-5 leading-[1.05]">
+              <span className="block text-[3rem] md:text-7xl font-black italic" style={{ background: 'linear-gradient(135deg, #2dd4a8, #5bb8c4, #8eaad0)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                Representante
+              </span>
+              <span className="block text-[3rem] md:text-7xl font-black italic text-white/85">
+                Comercial!
+              </span>
             </h1>
             
-            <h2 className="mb-6 text-2xl md:text-4xl font-extrabold leading-tight text-white opacity-0 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-              Chega de procurar clientes no <span className="text-foreground font-black">ESCURO</span>!
+            {/* "Chega de procurar..." — bold white, ESCURO in black */}
+            <h2 className="mb-6 text-[1.65rem] md:text-4xl font-extrabold leading-tight text-white">
+              Chega de procurar<br />clientes no <span className="text-black font-black">ESCURO</span>!
             </h2>
 
-            <p className="mb-10 text-base md:text-lg text-white/70 opacity-0 animate-fade-in-up max-w-sm" style={{ animationDelay: "0.3s" }}>
+            {/* Subtitle */}
+            <p className="mb-10 text-lg md:text-xl text-white/60 leading-relaxed max-w-xs">
               Use uma ferramenta que entrega o{" "}
-              <span className="text-success font-semibold">contato direto dos COMPRADORES</span>{" "}
+              <span className="text-success font-bold">contato direto dos COMPRADORES</span>{" "}
               para você!
             </p>
             
-            <div className="flex flex-col gap-3 opacity-0 animate-fade-in-up w-full max-w-sm" style={{ animationDelay: "0.4s" }}>
-              <Button 
-                size="lg" 
-                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 group text-lg h-16 px-8 rounded-2xl w-full"
-                onClick={goToConfig}
-              >
-                🚀 Encontrar Clientes Agora
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </div>
+            {/* Button — dark navy pill like reference */}
+            <Button 
+              size="lg" 
+              className="w-full max-w-sm h-16 rounded-2xl text-lg font-bold text-white border border-white/15 shadow-2xl transition-all duration-300 hover:-translate-y-1 group"
+              style={{ background: 'linear-gradient(135deg, #1a3a5c, #1e4a6e)' }}
+              onClick={goToConfig}
+            >
+              🚀 Encontrar Clientes Agora
+              <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            </Button>
           </div>
         </div>
 
