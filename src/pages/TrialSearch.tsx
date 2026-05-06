@@ -486,40 +486,56 @@ const TrialSearch = () => {
       <div className="min-h-screen overflow-x-hidden w-full max-w-[100vw] flex flex-col">
         {!isTestesRoute && <TrialNavbar />}
         {lockDialog}
-        {/* Hero — same for both /teste and /testes */}
-        <div className="relative bg-gradient-hero flex items-center justify-center min-h-screen md:min-h-screen">
+        {/* Hero */}
+        <div className="relative bg-gradient-hero flex flex-col min-h-screen">
           <div className="absolute inset-0 bg-gradient-hero" />
-          <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }} />
+          <div className="absolute -top-20 -right-20 w-64 h-64 bg-primary-glow/15 rounded-full blur-3xl" />
+          <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-success-glow/10 rounded-full blur-3xl" />
           
-          <div className="relative z-10 text-center px-6 max-w-lg mx-auto flex flex-col items-center">
-            <div className="flex items-center gap-2 mb-10 opacity-0 animate-fade-in-up">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm border border-white/20">
-                <Building2 className="h-6 w-6 text-white" />
-              </div>
-              <span className="text-xl font-bold text-white/90">Negocix</span>
+          <div className="relative z-10 flex flex-col items-center px-6 pt-16 pb-8 flex-1">
+            {/* Icon */}
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 mb-8 opacity-0 animate-fade-in-up">
+              <Target className="h-7 w-7 text-white" />
             </div>
 
-            <h1 className="mb-4 text-4xl md:text-6xl font-bold leading-tight text-primary-foreground opacity-0 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+            <h1 className="mb-3 text-3xl md:text-5xl font-bold leading-tight text-primary-foreground text-center opacity-0 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
               Encontre{" "}
-              <span className="relative">
-                <span className="relative z-10">Clientes Qualificados</span>
-                <span className="absolute bottom-1 left-0 right-0 h-3 bg-success-glow/40 -rotate-1 rounded" />
+              <span className="relative inline-block">
+                <span className="relative z-10">Clientes</span>
+                <span className="absolute bottom-0.5 left-0 right-0 h-2.5 bg-success-glow/40 -rotate-1 rounded" />
               </span>
+              {" "}Qualificados
             </h1>
             
-            <p className="mb-8 text-lg md:text-xl text-primary-foreground/80 opacity-0 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-              Veja na prática como a nossa plataforma encontra leads qualificados para o seu negócio.
+            <p className="mb-8 text-base md:text-lg text-primary-foreground/70 text-center max-w-md opacity-0 animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
+              Veja na prática como encontramos leads reais para o seu negócio.
             </p>
+
+            {/* Benefits list */}
+            <div className="w-full max-w-sm space-y-3 mb-8 opacity-0 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
+              {[
+                { icon: "🎯", text: "Leads com telefone, e-mail e WhatsApp" },
+                { icon: "📊", text: "Dados de 37 milhões de empresas" },
+                { icon: "⚡", text: "Resultados em segundos" },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-3 bg-white/[0.06] backdrop-blur-sm rounded-xl px-4 py-3 border border-white/10">
+                  <span className="text-lg">{item.icon}</span>
+                  <span className="text-sm text-primary-foreground/90 font-medium">{item.text}</span>
+                </div>
+              ))}
+            </div>
             
-            <div className="flex flex-col gap-3 opacity-0 animate-fade-in-up w-full max-w-sm" style={{ animationDelay: "0.3s" }}>
+            {/* CTA */}
+            <div className="w-full max-w-sm opacity-0 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
               <Button 
                 size="lg" 
-                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 group text-lg h-16 px-8 rounded-2xl w-full"
+                className="w-full bg-success hover:bg-success-hover text-success-foreground shadow-success hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group text-lg h-14 px-8 rounded-2xl font-semibold"
                 onClick={goToConfig}
               >
-                🚀 Encontrar Clientes Agora
-                <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                Encontrar Clientes Agora
+                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
+              <p className="text-center text-xs text-primary-foreground/40 mt-3">Pesquisa grátis · Sem cadastro</p>
             </div>
           </div>
         </div>
