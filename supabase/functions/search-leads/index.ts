@@ -2177,6 +2177,8 @@ serve(async (req) => {
 
       const beforeDistFilter = allCompanies.length;
       allCompanies = allCompanies.filter(c => {
+        // Results found via official CNAE code always pass distributor filter
+        if (c._viaCnae) return true;
         const seg = (c._segment || '').toLowerCase();
         // Only apply strict filter to distributor segments
         if (!seg.includes('distribuidor') && !seg.includes('distribuidora')) return true;
