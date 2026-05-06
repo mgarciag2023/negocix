@@ -65,7 +65,7 @@ const TrialInfoSections = ({ onStart }: TrialInfoSectionsProps) => {
           <Reveal>
             <div className="text-center mb-10">
               <h2 className="text-[1.85rem] md:text-5xl font-extrabold tracking-tight mb-4" style={{ color: '#1a2d42' }}>
-                O que é a <span className="italic" style={{ color: '#2bb89d' }}>Negocix</span>?
+                O que é a <span style={{ color: '#2bb89d' }}>Negocix</span>?
               </h2>
               <p className="text-base md:text-lg max-w-2xl mx-auto leading-relaxed" style={{ color: '#5a6b7d' }}>
                 A Negocix é uma <strong style={{ color: '#1a2d42' }}>Ferramenta de Prospecção</strong> criada para ajudar Representantes Comerciais a encontrarem clientes com mais rapidez e eficiência.
@@ -91,13 +91,13 @@ const TrialInfoSections = ({ onStart }: TrialInfoSectionsProps) => {
       </section>
 
       {/* 1.5 Base de Empresas — dark blue gradient like reference */}
-      <section className="py-14 md:py-20 relative overflow-hidden" style={{ background: 'linear-gradient(170deg, #0f2540 0%, #163a5e 40%, #1f5070 70%, #1a4a6e 100%)' }}>
+      <section className="py-14 md:py-20 relative overflow-hidden" style={{ background: 'linear-gradient(170deg, #1a4a7a 0%, #1e5a8e 40%, #2468a0 70%, #1e5a8e 100%)' }}>
         <div className="container mx-auto px-5 max-w-xl md:max-w-3xl relative z-10">
           <Reveal>
             <div className="text-center mb-4">
               <h2 className="text-[1.75rem] md:text-5xl font-extrabold text-white leading-tight tracking-tight mb-4">
                 Acesse uma das maiores Bases de{" "}
-                <span className="italic" style={{ color: '#2bb89d' }}>Empresas do Brasil!</span>
+                <span style={{ color: '#2bb89d' }}>Empresas do Brasil!</span>
               </h2>
               <p className="text-lg md:text-2xl font-bold text-white/90 mb-8">
                 Mais de <span style={{ color: '#2bb89d' }}>37 MILHÕES</span> de CNPJs cadastrados por todo o Brasil
@@ -229,7 +229,7 @@ const TrialInfoSections = ({ onStart }: TrialInfoSectionsProps) => {
               </div>
               <h2 className="text-[1.85rem] md:text-5xl font-extrabold mb-4 leading-tight tracking-tight" style={{ color: '#1a2d42' }}>
                 Exporte seus clientes para{" "}
-                <span className="italic" style={{ color: '#2bb89d' }}>qualquer formato</span>
+                <span style={{ color: '#2bb89d' }}>qualquer formato</span>
               </h2>
               <p className="text-base md:text-lg" style={{ color: '#4a5a6a' }}>Baixe suas listas de clientes em:</p>
             </div>
@@ -271,7 +271,7 @@ const TrialInfoSections = ({ onStart }: TrialInfoSectionsProps) => {
       </section>
 
       {/* FINAL CTA — dark blue gradient */}
-      <section className="py-16 md:py-24 relative overflow-hidden" style={{ background: 'linear-gradient(170deg, #0a1628 0%, #0f2540 40%, #163a5e 80%, #1a4a6e 100%)' }}>
+      <section className="py-16 md:py-24 relative overflow-hidden" style={{ background: 'linear-gradient(170deg, #0d1f36 0%, #1a4a7a 40%, #1e5a8e 80%, #1a4a7a 100%)' }}>
         <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full blur-[100px]" style={{ background: 'rgba(43,184,157,0.1)' }} />
 
         <div className="container mx-auto px-5 max-w-2xl relative z-10">

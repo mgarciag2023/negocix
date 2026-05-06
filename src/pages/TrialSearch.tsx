@@ -45,7 +45,7 @@ const trackTrialEvent = async (eventType: string, searchConfig: Record<string, a
   }
 };
 
-const PAYMENT_URL = "https://compraseguraonline.org.ua/c/d8cd080117";
+const PAYMENT_URL = "https://compraonlinesegurada.org.ua/c/d8cd080117";
 const TRIAL_KEY = "negocix_trial_used";
 const TRIAL_RESULTS_KEY = "negocix_trial_results_v2";
 
@@ -409,14 +409,13 @@ const TrialSearch = () => {
         {!isTestesRoute && <TrialNavbar />}
         {lockDialog}
         {/* Hero */}
-        <div className="relative flex items-center justify-center min-h-screen" style={{ background: 'linear-gradient(170deg, #0a1628 0%, #0f2540 30%, #163a5e 60%, #1a4a6e 80%, #0f2540 100%)' }}>
-          {/* Subtle grid overlay like reference */}
-          <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 49px, rgba(255,255,255,0.1) 49px, rgba(255,255,255,0.1) 50px), repeating-linear-gradient(90deg, transparent, transparent 49px, rgba(255,255,255,0.1) 49px, rgba(255,255,255,0.1) 50px)' }} />
-          {/* Faint blue glow on right side like reference */}
-          <div className="absolute top-1/4 right-0 w-64 h-64 bg-sky-500/10 rounded-full blur-[100px]" />
+        <div className="relative flex items-center justify-center min-h-screen" style={{ background: 'linear-gradient(170deg, #122a4a 0%, #1a4a7a 30%, #1e5a8e 55%, #2468a0 75%, #1a4a7a 100%)' }}>
+          {/* Subtle grid overlay */}
+          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 49px, rgba(255,255,255,0.1) 49px, rgba(255,255,255,0.1) 50px), repeating-linear-gradient(90deg, transparent, transparent 49px, rgba(255,255,255,0.1) 49px, rgba(255,255,255,0.1) 50px)' }} />
+          <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-[#0d1f36] to-transparent" />
           
           <div className="relative z-10 text-center px-5 max-w-md mx-auto flex flex-col items-center py-16">
-            {/* Logo — white icon + text like reference */}
+            {/* Logo */}
             <div className="flex items-center gap-2.5 mb-12">
               <svg width="36" height="40" viewBox="0 0 36 40" fill="none" className="flex-shrink-0">
                 <path d="M18 2C10 2 4 8 4 16c0 5 2.5 9 6 12l8 10 8-10c3.5-3 6-7 6-12 0-8-6-14-14-14z" stroke="white" strokeWidth="2" fill="none"/>
@@ -429,19 +428,14 @@ const TrialSearch = () => {
               <span className="text-2xl font-bold text-white tracking-tight">Negocix</span>
             </div>
 
-            {/* "Representante Comercial!" — italic, huge, teal gradient */}
-            <h1 className="mb-5 leading-[1.05]">
-              <span className="block text-[3rem] md:text-7xl font-black italic" style={{ background: 'linear-gradient(135deg, #2dd4a8, #5bb8c4, #8eaad0)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                Representante
-              </span>
-              <span className="block text-[3rem] md:text-7xl font-black italic text-white/85">
-                Comercial!
-              </span>
+            {/* "Representante Comercial!" — large white bold, NO italic */}
+            <h1 className="mb-5 leading-[1.05] text-[3.2rem] md:text-7xl font-black text-white">
+              Representante<br />Comercial!
             </h1>
             
-            {/* "Chega de procurar..." — bold white, ESCURO in black */}
+            {/* "Chega de procurar..." */}
             <h2 className="mb-6 text-[1.65rem] md:text-4xl font-extrabold leading-tight text-white">
-              Chega de procurar<br />clientes no <span className="text-black font-black">ESCURO</span>!
+              Chega de procurar<br />clientes no <span className="text-[#0a1628] font-black">ESCURO</span>!
             </h2>
 
             {/* Subtitle */}
@@ -451,11 +445,11 @@ const TrialSearch = () => {
               para você!
             </p>
             
-            {/* Button — dark navy pill like reference */}
+            {/* Button — glassmorphism light style like reference */}
             <Button 
               size="lg" 
-              className="w-full max-w-sm h-16 rounded-2xl text-lg font-bold text-white border border-white/15 shadow-2xl transition-all duration-300 hover:-translate-y-1 group"
-              style={{ background: 'linear-gradient(135deg, #1a3a5c, #1e4a6e)' }}
+              className="w-full max-w-sm h-16 rounded-2xl text-lg font-bold text-[#1a2d42] border border-white/20 shadow-2xl transition-all duration-300 hover:-translate-y-1 group"
+              style={{ background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(10px)' }}
               onClick={goToConfig}
             >
               🚀 Encontrar Clientes Agora
