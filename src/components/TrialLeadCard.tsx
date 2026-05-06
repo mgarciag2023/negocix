@@ -200,25 +200,31 @@ const TrialLeadCard = ({
       <div className="space-y-2 mb-4 p-3 border border-border rounded-lg">
         <h4 className="font-semibold text-foreground text-xs mb-2">Contato</h4>
         
+        {/* Phone - always show */}
         <div className="flex items-center gap-2 text-xs md:text-sm">
           <Phone className="h-3 w-3 md:h-4 md:w-4 text-primary flex-shrink-0" />
           {isPhoneBlocked ? (
-            <BlockedField>{phone}</BlockedField>
-          ) : (
+            <BlockedField>{phone || '(47) 99999-9999'}</BlockedField>
+          ) : phone ? (
             <span className="text-primary font-medium truncate">{phone}</span>
+          ) : (
+            <BlockedField>(47) 99999-9999</BlockedField>
           )}
         </div>
         
-        {email && email !== 'Não disponível' && email.length > 0 && (
-          <div className="flex items-center gap-2 text-xs md:text-sm">
-            <Mail className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
-            {isEmailBlocked ? (
+        {/* Email - always show */}
+        <div className="flex items-center gap-2 text-xs md:text-sm">
+          <Mail className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+          {email && email !== 'Não disponível' && email.length > 0 ? (
+            isEmailBlocked ? (
               <BlockedField>{formattedEmail}</BlockedField>
             ) : (
               <span className="text-primary truncate">{formattedEmail}</span>
-            )}
-          </div>
-        )}
+            )
+          ) : (
+            <BlockedField>contato@empresa.com.br</BlockedField>
+          )}
+        </div>
         
         {hasInstagram && (
           <div className="flex items-center gap-2 text-xs md:text-sm">
@@ -259,18 +265,16 @@ const TrialLeadCard = ({
             className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium h-[50px] px-4 border border-input bg-background hover:bg-accent transition-colors"
             onClick={handleUnlock}
           >
-            {isPhoneBlocked ? <Lock className="h-4 w-4" /> : null}
+            {isPhoneBlocked || !phone ? <Lock className="h-4 w-4" /> : null}
             Ligar
           </button>
-          {hasWhatsApp && (
-            <button 
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium h-[50px] px-4 border border-green-500 text-green-600 hover:bg-green-50 transition-colors"
-              onClick={handleUnlock}
-            >
-              {isWhatsAppBlocked && <Lock className="h-4 w-4" />}
-              WhatsApp
-            </button>
-          )}
+          <button 
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium h-[50px] px-4 border border-green-500 text-green-600 hover:bg-green-50 transition-colors"
+            onClick={handleUnlock}
+          >
+            {(isWhatsAppBlocked || !hasWhatsApp) && <Lock className="h-4 w-4" />}
+            WhatsApp
+          </button>
         </div>
       </div>
     </Card>
