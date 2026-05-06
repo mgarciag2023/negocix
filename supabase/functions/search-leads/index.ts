@@ -2264,8 +2264,13 @@ serve(async (req) => {
 
     // ===== STRICT INDUSTRY RELEVANCE FILTER =====
     // When searching for "indústrias de X" or "fábricas de X", ensure companies are actual factories/industries
+    // EXCEPTION: "Fábricas de Cerveja Artesanal" — cervejarias are known by "cervejaria" not "fábrica"
     const industrySegments = segments.filter((s: string) => {
       const lower = s.toLowerCase();
+      if (lower.includes('cerveja artesanal') || lower.includes('cervejaria')) return false; // skip industry filter
+      if (lower.includes('gelo') && lower.includes('fabrica')) return false; // "fábricas de gelo" — use name only
+      if (lower.includes('pao de queijo') || lower.includes('pão de queijo')) return false; // pão de queijo
+      if (lower.includes('salgados congelados')) return false; // salgados
       return lower.includes('indústria') || lower.includes('industria') || lower.includes('fábrica') || lower.includes('fabrica');
     });
 
