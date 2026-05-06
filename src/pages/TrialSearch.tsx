@@ -394,12 +394,21 @@ const TrialSearch = () => {
 
   // ==================== HOME STEP ====================
   if (step === "home") {
+    const isTestesRoute = window.location.pathname === "/testes";
+    const goToConfig = () => {
+      if (alreadyUsed) {
+        const saved = localStorage.getItem(TRIAL_RESULTS_KEY);
+        if (saved) { setStep("results"); return; }
+      }
+      setStep("config");
+    };
+
     return (
-      <div className="min-h-screen bg-gradient-hero overflow-x-hidden w-full max-w-[100vw] flex flex-col">
+      <div className="min-h-screen overflow-x-hidden w-full max-w-[100vw] flex flex-col">
         <TrialNavbar />
         {lockDialog}
-        <main className="relative flex-1 flex items-center justify-center">
-          {/* Background effects */}
+        {/* Hero */}
+        <div className="relative bg-gradient-hero flex items-center justify-center py-20 md:py-28">
           <div className="absolute inset-0 bg-gradient-hero" />
           <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-glow/20 rounded-full blur-3xl animate-float" />
           <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }} />
@@ -426,13 +435,7 @@ const TrialSearch = () => {
               <Button 
                 size="lg" 
                 className="bg-success hover:bg-success-hover text-success-foreground shadow-success hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group text-lg h-16 px-8 rounded-xl w-full"
-                onClick={() => {
-                  if (alreadyUsed) {
-                    const saved = localStorage.getItem(TRIAL_RESULTS_KEY);
-                    if (saved) { setStep("results"); return; }
-                  }
-                  setStep("config");
-                }}
+                onClick={goToConfig}
               >
                 Experimentar Grátis
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -445,7 +448,10 @@ const TrialSearch = () => {
               <div className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-success" /><span>100% grátis</span></div>
             </div>
           </div>
-        </main>
+        </div>
+
+        {/* Info sections — only on /testes */}
+        {isTestesRoute && <TrialInfoSections onStart={goToConfig} />}
       </div>
     );
   }
