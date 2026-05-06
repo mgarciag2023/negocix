@@ -97,7 +97,7 @@ const TrialInfoSections = ({ onStart }: TrialInfoSectionsProps) => {
             <div className="text-center mb-4">
               <h2 className="text-[1.75rem] md:text-5xl font-extrabold text-white leading-tight tracking-tight mb-4">
                 Acesse uma das maiores Bases de{" "}
-                <span className="italic" style={{ color: '#2bb89d' }}>Empresas do Brasil!</span>
+                <span style={{ color: '#2bb89d' }}>Empresas do Brasil!</span>
               </h2>
               <p className="text-lg md:text-2xl font-bold text-white/90 mb-8">
                 Mais de <span style={{ color: '#2bb89d' }}>37 MILHÕES</span> de CNPJs cadastrados por todo o Brasil
