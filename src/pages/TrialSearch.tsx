@@ -26,6 +26,16 @@ const getDeviceId = (): string => {
   return id;
 };
 
+// Helper to fire Meta Pixel events safely
+const firePixel = (eventName: string, params?: Record<string, any>) => {
+  try {
+    if (typeof window !== 'undefined' && (window as any).fbq) {
+      (window as any).fbq('track', eventName, params);
+      console.log('[Pixel]', eventName, params);
+    }
+  } catch (_) {}
+};
+
 const trackTrialEvent = async (eventType: string, searchConfig: Record<string, any> = {}, resultsCount = 0) => {
   try {
     const { supabase } = await import("@/integrations/supabase/client");
