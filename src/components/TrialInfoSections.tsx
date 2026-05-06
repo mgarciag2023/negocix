@@ -271,7 +271,7 @@ const TrialInfoSections = ({ onStart }: TrialInfoSectionsProps) => {
       </section>
 
       {/* FINAL CTA — dark blue gradient */}
-      <section className="py-16 md:py-24 relative overflow-hidden" style={{ background: 'linear-gradient(170deg, #0a1628 0%, #0f2540 40%, #163a5e 80%, #1a4a6e 100%)' }}>
+      <section className="py-16 md:py-24 relative overflow-hidden" style={{ background: 'linear-gradient(170deg, #0d1f36 0%, #1a4a7a 40%, #1e5a8e 80%, #1a4a7a 100%)' }}>
         <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full blur-[100px]" style={{ background: 'rgba(43,184,157,0.1)' }} />
 
         <div className="container mx-auto px-5 max-w-2xl relative z-10">
