@@ -167,16 +167,17 @@ const TrialSearch = () => {
 
   // Keep users inside the trial flow without breaking access to /teste/admin
   useEffect(() => {
+    const currentPath = window.location.pathname;
     const blockNavigation = () => {
-      if (window.location.pathname === "/teste") {
-        window.history.pushState(null, "", "/teste");
+      if (window.location.pathname === currentPath) {
+        window.history.pushState(null, "", currentPath);
       }
     };
 
-    if (window.location.pathname === "/teste") {
-      window.history.replaceState(null, "", "/teste");
-      window.history.pushState(null, "", "/teste");
-      window.history.pushState(null, "", "/teste");
+    if (currentPath === "/teste" || currentPath === "/testes") {
+      window.history.replaceState(null, "", currentPath);
+      window.history.pushState(null, "", currentPath);
+      window.history.pushState(null, "", currentPath);
     }
 
     window.addEventListener("popstate", blockNavigation);
