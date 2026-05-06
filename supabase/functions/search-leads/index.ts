@@ -1272,6 +1272,19 @@ function parseRegion(region: string): { city: string | null; state: string | nul
     return { city: null, state: stateNameMap[singleLower], isStateOnly: true };
   }
   
+  // Check if single value is a known region name (without state)
+  const regionToState: { [key: string]: string } = {
+    'triangulo mineiro': 'MG', 'abc paulista': 'SP', 'abc': 'SP',
+    'baixada santista': 'SP', 'vale do paraiba': 'SP', 'grande sao paulo': 'SP',
+    'baixada fluminense': 'RJ', 'grande rio': 'RJ', 'regiao dos lagos': 'RJ',
+    'vale do itajai': 'SC', 'serra gaucha': 'RS', 'vale dos sinos': 'RS',
+    'reconcavo baiano': 'BA', 'sul de minas': 'MG', 'zona da mata': 'MG',
+    'norte do parana': 'PR', 'entorno do df': 'GO',
+  };
+  if (regionToState[singleLower]) {
+    return { city: null, state: regionToState[singleLower], isStateOnly: true };
+  }
+
   // Assume it's a city
   return { city: singleNorm, state: null, isStateOnly: false };
 }
