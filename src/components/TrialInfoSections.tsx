@@ -65,7 +65,7 @@ const TrialInfoSections = ({ onStart }: TrialInfoSectionsProps) => {
           <Reveal>
             <div className="text-center mb-10">
               <h2 className="text-[1.85rem] md:text-5xl font-extrabold tracking-tight mb-4" style={{ color: '#1a2d42' }}>
-                O que é a <span className="italic" style={{ color: '#2bb89d' }}>Negocix</span>?
+                O que é a <span style={{ color: '#2bb89d' }}>Negocix</span>?
               </h2>
               <p className="text-base md:text-lg max-w-2xl mx-auto leading-relaxed" style={{ color: '#5a6b7d' }}>
                 A Negocix é uma <strong style={{ color: '#1a2d42' }}>Ferramenta de Prospecção</strong> criada para ajudar Representantes Comerciais a encontrarem clientes com mais rapidez e eficiência.
