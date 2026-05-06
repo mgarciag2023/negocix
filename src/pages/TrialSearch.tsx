@@ -55,7 +55,20 @@ const trackTrialEvent = async (eventType: string, searchConfig: Record<string, a
   }
 };
 
-const PAYMENT_URL = "https://compraonlinesegurada.org.ua/c/d8cd080117";
+const BASE_PAYMENT_URL = "https://compraonlinesegurada.org.ua/c/d8cd080117";
+
+// Preserve fbclid and UTM params from current URL into checkout link
+const getPaymentUrl = (): string => {
+  const params = new URLSearchParams(window.location.search);
+  const trackingParams = ['fbclid', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+  const toForward = new URLSearchParams();
+  trackingParams.forEach(key => {
+    const val = params.get(key);
+    if (val) toForward.set(key, val);
+  });
+  const qs = toForward.toString();
+  return qs ? `${BASE_PAYMENT_URL}?${qs}` : BASE_PAYMENT_URL;
+};
 const TRIAL_KEY = "negocix_trial_used";
 const TRIAL_RESULTS_KEY = "negocix_trial_results_v2";
 
