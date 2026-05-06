@@ -1375,6 +1375,11 @@ async function resolveCityName(
     }
   }
 
+  // 0.5) Generic concatenated city name detection
+  // If the input has no spaces and is long (>8 chars), try to split it into words
+  // by matching against known city names in the state
+  const inputHasNoSpaces = !inputNorm.includes(' ') && inputNorm.length > 8;
+
   // 1) Match exato — já tá certo
   const { data: exact } = await client
     .from('companies')
@@ -1383,6 +1388,33 @@ async function resolveCityName(
     .eq('cidade', inputNorm)
     .limit(1);
   if (exact && exact.length > 0) return inputNorm;
+
+  // 1.5) If input has no spaces and no exact match, try ILIKE with wildcards inserted
+  if (inputHasNoSpaces) {
+    // Try common split patterns: "SAOPAULO" → "SAO PAULO", "RIBEIRAOPRETO" → "RIBEIRAO PRETO"
+    // Build a pattern with optional spaces between each char cluster
+    const likePattern = inputNorm.split('').join('%');
+    const { data: concatMatch } = await client
+      .from('companies')
+      .select('cidade')
+      .eq('estado', state)
+      .not('cidade', 'is', null)
+      .ilike('cidade', likePattern)
+      .limit(10);
+    if (concatMatch && concatMatch.length > 0) {
+      const uniqueMatches = Array.from(new Set(concatMatch.map((c: any) => c.cidade).filter(Boolean)));
+      // Pick the one whose characters (without spaces) most closely match input
+      const bestConcat = uniqueMatches.find((c: any) => (c as string).replace(/\s+/g, '') === inputNorm);
+      if (bestConcat) {
+        console.log(`🔤 Concatenated city fixed: "${inputNorm}" → "${bestConcat}"`);
+        return bestConcat as string;
+      }
+      // If no exact char match, take the shortest candidate
+      uniqueMatches.sort((a: any, b: any) => (a as string).length - (b as string).length);
+      console.log(`🔤 Concatenated city best guess: "${inputNorm}" → "${uniqueMatches[0]}"`);
+      return uniqueMatches[0] as string;
+    }
+  }
 
   // 2) Buscar candidatas distintas do estado e escolher a mais parecida
   // (faixa razoável: cidades que comecem com a primeira letra ou contenham parte do nome)
