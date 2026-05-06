@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Lock, Building, Building2, Target, TrendingUp, Zap, Users, Package, ArrowRight, Star, CheckCircle2, Sparkles, MessageSquare } from "lucide-react";
+import { Search, Lock, Building, Building2, Target, TrendingUp, Zap, Users, Package, ArrowRight, Star, CheckCircle2, Sparkles, MessageSquare, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import TrialNavbar from "@/components/TrialNavbar";
