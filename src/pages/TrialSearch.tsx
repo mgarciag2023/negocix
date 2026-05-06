@@ -409,44 +409,45 @@ const TrialSearch = () => {
         <TrialNavbar />
         {lockDialog}
         {/* Hero */}
-        <div className="relative bg-gradient-hero flex items-center justify-center py-20 md:py-28">
+        <div className="relative bg-gradient-hero flex items-center justify-center min-h-[85vh] md:min-h-[90vh]">
           <div className="absolute inset-0 bg-gradient-hero" />
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-glow/20 rounded-full blur-3xl animate-float" />
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-float" style={{ animationDelay: "2s" }} />
-
-          <div className="relative z-10 text-center px-6 max-w-lg mx-auto">
-            <div className="inline-flex items-center gap-2 mb-5 px-5 py-2.5 rounded-full bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/20 animate-fade-in-down">
-              <Star className="h-5 w-5 text-warning" fill="currentColor" />
-              <span className="text-base text-primary-foreground/90 font-medium">Experimente Agora</span>
+          {/* Subtle background grid/texture overlay */}
+          <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }} />
+          
+          <div className="relative z-10 text-center px-6 max-w-lg mx-auto flex flex-col items-center">
+            {/* Logo */}
+            <div className="flex items-center gap-2 mb-10 opacity-0 animate-fade-in-up">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm border border-white/20">
+                <Building2 className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-xl font-bold text-white/90">Negocix</span>
             </div>
-            
-            <h1 className="mb-4 text-4xl md:text-6xl font-bold leading-tight text-primary-foreground opacity-0 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-              Encontre{" "}
-              <span className="relative">
-                <span className="relative z-10">Clientes Qualificados</span>
-                <span className="absolute bottom-1 left-0 right-0 h-3 bg-success-glow/40 -rotate-1 rounded" />
-              </span>
+
+            <h1 className="mb-6 text-[2.5rem] md:text-6xl font-extrabold leading-[1.1] text-white opacity-0 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+              <span className="text-success">Representante</span>
+              <br />
+              <span className="text-white/90">Comercial!</span>
             </h1>
             
-            <p className="mb-8 text-lg md:text-xl text-primary-foreground/80 opacity-0 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-              Veja na prática como a nossa plataforma encontra leads qualificados para o seu negócio.
+            <h2 className="mb-6 text-2xl md:text-4xl font-extrabold leading-tight text-white opacity-0 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
+              Chega de procurar clientes no <span className="text-foreground font-black">ESCURO</span>!
+            </h2>
+
+            <p className="mb-10 text-base md:text-lg text-white/70 opacity-0 animate-fade-in-up max-w-sm" style={{ animationDelay: "0.3s" }}>
+              Use uma ferramenta que entrega o{" "}
+              <span className="text-success font-semibold">contato direto dos COMPRADORES</span>{" "}
+              para você!
             </p>
             
-            <div className="flex flex-col gap-3 opacity-0 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
+            <div className="flex flex-col gap-3 opacity-0 animate-fade-in-up w-full max-w-sm" style={{ animationDelay: "0.4s" }}>
               <Button 
                 size="lg" 
-                className="bg-success hover:bg-success-hover text-success-foreground shadow-success hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group text-lg h-16 px-8 rounded-xl w-full"
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 group text-lg h-16 px-8 rounded-2xl w-full"
                 onClick={goToConfig}
               >
-                Experimentar Grátis
+                🚀 Encontrar Clientes Agora
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
-            </div>
-
-            <div className="mt-6 flex items-center justify-center gap-4 text-sm text-primary-foreground/60 opacity-0 animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
-              <div className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-success" /><span>Sem cadastro</span></div>
-              <div className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-success" /><span>Dados reais</span></div>
-              <div className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-success" /><span>100% grátis</span></div>
             </div>
           </div>
         </div>
