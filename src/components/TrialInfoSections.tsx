@@ -98,7 +98,57 @@ const TrialInfoSections = ({ onStart }: TrialInfoSectionsProps) => {
         </div>
       </section>
 
-      {/* 2. 3 Passos Simples */}
+      {/* 1.5 Base de Empresas */}
+      <section className="py-14 md:py-20 bg-gradient-hero relative overflow-hidden">
+        <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.4\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }} />
+        <div className="container mx-auto px-5 max-w-xl md:max-w-3xl relative z-10">
+          <Reveal>
+            <div className="text-center mb-4">
+              <h2 className="text-3xl md:text-5xl font-extrabold text-white leading-tight tracking-tight mb-4">
+                Acesse uma das maiores Bases de{" "}
+                <span className="text-success">Empresas do Brasil!</span>
+              </h2>
+              <p className="text-xl md:text-2xl font-bold text-white/90 mb-8">
+                Mais de <span className="text-success">37 MILHÕES</span> de CNPJs cadastrados por todo o Brasil
+              </p>
+            </div>
+          </Reveal>
+
+          <div className="space-y-4 mb-8">
+            <Reveal delay={80}>
+              <div className="flex items-center gap-4 p-5 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
+                <span className="text-3xl flex-shrink-0">📞</span>
+                <p className="text-white/90 font-semibold text-base md:text-lg">
+                  Contato direto com os compradores (telefone, WhatsApp e e-mail)
+                </p>
+              </div>
+            </Reveal>
+            <Reveal delay={160}>
+              <div className="flex items-center gap-4 p-5 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
+                <span className="text-3xl flex-shrink-0">🏢</span>
+                <p className="text-white/90 font-semibold text-base md:text-lg">
+                  Empresas de <span className="text-success font-bold">TODOS</span> os segmentos e regiões do Brasil
+                </p>
+              </div>
+            </Reveal>
+            <Reveal delay={240}>
+              <div className="flex items-center gap-4 p-5 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
+                <span className="text-3xl flex-shrink-0">✅</span>
+                <p className="text-white/90 font-semibold text-base md:text-lg">
+                  Dados organizados e prontos para prospecção
+                </p>
+              </div>
+            </Reveal>
+          </div>
+
+          <Reveal delay={320}>
+            <p className="text-center text-xl md:text-2xl font-extrabold text-white">
+              Nunca mais fique sem empresas para prospectar.
+            </p>
+          </Reveal>
+        </div>
+      </section>
+
       <section className="py-14 md:py-20 bg-white">
         <div className="container mx-auto px-5 max-w-xl md:max-w-5xl">
           <Reveal>
