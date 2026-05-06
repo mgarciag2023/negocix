@@ -91,7 +91,7 @@ const TrialInfoSections = ({ onStart }: TrialInfoSectionsProps) => {
       </section>
 
       {/* 1.5 Base de Empresas — dark blue gradient like reference */}
-      <section className="py-14 md:py-20 relative overflow-hidden" style={{ background: 'linear-gradient(170deg, #0f2540 0%, #163a5e 40%, #1f5070 70%, #1a4a6e 100%)' }}>
+      <section className="py-14 md:py-20 relative overflow-hidden" style={{ background: 'linear-gradient(170deg, #1a4a7a 0%, #1e5a8e 40%, #2468a0 70%, #1e5a8e 100%)' }}>
         <div className="container mx-auto px-5 max-w-xl md:max-w-3xl relative z-10">
           <Reveal>
             <div className="text-center mb-4">
