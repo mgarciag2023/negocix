@@ -200,25 +200,31 @@ const TrialLeadCard = ({
       <div className="space-y-2 mb-4 p-3 border border-border rounded-lg">
         <h4 className="font-semibold text-foreground text-xs mb-2">Contato</h4>
         
+        {/* Phone - always show */}
         <div className="flex items-center gap-2 text-xs md:text-sm">
           <Phone className="h-3 w-3 md:h-4 md:w-4 text-primary flex-shrink-0" />
           {isPhoneBlocked ? (
-            <BlockedField>{phone}</BlockedField>
-          ) : (
+            <BlockedField>{phone || '(47) 99999-9999'}</BlockedField>
+          ) : phone ? (
             <span className="text-primary font-medium truncate">{phone}</span>
+          ) : (
+            <BlockedField>(47) 99999-9999</BlockedField>
           )}
         </div>
         
-        {email && email !== 'Não disponível' && email.length > 0 && (
-          <div className="flex items-center gap-2 text-xs md:text-sm">
-            <Mail className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
-            {isEmailBlocked ? (
+        {/* Email - always show */}
+        <div className="flex items-center gap-2 text-xs md:text-sm">
+          <Mail className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+          {email && email !== 'Não disponível' && email.length > 0 ? (
+            isEmailBlocked ? (
               <BlockedField>{formattedEmail}</BlockedField>
             ) : (
               <span className="text-primary truncate">{formattedEmail}</span>
-            )}
-          </div>
-        )}
+            )
+          ) : (
+            <BlockedField>contato@empresa.com.br</BlockedField>
+          )}
+        </div>
         
         {hasInstagram && (
           <div className="flex items-center gap-2 text-xs md:text-sm">
