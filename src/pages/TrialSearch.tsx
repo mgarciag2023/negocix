@@ -394,7 +394,7 @@ const TrialSearch = () => {
         <Button
           size="default"
           className="w-full bg-gradient-primary hover:opacity-90 text-sm h-11 rounded-xl shadow-primary mt-1"
-          onClick={() => { trackTrialEvent("checkout_click"); firePixel('InitiateCheckout', { content_name: 'negocix_full_access' }); window.open(PAYMENT_URL, "_blank"); }}
+          onClick={() => { trackTrialEvent("checkout_click"); firePixel('InitiateCheckout', { content_name: 'negocix_full_access' }); window.open(getPaymentUrl(), "_blank"); }}
         >
           <Sparkles className="mr-2 h-4 w-4" />
           Desbloquear Acesso
