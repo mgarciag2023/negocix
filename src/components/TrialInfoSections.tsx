@@ -229,7 +229,7 @@ const TrialInfoSections = ({ onStart }: TrialInfoSectionsProps) => {
               </div>
               <h2 className="text-[1.85rem] md:text-5xl font-extrabold mb-4 leading-tight tracking-tight" style={{ color: '#1a2d42' }}>
                 Exporte seus clientes para{" "}
-                <span className="italic" style={{ color: '#2bb89d' }}>qualquer formato</span>
+                <span style={{ color: '#2bb89d' }}>qualquer formato</span>
               </h2>
               <p className="text-base md:text-lg" style={{ color: '#4a5a6a' }}>Baixe suas listas de clientes em:</p>
             </div>
