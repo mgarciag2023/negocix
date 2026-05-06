@@ -99,6 +99,7 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/teste" element={<TrialSearch />} />
+          <Route path="/testes" element={<TrialSearch />} />
           <Route path="/teste/admin" element={<TrialAdmin />} />
           
           {/* Protected routes */}
