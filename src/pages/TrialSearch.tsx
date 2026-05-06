@@ -399,9 +399,10 @@ const TrialSearch = () => {
     const goToConfig = () => {
       if (alreadyUsed) {
         const saved = localStorage.getItem(TRIAL_RESULTS_KEY);
-        if (saved) { setStep("results"); return; }
+        if (saved) { setStep("results"); window.scrollTo(0, 0); return; }
       }
       setStep("config");
+      window.scrollTo(0, 0);
     };
 
     return (
