@@ -489,7 +489,7 @@ const TrialSearch = () => {
   // ==================== LOADING STEP ====================
   const loadingMessages = [
     { text: "Conectando ao banco de dados...", icon: "🔌" },
-    { text: "Analisando 35 milhões de empresas...", icon: "🏢" },
+    { text: "Analisando 37 milhões de empresas...", icon: "🏢" },
     { text: "Filtrando por sua região...", icon: "📍" },
     { text: "Verificando dados de contato...", icon: "📞" },
     { text: "Classificando por relevância...", icon: "⭐" },
