@@ -150,6 +150,7 @@ const TrialSearch = () => {
   useEffect(() => {
     const enteredAt = Date.now();
     trackTrialEvent("page_view");
+    firePixel('PageView');
     
     // Track time periodically and on page hide
     let lastTracked = 0;
@@ -340,6 +341,8 @@ const TrialSearch = () => {
           previewCount: preview.length,
         }, total);
         
+        firePixel('Lead', { content_name: selectedCustomers.join(', '), content_category: 'trial_search', value: inflatedTotal });
+        firePixel('ViewContent', { content_name: 'trial_results', num_items: preview.length });
         setStep("results");
       } else {
         toast({ title: "Nenhum resultado", description: "Tente outro segmento ou localização", variant: "destructive" });
@@ -378,7 +381,7 @@ const TrialSearch = () => {
         <Button
           size="default"
           className="w-full bg-gradient-primary hover:opacity-90 text-sm h-11 rounded-xl shadow-primary mt-1"
-          onClick={() => { trackTrialEvent("checkout_click"); window.open(PAYMENT_URL, "_blank"); }}
+          onClick={() => { trackTrialEvent("checkout_click"); firePixel('InitiateCheckout', { content_name: 'negocix_full_access' }); window.open(PAYMENT_URL, "_blank"); }}
         >
           <Sparkles className="mr-2 h-4 w-4" />
           Desbloquear Acesso
@@ -570,7 +573,7 @@ const TrialSearch = () => {
                 <Button
                   size="lg"
                   className="w-full bg-gradient-primary hover:opacity-90 text-base h-14 rounded-xl shadow-primary"
-                  onClick={() => { trackTrialEvent("unlock_click"); setShowLockDialog(true); }}
+                  onClick={() => { trackTrialEvent("unlock_click"); firePixel('ViewContent', { content_name: 'unlock_cta' }); setShowLockDialog(true); }}
                 >
                   <Sparkles className="mr-2 h-5 w-5" />
                   Desbloquear Acesso
