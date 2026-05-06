@@ -480,16 +480,52 @@ const TrialSearch = () => {
   }
 
   // ==================== LOADING STEP ====================
+  const loadingMessages = [
+    { text: "Conectando ao banco de dados...", icon: "🔌" },
+    { text: "Analisando 35 milhões de empresas...", icon: "🏢" },
+    { text: "Filtrando por sua região...", icon: "📍" },
+    { text: "Verificando dados de contato...", icon: "📞" },
+    { text: "Classificando por relevância...", icon: "⭐" },
+    { text: "Calculando score de cada lead...", icon: "📊" },
+    { text: "Separando os melhores matches...", icon: "🎯" },
+    { text: "Quase pronto, finalizando...", icon: "✨" },
+  ];
+
+  const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
+
+  useEffect(() => {
+    if (step !== "loading") return;
+    setLoadingMsgIndex(0);
+    const interval = setInterval(() => {
+      setLoadingMsgIndex(prev => prev < loadingMessages.length - 1 ? prev + 1 : prev);
+    }, 2800);
+    return () => clearInterval(interval);
+  }, [step]);
+
   if (step === "loading") {
     return (
       <div className="min-h-screen bg-background overflow-x-hidden w-full max-w-[100vw]">
         <TrialNavbar />
         <main className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-lg font-medium text-foreground">Buscando leads...</p>
-              <p className="text-sm text-muted-foreground mt-2">Isso pode levar alguns segundos</p>
+            <div className="text-center max-w-xs mx-auto">
+              <div className="animate-spin rounded-full h-14 w-14 border-b-2 border-primary mx-auto mb-6"></div>
+              <div className="min-h-[60px] flex flex-col items-center justify-center">
+                <p className="text-2xl mb-2 animate-fade-in" key={`icon-${loadingMsgIndex}`}>
+                  {loadingMessages[loadingMsgIndex].icon}
+                </p>
+                <p className="text-base font-medium text-foreground animate-fade-in" key={`msg-${loadingMsgIndex}`}>
+                  {loadingMessages[loadingMsgIndex].text}
+                </p>
+              </div>
+              {/* Progress bar */}
+              <div className="mt-6 w-full bg-muted rounded-full h-2 overflow-hidden">
+                <div 
+                  className="h-full bg-primary rounded-full transition-all duration-700 ease-out"
+                  style={{ width: `${Math.min(((loadingMsgIndex + 1) / loadingMessages.length) * 100, 95)}%` }}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground mt-3">Isso pode levar alguns segundos</p>
             </div>
           </div>
         </main>
