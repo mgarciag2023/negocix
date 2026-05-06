@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Lock, Building, Building2, Target, TrendingUp, Zap, Users, Package, ArrowRight, Star, CheckCircle2, Sparkles, MessageSquare } from "lucide-react";
+import { Search, Lock, Building, Building2, Target, TrendingUp, Zap, Users, Package, ArrowRight, Star, CheckCircle2, Sparkles, MessageSquare, Phone } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import TrialNavbar from "@/components/TrialNavbar";
@@ -376,40 +376,84 @@ const TrialSearch = () => {
   // ==================== LOCK DIALOG (rendered via Portal, works in any step) ====================
   const lockDialog = (
     <Dialog open={showLockDialog} onOpenChange={setShowLockDialog}>
-      <DialogContent className="w-[92vw] max-w-sm text-center z-[100] p-4 sm:p-6">
-        <DialogHeader className="items-center space-y-1">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-1">
-            <Lock className="h-6 w-6 text-primary" />
+      <DialogContent className="w-[92vw] max-w-sm z-[100] p-0 overflow-hidden border-0 rounded-2xl">
+        {/* Gradient header */}
+        <div className="relative bg-gradient-hero px-5 pt-7 pb-5 text-center overflow-hidden">
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/20 rounded-full blur-2xl" />
+            <div className="absolute -bottom-10 -left-10 w-28 h-28 bg-success-glow/30 rounded-full blur-2xl" />
           </div>
-          <DialogTitle className="text-lg">Acesso Completo</DialogTitle>
-          <DialogDescription className="text-sm">
-            Desbloqueie todos os leads e recursos da plataforma.
-          </DialogDescription>
-        </DialogHeader>
-        <ul className="text-sm text-muted-foreground space-y-2.5 text-left mx-auto">
-          <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" /> Pesquisas ilimitadas</li>
-          <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" /> Contatos completos (telefone, email, WhatsApp)</li>
-          <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" /> Fornecedores e representantes</li>
-          <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" /> Exportação para Excel</li>
-        </ul>
-        {/* Price */}
-        <div className="bg-muted/40 rounded-xl p-3 mt-1">
-          <div className="text-xs text-muted-foreground line-through">De R$ 197,00</div>
-          <div className="text-2xl font-bold text-foreground">R$ 97,90</div>
-          <div className="text-xs text-success font-semibold">Acesso vitalício · Pagamento único</div>
+          <div className="relative z-10">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/20 mb-3 shadow-lg">
+              <Sparkles className="h-7 w-7 text-white" />
+            </div>
+            <DialogHeader className="items-center space-y-1">
+              <DialogTitle className="text-xl font-bold text-white">Acesso Completo</DialogTitle>
+              <DialogDescription className="text-sm text-white/70">
+                Desbloqueie todo o potencial da plataforma
+              </DialogDescription>
+            </DialogHeader>
+          </div>
         </div>
-        <Button
-          size="default"
-          className="w-full bg-gradient-primary hover:opacity-90 text-sm h-12 rounded-xl shadow-primary mt-1"
-          onClick={() => { trackTrialEvent("checkout_click"); firePixel('InitiateCheckout', { content_name: 'negocix_full_access', value: 97.90, currency: 'BRL' }); window.open(getPaymentUrl(), "_blank"); }}
-        >
-          <Sparkles className="mr-2 h-4 w-4" />
-          Desbloquear por R$ 97,90
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
-        <div className="flex items-center justify-center gap-3 text-[10px] text-muted-foreground">
-          <div className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-success" /><span>Acesso imediato</span></div>
-          <div className="flex items-center gap-1"><CheckCircle2 className="h-3 w-3 text-success" /><span>Pagamento seguro</span></div>
+
+        {/* Body */}
+        <div className="px-5 pb-5 pt-4 space-y-4">
+          {/* Benefits */}
+          <div className="space-y-2.5">
+            {[
+              { icon: Search, text: "Pesquisas ilimitadas" },
+              { icon: Phone, text: "Contatos completos (telefone, email, WhatsApp)" },
+              { icon: Package, text: "Fornecedores e representantes" },
+              { icon: TrendingUp, text: "Exportação para Excel" },
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl bg-success/5 border border-success/10">
+                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
+                  <item.icon className="h-4 w-4 text-success" />
+                </div>
+                <span className="text-sm font-medium text-foreground">{item.text}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Price card */}
+          <div className="relative rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 p-4 text-center overflow-hidden">
+            <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-bl-xl">
+              -50% OFF
+            </div>
+            <div className="text-xs text-muted-foreground line-through mb-0.5">De R$ 197,00</div>
+            <div className="text-3xl font-extrabold text-foreground tracking-tight">R$ 97,90</div>
+            <div className="inline-flex items-center gap-1.5 mt-1.5 px-3 py-1 rounded-full bg-success/10 border border-success/20">
+              <Star className="h-3 w-3 text-success" fill="currentColor" />
+              <span className="text-[11px] text-success font-semibold">Acesso vitalício · Pagamento único</span>
+            </div>
+          </div>
+
+          {/* CTA Button */}
+          <Button
+            size="lg"
+            className="w-full bg-gradient-primary hover:opacity-90 text-base h-14 rounded-xl shadow-primary hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 group"
+            onClick={() => { trackTrialEvent("checkout_click"); firePixel('InitiateCheckout', { content_name: 'negocix_full_access', value: 97.90, currency: 'BRL' }); window.open(getPaymentUrl(), "_blank"); }}
+          >
+            <Sparkles className="mr-2 h-5 w-5" />
+            Desbloquear por R$ 97,90
+            <ArrowRight className="ml-2 h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+          </Button>
+
+          {/* Trust badges */}
+          <div className="flex items-center justify-center gap-4 text-[11px] text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <div className="w-4 h-4 rounded-full bg-success/20 flex items-center justify-center">
+                <CheckCircle2 className="h-3 w-3 text-success" />
+              </div>
+              <span>Acesso imediato</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-4 h-4 rounded-full bg-success/20 flex items-center justify-center">
+                <Lock className="h-2.5 w-2.5 text-success" />
+              </div>
+              <span>Pagamento seguro</span>
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
@@ -489,7 +533,7 @@ const TrialSearch = () => {
   // ==================== LOADING STEP ====================
   const loadingMessages = [
     { text: "Conectando ao banco de dados...", icon: "🔌" },
-    { text: "Analisando 35 milhões de empresas...", icon: "🏢" },
+    { text: "Analisando 37 milhões de empresas...", icon: "🏢" },
     { text: "Filtrando por sua região...", icon: "📍" },
     { text: "Verificando dados de contato...", icon: "📞" },
     { text: "Classificando por relevância...", icon: "⭐" },
@@ -498,7 +542,7 @@ const TrialSearch = () => {
     { text: "Quase pronto, finalizando...", icon: "✨" },
   ];
 
-  const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
+  // loadingMsgIndex state is declared at top of component
 
   useEffect(() => {
     if (step !== "loading") return;
