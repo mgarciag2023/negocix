@@ -265,18 +265,16 @@ const TrialLeadCard = ({
             className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium h-[50px] px-4 border border-input bg-background hover:bg-accent transition-colors"
             onClick={handleUnlock}
           >
-            {isPhoneBlocked ? <Lock className="h-4 w-4" /> : null}
+            {isPhoneBlocked || !phone ? <Lock className="h-4 w-4" /> : null}
             Ligar
           </button>
-          {hasWhatsApp && (
-            <button 
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium h-[50px] px-4 border border-green-500 text-green-600 hover:bg-green-50 transition-colors"
-              onClick={handleUnlock}
-            >
-              {isWhatsAppBlocked && <Lock className="h-4 w-4" />}
-              WhatsApp
-            </button>
-          )}
+          <button 
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium h-[50px] px-4 border border-green-500 text-green-600 hover:bg-green-50 transition-colors"
+            onClick={handleUnlock}
+          >
+            {(isWhatsAppBlocked || !hasWhatsApp) && <Lock className="h-4 w-4" />}
+            WhatsApp
+          </button>
         </div>
       </div>
     </Card>
