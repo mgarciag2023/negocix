@@ -2508,18 +2508,20 @@ serve(async (req) => {
           const nameText = `${nf} ${rs}`;
           const fullText = `${nameText} ${descCnae}`;
           
-          // Must have a distributor indicator
+          // Must have a distributor indicator in NAME
           const hasDistIndicator = distributorIndicators.some(ind => nameText.includes(ind));
+          
+          // Check if CNAE description indicates wholesale/distribution
+          const isWholesaleCnae = descCnae.includes('atacad') || descCnae.includes('distribui');
           
           // Must have at least one product keyword (in name OR CNAE description)
           const hasProductMatch = productKeywords.some(pk => fullText.includes(pk));
           
-          // If has distributor indicator, REQUIRE product match
-          // If no distributor indicator but has product match in name, accept (e.g. "Frios Silva Atacado")
-          if (hasDistIndicator) return hasProductMatch;
+          // STRICT: company must be a distributor/wholesaler (by name OR CNAE)
+          if (!hasDistIndicator && !isWholesaleCnae) return false;
           
-          // No distributor indicator - check if name has product keywords
-          return productKeywords.some(pk => nameText.includes(pk));
+          // Then must match product type
+          return hasProductMatch;
         });
         console.log(`🏪 Distributor strict filter: ${allCompanies.length} (removed ${beforeDistFilter - allCompanies.length} off-type distributors)`);
       }
