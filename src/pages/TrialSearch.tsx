@@ -498,7 +498,7 @@ const TrialSearch = () => {
     { text: "Quase pronto, finalizando...", icon: "✨" },
   ];
 
-  const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
+  // loadingMsgIndex state is declared at top of component
 
   useEffect(() => {
     if (step !== "loading") return;
