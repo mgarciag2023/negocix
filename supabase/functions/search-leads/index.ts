@@ -59,6 +59,9 @@ function getCnaesForSegment(segment: string): string[] {
     // agropecuária, casas agropecuárias, distribuidoras de alimentos/bebidas/autopeças,
     // laticínios, queijarias. Para esses, FTS por nome é mais preciso que CNAE.
     // ===== ESPECIALIZADOS / NICHO QUE AINDA USAM CNAE =====
+    // Academias - CNAE específico para condicionamento físico
+    'academias': ['9313100', '9319199'],
+    'academia': ['9313100', '9319199'],
     // Hidráulica - CNAE específico do setor
     'lojas de materiais hidráulicos': ['4744003'],
     'lojas de materiais hidraulicos': ['4744003'],
