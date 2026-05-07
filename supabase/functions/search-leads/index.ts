@@ -2246,10 +2246,8 @@ serve(async (req) => {
     {
       const beforePostFilter = allCompanies.length;
       allCompanies = allCompanies.filter(c => {
-        const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
-        const rs = normalizeText(c.razao_social || '').toLowerCase();
-        const nameText = `${nf} ${rs}`;
-        const seg = normalizeText(c._segment || '').toLowerCase();
+        const nameText = c._nameText || '';
+        const seg = (c._segment || '').toLowerCase();
 
         // 1. Filter CPF-format names (XX.XXX.XXX pattern = person, not a company)
         //    These are individuals whose surname matches a search term (e.g. surname "Tinta")
