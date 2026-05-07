@@ -455,7 +455,7 @@ const Results = () => {
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Empresas Encontradas</h1>
             <p className="text-muted-foreground text-base md:text-lg">
-              Encontramos {leads.length} leads compatíveis com seu perfil
+              Encontramos {leads.length} empresas compatíveis com seu perfil
             </p>
             {cityCorrection && (
               <p className="mt-2 text-sm text-primary">
