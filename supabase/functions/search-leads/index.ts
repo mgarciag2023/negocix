@@ -1786,7 +1786,7 @@ serve(async (req) => {
     // Edge functions have a strict CPU time limit; processing too many rows in JS will fail.
     // State-wide searches are capped lower because they pull much more data.
     const isHeavySearch = segments.length > 5;
-    const MAX_TOTAL_RAW = isStateOnly ? 45_000 : 50_000;
+    const MAX_TOTAL_RAW = isStateOnly ? 30_000 : 50_000;
 
     // Fetch a single segment using paginated queries (SDK caps RPC at 1000 rows)
     // Pre-compute neighborhood filter normalization (used inside fetchSegment)
