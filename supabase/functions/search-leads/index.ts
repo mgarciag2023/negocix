@@ -1551,36 +1551,58 @@ async function resolveCityName(
     }
   }
 
-  // 2) Buscar candidatas distintas do estado usando múltiplos prefixos para cobertura
+  // 2) Buscar candidatas distintas do estado — usar ILIKE com input completo para melhor match
+  // Strategy: try multiple patterns to find the right city
+  // Pattern 1: exact-ish match with the full input (most likely to find the right city)
+  // Pattern 2: prefix3 match for broader coverage
+  // Pattern 3: first letter fallback
   const firstLetter = inputNorm.charAt(0);
   const prefix3 = inputNorm.length >= 3 ? inputNorm.substring(0, 3) : inputNorm;
   
-  // Strategy: fetch with multiple ILIKE patterns to ensure coverage
-  // Use prefix3 first (more specific), fallback to first letter
-  const { data: candidates3 } = await client
-    .from('companies')
-    .select('cidade')
-    .eq('estado', state)
-    .not('cidade', 'is', null)
-    .ilike('cidade', `${prefix3}%`)
-    .limit(3000);
+  // Build a fuzzy ILIKE pattern from input: "SAO PAUO" → "%SAO%PA%"  
+  const inputWords = inputNorm.split(/\s+/).filter(w => w.length >= 2);
+  const fuzzyPattern = inputWords.map(w => `%${w.substring(0, Math.min(w.length, 4))}%`).join('');
   
-  // If prefix3 gives few results, also try first letter
-  let allCandidates = candidates3 || [];
-  if (allCandidates.length < 100) {
-    const { data: candidates1 } = await client
-      .from('companies')
-      .select('cidade')
-      .eq('estado', state)
-      .not('cidade', 'is', null)
-      .ilike('cidade', `${firstLetter}%`)
-      .limit(3000);
-    if (candidates1) allCandidates = [...allCandidates, ...candidates1];
+  // Fetch candidates with multiple strategies in parallel for speed
+  const candidatePromises: Promise<any[]>[] = [];
+  
+  // Strategy A: fuzzy pattern match (best for typos like "SAO PAUO" → finds "SAO PAULO")
+  if (fuzzyPattern.length > 4) {
+    candidatePromises.push(
+      client.from('companies').select('cidade').eq('estado', state)
+        .not('cidade', 'is', null).ilike('cidade', fuzzyPattern).limit(500)
+        .then((r: any) => r.data || [])
+    );
   }
+  
+  // Strategy B: prefix3 match
+  candidatePromises.push(
+    client.from('companies').select('cidade').eq('estado', state)
+      .not('cidade', 'is', null).ilike('cidade', `${prefix3}%`).limit(500)
+      .then((r: any) => r.data || [])
+  );
+  
+  // Strategy C: input starts-with (handles cases where input is close to correct)
+  const inputPrefix = inputNorm.length >= 5 ? inputNorm.substring(0, 5) : inputNorm;
+  candidatePromises.push(
+    client.from('companies').select('cidade').eq('estado', state)
+      .not('cidade', 'is', null).ilike('cidade', `${inputPrefix}%`).limit(500)
+      .then((r: any) => r.data || [])
+  );
+  
+  const candidateResults = await Promise.all(candidatePromises);
+  const allCandidates = candidateResults.flat();
 
   if (allCandidates.length === 0) {
-    console.log(`🔤 resolveCityName: no candidates found for "${inputNorm}" in ${state} (prefix3="${prefix3}")`);
-    return inputNorm;
+    // Fallback: first letter
+    const { data: fallback } = await client.from('companies').select('cidade')
+      .eq('estado', state).not('cidade', 'is', null)
+      .ilike('cidade', `${firstLetter}%`).limit(1000);
+    if (!fallback || fallback.length === 0) {
+      console.log(`🔤 resolveCityName: no candidates found for "${inputNorm}" in ${state}`);
+      return inputNorm;
+    }
+    allCandidates.push(...fallback);
   }
 
   const unique = Array.from(new Set(allCandidates.map((c: any) => c.cidade).filter(Boolean)));
