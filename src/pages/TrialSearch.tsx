@@ -522,8 +522,7 @@ const TrialSearch = () => {
     );
   }
 
-  // ==================== LOADING STEP ====================
-  }, [step]);
+  // (loading useEffect moved above early returns)
 
   if (step === "loading") {
     return (
