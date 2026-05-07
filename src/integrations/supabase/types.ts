@@ -574,6 +574,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_distinct_cities: {
+        Args: { p_prefix: string; p_state: string }
+        Returns: {
+          cidade: string
+        }[]
+      }
       get_profile_blocked_fields: {
         Args: { _user_id: string }
         Returns: {
