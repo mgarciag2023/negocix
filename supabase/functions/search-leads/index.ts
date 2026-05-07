@@ -2128,6 +2128,15 @@ serve(async (req) => {
     });
     console.log(`📊 After CNPJ dedup: ${allCompanies.length}`);
 
+    // ===== PRE-COMPUTE NORMALIZED NAMES (once per company, reused in all filters) =====
+    // This avoids calling normalizeText() hundreds of thousands of times across filters.
+    for (const c of allCompanies) {
+      c._nfNorm = (c.nome_fantasia || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim().toLowerCase();
+      c._rsNorm = (c.razao_social || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim().toLowerCase();
+      c._nameText = `${c._nfNorm} ${c._rsNorm}`;
+    }
+    console.log(`🔤 Pre-computed normalized names for ${allCompanies.length} companies (elapsed: ${Date.now() - FUNCTION_START}ms)`);
+
     // ===== SOFT TIMEOUT CHECK: if near timeout after dedup, skip heavy filters and go straight to lead transform =====
     if (isNearSoftTimeout()) {
       console.log(`⚠️ NEAR TIMEOUT after dedup — skipping relevance filters, transforming ${allCompanies.length} leads directly`);
