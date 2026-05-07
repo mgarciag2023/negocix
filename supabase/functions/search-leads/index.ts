@@ -2204,9 +2204,7 @@ serve(async (req) => {
         const seg = normalizeText(c._segment || '').toLowerCase();
         if (!seg.includes('moda infantil') && !seg.includes('roupas infantis') && !seg.includes('artigos para bebe')) return true;
         
-        const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
-        const rs = normalizeText(c.razao_social || '').toLowerCase();
-        const nameText = `${nf} ${rs}`;
+        const nameText = c._nameText || `${(c.nome_fantasia||'').toLowerCase()} ${(c.razao_social||'').toLowerCase()}`;
         const primaryCnae = (c.cnae_principal || c.cnaePrincipal || '').toString().substring(0, 4);
         const cnaeSecundaria = (c.cnae_secundaria || c.cnaeSecundaria || '').toString();
         const allCnaesText = `${c.cnae_principal || c.cnaePrincipal || ''} ${cnaeSecundaria}`;
