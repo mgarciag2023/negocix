@@ -2152,32 +2152,46 @@ serve(async (req) => {
     });
     if (hasModaInfantilSegment) {
       const beforeModaFilter = allCompanies.length;
-      // Fashion/clothing positive indicators (in name OR razao_social)
-      const fashionNameIndicators = [
+      // STRONG fashion indicators — these alone are sufficient to accept a company
+      const strongFashionIndicators = [
         'moda', 'roupa', 'roupas', 'roupinha', 'roupinhas', 'vestido', 'vestuario', 'vestuário',
         'confeccao', 'confecção', 'confeccoes', 'confecções', 'calcado', 'calçado', 'calcados', 'calçados',
         'sapatinho', 'sapato', 'tenis', 'tênis', 'enxoval', 'enxovais',
-        'baby', 'kids', 'fashion', 'wear', 'store', 'shop', 'boutique', 'butique',
+        'fashion', 'wear', 'boutique', 'butique',
         'magazine', 'magazin', 'brechó', 'brecho', 'bazar', 'outlet',
         'lingerie', 'meias', 'pijama', 'pijamas', 'camiseta', 'camisetas',
         'jeans', 'malha', 'malharia', 'tricot', 'trico', 'tricô',
         'gestante', 'gestantes', 'maternidade', 'recem nascido', 'recém nascido',
-        'bebe', 'bebê', 'nenem', 'nenê', 'loja infantil',
-        'uniforme', 'farda', 'fantasia', 'fantasias', 'costumes',
+        'loja infantil', 'uniforme', 'farda',
         'atacado de roupas', 'atacado infantil', 'tecido', 'tecidos', 'aviamento',
       ];
-      // CNAE codes that indicate clothing/fashion commerce
+      // WEAK indicators — only valid if PRIMARY CNAE is NOT from a non-fashion sector
+      const weakFashionIndicators = [
+        'baby', 'kids', 'bebe', 'bebê', 'nenem', 'nenê',
+        'shop', 'store', 'fantasia', 'fantasias',
+      ];
+      // CNAE codes that DEFINITELY indicate clothing/fashion
       const fashionCnaes = [
         '4781', // vestuário e acessórios
         '4782', // calçados
         '1412', // confecção de vestuário
         '1411', // confecção de roupas íntimas
-        '4789', // comércio varejista de outros produtos (some baby stores)
         '4763', // artigos de armarinho e vestuário
         '4755', // artigos de cama, mesa, enxoval
         '1413', // confecção de roupas profissionais
         '4785', // artigos usados (brechós)
-        '4772', // cosméticos (some baby product stores have this)
+      ];
+      // CNAE codes that are CLEARLY not fashion — if primary CNAE matches, reject
+      const nonFashionPrimaryCnaes = [
+        '8511', '8512', '8513', '8520', '8531', '8532', '8533', '8541', '8542', '8550', '8591', '8592', '8593', '8599', // educação
+        '8610', '8621', '8622', '8630', '8640', '8650', '8660', '8690', // saúde
+        '9602', '9601', // cabeleireiros, lavanderias
+        '8230', // organização de feiras/festas
+        '9329', '9321', '9311', '9312', '9313', '9319', // esportes, recreação
+        '8711', '8712', '8720', '8730', // assistência social
+        '6911', '6912', '6920', // atividades jurídicas/contábeis
+        '7111', '7112', '7120', // engenharia/arquitetura
+        '8650', // fonoaudiologia, fisioterapia, terapia ocupacional
       ];
       allCompanies = allCompanies.filter(c => {
         if (c._viaCnae) return true;
@@ -2187,26 +2201,38 @@ serve(async (req) => {
         const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
         const rs = normalizeText(c.razao_social || '').toLowerCase();
         const nameText = `${nf} ${rs}`;
-        
-        // Check 1: Does the name have ANY fashion/clothing indicator?
-        const hasFashionName = fashionNameIndicators.some(ind => nameText.includes(ind));
-        if (hasFashionName) return true;
-        
-        // Check 2: Does the CNAE indicate fashion/clothing?
-        const cnae = (c.cnae_principal || c.cnaePrincipal || '').toString();
+        const primaryCnae = (c.cnae_principal || c.cnaePrincipal || '').toString().substring(0, 4);
         const cnaeSecundaria = (c.cnae_secundaria || c.cnaeSecundaria || '').toString();
-        const allCnaes = `${cnae} ${cnaeSecundaria}`;
-        const hasFashionCnae = fashionCnaes.some(code => allCnaes.includes(code));
-        if (hasFashionCnae) return true;
+        const allCnaesText = `${c.cnae_principal || c.cnaePrincipal || ''} ${cnaeSecundaria}`;
         
-        // Check 3: CNAE description mentions clothing
+        // REJECT immediately if primary CNAE is clearly non-fashion
+        const isNonFashionPrimary = nonFashionPrimaryCnaes.some(code => primaryCnae.startsWith(code.substring(0, 4)));
+        
+        // Check 1: Strong fashion indicator in name — accept unless primary CNAE is non-fashion
+        const hasStrongFashionName = strongFashionIndicators.some(ind => nameText.includes(ind));
+        if (hasStrongFashionName && !isNonFashionPrimary) return true;
+        
+        // Check 2: Fashion CNAE (primary or secondary) — always accept
+        const hasFashionCnae = fashionCnaes.some(code => allCnaesText.includes(code));
+        if (hasFashionCnae && !isNonFashionPrimary) return true;
+        
+        // Check 3: CNAE description mentions clothing — accept unless non-fashion primary
         const descCnae = normalizeText(c.descricao_cnae || c.descricaoCnae || '').toLowerCase();
         const hasFashionCnaeDesc = descCnae.includes('vestuario') || descCnae.includes('confeccao') || 
-          descCnae.includes('calcado') || descCnae.includes('calçado') || descCnae.includes('roupa') ||
-          descCnae.includes('textil') || descCnae.includes('têxtil') || descCnae.includes('malha');
+          descCnae.includes('calcado') || descCnae.includes('roupa') ||
+          descCnae.includes('textil') || descCnae.includes('malha');
         if (hasFashionCnaeDesc) return true;
         
-        // No fashion signal found — reject (likely a school, clinic, buffet, salon, etc.)
+        // Check 4: Weak indicator + NOT non-fashion primary
+        const hasWeakFashionName = weakFashionIndicators.some(ind => nameText.includes(ind));
+        if (hasWeakFashionName && !isNonFashionPrimary) {
+          // Weak indicator is only valid with a supporting fashion CNAE (any position)
+          if (hasFashionCnae) return true;
+          // Or if primary CNAE is generic retail (4789 = outros produtos)
+          if (primaryCnae === '4789') return true;
+        }
+        
+        // No reliable fashion signal — reject
         return false;
       });
       console.log(`👶 Moda Infantil whitelist filter: ${allCompanies.length} (removed ${beforeModaFilter - allCompanies.length} non-fashion companies)`);
