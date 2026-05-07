@@ -1578,9 +1578,13 @@ async function resolveCityName(
     if (candidates1) allCandidates = [...allCandidates, ...candidates1];
   }
 
-  if (allCandidates.length === 0) return inputNorm;
+  if (allCandidates.length === 0) {
+    console.log(`🔤 resolveCityName: no candidates found for "${inputNorm}" in ${state} (prefix3="${prefix3}")`);
+    return inputNorm;
+  }
 
   const unique = Array.from(new Set(allCandidates.map((c: any) => c.cidade).filter(Boolean)));
+  console.log(`🔤 resolveCityName: ${allCandidates.length} rows → ${unique.length} unique cities for "${inputNorm}" (prefix3="${prefix3}")`);
 
   // Similaridade simples (Dice) entre bigrams — funciona offline sem RPC
   const bigrams = (s: string): Set<string> => {
