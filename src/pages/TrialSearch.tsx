@@ -523,26 +523,6 @@ const TrialSearch = () => {
   }
 
   // ==================== LOADING STEP ====================
-  const loadingMessages = [
-    { text: "Conectando ao banco de dados...", icon: "🔌" },
-    { text: "Analisando 37 milhões de empresas...", icon: "🏢" },
-    { text: "Filtrando por sua região...", icon: "📍" },
-    { text: "Verificando dados de contato...", icon: "📞" },
-    { text: "Classificando por relevância...", icon: "⭐" },
-    { text: "Calculando score de cada lead...", icon: "📊" },
-    { text: "Separando os melhores matches...", icon: "🎯" },
-    { text: "Quase pronto, finalizando...", icon: "✨" },
-  ];
-
-  // loadingMsgIndex state is declared at top of component
-
-  useEffect(() => {
-    if (step !== "loading") return;
-    setLoadingMsgIndex(0);
-    const interval = setInterval(() => {
-      setLoadingMsgIndex(prev => prev < loadingMessages.length - 1 ? prev + 1 : prev);
-    }, 2800);
-    return () => clearInterval(interval);
   }, [step]);
 
   if (step === "loading") {
