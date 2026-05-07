@@ -1565,10 +1565,23 @@ async function resolveCityName(
     prefixesToTry.add(inputWords[0].substring(0, 3));
   }
   
-  const distinctPromises = Array.from(prefixesToTry).map(prefix =>
-    client.rpc('get_distinct_cities', { p_state: state, p_prefix: prefix })
-      .then((r: any) => (r.data || []).map((row: any) => row.cidade))
-  );
+  const distinctPromises = Array.from(prefixesToTry).map(async (prefix) => {
+    try {
+      const r = await client.rpc('get_distinct_cities', { p_state: state, p_prefix: prefix });
+      if (r.error) {
+        console.log(`🔤 RPC error for prefix "${prefix}": ${r.error.message}`);
+        // Fallback: use regular query
+        const fb = await client.from('companies').select('cidade').eq('estado', state)
+          .not('cidade', 'is', null).ilike('cidade', `${prefix}%`).limit(1000);
+        const cities = new Set((fb.data || []).map((row: any) => row.cidade).filter(Boolean));
+        return Array.from(cities);
+      }
+      return (r.data || []).map((row: any) => row.cidade);
+    } catch (e) {
+      console.log(`🔤 RPC exception for prefix "${prefix}": ${e}`);
+      return [];
+    }
+  });
   
   const distinctResults = await Promise.all(distinctPromises);
   const unique = Array.from(new Set(distinctResults.flat().filter(Boolean)));
