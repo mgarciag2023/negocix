@@ -1580,7 +1580,7 @@ async function resolveCityName(
 
   if (allCandidates.length === 0) return inputNorm;
 
-  const unique = Array.from(new Set(candidates.map((c: any) => c.cidade).filter(Boolean)));
+  const unique = Array.from(new Set(allCandidates.map((c: any) => c.cidade).filter(Boolean)));
 
   // Similaridade simples (Dice) entre bigrams — funciona offline sem RPC
   const bigrams = (s: string): Set<string> => {
