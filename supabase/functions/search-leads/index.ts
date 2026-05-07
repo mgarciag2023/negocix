@@ -2736,10 +2736,7 @@ serve(async (req) => {
     if (hasPadariasSegment) {
       const beforePadFilter = allCompanies.length;
       allCompanies = allCompanies.filter(c => {
-        const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
-        const rs = normalizeText(c.razao_social || '').toLowerCase();
-        const combined = `${nf} ${rs}`;
-        return !/\bmercad/i.test(combined);
+        return !/mercad/.test(c._nameText || '');
       });
       console.log(`🥖 Padarias name filter (excluding "mercado"): ${allCompanies.length} (removed ${beforePadFilter - allCompanies.length})`);
     }
