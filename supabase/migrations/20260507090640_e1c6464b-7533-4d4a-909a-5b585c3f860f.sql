@@ -1,0 +1,1 @@
+GRANT SELECT ON TABLE public.trial_analytics TO anon;
