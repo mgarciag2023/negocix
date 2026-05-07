@@ -509,7 +509,7 @@ const TrialSearch = () => {
                 className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 group text-lg h-16 px-8 rounded-2xl w-full"
                 onClick={goToConfig}
               >
-                🚀 Encontrar Clientes Agora
+                🚀 Testar Grátis Agora
                 <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </div>
