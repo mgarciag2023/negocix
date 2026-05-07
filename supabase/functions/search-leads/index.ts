@@ -2143,6 +2143,26 @@ serve(async (req) => {
       }
     }
 
+    // ===== MODA INFANTIL: exclude schools, daycares, colleges =====
+    const hasModaInfantilSegment = segments.some((s: string) => {
+      const n = normalizeText(s).toLowerCase();
+      return n.includes('moda infantil') || n.includes('roupas infantis') || n.includes('artigos para bebe');
+    });
+    if (hasModaInfantilSegment) {
+      const beforeModaFilter = allCompanies.length;
+      const schoolExclusions = ['colegio', 'colégio', 'escola', 'creche', 'bercario', 'berçário', 'educacao', 'educação', 'ensino', 'jardim de infancia', 'jardim de infância', 'educacional', 'pedagogia', 'pedagogico', 'pedagógico', 'instituto de ensino', 'centro educacional', 'nucleo educacional', 'núcleo educacional', 'escolinha', 'pre escola', 'pré escola', 'maternal', 'curso', 'cursos', 'treinamento', 'capacitacao', 'capacitação', 'autoescola', 'auto escola', 'igreja', 'templo', 'paroquia', 'paróquia', 'ministerio', 'ministério', 'assembleia', 'congregacao', 'congregação', 'hospital', 'clinica', 'clínica', 'laboratorio', 'laboratório', 'farmacia', 'farmácia', 'consultorio', 'consultório', 'odontologia', 'odontologico', 'odontológico', 'pediatra', 'pediatria'];
+      allCompanies = allCompanies.filter(c => {
+        if (c._viaCnae) return true;
+        const seg = (c._segment || '').trim().toLowerCase();
+        if (!seg.includes('moda infantil') && !seg.includes('roupas infantis')) return true;
+        const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
+        const rs = normalizeText(c.razao_social || '').toLowerCase();
+        const combined = `${nf} ${rs}`;
+        return !schoolExclusions.some(term => combined.includes(term));
+      });
+      console.log(`👶 Moda Infantil filter (excluding schools/clinics): ${allCompanies.length} (removed ${beforeModaFilter - allCompanies.length})`);
+    }
+
 
     // ===== STRICT RELEVANCE FILTER FOR DISTRIBUTORS =====
     // When searching for "distribuidores/distribuidoras", ensure companies are:
