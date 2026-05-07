@@ -1665,7 +1665,7 @@ serve(async (req) => {
   // Time guard: track when we started so we can bail before Supabase kills us
   const FUNCTION_START = Date.now();
   const MAX_EXECUTION_MS = 395_000; // 395s safety margin (Supabase Pro hard limit ~400s)
-  const SOFT_TIMEOUT_MS = 120_000; // 120s — return partial results BEFORE gateway kills us at ~150s
+  const SOFT_TIMEOUT_MS = 50_000; // 50s — return partial results well before CPU limit is hit
   const isNearTimeout = () => (Date.now() - FUNCTION_START) > MAX_EXECUTION_MS;
   const isNearSoftTimeout = () => (Date.now() - FUNCTION_START) > SOFT_TIMEOUT_MS;
 
