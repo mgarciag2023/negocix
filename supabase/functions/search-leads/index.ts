@@ -2698,9 +2698,7 @@ serve(async (req) => {
         const coreKeywords = segCoreKeywordsMap.get(seg);
         if (!termSets || termSets.length === 0) return true;
 
-        const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
-        const rs = normalizeText(c.razao_social || '').toLowerCase();
-        const nameText = `${nf} ${rs}`;
+        const nameText = c._nameText || '';
 
         // At least one core keyword must appear in the business name
         if (coreKeywords && coreKeywords.length > 0) {
