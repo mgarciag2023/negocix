@@ -1786,7 +1786,7 @@ serve(async (req) => {
     // Edge functions have a strict CPU time limit; processing too many rows in JS will fail.
     // State-wide searches are capped lower because they pull much more data.
     const isHeavySearch = segments.length > 5;
-    const MAX_TOTAL_RAW = isStateOnly ? 20_000 : 50_000;
+    const MAX_TOTAL_RAW = isStateOnly ? 30_000 : 50_000;
 
     // Fetch a single segment using paginated queries (SDK caps RPC at 1000 rows)
     // Pre-compute neighborhood filter normalization (used inside fetchSegment)
@@ -1861,7 +1861,7 @@ serve(async (req) => {
       // Phase 1: Fetch first batch of pages in parallel using the COMBINED query
       // (all terms OR'd together in a single tsquery — one GIN index scan in Postgres).
       const PAGE_CONCURRENCY = 5;
-      const INITIAL_PAGES = isHeavySearch ? 8 : (isStateOnly ? 10 : 15); // state-wide: 10 pages (10k), city: 15 pages (15k)
+      const INITIAL_PAGES = isHeavySearch ? 8 : 15;
       const initialPageNums = Array.from({ length: INITIAL_PAGES }, (_, i) => i);
 
       const initialPages = await runPool(initialPageNums, async (p: number) => {
@@ -1939,7 +1939,7 @@ serve(async (req) => {
       // Phase 2: Continue paginating in parallel batches if last page was full
       // (means there's likely more data). Stop on soft-timeout, target reached, or empty page.
       if (lastPageFull && bestResults.length < targetPerSegment) {
-        const MAX_EXTRA_BATCHES = isHeavySearch ? 2 : (isStateOnly ? 2 : 6); // state-wide: max 2 extra batches
+        const MAX_EXTRA_BATCHES = isHeavySearch ? 2 : 6;
         let nextPage = highestPageFetched + 1;
         let stop = false;
 
@@ -2128,6 +2128,15 @@ serve(async (req) => {
     });
     console.log(`📊 After CNPJ dedup: ${allCompanies.length}`);
 
+    // ===== PRE-COMPUTE NORMALIZED NAMES (once per company, reused in all filters) =====
+    // This avoids calling normalizeText() hundreds of thousands of times across filters.
+    for (const c of allCompanies) {
+      c._nfNorm = (c.nome_fantasia || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim().toLowerCase();
+      c._rsNorm = (c.razao_social || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim().toLowerCase();
+      c._nameText = `${c._nfNorm} ${c._rsNorm}`;
+    }
+    console.log(`🔤 Pre-computed normalized names for ${allCompanies.length} companies (elapsed: ${Date.now() - FUNCTION_START}ms)`);
+
     // ===== SOFT TIMEOUT CHECK: if near timeout after dedup, skip heavy filters and go straight to lead transform =====
     if (isNearSoftTimeout()) {
       console.log(`⚠️ NEAR TIMEOUT after dedup — skipping relevance filters, transforming ${allCompanies.length} leads directly`);
@@ -2195,9 +2204,7 @@ serve(async (req) => {
         const seg = normalizeText(c._segment || '').toLowerCase();
         if (!seg.includes('moda infantil') && !seg.includes('roupas infantis') && !seg.includes('artigos para bebe')) return true;
         
-        const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
-        const rs = normalizeText(c.razao_social || '').toLowerCase();
-        const nameText = `${nf} ${rs}`;
+        const nameText = c._nameText || `${(c.nome_fantasia||'').toLowerCase()} ${(c.razao_social||'').toLowerCase()}`;
         const primaryCnae = (c.cnae_principal || c.cnaePrincipal || '').toString().substring(0, 4);
         const cnaeSecundaria = (c.cnae_secundaria || c.cnaeSecundaria || '').toString();
         const allCnaesText = `${c.cnae_principal || c.cnaePrincipal || ''} ${cnaeSecundaria}`;
@@ -2239,10 +2246,8 @@ serve(async (req) => {
     {
       const beforePostFilter = allCompanies.length;
       allCompanies = allCompanies.filter(c => {
-        const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
-        const rs = normalizeText(c.razao_social || '').toLowerCase();
-        const nameText = `${nf} ${rs}`;
-        const seg = normalizeText(c._segment || '').toLowerCase();
+        const nameText = c._nameText || '';
+        const seg = (c._segment || '').toLowerCase();
 
         // 1. Filter CPF-format names (XX.XXX.XXX pattern = person, not a company)
         //    These are individuals whose surname matches a search term (e.g. surname "Tinta")
@@ -2485,9 +2490,7 @@ serve(async (req) => {
         const isIndustrySeg = seg.includes('industria') || seg.includes('indústria') || seg.includes('fabrica') || seg.includes('fábrica');
         if (!isIndustrySeg) return true;
 
-        const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
-        const rs = normalizeText(c.razao_social || '').toLowerCase();
-        const combined = `${nf} ${rs}`;
+        const combined = c._nameText || '';
 
         // Must match the product segment in name
         const productKws = industryProductKeywords[seg];
@@ -2661,10 +2664,8 @@ serve(async (req) => {
           const productKeywords = getDistributorProductType(seg);
           if (!productKeywords) return true; // Can't determine product type, keep
           
-          const nf = (c.nome_fantasia || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-          const rs = (c.razao_social || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          const nameText = c._nameText || '';
           const descCnae = (c.descricao_cnae || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-          const nameText = `${nf} ${rs}`;
           const fullText = `${nameText} ${descCnae}`;
           
           // Must have a distributor indicator in NAME
@@ -2697,9 +2698,7 @@ serve(async (req) => {
         const coreKeywords = segCoreKeywordsMap.get(seg);
         if (!termSets || termSets.length === 0) return true;
 
-        const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
-        const rs = normalizeText(c.razao_social || '').toLowerCase();
-        const nameText = `${nf} ${rs}`;
+        const nameText = c._nameText || '';
 
         // At least one core keyword must appear in the business name
         if (coreKeywords && coreKeywords.length > 0) {
@@ -2737,10 +2736,7 @@ serve(async (req) => {
     if (hasPadariasSegment) {
       const beforePadFilter = allCompanies.length;
       allCompanies = allCompanies.filter(c => {
-        const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
-        const rs = normalizeText(c.razao_social || '').toLowerCase();
-        const combined = `${nf} ${rs}`;
-        return !/\bmercad/i.test(combined);
+        return !/mercad/.test(c._nameText || '');
       });
       console.log(`🥖 Padarias name filter (excluding "mercado"): ${allCompanies.length} (removed ${beforePadFilter - allCompanies.length})`);
     }
