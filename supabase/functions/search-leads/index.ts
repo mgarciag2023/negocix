@@ -1320,18 +1320,41 @@ function parseRegion(region: string): { city: string | null; state: string | nul
     return { city: city || normalizeText(cityRaw), state, isStateOnly: false };
   }
 
-  // Single value
+  // Single value — but first check if it contains a trailing state abbreviation or name separated by space
+  // e.g. "Joinvile SC", "São Paulo SP", "Blumenau Santa Catarina"
   const single = clean;
   const singleNorm = normalizeText(single);
   const singleLower = single.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  
+
   if (stateAbbrevs.includes(singleNorm)) {
     return { city: null, state: singleNorm, isStateOnly: true };
   }
   if (stateNameMap[singleLower]) {
     return { city: null, state: stateNameMap[singleLower], isStateOnly: true };
   }
-  
+
+  // Check for trailing state abbreviation in space-separated input: "Joinvile SC" → city=JOINVILE, state=SC
+  const spaceWords = singleNorm.split(/\s+/);
+  if (spaceWords.length >= 2) {
+    const lastWord = spaceWords[spaceWords.length - 1];
+    if (stateAbbrevs.includes(lastWord)) {
+      const cityPart = spaceWords.slice(0, -1).join(' ');
+      const city = cleanCityName(cityPart, lastWord) || cityPart;
+      return { city, state: lastWord, isStateOnly: false };
+    }
+    // Check for trailing full state name: "Blumenau Santa Catarina"
+    // Try 1-word, 2-word, 3-word suffixes
+    for (let suffixLen = 1; suffixLen <= Math.min(3, spaceWords.length - 1); suffixLen++) {
+      const suffixWords = spaceWords.slice(-suffixLen).join(' ').toLowerCase();
+      const suffixNorm = suffixWords.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      if (stateNameMap[suffixNorm]) {
+        const detectedState = stateNameMap[suffixNorm];
+        const cityPart = spaceWords.slice(0, -suffixLen).join(' ');
+        const city = cleanCityName(cityPart, detectedState) || cityPart;
+        return { city, state: detectedState, isStateOnly: false };
+      }
+    }
+  }
 
   // Assume it's a city
   return { city: singleNorm, state: null, isStateOnly: false };
@@ -1528,20 +1551,36 @@ async function resolveCityName(
     }
   }
 
-  // 2) Buscar candidatas distintas do estado e escolher a mais parecida
-  // (faixa razoável: cidades que comecem com a primeira letra ou contenham parte do nome)
+  // 2) Buscar candidatas distintas do estado usando múltiplos prefixos para cobertura
   const firstLetter = inputNorm.charAt(0);
-  const { data: candidates } = await client
+  const prefix3 = inputNorm.length >= 3 ? inputNorm.substring(0, 3) : inputNorm;
+  
+  // Strategy: fetch with multiple ILIKE patterns to ensure coverage
+  // Use prefix3 first (more specific), fallback to first letter
+  const { data: candidates3 } = await client
     .from('companies')
     .select('cidade')
     .eq('estado', state)
     .not('cidade', 'is', null)
-    .ilike('cidade', `${firstLetter}%`)
-    .limit(2000);
+    .ilike('cidade', `${prefix3}%`)
+    .limit(3000);
+  
+  // If prefix3 gives few results, also try first letter
+  let allCandidates = candidates3 || [];
+  if (allCandidates.length < 100) {
+    const { data: candidates1 } = await client
+      .from('companies')
+      .select('cidade')
+      .eq('estado', state)
+      .not('cidade', 'is', null)
+      .ilike('cidade', `${firstLetter}%`)
+      .limit(3000);
+    if (candidates1) allCandidates = [...allCandidates, ...candidates1];
+  }
 
-  if (!candidates || candidates.length === 0) return inputNorm;
+  if (allCandidates.length === 0) return inputNorm;
 
-  const unique = Array.from(new Set(candidates.map((c: any) => c.cidade).filter(Boolean)));
+  const unique = Array.from(new Set(allCandidates.map((c: any) => c.cidade).filter(Boolean)));
 
   // Similaridade simples (Dice) entre bigrams — funciona offline sem RPC
   const bigrams = (s: string): Set<string> => {
