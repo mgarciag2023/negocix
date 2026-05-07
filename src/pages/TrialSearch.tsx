@@ -376,55 +376,55 @@ const TrialSearch = () => {
   // ==================== LOCK DIALOG (rendered via Portal, works in any step) ====================
   const lockDialog = (
     <Dialog open={showLockDialog} onOpenChange={setShowLockDialog}>
-      <DialogContent className="w-[88vw] max-w-xs z-[100] p-0 overflow-hidden border-0 rounded-2xl">
+      <DialogContent className="w-[90vw] max-w-sm z-[100] p-0 overflow-hidden border-0 rounded-2xl top-[45%]">
         {/* Header */}
         <div className="relative bg-gradient-hero px-5 pt-5 pb-4 text-center">
-          <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 mb-2">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 mb-2">
             <Sparkles className="h-5 w-5 text-white" />
           </div>
           <DialogHeader className="items-center space-y-0.5">
             <DialogTitle className="text-lg font-bold text-white">Acesso Completo</DialogTitle>
-            <DialogDescription className="text-xs text-white/70">
+            <DialogDescription className="text-sm text-white/70">
               Desbloqueie todo o potencial da plataforma
             </DialogDescription>
           </DialogHeader>
         </div>
 
         {/* Body */}
-        <div className="px-4 pb-4 pt-3 space-y-3">
-          {/* Benefits — compact list */}
-          <div className="space-y-1.5">
+        <div className="px-5 pb-5 pt-3 space-y-3.5">
+          {/* Benefits */}
+          <div className="space-y-2">
             {[
               "Pesquisas ilimitadas",
               "Contatos completos (telefone, email, WhatsApp)",
               "Fornecedores e representantes",
               "Exportação para Excel",
             ].map((text, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <CheckCircle2 className="h-3.5 w-3.5 text-success flex-shrink-0" />
-                <span className="text-xs text-foreground">{text}</span>
+              <div key={i} className="flex items-center gap-2.5">
+                <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
+                <span className="text-sm text-foreground">{text}</span>
               </div>
             ))}
           </div>
 
           {/* Price */}
-          <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-center">
-            <span className="text-xs text-muted-foreground line-through mr-2">R$ 197,00</span>
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 text-center">
+            <span className="text-sm text-muted-foreground line-through mr-2">R$ 197,00</span>
             <span className="text-2xl font-extrabold text-foreground">R$ 97,90</span>
-            <p className="text-[10px] text-success font-medium mt-1">Acesso vitalício · Pagamento único</p>
+            <p className="text-xs text-success font-medium mt-1">Acesso vitalício · Pagamento único</p>
           </div>
 
           {/* CTA */}
           <Button
             size="default"
-            className="w-full bg-gradient-primary hover:opacity-90 text-sm h-11 rounded-xl shadow-primary transition-all duration-300"
+            className="w-full bg-gradient-primary hover:opacity-90 text-sm h-12 rounded-xl shadow-primary transition-all duration-300"
             onClick={() => { trackTrialEvent("checkout_click"); firePixel('InitiateCheckout', { content_name: 'negocix_full_access', value: 97.90, currency: 'BRL' }); window.open(getPaymentUrl(), "_blank"); }}
           >
             Desbloquear por R$ 97,90
           </Button>
 
           {/* Trust */}
-          <div className="flex items-center justify-center gap-3 text-[10px] text-muted-foreground">
+          <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
             <span>🔒 Pagamento seguro</span>
             <span>⚡ Acesso imediato</span>
           </div>
