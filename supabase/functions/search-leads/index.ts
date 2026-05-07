@@ -1665,7 +1665,7 @@ serve(async (req) => {
   // Time guard: track when we started so we can bail before Supabase kills us
   const FUNCTION_START = Date.now();
   const MAX_EXECUTION_MS = 395_000; // 395s safety margin (Supabase Pro hard limit ~400s)
-  const SOFT_TIMEOUT_MS = 120_000; // 120s — return partial results BEFORE gateway kills us at ~150s
+  const SOFT_TIMEOUT_MS = 50_000; // 50s — return partial results well before CPU limit is hit
   const isNearTimeout = () => (Date.now() - FUNCTION_START) > MAX_EXECUTION_MS;
   const isNearSoftTimeout = () => (Date.now() - FUNCTION_START) > SOFT_TIMEOUT_MS;
 
@@ -1783,13 +1783,10 @@ serve(async (req) => {
     let allCompanies: any[] = [];
 
     // Hard cap on total raw companies to prevent CPU Time exceeded errors
-    // Edge functions have a strict 2s CPU time limit; processing 100K+ rows in JS will always fail.
-    // 50K is the safe maximum — covers virtually all real searches while staying under CPU budget.
-    const MAX_TOTAL_RAW = 50_000;
-
-    // Adaptive limits: heavy multi-segment searches (>5 segments) need stricter caps
-    // to fit inside the ~400s edge-function window
+    // Edge functions have a strict CPU time limit; processing too many rows in JS will fail.
+    // State-wide searches are capped lower because they pull much more data.
     const isHeavySearch = segments.length > 5;
+    const MAX_TOTAL_RAW = isStateOnly ? 20_000 : 50_000;
 
     // Fetch a single segment using paginated queries (SDK caps RPC at 1000 rows)
     // Pre-compute neighborhood filter normalization (used inside fetchSegment)
@@ -1864,7 +1861,7 @@ serve(async (req) => {
       // Phase 1: Fetch first batch of pages in parallel using the COMBINED query
       // (all terms OR'd together in a single tsquery — one GIN index scan in Postgres).
       const PAGE_CONCURRENCY = 5;
-      const INITIAL_PAGES = isHeavySearch ? 8 : 15; // fetch up to 15 pages (15k rows) up front in parallel
+      const INITIAL_PAGES = isHeavySearch ? 8 : (isStateOnly ? 10 : 15); // state-wide: 10 pages (10k), city: 15 pages (15k)
       const initialPageNums = Array.from({ length: INITIAL_PAGES }, (_, i) => i);
 
       const initialPages = await runPool(initialPageNums, async (p: number) => {
@@ -1942,7 +1939,7 @@ serve(async (req) => {
       // Phase 2: Continue paginating in parallel batches if last page was full
       // (means there's likely more data). Stop on soft-timeout, target reached, or empty page.
       if (lastPageFull && bestResults.length < targetPerSegment) {
-        const MAX_EXTRA_BATCHES = isHeavySearch ? 2 : 6; // each batch = PAGE_CONCURRENCY pages
+        const MAX_EXTRA_BATCHES = isHeavySearch ? 2 : (isStateOnly ? 2 : 6); // state-wide: max 2 extra batches
         let nextPage = highestPageFetched + 1;
         let stop = false;
 
