@@ -376,83 +376,57 @@ const TrialSearch = () => {
   // ==================== LOCK DIALOG (rendered via Portal, works in any step) ====================
   const lockDialog = (
     <Dialog open={showLockDialog} onOpenChange={setShowLockDialog}>
-      <DialogContent className="w-[92vw] max-w-sm z-[100] p-0 overflow-hidden border-0 rounded-2xl">
-        {/* Gradient header */}
-        <div className="relative bg-gradient-hero px-5 pt-7 pb-5 text-center overflow-hidden">
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/20 rounded-full blur-2xl" />
-            <div className="absolute -bottom-10 -left-10 w-28 h-28 bg-success-glow/30 rounded-full blur-2xl" />
+      <DialogContent className="w-[88vw] max-w-xs z-[100] p-0 overflow-hidden border-0 rounded-2xl">
+        {/* Header */}
+        <div className="relative bg-gradient-hero px-5 pt-5 pb-4 text-center">
+          <div className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 mb-2">
+            <Sparkles className="h-5 w-5 text-white" />
           </div>
-          <div className="relative z-10">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/20 mb-3 shadow-lg">
-              <Sparkles className="h-7 w-7 text-white" />
-            </div>
-            <DialogHeader className="items-center space-y-1">
-              <DialogTitle className="text-xl font-bold text-white">Acesso Completo</DialogTitle>
-              <DialogDescription className="text-sm text-white/70">
-                Desbloqueie todo o potencial da plataforma
-              </DialogDescription>
-            </DialogHeader>
-          </div>
+          <DialogHeader className="items-center space-y-0.5">
+            <DialogTitle className="text-lg font-bold text-white">Acesso Completo</DialogTitle>
+            <DialogDescription className="text-xs text-white/70">
+              Desbloqueie todo o potencial da plataforma
+            </DialogDescription>
+          </DialogHeader>
         </div>
 
         {/* Body */}
-        <div className="px-5 pb-5 pt-4 space-y-4">
-          {/* Benefits */}
-          <div className="space-y-2.5">
+        <div className="px-4 pb-4 pt-3 space-y-3">
+          {/* Benefits — compact list */}
+          <div className="space-y-1.5">
             {[
-              { icon: Search, text: "Pesquisas ilimitadas" },
-              { icon: Phone, text: "Contatos completos (telefone, email, WhatsApp)" },
-              { icon: Package, text: "Fornecedores e representantes" },
-              { icon: TrendingUp, text: "Exportação para Excel" },
-            ].map((item, i) => (
-              <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl bg-success/5 border border-success/10">
-                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
-                  <item.icon className="h-4 w-4 text-success" />
-                </div>
-                <span className="text-sm font-medium text-foreground">{item.text}</span>
+              "Pesquisas ilimitadas",
+              "Contatos completos (telefone, email, WhatsApp)",
+              "Fornecedores e representantes",
+              "Exportação para Excel",
+            ].map((text, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <CheckCircle2 className="h-3.5 w-3.5 text-success flex-shrink-0" />
+                <span className="text-xs text-foreground">{text}</span>
               </div>
             ))}
           </div>
 
-          {/* Price card */}
-          <div className="relative rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 p-4 text-center overflow-hidden">
-            <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-bl-xl">
-              -50% OFF
-            </div>
-            <div className="text-xs text-muted-foreground line-through mb-0.5">De R$ 197,00</div>
-            <div className="text-3xl font-extrabold text-foreground tracking-tight">R$ 97,90</div>
-            <div className="inline-flex items-center gap-1.5 mt-1.5 px-3 py-1 rounded-full bg-success/10 border border-success/20">
-              <Star className="h-3 w-3 text-success" fill="currentColor" />
-              <span className="text-[11px] text-success font-semibold">Acesso vitalício · Pagamento único</span>
-            </div>
+          {/* Price */}
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-center">
+            <span className="text-xs text-muted-foreground line-through mr-2">R$ 197,00</span>
+            <span className="text-2xl font-extrabold text-foreground">R$ 97,90</span>
+            <p className="text-[10px] text-success font-medium mt-1">Acesso vitalício · Pagamento único</p>
           </div>
 
-          {/* CTA Button */}
+          {/* CTA */}
           <Button
-            size="lg"
-            className="w-full bg-gradient-primary hover:opacity-90 text-base h-14 rounded-xl shadow-primary hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 group"
+            size="default"
+            className="w-full bg-gradient-primary hover:opacity-90 text-sm h-11 rounded-xl shadow-primary transition-all duration-300"
             onClick={() => { trackTrialEvent("checkout_click"); firePixel('InitiateCheckout', { content_name: 'negocix_full_access', value: 97.90, currency: 'BRL' }); window.open(getPaymentUrl(), "_blank"); }}
           >
-            <Sparkles className="mr-2 h-5 w-5" />
             Desbloquear por R$ 97,90
-            <ArrowRight className="ml-2 h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
           </Button>
 
-          {/* Trust badges */}
-          <div className="flex items-center justify-center gap-4 text-[11px] text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded-full bg-success/20 flex items-center justify-center">
-                <CheckCircle2 className="h-3 w-3 text-success" />
-              </div>
-              <span>Acesso imediato</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-4 h-4 rounded-full bg-success/20 flex items-center justify-center">
-                <Lock className="h-2.5 w-2.5 text-success" />
-              </div>
-              <span>Pagamento seguro</span>
-            </div>
+          {/* Trust */}
+          <div className="flex items-center justify-center gap-3 text-[10px] text-muted-foreground">
+            <span>🔒 Pagamento seguro</span>
+            <span>⚡ Acesso imediato</span>
           </div>
         </div>
       </DialogContent>
