@@ -2143,24 +2143,73 @@ serve(async (req) => {
       }
     }
 
-    // ===== MODA INFANTIL: exclude schools, daycares, colleges =====
+    // ===== MODA INFANTIL: WHITELIST approach — require fashion/clothing indicator =====
+    // The word "infantil" alone is too generic (matches schools, clinics, buffets, salons, etc.)
+    // Instead of blacklisting, we REQUIRE a positive fashion/clothing signal in name OR CNAE.
     const hasModaInfantilSegment = segments.some((s: string) => {
       const n = normalizeText(s).toLowerCase();
       return n.includes('moda infantil') || n.includes('roupas infantis') || n.includes('artigos para bebe');
     });
     if (hasModaInfantilSegment) {
       const beforeModaFilter = allCompanies.length;
-      const schoolExclusions = ['colegio', 'colégio', 'escola', 'creche', 'bercario', 'berçário', 'educacao', 'educação', 'ensino', 'jardim de infancia', 'jardim de infância', 'educacional', 'pedagogia', 'pedagogico', 'pedagógico', 'instituto de ensino', 'centro educacional', 'nucleo educacional', 'núcleo educacional', 'escolinha', 'pre escola', 'pré escola', 'maternal', 'curso', 'cursos', 'treinamento', 'capacitacao', 'capacitação', 'autoescola', 'auto escola', 'igreja', 'templo', 'paroquia', 'paróquia', 'ministerio', 'ministério', 'assembleia', 'congregacao', 'congregação', 'hospital', 'clinica', 'clínica', 'laboratorio', 'laboratório', 'farmacia', 'farmácia', 'consultorio', 'consultório', 'odontologia', 'odontologico', 'odontológico', 'pediatra', 'pediatria'];
+      // Fashion/clothing positive indicators (in name OR razao_social)
+      const fashionNameIndicators = [
+        'moda', 'roupa', 'roupas', 'roupinha', 'roupinhas', 'vestido', 'vestuario', 'vestuário',
+        'confeccao', 'confecção', 'confeccoes', 'confecções', 'calcado', 'calçado', 'calcados', 'calçados',
+        'sapatinho', 'sapato', 'tenis', 'tênis', 'enxoval', 'enxovais',
+        'baby', 'kids', 'fashion', 'wear', 'store', 'shop', 'boutique', 'butique',
+        'magazine', 'magazin', 'brechó', 'brecho', 'bazar', 'outlet',
+        'lingerie', 'meias', 'pijama', 'pijamas', 'camiseta', 'camisetas',
+        'jeans', 'malha', 'malharia', 'tricot', 'trico', 'tricô',
+        'gestante', 'gestantes', 'maternidade', 'recem nascido', 'recém nascido',
+        'bebe', 'bebê', 'nenem', 'nenê', 'loja infantil',
+        'uniforme', 'farda', 'fantasia', 'fantasias', 'costumes',
+        'atacado de roupas', 'atacado infantil', 'tecido', 'tecidos', 'aviamento',
+      ];
+      // CNAE codes that indicate clothing/fashion commerce
+      const fashionCnaes = [
+        '4781', // vestuário e acessórios
+        '4782', // calçados
+        '1412', // confecção de vestuário
+        '1411', // confecção de roupas íntimas
+        '4789', // comércio varejista de outros produtos (some baby stores)
+        '4763', // artigos de armarinho e vestuário
+        '4755', // artigos de cama, mesa, enxoval
+        '1413', // confecção de roupas profissionais
+        '4785', // artigos usados (brechós)
+        '4772', // cosméticos (some baby product stores have this)
+      ];
       allCompanies = allCompanies.filter(c => {
         if (c._viaCnae) return true;
         const seg = (c._segment || '').trim().toLowerCase();
-        if (!seg.includes('moda infantil') && !seg.includes('roupas infantis')) return true;
+        if (!seg.includes('moda infantil') && !seg.includes('roupas infantis') && !seg.includes('artigos para bebe')) return true;
+        
         const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
         const rs = normalizeText(c.razao_social || '').toLowerCase();
-        const combined = `${nf} ${rs}`;
-        return !schoolExclusions.some(term => combined.includes(term));
+        const nameText = `${nf} ${rs}`;
+        
+        // Check 1: Does the name have ANY fashion/clothing indicator?
+        const hasFashionName = fashionNameIndicators.some(ind => nameText.includes(ind));
+        if (hasFashionName) return true;
+        
+        // Check 2: Does the CNAE indicate fashion/clothing?
+        const cnae = (c.cnae_principal || c.cnaePrincipal || '').toString();
+        const cnaeSecundaria = (c.cnae_secundaria || c.cnaeSecundaria || '').toString();
+        const allCnaes = `${cnae} ${cnaeSecundaria}`;
+        const hasFashionCnae = fashionCnaes.some(code => allCnaes.includes(code));
+        if (hasFashionCnae) return true;
+        
+        // Check 3: CNAE description mentions clothing
+        const descCnae = normalizeText(c.descricao_cnae || c.descricaoCnae || '').toLowerCase();
+        const hasFashionCnaeDesc = descCnae.includes('vestuario') || descCnae.includes('confeccao') || 
+          descCnae.includes('calcado') || descCnae.includes('calçado') || descCnae.includes('roupa') ||
+          descCnae.includes('textil') || descCnae.includes('têxtil') || descCnae.includes('malha');
+        if (hasFashionCnaeDesc) return true;
+        
+        // No fashion signal found — reject (likely a school, clinic, buffet, salon, etc.)
+        return false;
       });
-      console.log(`👶 Moda Infantil filter (excluding schools/clinics): ${allCompanies.length} (removed ${beforeModaFilter - allCompanies.length})`);
+      console.log(`👶 Moda Infantil whitelist filter: ${allCompanies.length} (removed ${beforeModaFilter - allCompanies.length} non-fashion companies)`);
     }
 
 
