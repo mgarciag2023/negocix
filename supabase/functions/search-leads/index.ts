@@ -1551,47 +1551,63 @@ async function resolveCityName(
     }
   }
 
-  // 2) Buscar cidades distintas do estado usando RPC otimizado
-  const firstLetter = inputNorm.charAt(0);
-  const prefix3 = inputNorm.length >= 3 ? inputNorm.substring(0, 3) : inputNorm;
-  const prefix2 = inputNorm.length >= 2 ? inputNorm.substring(0, 2) : inputNorm;
+  // 2) Major Brazilian cities hardcoded for instant fuzzy matching (no DB query needed)
+  const MAJOR_CITIES: { [s: string]: string[] } = {
+    'SP': ['SAO PAULO','CAMPINAS','GUARULHOS','SAO BERNARDO DO CAMPO','SANTO ANDRE','SAO JOSE DOS CAMPOS','OSASCO','RIBEIRAO PRETO','SOROCABA','SANTOS','SAO JOSE DO RIO PRETO','MOGI DAS CRUZES','PIRACICABA','JUNDIAI','BAURU','MAUA','CARAPICUIBA','ITAQUAQUECETUBA','DIADEMA','FRANCA','PRAIA GRANDE','LIMEIRA','SUZANO','TABOAO DA SERRA','TAUBATE','MARILIA','PRESIDENTE PRUDENTE','SAO CARLOS','INDAIATUBA','AMERICANA','COTIA','ARARAQUARA','BARUERI','JACEREI','HORTOLANDIA','ARACATUBA','FERRAZ DE VASCONCELOS','SAO CAETANO DO SUL','ITAPEVI','BRAGANCA PAULISTA','BOTUCATU','ATIBAIA','FRANCISCO MORATO','EMBU DAS ARTES','SUMARE','ITANHAEM','SERTAOZINHO','VOTORANTIM','TATUI','VALINHOS','GUARUJA','CUBATAO','SAO VICENTE','ITU','SALTO','MOGI GUACU','MOGI MIRIM','JABOTICABAL','CATANDUVA','BIRIGUI','LINS','AVARE','CARAGUATATUBA','UBATUBA','SAO SEBASTIAO','REGISTRO','OURINHOS','ASSIS','ITAPETININGA','LEME','BEBEDOURO','PENAPOLIS'],
+    'RJ': ['RIO DE JANEIRO','SAO GONCALO','DUQUE DE CAXIAS','NOVA IGUACU','NITEROI','BELFORD ROXO','SAO JOAO DE MERITI','CAMPOS DOS GOYTACAZES','PETROPOLIS','VOLTA REDONDA','MACAE','CABO FRIO','NOVA FRIBURGO','BARRA MANSA','ANGRA DOS REIS','MESQUITA','TERESOPOLIS','NILOPOLIS','QUEIMADOS','ITAGUAI','MAGE','ITABORAI','ARARUAMA','RESENDE','MARICA','BUZIOS','SAQUAREMA'],
+    'MG': ['BELO HORIZONTE','UBERLANDIA','CONTAGEM','JUIZ DE FORA','BETIM','MONTES CLAROS','RIBEIRAO DAS NEVES','UBERABA','GOVERNADOR VALADARES','IPATINGA','SETE LAGOAS','DIVINOPOLIS','SANTA LUZIA','IBIRITE','POCOS DE CALDAS','PATOS DE MINAS','TEOFILO OTONI','BARBACENA','SABARA','VARGINHA','CONSELHEIRO LAFAIETE','ARAGUARI','PASSOS','ITABIRA','POUSO ALEGRE','LAVRAS','MURIAE','ALFENAS','ITAJUBA','UBA','OURO PRETO','SAO JOAO DEL REI'],
+    'RS': ['PORTO ALEGRE','CAXIAS DO SUL','PELOTAS','CANOAS','SANTA MARIA','GRAVATAI','VIAMAO','NOVO HAMBURGO','SAO LEOPOLDO','RIO GRANDE','ALVORADA','PASSO FUNDO','SAPUCAIA DO SUL','URUGUAIANA','SANTA CRUZ DO SUL','CACHOEIRINHA','BAGE','BENTO GONCALVES','ERECHIM','GUAIBA','CACHOEIRA DO SUL','SAPIRANGA','LAJEADO','IJUI','ALEGRETE','ESTEIO','SANTANA DO LIVRAMENTO','FARROUPILHA','TORRES','TRAMANDAI','CAPAO DA CANOA','OSORIO'],
+    'PR': ['CURITIBA','LONDRINA','MARINGA','PONTA GROSSA','CASCAVEL','SAO JOSE DOS PINHAIS','FOZ DO IGUACU','COLOMBO','GUARAPUAVA','PARANAGUA','ARAUCARIA','TOLEDO','APUCARANA','PINHAIS','CAMPO LARGO','ARAPONGAS','ALMIRANTE TAMANDARE','UMUARAMA','PIRAQUARA','CAMBE','CAMPO MOURAO','FAZENDA RIO GRANDE','FRANCISCO BELTRAO','PATO BRANCO','CIANORTE','PARANAVAÍ','PARANAVAI'],
+    'SC': ['JOINVILLE','FLORIANOPOLIS','BLUMENAU','SAO JOSE','CHAPECO','CRICIUMA','ITAJAI','JARAGUA DO SUL','LAGES','PALHOCA','BRUSQUE','TUBARAO','CAMBORIU','BALNEARIO CAMBORIU','SAO BENTO DO SUL','CONCORDIA','BIGUACU','NAVEGANTES','RIO DO SUL','CANOINHAS','ARARANGUA','GASPAR','INDAIAL','MAFRA','TIJUCAS','IMBITUBA','PENHA','BARRA VELHA','JOACABA','CURITIBANOS'],
+    'BA': ['SALVADOR','FEIRA DE SANTANA','VITORIA DA CONQUISTA','CAMACARI','ITABUNA','JUAZEIRO','LAURO DE FREITAS','ILHEUS','JEQUIE','TEIXEIRA DE FREITAS','ALAGOINHAS','BARREIRAS','PORTO SEGURO','SIMOES FILHO','PAULO AFONSO','EUNAPOLIS','LUIS EDUARDO MAGALHAES'],
+    'PE': ['RECIFE','JABOATAO DOS GUARARAPES','OLINDA','CARUARU','PAULISTA','PETROLINA','CABO DE SANTO AGOSTINHO','CAMARAGIBE','GARANHUNS','VITORIA DE SANTO ANTAO','IGARASSU','SERRA TALHADA'],
+    'CE': ['FORTALEZA','CAUCAIA','JUAZEIRO DO NORTE','MARACANAU','SOBRAL','CRATO','ITAPIPOCA','MARANGUAPE','IGUATU','QUIXADA','AQUIRAZ'],
+    'PA': ['BELEM','ANANINDEUA','SANTAREM','MARABA','CASTANHAL','PARAUAPEBAS','ABAETETUBA','TUCURUI','ALTAMIRA','BARCARENA'],
+    'MA': ['SAO LUIS','IMPERATRIZ','SAO JOSE DE RIBAMAR','TIMON','CAXIAS','CODO','PACO DO LUMIAR','ACAILANDIA','BACABAL','BALSAS'],
+    'GO': ['GOIANIA','APARECIDA DE GOIANIA','ANAPOLIS','RIO VERDE','LUZIANIA','AGUAS LINDAS DE GOIAS','TRINDADE','FORMOSA','VALPARAISO DE GOIAS','SENADOR CANEDO','CALDAS NOVAS','ITUMBIARA','JATAI','CATALAO'],
+    'AM': ['MANAUS','PARINTINS','ITACOATIARA','MANACAPURU','COARI','TEFE','TABATINGA'],
+    'ES': ['VITORIA','VILA VELHA','SERRA','CARIACICA','CACHOEIRO DE ITAPEMIRIM','LINHARES','SAO MATEUS','GUARAPARI','COLATINA','ARACRUZ','VIANA'],
+    'PB': ['JOAO PESSOA','CAMPINA GRANDE','SANTA RITA','PATOS','BAYEUX','CABEDELO','SOUSA','CAJAZEIRAS'],
+    'RN': ['NATAL','MOSSORO','PARNAMIRIM','SAO GONCALO DO AMARANTE','MACAIBA','CEARA MIRIM','CAICO'],
+    'PI': ['TERESINA','PARNAIBA','PICOS','PIRIPIRI','FLORIANO','CAMPO MAIOR'],
+    'AL': ['MACEIO','ARAPIRACA','RIO LARGO','PALMEIRA DOS INDIOS','PENEDO','MARECHAL DEODORO'],
+    'SE': ['ARACAJU','NOSSA SENHORA DO SOCORRO','LAGARTO','ITABAIANA','SAO CRISTOVAO','ESTANCIA'],
+    'MT': ['CUIABA','VARZEA GRANDE','RONDONOPOLIS','SINOP','TANGARA DA SERRA','CACERES','SORRISO','LUCAS DO RIO VERDE','PRIMAVERA DO LESTE'],
+    'MS': ['CAMPO GRANDE','DOURADOS','TRES LAGOAS','CORUMBA','PONTA PORA','NAVIRAI','NOVA ANDRADINA'],
+    'DF': ['BRASILIA'],
+    'TO': ['PALMAS','ARAGUAINA','GURUPI','PORTO NACIONAL'],
+    'RO': ['PORTO VELHO','JI-PARANA','ARIQUEMES','VILHENA','CACOAL'],
+    'AC': ['RIO BRANCO','CRUZEIRO DO SUL','SENA MADUREIRA'],
+    'AP': ['MACAPA','SANTANA','LARANJAL DO JARI'],
+    'RR': ['BOA VISTA','RORAINOPOLIS'],
+  };
+
+  // Start with major cities, then supplement with a targeted DB query
+  let unique: string[] = [...(MAJOR_CITIES[state] || [])];
   
-  // Use the optimized get_distinct_cities RPC for true DISTINCT results
-  // Try multiple prefixes in parallel for coverage
-  const prefixesToTry = new Set([prefix3, prefix2, firstLetter]);
-  // Also try first word if multi-word input
-  const inputWords = inputNorm.split(/\s+/).filter(w => w.length >= 2);
-  if (inputWords.length > 1 && inputWords[0].length >= 3) {
-    prefixesToTry.add(inputWords[0].substring(0, 3));
-  }
-  
-  const distinctPromises = Array.from(prefixesToTry).map(async (prefix) => {
-    try {
-      const r = await client.rpc('get_distinct_cities', { p_state: state, p_prefix: prefix });
-      if (r.error) {
-        console.log(`🔤 RPC error for prefix "${prefix}": ${r.error.message}`);
-        // Fallback: use regular query
-        const fb = await client.from('companies').select('cidade').eq('estado', state)
-          .not('cidade', 'is', null).ilike('cidade', `${prefix}%`).limit(1000);
-        const cities = new Set((fb.data || []).map((row: any) => row.cidade).filter(Boolean));
-        return Array.from(cities);
+  // Also do a DB query with narrow prefix to catch smaller cities not in the hardcoded list
+  const inputPrefix = inputNorm.length >= 4 ? inputNorm.substring(0, 4) : (inputNorm.length >= 3 ? inputNorm.substring(0, 3) : inputNorm);
+  try {
+    const { data: dbCities } = await client.from('companies').select('cidade')
+      .eq('estado', state).not('cidade', 'is', null)
+      .ilike('cidade', `${inputPrefix}%`).limit(1000);
+    if (dbCities) {
+      const existing = new Set(unique);
+      for (const c of dbCities) {
+        if (c.cidade && !existing.has(c.cidade)) {
+          unique.push(c.cidade);
+          existing.add(c.cidade);
+        }
       }
-      return (r.data || []).map((row: any) => row.cidade);
-    } catch (e) {
-      console.log(`🔤 RPC exception for prefix "${prefix}": ${e}`);
-      return [];
     }
-  });
-  
-  const distinctResults = await Promise.all(distinctPromises);
-  const unique = Array.from(new Set(distinctResults.flat().filter(Boolean)));
+  } catch (_e) { /* ignore timeout */ }
   
   if (unique.length === 0) {
-    console.log(`🔤 resolveCityName: no candidates found for "${inputNorm}" in ${state}`);
+    console.log(`🔤 resolveCityName: no candidates for "${inputNorm}" in ${state}`);
     return inputNorm;
   }
   
-  console.log(`🔤 resolveCityName: ${unique.length} unique cities for "${inputNorm}" (prefixes: ${Array.from(prefixesToTry).join(', ')})`);
+  console.log(`🔤 resolveCityName: ${unique.length} candidate cities for "${inputNorm}"`);
 
   // Similaridade simples (Dice) entre bigrams — funciona offline sem RPC
   const bigrams = (s: string): Set<string> => {
