@@ -1,0 +1,1 @@
+CREATE POLICY "Anon can read own inserts" ON public.trial_analytics FOR SELECT TO anon USING (true);
