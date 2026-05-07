@@ -1320,18 +1320,41 @@ function parseRegion(region: string): { city: string | null; state: string | nul
     return { city: city || normalizeText(cityRaw), state, isStateOnly: false };
   }
 
-  // Single value
+  // Single value — but first check if it contains a trailing state abbreviation or name separated by space
+  // e.g. "Joinvile SC", "São Paulo SP", "Blumenau Santa Catarina"
   const single = clean;
   const singleNorm = normalizeText(single);
   const singleLower = single.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  
+
   if (stateAbbrevs.includes(singleNorm)) {
     return { city: null, state: singleNorm, isStateOnly: true };
   }
   if (stateNameMap[singleLower]) {
     return { city: null, state: stateNameMap[singleLower], isStateOnly: true };
   }
-  
+
+  // Check for trailing state abbreviation in space-separated input: "Joinvile SC" → city=JOINVILE, state=SC
+  const spaceWords = singleNorm.split(/\s+/);
+  if (spaceWords.length >= 2) {
+    const lastWord = spaceWords[spaceWords.length - 1];
+    if (stateAbbrevs.includes(lastWord)) {
+      const cityPart = spaceWords.slice(0, -1).join(' ');
+      const city = cleanCityName(cityPart, lastWord) || cityPart;
+      return { city, state: lastWord, isStateOnly: false };
+    }
+    // Check for trailing full state name: "Blumenau Santa Catarina"
+    // Try 1-word, 2-word, 3-word suffixes
+    for (let suffixLen = 1; suffixLen <= Math.min(3, spaceWords.length - 1); suffixLen++) {
+      const suffixWords = spaceWords.slice(-suffixLen).join(' ').toLowerCase();
+      const suffixNorm = suffixWords.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      if (stateNameMap[suffixNorm]) {
+        const detectedState = stateNameMap[suffixNorm];
+        const cityPart = spaceWords.slice(0, -suffixLen).join(' ');
+        const city = cleanCityName(cityPart, detectedState) || cityPart;
+        return { city, state: detectedState, isStateOnly: false };
+      }
+    }
+  }
 
   // Assume it's a city
   return { city: singleNorm, state: null, isStateOnly: false };
