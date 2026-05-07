@@ -2664,10 +2664,8 @@ serve(async (req) => {
           const productKeywords = getDistributorProductType(seg);
           if (!productKeywords) return true; // Can't determine product type, keep
           
-          const nf = (c.nome_fantasia || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-          const rs = (c.razao_social || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          const nameText = c._nameText || '';
           const descCnae = (c.descricao_cnae || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-          const nameText = `${nf} ${rs}`;
           const fullText = `${nameText} ${descCnae}`;
           
           // Must have a distributor indicator in NAME
