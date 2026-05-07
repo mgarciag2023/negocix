@@ -1551,62 +1551,34 @@ async function resolveCityName(
     }
   }
 
-  // 2) Buscar candidatas distintas do estado — usar ILIKE com input completo para melhor match
-  // Strategy: try multiple patterns to find the right city
-  // Pattern 1: exact-ish match with the full input (most likely to find the right city)
-  // Pattern 2: prefix3 match for broader coverage
-  // Pattern 3: first letter fallback
+  // 2) Buscar cidades distintas do estado usando RPC otimizado
   const firstLetter = inputNorm.charAt(0);
   const prefix3 = inputNorm.length >= 3 ? inputNorm.substring(0, 3) : inputNorm;
+  const prefix2 = inputNorm.length >= 2 ? inputNorm.substring(0, 2) : inputNorm;
   
-  // Build a fuzzy ILIKE pattern from input: "SAO PAUO" → "%SAO%PA%"  
+  // Use the optimized get_distinct_cities RPC for true DISTINCT results
+  // Try multiple prefixes in parallel for coverage
+  const prefixesToTry = new Set([prefix3, prefix2, firstLetter]);
+  // Also try first word if multi-word input
   const inputWords = inputNorm.split(/\s+/).filter(w => w.length >= 2);
-  const fuzzyPattern = inputWords.map(w => `%${w.substring(0, Math.min(w.length, 4))}%`).join('');
-  
-  // Fetch candidates with multiple strategies in parallel for speed
-  const candidatePromises: Promise<any[]>[] = [];
-  
-  // Strategy A: fuzzy pattern match (best for typos like "SAO PAUO" → finds "SAO PAULO")
-  if (fuzzyPattern.length > 4) {
-    candidatePromises.push(
-      client.from('companies').select('cidade').eq('estado', state)
-        .not('cidade', 'is', null).ilike('cidade', fuzzyPattern).limit(500)
-        .then((r: any) => r.data || [])
-    );
+  if (inputWords.length > 1 && inputWords[0].length >= 3) {
+    prefixesToTry.add(inputWords[0].substring(0, 3));
   }
   
-  // Strategy B: prefix3 match
-  candidatePromises.push(
-    client.from('companies').select('cidade').eq('estado', state)
-      .not('cidade', 'is', null).ilike('cidade', `${prefix3}%`).limit(500)
-      .then((r: any) => r.data || [])
+  const distinctPromises = Array.from(prefixesToTry).map(prefix =>
+    client.rpc('get_distinct_cities', { p_state: state, p_prefix: prefix })
+      .then((r: any) => (r.data || []).map((row: any) => row.cidade))
   );
   
-  // Strategy C: input starts-with (handles cases where input is close to correct)
-  const inputPrefix = inputNorm.length >= 5 ? inputNorm.substring(0, 5) : inputNorm;
-  candidatePromises.push(
-    client.from('companies').select('cidade').eq('estado', state)
-      .not('cidade', 'is', null).ilike('cidade', `${inputPrefix}%`).limit(500)
-      .then((r: any) => r.data || [])
-  );
+  const distinctResults = await Promise.all(distinctPromises);
+  const unique = Array.from(new Set(distinctResults.flat().filter(Boolean)));
   
-  const candidateResults = await Promise.all(candidatePromises);
-  const allCandidates = candidateResults.flat();
-
-  if (allCandidates.length === 0) {
-    // Fallback: first letter
-    const { data: fallback } = await client.from('companies').select('cidade')
-      .eq('estado', state).not('cidade', 'is', null)
-      .ilike('cidade', `${firstLetter}%`).limit(1000);
-    if (!fallback || fallback.length === 0) {
-      console.log(`🔤 resolveCityName: no candidates found for "${inputNorm}" in ${state}`);
-      return inputNorm;
-    }
-    allCandidates.push(...fallback);
+  if (unique.length === 0) {
+    console.log(`🔤 resolveCityName: no candidates found for "${inputNorm}" in ${state}`);
+    return inputNorm;
   }
-
-  const unique = Array.from(new Set(allCandidates.map((c: any) => c.cidade).filter(Boolean)));
-  console.log(`🔤 resolveCityName: ${allCandidates.length} rows → ${unique.length} unique cities for "${inputNorm}" (prefix3="${prefix3}")`);
+  
+  console.log(`🔤 resolveCityName: ${unique.length} unique cities for "${inputNorm}" (prefixes: ${Array.from(prefixesToTry).join(', ')})`);
 
   // Similaridade simples (Dice) entre bigrams — funciona offline sem RPC
   const bigrams = (s: string): Set<string> => {
