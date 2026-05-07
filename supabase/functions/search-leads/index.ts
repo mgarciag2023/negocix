@@ -1783,13 +1783,10 @@ serve(async (req) => {
     let allCompanies: any[] = [];
 
     // Hard cap on total raw companies to prevent CPU Time exceeded errors
-    // Edge functions have a strict 2s CPU time limit; processing 100K+ rows in JS will always fail.
-    // 50K is the safe maximum — covers virtually all real searches while staying under CPU budget.
-    const MAX_TOTAL_RAW = 50_000;
-
-    // Adaptive limits: heavy multi-segment searches (>5 segments) need stricter caps
-    // to fit inside the ~400s edge-function window
+    // Edge functions have a strict CPU time limit; processing too many rows in JS will fail.
+    // State-wide searches are capped lower because they pull much more data.
     const isHeavySearch = segments.length > 5;
+    const MAX_TOTAL_RAW = isStateOnly ? 20_000 : 50_000;
 
     // Fetch a single segment using paginated queries (SDK caps RPC at 1000 rows)
     // Pre-compute neighborhood filter normalization (used inside fetchSegment)
