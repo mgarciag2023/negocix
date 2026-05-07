@@ -1626,6 +1626,7 @@ async function resolveCityName(
     console.log(`🔤 City auto-correct: "${inputNorm}" → "${best}" (similarity: ${bestScore.toFixed(2)})`);
     return best;
   }
+  console.log(`🔤 resolveCityName: no good match for "${inputNorm}" — bestScore=${bestScore.toFixed(2)}, best="${best}"`);
   return inputNorm;
 }
 
