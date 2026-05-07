@@ -2238,6 +2238,73 @@ serve(async (req) => {
       console.log(`👶 Moda Infantil whitelist filter: ${allCompanies.length} (removed ${beforeModaFilter - allCompanies.length} non-fashion companies)`);
     }
 
+    // ===== POST-RELEVANCE: Filter out person-named CPFs and cross-segment contamination =====
+    {
+      const beforePostFilter = allCompanies.length;
+      allCompanies = allCompanies.filter(c => {
+        const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
+        const rs = normalizeText(c.razao_social || '').toLowerCase();
+        const nameText = `${nf} ${rs}`;
+        const seg = normalizeText(c._segment || '').toLowerCase();
+
+        // 1. Filter CPF-format names (XX.XXX.XXX pattern = person, not a company)
+        //    These are individuals whose surname matches a search term (e.g. surname "Tinta")
+        const isCpfName = /^\d{2}\.\d{3}\.\d{3}\s/.test((c.nome_fantasia || '').trim()) || 
+                          /^\d{2}\.\d{3}\.\d{3}\s/.test((c.razao_social || '').trim());
+        if (isCpfName) return false;
+
+        // 2. For TINTAS segment: exclude non-paint businesses
+        if (seg.includes('tinta')) {
+          const nonPaintTerms = ['fisioterapia', 'fisioterapeuta', 'eletrica', 'hidraulica', 
+            'advocacia', 'odontolog', 'clinica', 'hospital', 'escola', 'colegio', 'igreja',
+            'contabil', 'contabilidade', 'mecanica', 'auto peca', 'autopeca'];
+          if (nonPaintTerms.some(t => nameText.includes(t))) return false;
+        }
+
+        // 3. For SUPERMERCADOS: exclude "atacadao/atacarejo" that are clearly non-food
+        if (seg.includes('supermercado') || seg.includes('mercado') || seg.includes('mercearia')) {
+          const nonFoodIndicators = ['madeira', 'vidro', 'vidros', 'motos', 'moto ', 'home center',
+            'construcao', 'automotiv', 'auto center', 'mecanica', 'oficina', 'polpa', 'frios',
+            'eletric', 'informatica', 'celular', 'tintas', 'ferragens', 'roupas', 'calcados',
+            'piscina', 'pet ', 'racao', 'saber', 'escola', 'educac'];
+          const isAtacadoBrand = nf.includes('atacadao s.a') || nf.includes('atacadao s a') || rs.includes('atacadao s.a');
+          if (!isAtacadoBrand) {
+            const hasNonFoodInName = nonFoodIndicators.some(t => nameText.includes(t));
+            // Only exclude if it's NOT a known supermarket chain
+            const knownChains = ['supermercado', 'supermarket', 'mercado', 'mercearia', 'hiper', 'bodegao'];
+            const isKnownChain = knownChains.some(ch => nameText.includes(ch));
+            if (hasNonFoodInName && !isKnownChain) return false;
+          }
+        }
+
+        // 4. For ARTIGOS PARA BEBÊ: exclude non-retail (editora, beleza/bem-estar)
+        if (seg.includes('bebe') || seg.includes('infantil')) {
+          const nonBabyTerms = ['editora', 'grafica', 'beleza e bem-estar', 'bem-estar',
+            'contabilidade', 'advocacia', 'construtora', 'engenharia'];
+          if (nonBabyTerms.some(t => nameText.includes(t))) return false;
+        }
+
+        // 5. For AUTO ELÉTRICAS: exclude non-auto businesses
+        if (seg.includes('auto eletrica') || seg.includes('autopeca')) {
+          const nonAutoTerms = ['construtora', 'construcao', 'empreiteira', 'engenharia',
+            'advocacia', 'contabil', 'escola', 'colegio'];
+          if (nonAutoTerms.some(t => nameText.includes(t))) return false;
+        }
+
+        // 6. For MANUTENÇÃO INDUSTRIAL: exclude pure transport companies
+        if (seg.includes('manutencao industrial')) {
+          const nonMaintTerms = ['transportes', 'transportadora', 'logistica'];
+          // Only exclude if name has NO maintenance/industrial indicator
+          const hasMaintIndicator = nameText.includes('manutencao') || nameText.includes('industrial') || 
+            nameText.includes('montagem') || nameText.includes('servico');
+          if (!hasMaintIndicator && nonMaintTerms.some(t => nameText.includes(t))) return false;
+        }
+
+        return true;
+      });
+      console.log(`🧹 Post-relevance cleanup: ${allCompanies.length} (removed ${beforePostFilter - allCompanies.length} inconsistent results)`);
+    }
+
 
     // ===== STRICT RELEVANCE FILTER FOR DISTRIBUTORS =====
     // When searching for "distribuidores/distribuidoras", ensure companies are:
