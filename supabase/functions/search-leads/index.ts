@@ -2490,9 +2490,7 @@ serve(async (req) => {
         const isIndustrySeg = seg.includes('industria') || seg.includes('indústria') || seg.includes('fabrica') || seg.includes('fábrica');
         if (!isIndustrySeg) return true;
 
-        const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
-        const rs = normalizeText(c.razao_social || '').toLowerCase();
-        const combined = `${nf} ${rs}`;
+        const combined = c._nameText || '';
 
         // Must match the product segment in name
         const productKws = industryProductKeywords[seg];
