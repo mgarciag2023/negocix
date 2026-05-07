@@ -2195,7 +2195,7 @@ serve(async (req) => {
       ];
       allCompanies = allCompanies.filter(c => {
         if (c._viaCnae) return true;
-        const seg = (c._segment || '').trim().toLowerCase();
+        const seg = normalizeText(c._segment || '').toLowerCase();
         if (!seg.includes('moda infantil') && !seg.includes('roupas infantis') && !seg.includes('artigos para bebe')) return true;
         
         const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
