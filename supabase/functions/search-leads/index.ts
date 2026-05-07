@@ -1551,18 +1551,34 @@ async function resolveCityName(
     }
   }
 
-  // 2) Buscar candidatas distintas do estado e escolher a mais parecida
-  // (faixa razoável: cidades que comecem com a primeira letra ou contenham parte do nome)
+  // 2) Buscar candidatas distintas do estado usando múltiplos prefixos para cobertura
   const firstLetter = inputNorm.charAt(0);
-  const { data: candidates } = await client
+  const prefix3 = inputNorm.length >= 3 ? inputNorm.substring(0, 3) : inputNorm;
+  
+  // Strategy: fetch with multiple ILIKE patterns to ensure coverage
+  // Use prefix3 first (more specific), fallback to first letter
+  const { data: candidates3 } = await client
     .from('companies')
     .select('cidade')
     .eq('estado', state)
     .not('cidade', 'is', null)
-    .ilike('cidade', `${firstLetter}%`)
-    .limit(2000);
+    .ilike('cidade', `${prefix3}%`)
+    .limit(3000);
+  
+  // If prefix3 gives few results, also try first letter
+  let allCandidates = candidates3 || [];
+  if (allCandidates.length < 100) {
+    const { data: candidates1 } = await client
+      .from('companies')
+      .select('cidade')
+      .eq('estado', state)
+      .not('cidade', 'is', null)
+      .ilike('cidade', `${firstLetter}%`)
+      .limit(3000);
+    if (candidates1) allCandidates = [...allCandidates, ...candidates1];
+  }
 
-  if (!candidates || candidates.length === 0) return inputNorm;
+  if (allCandidates.length === 0) return inputNorm;
 
   const unique = Array.from(new Set(candidates.map((c: any) => c.cidade).filter(Boolean)));
 
