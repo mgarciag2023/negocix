@@ -2407,6 +2407,37 @@ serve(async (req) => {
           if (!hasMaintIndicator && nonMaintTerms.some(t => nameText.includes(t))) return false;
         }
 
+        // 7. For HOSPITAIS (and pronto-atendimentos): name MUST contain a hospital anchor.
+        // Prevents false positives like "Casa de Carnes Santa Rita" being matched via 'santa'.
+        const isHospitalSeg =
+          seg === 'hospitais' ||
+          seg === 'hospitais e pronto-atendimentos' ||
+          seg === 'upas e prontos-socorros' ||
+          seg === 'maternidades';
+        if (isHospitalSeg && !c._viaCnae) {
+          const hospitalAnchors = [
+            'hospital', 'hospitais', 'hospitalar',
+            'santa casa', 'casa de saude', 'casa de saúde',
+            'pronto socorro', 'pronto-socorro',
+            'pronto atendimento', 'pronto-atendimento',
+            'upa ', ' upa', 'unidade de pronto',
+            'maternidade', 'materno infantil',
+            'hps ', ' hps',
+          ];
+          const hasAnchor = hospitalAnchors.some(a => nameText.includes(a));
+          if (!hasAnchor) return false;
+
+          // Hard exclusion of obvious off-topic businesses
+          const hospitalOffTopic = [
+            'acougue', 'açougue', 'frigorif', 'casa de carne', 'casa de carnes',
+            'mercado', 'mercearia', 'padaria', 'restaurante', 'pizzaria',
+            'lanchonete', 'churrascaria', 'sorveteria', 'confeitaria',
+            'auto peca', 'autopeca', 'oficina', 'mecanica',
+            'construtora', 'transportadora', 'transportes',
+          ];
+          if (hospitalOffTopic.some(t => nameText.includes(t))) return false;
+        }
+
         return true;
       });
       console.log(`🧹 Post-relevance cleanup: ${allCompanies.length} (removed ${beforePostFilter - allCompanies.length} inconsistent results)`);
