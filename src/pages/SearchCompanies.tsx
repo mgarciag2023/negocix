@@ -78,7 +78,12 @@ const SearchCompanies = () => {
           setLoading(false);
           return;
         }
-        const terms = name.trim().split(/\s+/).slice(0, 5);
+        const terms = name.trim().split(/\s+/).slice(0, 5).map((t) => {
+          const lower = t.toLowerCase();
+          // strip plural 's' to match both singular and plural (e.g. "pizzarias" -> "pizzaria")
+          if (lower.length > 4 && lower.endsWith("s")) return lower.slice(0, -1);
+          return lower;
+        });
         const effectiveState = stateUf && stateUf !== "all" ? stateUf : null;
         const { data: rows, error } = await supabase.rpc("search_companies_ilike", {
           p_city: city.trim() ? city.trim().toUpperCase() : null,
