@@ -171,6 +171,7 @@ export default function RepresentativesResults() {
         }
       } else if (registered.length === 0) {
         toast({ title: "Nenhum representante encontrado" });
+      }
     } catch (error) {
       console.error("Error:", error);
       toast({
