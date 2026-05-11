@@ -92,13 +92,14 @@ const SearchCompanies = () => {
         data = (rows || []) as Company[];
       } else {
         // location only
-        if (!stateUf && !city.trim()) {
+        const effState = stateUf && stateUf !== "all" ? stateUf : null;
+        if (!effState && !city.trim()) {
           toast({ title: "Informe estado ou cidade", variant: "destructive" });
           setLoading(false);
           return;
         }
         let q = supabase.from("companies").select("*").eq("situacao_cadastral", "ATIVA").limit(300);
-        if (stateUf) q = q.eq("estado", stateUf);
+        if (effState) q = q.eq("estado", effState);
         if (city.trim()) q = q.eq("cidade", city.trim().toUpperCase());
         const { data: rows, error } = await q;
         if (error) throw error;
