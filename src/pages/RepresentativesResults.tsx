@@ -54,10 +54,43 @@ export default function RepresentativesResults() {
     searchRepresentatives(parsedConfig);
   }, []);
 
+  const fetchRegisteredReps = async (config: any): Promise<Representative[]> => {
+    try {
+      let q = supabase
+        .from("registered_representatives")
+        .select("id, full_name, phone, whatsapp, email, state, cities, segments, notes")
+        .eq("is_active", true)
+        .eq("state", config.state);
+      const { data, error } = await q;
+      if (error || !data) return [];
+      const cityNorm = (config.city || "").trim().toLowerCase();
+      const filtered = cityNorm
+        ? data.filter((r: any) => {
+            const list = (r.cities || []).map((c: string) => c.toLowerCase());
+            return list.length === 0 || list.some((c: string) => c.includes(cityNorm) || cityNorm.includes(c));
+          })
+        : data;
+      return filtered.map((r: any) => ({
+        id: `registered-${r.id}`,
+        name: `⭐ ${r.full_name}`,
+        phone: r.phone,
+        whatsapp: r.whatsapp || r.phone,
+        address: `${(r.cities || []).join(", ") || "Atende todo o estado"} - ${r.state}${r.segments?.length ? ` • Segmentos: ${r.segments.join(", ")}` : ""}${r.notes ? ` • ${r.notes}` : ""}`,
+        website: undefined,
+      }));
+    } catch (e) {
+      console.error("registered reps fetch error", e);
+      return [];
+    }
+  };
+
   const searchRepresentatives = async (config: any) => {
     setIsLoading(true);
     
     try {
+      const registered = await fetchRegisteredReps(config);
+      if (registered.length > 0) setRepresentatives(registered);
+
       const { data: { user } } = await supabase.auth.getUser();
       const bodyConfig = { ...config, user_id: user?.id };
       
@@ -86,16 +119,19 @@ export default function RepresentativesResults() {
 
       if (!response.ok || data?.error) {
         console.error("Error searching representatives:", data);
-        toast({
-          title: "Erro na busca",
-          description: data?.error || "Não foi possível buscar representantes. Tente novamente.",
-          variant: "destructive",
-        });
+        if (registered.length === 0) {
+          toast({
+            title: "Erro na busca",
+            description: data?.error || "Não foi possível buscar representantes. Tente novamente.",
+            variant: "destructive",
+          });
+        }
         return;
       }
 
       if (data?.representatives) {
-        setRepresentatives(data.representatives);
+        const combined = [...registered, ...data.representatives];
+        setRepresentatives(combined);
         
         // Log the search
         try {
