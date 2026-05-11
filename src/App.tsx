@@ -114,6 +114,7 @@ const App = () => (
           <Route path="/representatives-results" element={<ProtectedRoute><RepresentativesResults /></ProtectedRoute>} />
           <Route path="/search-suppliers" element={<ProtectedRoute><SearchSuppliers /></ProtectedRoute>} />
           <Route path="/suppliers-results" element={<ProtectedRoute><SuppliersResults /></ProtectedRoute>} />
+          <Route path="/buscar-empresas" element={<ProtectedRoute><SearchCompanies /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
           <Route path="/historico" element={<ProtectedRoute><SearchHistory /></ProtectedRoute>} />
           
