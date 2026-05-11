@@ -79,9 +79,10 @@ const SearchCompanies = () => {
           return;
         }
         const terms = name.trim().split(/\s+/).slice(0, 5);
+        const effectiveState = stateUf && stateUf !== "all" ? stateUf : null;
         const { data: rows, error } = await supabase.rpc("search_companies_ilike", {
           p_city: city.trim() ? city.trim().toUpperCase() : null,
-          p_state: stateUf || null,
+          p_state: effectiveState,
           p_search_terms: terms,
           p_biz_type: "all",
           p_limit_val: 300,
