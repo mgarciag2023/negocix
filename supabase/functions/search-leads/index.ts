@@ -2374,7 +2374,9 @@ serve(async (req) => {
             'construcao', 'automotiv', 'auto center', 'mecanica', 'oficina', 'polpa', 'frios',
             'eletric', 'informatica', 'celular', 'tintas', 'ferragens', 'roupas', 'calcados',
             'piscina', 'pet ', 'racao', 'saber', 'escola', 'educac'];
-          const isAtacadoBrand = nf.includes('atacadao s.a') || nf.includes('atacadao s a') || rs.includes('atacadao s.a');
+          const nfLocal = (c.nome_fantasia || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          const rsLocal = (c.razao_social || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          const isAtacadoBrand = nfLocal.includes('atacadao s.a') || nfLocal.includes('atacadao s a') || rsLocal.includes('atacadao s.a');
           if (!isAtacadoBrand) {
             const hasNonFoodInName = nonFoodIndicators.some(t => nameText.includes(t));
             // Only exclude if it's NOT a known supermarket chain
