@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { clearStoredAuthSession } from "@/lib/auth-session";
-import { Building2, Settings, Users, Package, Menu, LogIn, LogOut, User, Shield, History } from "lucide-react";
+import { Building2, Settings, Users, Package, Menu, LogIn, LogOut, User, Shield, History, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -69,6 +69,7 @@ const Navbar = () => {
   
   const navItems = [
     { path: "/configuracao", icon: Settings, label: "Buscar" },
+    { path: "/buscar-empresas", icon: Search, label: "Empresas" },
     { path: "/search-suppliers", icon: Package, label: "Fornecedores" },
     { path: "/leads-salvos", icon: Users, label: "Leads Salvos" },
     { path: "/historico", icon: History, label: "Histórico" },
