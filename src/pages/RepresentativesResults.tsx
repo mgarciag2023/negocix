@@ -158,7 +158,7 @@ export default function RepresentativesResults() {
           console.error("Error logging search:", logErr);
         }
 
-        if (data.representatives.length === 0) {
+        if (combined.length === 0) {
           toast({
             title: "Nenhum representante encontrado",
             description: "Tente ajustar os filtros da busca.",
@@ -166,10 +166,11 @@ export default function RepresentativesResults() {
         } else {
           toast({
             title: "Busca concluída",
-            description: `${data.representatives.length} representante(s) encontrado(s).`,
+            description: `${combined.length} representante(s) encontrado(s).`,
           });
         }
-      }
+      } else if (registered.length === 0) {
+        toast({ title: "Nenhum representante encontrado" });
     } catch (error) {
       console.error("Error:", error);
       toast({
