@@ -224,6 +224,54 @@ export type Database = {
         }
         Relationships: []
       }
+      registered_representatives: {
+        Row: {
+          cities: string[]
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          is_active: boolean
+          notes: string | null
+          phone: string
+          segments: string[]
+          state: string
+          updated_at: string
+          user_id: string
+          whatsapp: string | null
+        }
+        Insert: {
+          cities?: string[]
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          phone: string
+          segments?: string[]
+          state: string
+          updated_at?: string
+          user_id: string
+          whatsapp?: string | null
+        }
+        Update: {
+          cities?: string[]
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          phone?: string
+          segments?: string[]
+          state?: string
+          updated_at?: string
+          user_id?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       saved_leads: {
         Row: {
           address: string

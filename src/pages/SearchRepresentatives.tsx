@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Users, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import RegisterRepresentativeDialog from "@/components/RegisterRepresentativeDialog";
 
 const brazilianStates = [
   "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
@@ -106,6 +107,10 @@ export default function SearchRepresentatives() {
                 <Search className="w-5 h-5 mr-2" />
                 {isLoading ? "Buscando..." : "Buscar Representantes"}
               </Button>
+
+              <div className="pt-3 border-t">
+                <RegisterRepresentativeDialog />
+              </div>
             </CardContent>
           </Card>
         </div>
