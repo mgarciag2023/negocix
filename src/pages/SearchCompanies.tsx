@@ -8,10 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Building2, MapPin, Phone, Mail, Loader2, ArrowLeft, FileText } from "lucide-react";
+import { Search, Loader2, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { brazilianStates } from "@/data/searchConstants";
 import { useToast } from "@/hooks/use-toast";
+import LeadCard from "@/components/LeadCard";
 
 type Company = {
   id: string;
