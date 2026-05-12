@@ -619,51 +619,7 @@ export type Database = {
       }
     }
     Views: {
-      registered_representatives_directory: {
-        Row: {
-          cities: string[] | null
-          created_at: string | null
-          full_name: string | null
-          id: string | null
-          is_active: boolean | null
-          notes: string | null
-          phone: string | null
-          segments: string[] | null
-          state: string | null
-          updated_at: string | null
-          user_id: string | null
-          whatsapp: string | null
-        }
-        Insert: {
-          cities?: string[] | null
-          created_at?: string | null
-          full_name?: string | null
-          id?: string | null
-          is_active?: boolean | null
-          notes?: string | null
-          phone?: string | null
-          segments?: string[] | null
-          state?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-          whatsapp?: string | null
-        }
-        Update: {
-          cities?: string[] | null
-          created_at?: string | null
-          full_name?: string | null
-          id?: string | null
-          is_active?: boolean | null
-          notes?: string | null
-          phone?: string | null
-          segments?: string[] | null
-          state?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-          whatsapp?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       get_distinct_cities: {
