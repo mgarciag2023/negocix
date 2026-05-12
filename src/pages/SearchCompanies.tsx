@@ -8,10 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Building2, MapPin, Phone, Mail, Loader2, ArrowLeft, FileText } from "lucide-react";
+import { Search, Loader2, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { brazilianStates } from "@/data/searchConstants";
 import { useToast } from "@/hooks/use-toast";
+import LeadCard from "@/components/LeadCard";
 
 type Company = {
   id: string;
@@ -226,54 +227,32 @@ const SearchCompanies = () => {
               </CardContent></Card>
             )}
             {results.map((c) => {
-              const name = titleCase(c.nome_fantasia || c.razao_social || "Empresa");
-              const phone = c.telefone_1 || c.telefone_2;
-              const addr = [c.endereco, c.bairro, c.cidade, c.estado, c.cep].filter(Boolean).join(", ");
+              const displayName = titleCase(c.nome_fantasia || c.razao_social || "Empresa");
+              const phone = (c.telefone_1 || c.telefone_2 || "").trim();
+              const addr = titleCase([c.endereco, c.bairro, c.cidade, c.estado, c.cep].filter(Boolean).join(", "));
+              const reasons: string[] = [];
+              if (c.situacao_cadastral) reasons.push(`Situação cadastral: ${titleCase(c.situacao_cadastral)}`);
+              if (c.matriz_filial) reasons.push(`Tipo de unidade: ${titleCase(c.matriz_filial)}`);
+              if (c.descricao_cnae) reasons.push(`Atividade: ${titleCase(c.descricao_cnae)}`);
+              if (c.porte) reasons.push(`Porte: ${titleCase(c.porte)}`);
+              if (!reasons.length) reasons.push("Empresa encontrada na base nacional");
               return (
-                <Card key={c.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="h-10 w-10 rounded-lg bg-primary-light flex items-center justify-center shrink-0">
-                        <Building2 className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2 flex-wrap">
-                          <div>
-                            <h3 className="font-semibold text-foreground">{name}</h3>
-                            {c.razao_social && c.nome_fantasia && (
-                              <p className="text-xs text-muted-foreground">{titleCase(c.razao_social)}</p>
-                            )}
-                          </div>
-                          <div className="flex gap-1 flex-wrap">
-                            {c.matriz_filial && <Badge variant="outline" className="text-xs">{titleCase(c.matriz_filial)}</Badge>}
-                            {c.situacao_cadastral && (
-                              <Badge variant={c.situacao_cadastral === "ATIVA" ? "default" : "secondary"} className="text-xs">
-                                {titleCase(c.situacao_cadastral)}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                        <div className="mt-2 grid gap-1 text-sm text-muted-foreground">
-                          {c.cnpj && (
-                            <div className="flex items-center gap-2"><FileText className="h-3.5 w-3.5" />{formatCnpj(c.cnpj)}</div>
-                          )}
-                          {addr && (
-                            <div className="flex items-start gap-2"><MapPin className="h-3.5 w-3.5 mt-0.5" /><span>{titleCase(addr)}</span></div>
-                          )}
-                          {phone && (
-                            <div className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{phone}</div>
-                          )}
-                          {c.email && (
-                            <div className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" />{c.email.toLowerCase()}</div>
-                          )}
-                          {c.descricao_cnae && (
-                            <div className="text-xs italic">{titleCase(c.descricao_cnae)}</div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <LeadCard
+                  key={c.id}
+                  id={c.id}
+                  name={displayName}
+                  address={addr || "Endereço não disponível"}
+                  phone={phone || "Não disponível"}
+                  email={c.email || undefined}
+                  matchScore={70}
+                  reasons={reasons}
+                  category={titleCase(c.descricao_cnae || "Empresa")}
+                  companySize={c.porte ? titleCase(c.porte) : undefined}
+                  cnpj={formatCnpj(c.cnpj)}
+                  razaoSocial={titleCase(c.razao_social || "")}
+                  nomeFantasia={titleCase(c.nome_fantasia || "")}
+                  hasWhatsApp={!!phone}
+                />
               );
             })}
           </div>
