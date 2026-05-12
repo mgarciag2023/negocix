@@ -58,7 +58,7 @@ export default function RepresentativesResults() {
     try {
       let q = supabase
         .from("registered_representatives")
-        .select("id, full_name, phone, whatsapp, email, state, cities, segments, notes")
+        .select("id, full_name, phone, whatsapp, state, cities, segments, notes")
         .eq("is_active", true)
         .eq("state", config.state);
       const { data, error } = await q;
