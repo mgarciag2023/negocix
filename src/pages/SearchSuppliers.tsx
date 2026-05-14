@@ -24,6 +24,15 @@ const SearchSuppliers = () => {
   const [neighborhood, setNeighborhood] = useState("");
   const [state, setState] = useState("");
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [esquadriasMaterials, setEsquadriasMaterials] = useState<string[]>([]);
+
+  const esquadriasOptions = ["Alumínio", "PVC", "Madeira", "Ferro"];
+  const esquadriasMap: Record<string, string> = {
+    "Alumínio": "Esquadrias de Alumínio",
+    "PVC": "Esquadrias de PVC",
+    "Madeira": "Esquadrias de Madeira",
+    "Ferro": "Esquadrias de Ferro",
+  };
 
   const productCategories = [
     // Alimentos e Bebidas
