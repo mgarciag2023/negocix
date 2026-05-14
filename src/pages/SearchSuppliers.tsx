@@ -24,6 +24,15 @@ const SearchSuppliers = () => {
   const [neighborhood, setNeighborhood] = useState("");
   const [state, setState] = useState("");
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [esquadriasMaterials, setEsquadriasMaterials] = useState<string[]>([]);
+
+  const esquadriasOptions = ["Alumínio", "PVC", "Madeira", "Ferro"];
+  const esquadriasMap: Record<string, string> = {
+    "Alumínio": "Esquadrias de Alumínio",
+    "PVC": "Esquadrias de PVC",
+    "Madeira": "Esquadrias de Madeira",
+    "Ferro": "Esquadrias de Ferro",
+  };
 
   const productCategories = [
     // Alimentos e Bebidas
@@ -47,10 +56,7 @@ const SearchSuppliers = () => {
     "Materiais Hidráulicos",
     "Pré-Moldados",
     "Steel Frame",
-    "Esquadrias de Alumínio",
-    "Esquadrias de PVC",
-    "Esquadrias de Madeira",
-    "Esquadrias de Ferro",
+    "Esquadrias",
     "Vidros e Vidraçaria",
     "Portas e Janelas",
     // Têxtil e Vestuário
@@ -155,9 +161,19 @@ const SearchSuppliers = () => {
       return;
     }
 
+    // Expand "Esquadrias" into specific material categories
+    let expandedProducts = [...selectedProducts];
+    if (expandedProducts.includes("Esquadrias")) {
+      expandedProducts = expandedProducts.filter(p => p !== "Esquadrias");
+      const materials = esquadriasMaterials.length > 0
+        ? esquadriasMaterials.map(m => esquadriasMap[m])
+        : Object.values(esquadriasMap);
+      expandedProducts = Array.from(new Set([...expandedProducts, ...materials]));
+    }
+
     // Save search config
     const supplierSearchConfig = {
-      products: selectedProducts,
+      products: expandedProducts,
       location: location.trim() || '',
       neighborhood: neighborhood.trim() || '',
       state,
@@ -243,6 +259,38 @@ const SearchSuppliers = () => {
                       );
                     })}
                   </div>
+
+                  {/* Esquadrias material sub-selector */}
+                  {selectedProducts.includes("Esquadrias") && (
+                    <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
+                      <Label className="text-sm font-semibold text-foreground">
+                        Materiais de esquadrias (opcional — vazio busca todos)
+                      </Label>
+                      <div className="flex flex-wrap gap-2">
+                        {esquadriasOptions.map((mat) => {
+                          const active = esquadriasMaterials.includes(mat);
+                          return (
+                            <button
+                              type="button"
+                              key={mat}
+                              onClick={() =>
+                                setEsquadriasMaterials(prev =>
+                                  prev.includes(mat) ? prev.filter(m => m !== mat) : [...prev, mat]
+                                )
+                              }
+                              className={`px-4 py-2 rounded-full text-sm font-medium border-2 transition-all ${
+                                active
+                                  ? 'bg-primary text-primary-foreground border-primary'
+                                  : 'bg-card text-muted-foreground border-border hover:border-primary/40'
+                              }`}
+                            >
+                              {mat}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Location */}
