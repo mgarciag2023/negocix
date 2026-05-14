@@ -259,6 +259,38 @@ const SearchSuppliers = () => {
                       );
                     })}
                   </div>
+
+                  {/* Esquadrias material sub-selector */}
+                  {selectedProducts.includes("Esquadrias") && (
+                    <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-3">
+                      <Label className="text-sm font-semibold text-foreground">
+                        Materiais de esquadrias (opcional — vazio busca todos)
+                      </Label>
+                      <div className="flex flex-wrap gap-2">
+                        {esquadriasOptions.map((mat) => {
+                          const active = esquadriasMaterials.includes(mat);
+                          return (
+                            <button
+                              type="button"
+                              key={mat}
+                              onClick={() =>
+                                setEsquadriasMaterials(prev =>
+                                  prev.includes(mat) ? prev.filter(m => m !== mat) : [...prev, mat]
+                                )
+                              }
+                              className={`px-4 py-2 rounded-full text-sm font-medium border-2 transition-all ${
+                                active
+                                  ? 'bg-primary text-primary-foreground border-primary'
+                                  : 'bg-card text-muted-foreground border-border hover:border-primary/40'
+                              }`}
+                            >
+                              {mat}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Location */}
