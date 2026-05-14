@@ -47,10 +47,7 @@ const SearchSuppliers = () => {
     "Materiais Hidráulicos",
     "Pré-Moldados",
     "Steel Frame",
-    "Esquadrias de Alumínio",
-    "Esquadrias de PVC",
-    "Esquadrias de Madeira",
-    "Esquadrias de Ferro",
+    "Esquadrias",
     "Vidros e Vidraçaria",
     "Portas e Janelas",
     // Têxtil e Vestuário
