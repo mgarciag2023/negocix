@@ -161,9 +161,19 @@ const SearchSuppliers = () => {
       return;
     }
 
+    // Expand "Esquadrias" into specific material categories
+    let expandedProducts = [...selectedProducts];
+    if (expandedProducts.includes("Esquadrias")) {
+      expandedProducts = expandedProducts.filter(p => p !== "Esquadrias");
+      const materials = esquadriasMaterials.length > 0
+        ? esquadriasMaterials.map(m => esquadriasMap[m])
+        : Object.values(esquadriasMap);
+      expandedProducts = Array.from(new Set([...expandedProducts, ...materials]));
+    }
+
     // Save search config
     const supplierSearchConfig = {
-      products: selectedProducts,
+      products: expandedProducts,
       location: location.trim() || '',
       neighborhood: neighborhood.trim() || '',
       state,
