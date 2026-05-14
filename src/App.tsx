@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { getSessionSafely } from "@/lib/auth-session";
-import Index from "./pages/Index";
+// Index removed — root now redirects to /auth or /configuracao
 import Auth from "./pages/Auth";
 import Configuration from "./pages/Configuration";
 import Results from "./pages/Results";
