@@ -154,18 +154,20 @@ const Auth = () => {
 
         if (error) {
           let errorTitle = "Erro ao criar conta";
-          let errorDesc = error.message;
+          let errorDesc = `[${error.status || "?"}] ${error.message}`;
 
-          if (error.message.includes("already registered") || error.status === 422) {
+          if (error.message.includes("already registered") || error.status === 422 && error.message.toLowerCase().includes("registered")) {
             errorDesc = "Este email já está cadastrado. Tente fazer login.";
+          } else if (error.message.toLowerCase().includes("pwned") || error.message.toLowerCase().includes("weak") || error.message.toLowerCase().includes("known to be")) {
+            errorDesc = "Senha rejeitada: ela aparece em vazamentos públicos (HIBP). Use uma senha diferente/mais forte.";
           } else if (error.message.includes("password") && error.message.includes("6")) {
             errorDesc = "A senha deve ter no mínimo 6 caracteres.";
-          } else if (error.message.includes("valid email") || error.message.includes("invalid")) {
-            errorDesc = "O email informado não é válido. Verifique e tente novamente.";
+          } else if (error.message.includes("valid email") || error.message.toLowerCase().includes("invalid email")) {
+            errorDesc = "O email informado não é válido.";
           } else if (error.message.includes("rate limit") || error.message.includes("too many")) {
-            errorDesc = "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
+            errorDesc = "Muitas tentativas. Aguarde alguns minutos.";
           } else if (error.message.includes("network") || error.message.includes("fetch")) {
-            errorDesc = "Erro de conexão. Verifique sua internet e tente novamente.";
+            errorDesc = "Erro de conexão. Verifique sua internet.";
           }
 
           // Log failed signup attempt
