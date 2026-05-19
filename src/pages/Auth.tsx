@@ -463,6 +463,28 @@ const Auth = () => {
                 </div>
               )}
 
+              {!isLogin && (
+                <div className="rounded-lg border border-border/50 bg-muted/30 p-4 text-sm">
+                  <p className="font-medium text-foreground mb-2">Requisitos obrigatórios:</p>
+                  <ul className="space-y-1.5 text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                      <span>Email válido (ex: nome@exemplo.com)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                      <span>Senha com no mínimo 6 caracteres</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                      <span>Confirmar a senha (deve ser idêntica)</span>
+                    </li>
+                  </ul>
+                  <p className="mt-3 text-xs text-muted-foreground/80">Nome e telefone são opcionais.</p>
+                </div>
+              )}
+
+
               <Button
                 type="submit"
                 className="w-full h-12 text-base font-semibold bg-gradient-primary hover:opacity-90 shadow-primary transition-all duration-300 hover:-translate-y-0.5"
