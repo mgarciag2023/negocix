@@ -10,10 +10,8 @@ import { getSessionSafely } from "@/lib/auth-session";
 import { Building2, Mail, Lock, ArrowRight, Eye, EyeOff, Sparkles, Target, TrendingUp, Shield, User, Phone, Check, X } from "lucide-react";
 import { z } from "zod";
 
-const emailSchema = z.string().email("Email inválido").max(255);
+const emailSchema = z.string().min(1, "Digite um email").max(255);
 const passwordSchema = z.string().min(1, "Digite uma senha").max(100);
-const nameSchema = z.string().min(2, "Nome deve ter no mínimo 2 caracteres").max(100);
-const phoneSchema = z.string().min(10, "Telefone deve ter no mínimo 10 dígitos").max(20);
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -89,23 +87,8 @@ const Auth = () => {
     }
 
     if (!isLogin) {
-      if (password !== confirmPassword) {
+      if (password && confirmPassword && password !== confirmPassword) {
         newErrors.confirmPassword = "As senhas não coincidem";
-      }
-      try {
-        nameSchema.parse(fullName.trim());
-      } catch (e) {
-        if (e instanceof z.ZodError) {
-          newErrors.fullName = e.errors[0].message;
-        }
-      }
-      const phoneDigits = phone.replace(/\D/g, "");
-      try {
-        phoneSchema.parse(phoneDigits);
-      } catch (e) {
-        if (e instanceof z.ZodError) {
-          newErrors.phone = e.errors[0].message;
-        }
       }
     }
 
@@ -335,11 +318,10 @@ const Auth = () => {
                       <Input
                         id="fullName"
                         type="text"
-                        placeholder="Seu nome completo"
+                        placeholder="Seu nome completo (opcional)"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         className="pl-11 h-12 bg-background/50 border-border/50 focus:border-primary transition-all"
-                        required
                       />
                     </div>
                     {errors.fullName && (
@@ -356,11 +338,10 @@ const Auth = () => {
                       <Input
                         id="phone"
                         type="tel"
-                        placeholder="(00) 00000-0000"
+                        placeholder="(00) 00000-0000 (opcional)"
                         value={phone}
                         onChange={(e) => setPhone(formatPhone(e.target.value))}
                         className="pl-11 h-12 bg-background/50 border-border/50 focus:border-primary transition-all"
-                        required
                       />
                     </div>
                     {errors.phone && (
