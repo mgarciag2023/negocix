@@ -338,11 +338,10 @@ const Auth = () => {
                       <Input
                         id="phone"
                         type="tel"
-                        placeholder="(00) 00000-0000"
+                        placeholder="(00) 00000-0000 (opcional)"
                         value={phone}
                         onChange={(e) => setPhone(formatPhone(e.target.value))}
                         className="pl-11 h-12 bg-background/50 border-border/50 focus:border-primary transition-all"
-                        required
                       />
                     </div>
                     {errors.phone && (
