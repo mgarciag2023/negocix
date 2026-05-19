@@ -318,11 +318,10 @@ const Auth = () => {
                       <Input
                         id="fullName"
                         type="text"
-                        placeholder="Seu nome completo"
+                        placeholder="Seu nome completo (opcional)"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         className="pl-11 h-12 bg-background/50 border-border/50 focus:border-primary transition-all"
-                        required
                       />
                     </div>
                     {errors.fullName && (
