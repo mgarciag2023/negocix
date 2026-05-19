@@ -87,23 +87,8 @@ const Auth = () => {
     }
 
     if (!isLogin) {
-      if (password !== confirmPassword) {
+      if (password && confirmPassword && password !== confirmPassword) {
         newErrors.confirmPassword = "As senhas não coincidem";
-      }
-      try {
-        nameSchema.parse(fullName.trim());
-      } catch (e) {
-        if (e instanceof z.ZodError) {
-          newErrors.fullName = e.errors[0].message;
-        }
-      }
-      const phoneDigits = phone.replace(/\D/g, "");
-      try {
-        phoneSchema.parse(phoneDigits);
-      } catch (e) {
-        if (e instanceof z.ZodError) {
-          newErrors.phone = e.errors[0].message;
-        }
       }
     }
 
