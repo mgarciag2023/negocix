@@ -10,10 +10,8 @@ import { getSessionSafely } from "@/lib/auth-session";
 import { Building2, Mail, Lock, ArrowRight, Eye, EyeOff, Sparkles, Target, TrendingUp, Shield, User, Phone, Check, X } from "lucide-react";
 import { z } from "zod";
 
-const emailSchema = z.string().email("Email inválido").max(255);
+const emailSchema = z.string().min(1, "Digite um email").max(255);
 const passwordSchema = z.string().min(1, "Digite uma senha").max(100);
-const nameSchema = z.string().min(2, "Nome deve ter no mínimo 2 caracteres").max(100);
-const phoneSchema = z.string().min(10, "Telefone deve ter no mínimo 10 dígitos").max(20);
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
