@@ -126,60 +126,60 @@ export default function InAppAd() {
   if (!visible || !currentAd) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="relative w-[92vw] max-w-lg animate-in zoom-in-95 duration-300">
+    <div className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-300 p-3 overflow-y-auto">
+      <div className="relative w-full max-w-lg my-auto animate-in zoom-in-95 duration-300">
         {/* Glow effect behind card */}
         <div
-          className={`absolute -inset-1 rounded-3xl bg-gradient-to-br ${currentAd.accentColor} opacity-20 blur-xl`}
+          className={`absolute -inset-1 rounded-3xl bg-gradient-to-br ${currentAd.accentColor} opacity-20 blur-xl pointer-events-none`}
         />
 
-        <div className="relative bg-card border border-border/50 rounded-2xl shadow-2xl overflow-hidden">
+        <div className="relative bg-card border border-border/50 rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
           {/* Gradient accent bar */}
           <div
-            className={`h-1.5 w-full bg-gradient-to-r ${currentAd.accentColor}`}
+            className={`h-1.5 w-full bg-gradient-to-r ${currentAd.accentColor} shrink-0`}
           />
 
           {/* Close X */}
           <button
             onClick={handleClose}
-            className="absolute top-4 right-4 p-2 rounded-full bg-muted/80 hover:bg-muted transition-all text-muted-foreground hover:text-foreground hover:scale-110"
+            className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-muted/80 hover:bg-muted transition-all text-muted-foreground hover:text-foreground"
             aria-label="Fechar"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
 
-          <div className="p-8 pt-7">
+          <div className="p-5 overflow-y-auto flex-1">
             {/* Icon */}
             <div
-              className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${currentAd.accentColor} text-white shadow-lg ${currentAd.glowColor} mb-5`}
+              className={`inline-flex p-3 rounded-2xl bg-gradient-to-br ${currentAd.accentColor} text-white shadow-lg ${currentAd.glowColor} mb-3`}
             >
               {currentAd.icon}
             </div>
 
             {/* Title */}
-            <h3 className="text-2xl font-extrabold text-foreground tracking-tight mb-3">
+            <h3 className="text-lg sm:text-xl font-extrabold text-foreground tracking-tight mb-2 break-words">
               {currentAd.title}
             </h3>
 
             {/* Description */}
-            <p className="text-base text-muted-foreground leading-relaxed mb-6">
+            <p className="text-sm text-muted-foreground leading-relaxed mb-4 break-words">
               {currentAd.description}
             </p>
 
             {/* CTA Button */}
             <button
               onClick={() => window.open(currentAd.ctaUrl, "_blank")}
-              className={`w-full flex items-center justify-center gap-2 py-4 px-6 rounded-xl bg-gradient-to-r ${currentAd.accentColor} text-white font-bold text-lg shadow-lg ${currentAd.glowColor} hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200`}
+              className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r ${currentAd.accentColor} text-white font-bold text-sm sm:text-base shadow-lg ${currentAd.glowColor} active:scale-[0.98] transition-all duration-200`}
             >
-              {currentAd.ctaLabel}
-              <ArrowRight className="h-5 w-5" />
+              <span className="break-words text-center">{currentAd.ctaLabel}</span>
+              <ArrowRight className="h-4 w-4 shrink-0" />
             </button>
 
             {/* Hide forever */}
-            <div className="flex justify-center mt-5">
+            <div className="flex justify-center mt-3">
               <button
                 onClick={handleHideForever}
-                className="text-sm text-foreground hover:text-foreground/70 transition-colors"
+                className="text-xs text-foreground hover:text-foreground/70 transition-colors"
               >
                 Não mostrar novamente
               </button>
