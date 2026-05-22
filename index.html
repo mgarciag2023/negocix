@@ -2,7 +2,25 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta id="viewport-meta" name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <script>
+      // Padroniza o tamanho visual em dispositivos móveis (largura fixa de 390px).
+      // Computadores/notebooks/tablets grandes (>=1024px) mantêm o comportamento normal.
+      (function () {
+        function applyViewport() {
+          var meta = document.getElementById('viewport-meta');
+          if (!meta) return;
+          var w = window.screen.width;
+          if (w < 1024) {
+            meta.setAttribute('content', 'width=390, initial-scale=' + (w / 390) + ', maximum-scale=' + (w / 390) + ', user-scalable=no');
+          } else {
+            meta.setAttribute('content', 'width=device-width, initial-scale=1.0');
+          }
+        }
+        applyViewport();
+        window.addEventListener('orientationchange', applyViewport);
+      })();
+    </script>
     <meta name="google" content="notranslate" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
