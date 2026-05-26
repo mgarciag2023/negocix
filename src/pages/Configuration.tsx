@@ -92,14 +92,24 @@ const Configuration = () => {
       return;
     }
 
-    if (selectedCustomers.length === 0) {
+    if (searchMode === "segment" && selectedCustomers.length === 0) {
       toast({
         title: "Selecione pelo menos um tipo de cliente",
-        description: "Escolha os segmentos de clientes que deseja prospectar.",
+        description: "Escolha os segmentos OU mude para busca por CNAE.",
         variant: "destructive",
       });
       return;
     }
+
+    if (searchMode === "cnae" && selectedCnaes.length === 0) {
+      toast({
+        title: "Selecione pelo menos um CNAE",
+        description: "Escolha um ou mais CNAEs OU mude para busca por segmento.",
+        variant: "destructive",
+      });
+      return;
+    }
+
 
     if (country === "OTHER" && !customCountry) {
       toast({
