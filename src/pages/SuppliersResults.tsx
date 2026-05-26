@@ -155,6 +155,7 @@ const SuppliersResults = () => {
         }
       } catch (error) {
         console.error("Error fetching suppliers:", error);
+        await logSupplierSearch(config, [], error instanceof Error ? error.message : "Falha ao buscar fornecedores");
         toast({
           title: "Erro ao buscar fornecedores",
           description: "Verifique sua conexão e tente novamente.",
