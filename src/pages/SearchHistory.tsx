@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -25,11 +25,7 @@ export default function SearchHistory() {
   const [isLoading, setIsLoading] = useState(true);
   const [openingLogId, setOpeningLogId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchHistory();
-  }, []);
-
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -53,7 +49,11 @@ export default function SearchHistory() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
 
   const normalizeCacheKeyPart = (value: string) =>
     value
