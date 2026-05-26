@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { getSessionSafely } from "@/lib/auth-session";
-// Index removed — root now redirects to /auth or /configuracao
+import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Configuration from "./pages/Configuration";
 import Results from "./pages/Results";
@@ -104,8 +104,8 @@ const App = () => (
           <Route path="/teste/admin" element={<TrialAdmin />} />
           
           {/* Protected routes */}
-          <Route path="/" element={<ProtectedRoute><Navigate to="/configuracao" replace /></ProtectedRoute>} />
-          <Route path="/index" element={<ProtectedRoute><Navigate to="/configuracao" replace /></ProtectedRoute>} />
+          <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+          <Route path="/index" element={<ProtectedRoute><Index /></ProtectedRoute>} />
           <Route path="/configuracao" element={<ProtectedRoute><Configuration /></ProtectedRoute>} />
           <Route path="/resultados" element={<ProtectedRoute><Results /></ProtectedRoute>} />
           <Route path="/lead/:id" element={<ProtectedRoute><LeadDetail /></ProtectedRoute>} />
