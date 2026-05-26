@@ -2170,11 +2170,9 @@ serve(async (req) => {
       // Para nichos onde o nome da empresa não contém a palavra-chave (ex: DAJU LTDA),
       // buscamos diretamente por CNAEs oficiais. Esses resultados pulam o filtro de relevância.
       const cnaes = getCnaesForSegment(seg);
-      if (cnaes.length > 0) {
+      if (cnaes.length > 0 && !isNearSoftTimeout()) {
         console.log(`🏷️ CNAE search "${seg}": ${cnaes.length} CNAEs - ${cnaes.join(', ')}`);
         try {
-          // Busca em duas frentes: CNAE PRINCIPAL e CNAE SECUNDÁRIA
-          // (muitas redes como DAJU registram o varejo de cama/mesa/banho como secundária).
           const cnaeOrFilter = cnaes
             .map(code => `cnae_principal.eq.${code},cnae_secundaria.ilike.%${code}%`)
             .join(',');
@@ -2189,9 +2187,14 @@ serve(async (req) => {
           if (neighborhoodFilter) q = q.ilike('bairro', `%${neighborhoodFilter}%`);
           if (bizType === 'matriz') q = q.eq('matriz_filial', 'MATRIZ');
           if (bizType === 'filial') q = q.eq('matriz_filial', 'FILIAL');
-          const { data: cnaeData, error: cnaeErr } = await q.limit(10000);
+          // Abort se ultrapassar 20s — evita travar o gateway (150s wall-clock)
+          const cnaeController = new AbortController();
+          const cnaeTimer = setTimeout(() => cnaeController.abort(), 20000);
+          const qWithAbort: any = (q as any).abortSignal?.(cnaeController.signal) ?? q;
+          const { data: cnaeData, error: cnaeErr } = await qWithAbort.limit(5000);
+          clearTimeout(cnaeTimer);
           if (cnaeErr) {
-            console.error(`❌ CNAE search error "${seg}":`, cnaeErr.message);
+            console.warn(`⚠️ CNAE search skipped "${seg}": ${(cnaeErr.message || '').slice(0, 150)}`);
           } else if (cnaeData) {
             let added = 0;
             for (const c of cnaeData) {
@@ -2204,7 +2207,7 @@ serve(async (req) => {
             console.log(`🏷️ CNAE search "${seg}" (principal+secundária): +${added} novos (total CNAE: ${cnaeData.length})`);
           }
         } catch (e) {
-          console.error(`❌ CNAE search exception "${seg}":`, (e as Error).message);
+          console.warn(`⚠️ CNAE search aborted "${seg}":`, ((e as Error).message || '').slice(0, 100));
         }
       }
 
@@ -2221,6 +2224,11 @@ serve(async (req) => {
       while (true) {
         const myIdx = segIdx++;
         if (myIdx >= segments.length) break;
+        if (isNearSoftTimeout()) {
+          console.warn(`⏱️ Soft timeout reached — skipping segment "${segments[myIdx]}" and remaining`);
+          segmentResults[myIdx] = [];
+          continue;
+        }
         segmentResults[myIdx] = await fetchSegment(segments[myIdx]);
       }
     });
