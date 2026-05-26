@@ -302,7 +302,8 @@ const Results = () => {
               'apikey': supabaseKey,
             },
             body: JSON.stringify({
-              segment: searchConfig.selectedCustomers.join(', '),
+              segment: (searchConfig.selectedCustomers || []).join(', '),
+              cnaes: searchConfig.selectedCnaes || [],
               products: searchConfig.products,
               region: searchConfig.region,
               country: searchConfig.country || 'BR',
@@ -319,6 +320,7 @@ const Results = () => {
                 revenueRange: searchConfig.revenueRange,
               }
             }),
+
             signal: controller.signal,
           });
           

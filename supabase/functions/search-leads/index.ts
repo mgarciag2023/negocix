@@ -1775,15 +1775,21 @@ serve(async (req) => {
   const isNearSoftTimeout = () => (Date.now() - FUNCTION_START) > SOFT_TIMEOUT_MS;
 
   try {
-    const { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial, neighborhood } = await req.json();
-    console.log('🔍 LOCAL DB SEARCH v1 - Input:', { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial: !!isTrial });
+    const { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial, neighborhood, cnaes: cnaesInput } = await req.json();
+    console.log('🔍 LOCAL DB SEARCH v1 - Input:', { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial: !!isTrial, cnaesCount: Array.isArray(cnaesInput) ? cnaesInput.length : 0 });
 
-    if (!segment || !region) {
-      return new Response(JSON.stringify({ error: 'Segmento e região são obrigatórios.' }), {
+    const cnaesList: string[] = Array.isArray(cnaesInput)
+      ? cnaesInput.map((c: any) => String(c).replace(/\D/g, '')).filter((c: string) => c.length === 7)
+      : [];
+    const hasCnaeSearch = cnaesList.length > 0;
+
+    if ((!segment && !hasCnaeSearch) || !region) {
+      return new Response(JSON.stringify({ error: 'Informe segmento ou CNAE, e região.' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -1838,6 +1844,79 @@ serve(async (req) => {
         }
       }
     }
+
+    // ===== CNAE-ONLY SEARCH (atalho — bypassa fluxo de segmentos) =====
+    if (hasCnaeSearch) {
+      console.log(`🏷️ CNAE-ONLY SEARCH: ${cnaesList.length} código(s) - ${cnaesList.join(', ')}`);
+      const orFilter = cnaesList
+        .map((code) => `cnae_principal.eq.${code},cnae_secundaria.ilike.%${code}%`)
+        .join(',');
+      let q = adminClient
+        .from('companies')
+        .select('*')
+        .or(orFilter)
+        .eq('situacao_cadastral', 'ATIVA')
+        .not('telefone_1', 'is', null);
+      if (city) q = q.eq('cidade', city);
+      if (state) q = q.eq('estado', state);
+      if (neighborhoodFilter) q = q.ilike('bairro', `%${neighborhoodFilter}%`);
+      if (bizType === 'matriz') q = q.eq('matriz_filial', 'MATRIZ');
+      if (bizType === 'filial') q = q.eq('matriz_filial', 'FILIAL');
+      const { data: cnaeRows, error: cnaeErr } = await q.limit(10000);
+      if (cnaeErr) {
+        console.error('❌ CNAE-only search error:', cnaeErr.message);
+        return new Response(JSON.stringify({ error: cnaeErr.message }), {
+          status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const raw = cnaeRows || [];
+      const filtered = raw.filter((c: any) => isPhoneValid(c.telefone_1) || isPhoneValid(c.telefone_2));
+      const seenC = new Set<string>();
+      const dedup = filtered.filter((c: any) => { if (!c.cnpj) return true; if (seenC.has(c.cnpj)) return false; seenC.add(c.cnpj); return true; });
+      const leads = dedup.map((c: any, index: number) => {
+        const phone1 = isPhoneValid(c.telefone_1) ? c.telefone_1 : (c.telefone_2 || '');
+        const pv = validatePhone(phone1);
+        const nfRaw = (c.nome_fantasia || '').trim();
+        const rawName = !nfRaw ? (c.razao_social || 'Empresa') : nfRaw;
+        const name = rawName.replace(/[^\s]+/g, (w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+        const addr = [c.endereco, c.bairro, c.cidade, c.estado, c.cep]
+          .filter(Boolean)
+          .map((p: string) => p.replace(/[^\s]+/g, (w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()))
+          .join(', ');
+        const { employeeCount, companySize, revenue } = estimateCompanySize(c);
+        return {
+          id: `db-${c.id}-${index}`, name, address: addr || 'Endereço não disponível',
+          phone: pv.valid ? pv.normalized : phone1, phoneValid: pv.valid,
+          email: c.email ? c.email.toLowerCase() : '', website: null, instagram: '', facebook: '',
+          hasWhatsApp: pv.isWhatsApp, placeId: c.id, cnpj: c.cnpj || '',
+          category: c.descricao_cnae || 'CNAE', rating: 0, reviews: 0,
+          matchScore: 80, confidenceScore: 80, source: 'receita_federal',
+          responsible: c.nome_socio || 'Gerente', employeeCount, companySize, revenue,
+          openedDate: c.data_abertura || '',
+          reasons: [`CNAE ${c.cnae_principal || ''}: ${(c.descricao_cnae || '').toString()}`],
+          isMatriz: (c.matriz_filial || '').toUpperCase() === 'MATRIZ',
+          digitalPresence: 'unknown', digitalActivity: 'unknown',
+          dataQuality: { hasValidPhone: pv.valid, hasSocialMedia: false, hasWhatsApp: pv.isWhatsApp, hasWebsite: false, fromGoogleMaps: false, fromReceitaFederal: true },
+          needsReview: false, descricaoCnae: c.descricao_cnae || '', porte: c.porte || '',
+          capitalSocial: c.capital_social || 0, nomeSocio: c.nome_socio || '',
+          razaoSocial: c.razao_social || '', nomeFantasia: c.nome_fantasia || '',
+          telefone1: c.telefone_1 || '', telefone2: c.telefone_2 || '',
+          cnaePrincipal: c.cnae_principal || '', cnaeSecundaria: c.cnae_secundaria || '',
+          naturezaJuridica: c.natureza_juridica || '', situacaoCadastral: c.situacao_cadastral || '',
+          dataSituacaoCadastral: c.data_situacao_cadastral || '', motivoSituacao: c.motivo_situacao || '',
+          matrizFilial: c.matriz_filial || '', mei: c.mei || '', simples: c.simples || '',
+          endereco: c.endereco || '', complemento: c.complemento || '', bairro: c.bairro || '',
+          cidade: c.cidade || '', estado: c.estado || '', cep: c.cep || '',
+          faixaEtariaSocio: c.faixa_etaria_socio || '', qualificacaoSocio: c.qualificacao_socio || '',
+        };
+      });
+      console.log(`✅ CNAE-only search: ${raw.length} raw → ${leads.length} leads`);
+      return new Response(JSON.stringify({ leads }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+
 
     // ===== PARSE SEGMENTS =====
     // Algumas categorias contêm vírgula no nome (ex: "Lojas de Cama, Mesa e Banho").

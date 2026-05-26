@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Building, Building2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { customerTypes, countries, brazilianStates } from "@/data/searchConstants";
+import { cnaes as cnaeList } from "@/data/cnaes";
+
 
 import { useToast } from "@/hooks/use-toast";
 
@@ -32,6 +34,11 @@ const Configuration = () => {
   const [digitalActivity, setDigitalActivity] = useState("all"); // all, low, basic, active
   const [customerSearch, setCustomerSearch] = useState(""); // Search filter for customer types
   const [visibleCount, setVisibleCount] = useState(100); // Limit rendered items for performance
+  const [searchMode, setSearchMode] = useState<"segment" | "cnae">("segment");
+  const [selectedCnaes, setSelectedCnaes] = useState<string[]>([]);
+  const [cnaeSearch, setCnaeSearch] = useState("");
+  const [cnaeVisibleCount, setCnaeVisibleCount] = useState(100);
+
 
   // Fuzzy search: remove accents, match all words independently
   const normalizeText = (text: string) =>
@@ -85,14 +92,24 @@ const Configuration = () => {
       return;
     }
 
-    if (selectedCustomers.length === 0) {
+    if (searchMode === "segment" && selectedCustomers.length === 0) {
       toast({
         title: "Selecione pelo menos um tipo de cliente",
-        description: "Escolha os segmentos de clientes que deseja prospectar.",
+        description: "Escolha os segmentos OU mude para busca por CNAE.",
         variant: "destructive",
       });
       return;
     }
+
+    if (searchMode === "cnae" && selectedCnaes.length === 0) {
+      toast({
+        title: "Selecione pelo menos um CNAE",
+        description: "Escolha um ou mais CNAEs OU mude para busca por segmento.",
+        variant: "destructive",
+      });
+      return;
+    }
+
 
     if (country === "OTHER" && !customCountry) {
       toast({
@@ -127,7 +144,9 @@ const Configuration = () => {
     const newSearchConfig = {
       category,
       products,
-      selectedCustomers,
+      searchMode,
+      selectedCustomers: searchMode === "segment" ? selectedCustomers : [],
+      selectedCnaes: searchMode === "cnae" ? selectedCnaes : [],
       region,
       state,
       city,
@@ -142,6 +161,7 @@ const Configuration = () => {
       whatsappOnly: false,
       receitaFederalOnly: false,
     };
+
     
     const newConfigStr = JSON.stringify(newSearchConfig);
     
@@ -203,7 +223,37 @@ const Configuration = () => {
                     />
                 </div>
 
+                {/* Modo de busca: Segmento OU CNAE */}
+                <div className="rounded-lg border-2 border-primary/40 bg-primary/5 p-4">
+                  <Label className="text-base font-semibold mb-2 block" translate="no">
+                    Como deseja buscar? *
+                  </Label>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Escolha <strong>apenas um</strong> método: ou por <strong>segmento</strong>, ou por <strong>CNAE</strong>.
+                    Combinar os dois não é permitido (gera resultados ruins).
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant={searchMode === "segment" ? "default" : "outline"}
+                      onClick={() => { setSearchMode("segment"); setSelectedCnaes([]); }}
+                      className="gap-2"
+                    >
+                      Por Segmento
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={searchMode === "cnae" ? "default" : "outline"}
+                      onClick={() => { setSearchMode("cnae"); setSelectedCustomers([]); }}
+                      className="gap-2"
+                    >
+                      Por CNAE
+                    </Button>
+                  </div>
+                </div>
+
                 {/* Customer Types - Com campo de pesquisa */}
+                {searchMode === "segment" && (
                 <div>
                   <Label className="text-base font-semibold mb-4 block" translate="no">
                     Clientes que quero encontrar: *
@@ -302,6 +352,81 @@ const Configuration = () => {
                     );
                   })()}
                 </div>
+                )}
+
+                {/* CNAE picker */}
+                {searchMode === "cnae" && (
+                <div>
+                  <Label className="text-base font-semibold mb-2 block" translate="no">
+                    CNAE(s) que quero encontrar: *
+                  </Label>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Digite código (ex: 4711301) ou descrição para filtrar a lista oficial do IBGE ({cnaeList.length} CNAEs).
+                  </p>
+
+                  <div className="relative mb-4">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      value={cnaeSearch}
+                      onChange={(e) => { setCnaeSearch(e.target.value); setCnaeVisibleCount(100); }}
+                      placeholder="Buscar CNAE por código ou descrição..."
+                      className="pl-10"
+                      translate="no"
+                    />
+                  </div>
+
+                  {selectedCnaes.length > 0 && (
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {selectedCnaes.length} CNAE{selectedCnaes.length > 1 ? "s" : ""} selecionado{selectedCnaes.length > 1 ? "s" : ""}
+                    </p>
+                  )}
+
+                  {(() => {
+                    const q = normalizeText(cnaeSearch.trim()).toLowerCase();
+                    const filtered = q
+                      ? cnaeList.filter((c) => c.code.includes(q.replace(/\D/g, "")) || normalizeText(c.description).toLowerCase().includes(q))
+                      : cnaeList;
+                    const displayItems = filtered.slice(0, cnaeSearch ? 300 : cnaeVisibleCount);
+                    const hasMore = filtered.length > displayItems.length;
+                    return (
+                      <>
+                        <div className="grid grid-cols-1 gap-2 max-h-[400px] overflow-y-auto pr-2" translate="no">
+                          {displayItems.map((c) => (
+                            <div key={c.code} className="flex items-start space-x-2">
+                              <Checkbox
+                                id={`cnae-${c.code}`}
+                                checked={selectedCnaes.includes(c.code)}
+                                onCheckedChange={() => setSelectedCnaes((prev) => prev.includes(c.code) ? prev.filter(x => x !== c.code) : [...prev, c.code])}
+                              />
+                              <label htmlFor={`cnae-${c.code}`} className="text-sm leading-tight cursor-pointer">
+                                <span className="font-mono text-primary">{c.code}</span>
+                                <span className="text-muted-foreground"> — {c.description}</span>
+                              </label>
+                            </div>
+                          ))}
+                          {filtered.length === 0 && (
+                            <p className="text-muted-foreground text-sm py-4 text-center">
+                              Nenhum CNAE encontrado para "{cnaeSearch}"
+                            </p>
+                          )}
+                        </div>
+                        {hasMore && !cnaeSearch && (
+                          <Button type="button" variant="outline" className="mt-3 w-full" onClick={() => setCnaeVisibleCount(prev => prev + 200)}>
+                            Mostrar mais ({filtered.length - displayItems.length} restantes)
+                          </Button>
+                        )}
+                        {hasMore && cnaeSearch && (
+                          <p className="text-xs text-muted-foreground mt-2 text-center">
+                            Mostrando {displayItems.length} de {filtered.length}. Refine a busca para ver mais.
+                          </p>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+                )}
+
+
 
                 {/* Tipo de Empresa (Matriz/Filial) */}
                 <div>
