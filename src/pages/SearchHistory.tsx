@@ -66,7 +66,17 @@ export default function SearchHistory() {
   const generateDbCacheKey = (segment: string, region: string) =>
     `local|${normalizeCacheKeyPart(segment)}|${normalizeCacheKeyPart(region)}`;
 
-  const openResults = (results: any[], configStr: string) => {
+  const openResults = (results: any[], configStr: string, type: string = "leads") => {
+    if (type === "suppliers") {
+      localStorage.setItem("supplierSearchConfig", configStr);
+      localStorage.setItem("suppliersCache", JSON.stringify({
+        suppliers: results,
+        timestamp: Date.now(),
+      }));
+      navigate("/suppliers-results");
+      return;
+    }
+
     try {
       localStorage.setItem("cachedLeads", JSON.stringify(results));
       localStorage.setItem("cachedSearchConfig", configStr);
@@ -96,7 +106,7 @@ export default function SearchHistory() {
       const hasFullSavedResults = results.length > 0 && (!log.results_count || results.length >= log.results_count);
 
       if (hasFullSavedResults) {
-        openResults(results, configStr);
+        openResults(results, configStr, log.search_type);
         return;
       }
 
@@ -111,7 +121,7 @@ export default function SearchHistory() {
         if (!cacheError) {
           const cachedResults = Array.isArray(cacheData?.results) ? cacheData.results : [];
           if (cachedResults.length > results.length) {
-            openResults(cachedResults, configStr);
+            openResults(cachedResults, configStr, log.search_type);
             return;
           }
         }
@@ -130,7 +140,7 @@ export default function SearchHistory() {
       }
 
       if (results.length > 0) {
-        openResults(results, configStr);
+        openResults(results, configStr, log.search_type);
         return;
       }
 
@@ -156,9 +166,16 @@ export default function SearchHistory() {
   };
 
   const getSearchDescription = (config: any) => {
-    const segments = config?.selectedCustomers?.join(", ") || config?.segment || "—";
+    const segments = config?.products?.join(", ") || config?.selectedCustomers?.join(", ") || config?.segment || "—";
     const region = config?.region || "";
     return { segments, region };
+  };
+
+  const getSearchTypeLabel = (type: string) => {
+    if (type === "leads") return "Leads";
+    if (type === "representatives") return "Representantes";
+    if (type === "suppliers") return "Fornecedores";
+    return type;
   };
 
   return (
@@ -214,7 +231,7 @@ export default function SearchHistory() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <Badge variant={log.search_type === "leads" ? "default" : "secondary"} className="text-xs">
-                              {log.search_type === "leads" ? "Leads" : log.search_type === "representatives" ? "Representantes" : log.search_type}
+                              {getSearchTypeLabel(log.search_type)}
                             </Badge>
                             <span className="text-xs text-muted-foreground flex items-center gap-1">
                               <Calendar className="w-3 h-3" />
@@ -244,7 +261,7 @@ export default function SearchHistory() {
                           className="gap-1 flex-shrink-0"
                         >
                           <Eye className="w-4 h-4" />
-                          {openingLogId === log.id ? "Abrindo..." : "Ver Leads"}
+                          {openingLogId === log.id ? "Abrindo..." : log.search_type === "suppliers" ? "Ver Fornecedores" : "Ver Leads"}
                         </Button>
                       </div>
                     </CardContent>
