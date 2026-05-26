@@ -144,7 +144,9 @@ const Configuration = () => {
     const newSearchConfig = {
       category,
       products,
-      selectedCustomers,
+      searchMode,
+      selectedCustomers: searchMode === "segment" ? selectedCustomers : [],
+      selectedCnaes: searchMode === "cnae" ? selectedCnaes : [],
       region,
       state,
       city,
@@ -159,6 +161,7 @@ const Configuration = () => {
       whatsappOnly: false,
       receitaFederalOnly: false,
     };
+
     
     const newConfigStr = JSON.stringify(newSearchConfig);
     
