@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, History, Search, Users, Eye } from "lucide-react";
+import { Loader2, History, Search, Users, Eye, Package } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -67,6 +67,9 @@ export default function SearchLogsTable() {
     if (type === "representatives") {
       return [config.state, config.city].filter(Boolean).join(" - ");
     }
+    if (type === "suppliers") {
+      return [Array.isArray(config.products) ? config.products.join(", ") : "", config.region || config.state].filter(Boolean).join(" | ") || "—";
+    }
     const parts: string[] = [];
     if (config.segment) parts.push(config.segment);
     if (config.region) parts.push(config.region);
@@ -113,6 +116,8 @@ export default function SearchLogsTable() {
                     <Badge variant="secondary" className="gap-1">
                       {log.search_type === "representatives" ? (
                         <><Users className="h-3 w-3" /> Representantes</>
+                      ) : log.search_type === "suppliers" ? (
+                        <><Package className="h-3 w-3" /> Fornecedores</>
                       ) : (
                         <><Search className="h-3 w-3" /> Leads</>
                       )}
