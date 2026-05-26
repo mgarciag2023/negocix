@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, History, Search, Users, Eye } from "lucide-react";
+import { Loader2, History, Search, Users, Eye, Package } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -35,7 +35,7 @@ interface SearchLog {
   id: string;
   user_email: string;
   search_type: string;
-  search_config: Record<string, any>;
+  search_config: Record<string, unknown>;
   results_count: number;
   results?: LeadSample[];
   created_at: string;
@@ -63,13 +63,21 @@ export default function SearchLogsTable() {
     setLoading(false);
   };
 
-  const formatConfig = (config: Record<string, any>, type: string): string => {
+  const formatConfig = (config: Record<string, unknown>, type: string): string => {
+    const state = typeof config.state === "string" ? config.state : "";
+    const city = typeof config.city === "string" ? config.city : "";
+    const region = typeof config.region === "string" ? config.region : "";
+    const segment = typeof config.segment === "string" ? config.segment : "";
+
     if (type === "representatives") {
-      return [config.state, config.city].filter(Boolean).join(" - ");
+      return [state, city].filter(Boolean).join(" - ");
+    }
+    if (type === "suppliers") {
+      return [Array.isArray(config.products) ? config.products.join(", ") : "", region || state].filter(Boolean).join(" | ") || "—";
     }
     const parts: string[] = [];
-    if (config.segment) parts.push(config.segment);
-    if (config.region) parts.push(config.region);
+    if (segment) parts.push(segment);
+    if (region) parts.push(region);
     return parts.join(" | ") || "—";
   };
 
@@ -113,6 +121,8 @@ export default function SearchLogsTable() {
                     <Badge variant="secondary" className="gap-1">
                       {log.search_type === "representatives" ? (
                         <><Users className="h-3 w-3" /> Representantes</>
+                      ) : log.search_type === "suppliers" ? (
+                        <><Package className="h-3 w-3" /> Fornecedores</>
                       ) : (
                         <><Search className="h-3 w-3" /> Leads</>
                       )}

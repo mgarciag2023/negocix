@@ -16,13 +16,61 @@ interface Supplier {
   website?: string;
   category: string;
   hasWhatsApp: boolean;
+  email?: string | null;
+  cnpj?: string | null;
+  porte?: string | null;
+}
+
+interface SupplierSearchConfig {
+  products?: string[];
+  location?: string;
+  state?: string;
+  neighborhood?: string;
+  [key: string]: unknown;
+}
+
+interface SupplierSearchResponse {
+  suppliers?: Supplier[];
+  error?: string;
 }
 
 const SuppliersResults = () => {
   const { toast } = useToast();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchConfig, setSearchConfig] = useState<any>(null);
+  const [searchConfig, setSearchConfig] = useState<SupplierSearchConfig | null>(null);
+
+  const logSupplierSearch = async (config: SupplierSearchConfig, suppliersData: Supplier[], errorMessage?: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      await supabase.from("search_logs").insert({
+        user_id: user.id,
+        user_email: user.email || "",
+        search_type: "suppliers",
+        search_config: {
+          ...config,
+          products: config.products || [],
+          region: config.location ? `${config.location}, ${config.state}` : config.state,
+          ...(errorMessage ? { error: errorMessage } : {}),
+        },
+        results_count: suppliersData.length,
+        results: suppliersData.slice(0, 300).map((s) => ({
+          name: s.name,
+          address: s.address,
+          phone: s.phone,
+          category: s.category,
+          website: s.website,
+          email: s.email,
+          cnpj: s.cnpj,
+          porte: s.porte,
+        })),
+      });
+    } catch (logErr) {
+      console.error("Error logging supplier search:", logErr);
+    }
+  };
 
   useEffect(() => {
     const fetchSuppliers = async () => {
@@ -63,7 +111,7 @@ const SuppliersResults = () => {
         const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
         const { data: { session } } = await supabase.auth.getSession();
         
-        let data: any = null;
+        let data: SupplierSearchResponse = {};
         const response = await fetch(`${supabaseUrl}/functions/v1/search-suppliers`, {
           method: 'POST',
           headers: {
@@ -80,10 +128,16 @@ const SuppliersResults = () => {
           signal: controller.signal,
         });
         clearTimeout(timeoutId);
-        data = await response.json();
+        const responseText = await response.text();
+        try {
+          data = responseText ? JSON.parse(responseText) : {};
+        } catch {
+          data = { error: response.ok ? "Resposta inválida do servidor" : `Erro ${response.status} ao buscar fornecedores` };
+        }
         const error = !response.ok && !data?.suppliers ? data : null;
 
         if (error) {
+          await logSupplierSearch(config, [], error?.error || 'Erro ao buscar fornecedores');
           toast({
             title: "Erro na busca",
             description: error?.error || 'Erro ao buscar fornecedores',
@@ -93,6 +147,7 @@ const SuppliersResults = () => {
         } else {
           const suppliersData = data?.suppliers || [];
           setSuppliers(suppliersData);
+          await logSupplierSearch(config, suppliersData);
           
           localStorage.setItem("suppliersCache", JSON.stringify({
             suppliers: suppliersData,
@@ -113,6 +168,7 @@ const SuppliersResults = () => {
         }
       } catch (error) {
         console.error("Error fetching suppliers:", error);
+        await logSupplierSearch(config, [], error instanceof Error ? error.message : "Falha ao buscar fornecedores");
         toast({
           title: "Erro ao buscar fornecedores",
           description: "Verifique sua conexão e tente novamente.",

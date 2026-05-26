@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -12,9 +12,9 @@ import { useToast } from "@/hooks/use-toast";
 interface SearchLog {
   id: string;
   search_type: string;
-  search_config: any;
+  search_config: Record<string, unknown>;
   results_count: number | null;
-  results: any[];
+  results: Record<string, unknown>[];
   created_at: string;
 }
 
@@ -25,24 +25,20 @@ export default function SearchHistory() {
   const [isLoading, setIsLoading] = useState(true);
   const [openingLogId, setOpeningLogId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchHistory();
-  }, []);
-
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await (supabase
-        .from("search_logs") as any)
+      const { data, error } = await supabase
+        .from("search_logs")
         .select("id, search_type, search_config, results_count, results, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(50);
 
       if (error) throw error;
-      setLogs((data as any[]) || []);
+      setLogs(((data || []) as unknown) as SearchLog[]);
     } catch (err) {
       console.error("Error fetching history:", err);
       toast({
@@ -53,7 +49,11 @@ export default function SearchHistory() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
 
   const normalizeCacheKeyPart = (value: string) =>
     value
@@ -66,7 +66,17 @@ export default function SearchHistory() {
   const generateDbCacheKey = (segment: string, region: string) =>
     `local|${normalizeCacheKeyPart(segment)}|${normalizeCacheKeyPart(region)}`;
 
-  const openResults = (results: any[], configStr: string) => {
+  const openResults = (results: Record<string, unknown>[], configStr: string, type: string = "leads") => {
+    if (type === "suppliers") {
+      localStorage.setItem("supplierSearchConfig", configStr);
+      localStorage.setItem("suppliersCache", JSON.stringify({
+        suppliers: results,
+        timestamp: Date.now(),
+      }));
+      navigate("/suppliers-results");
+      return;
+    }
+
     try {
       localStorage.setItem("cachedLeads", JSON.stringify(results));
       localStorage.setItem("cachedSearchConfig", configStr);
@@ -75,7 +85,9 @@ export default function SearchHistory() {
       try {
         localStorage.removeItem("cachedLeads");
         localStorage.removeItem("cachedSearchConfig");
-      } catch {}
+      } catch (clearErr) {
+        console.warn("Não foi possível limpar cache local:", clearErr);
+      }
     }
     localStorage.setItem("leadSearchConfig", configStr);
     sessionStorage.removeItem('results_scroll_position');
@@ -91,27 +103,29 @@ export default function SearchHistory() {
       const configStr = JSON.stringify(config);
       const segment = Array.isArray(config.selectedCustomers)
         ? config.selectedCustomers.join(", ")
-        : config.segment || "";
-      const region = config.region || "";
+        : typeof config.segment === "string" ? config.segment : "";
+      const region = typeof config.region === "string" ? config.region : "";
       const hasFullSavedResults = results.length > 0 && (!log.results_count || results.length >= log.results_count);
 
       if (hasFullSavedResults) {
-        openResults(results, configStr);
+        openResults(results, configStr, log.search_type);
         return;
       }
 
       if (log.search_type === "leads" && segment && region) {
         const cacheKey = generateDbCacheKey(segment, region);
-        const { data: cacheData, error: cacheError } = await (supabase
-          .from("cached_search_results") as any)
+        const { data: cacheData, error: cacheError } = await supabase
+          .from("cached_search_results")
           .select("results, results_count")
           .eq("cache_key", cacheKey)
           .maybeSingle();
 
         if (!cacheError) {
-          const cachedResults = Array.isArray(cacheData?.results) ? cacheData.results : [];
+          const cachedResults = Array.isArray(cacheData?.results)
+            ? ((cacheData.results as unknown) as Record<string, unknown>[])
+            : [];
           if (cachedResults.length > results.length) {
-            openResults(cachedResults, configStr);
+            openResults(cachedResults, configStr, log.search_type);
             return;
           }
         }
@@ -130,7 +144,7 @@ export default function SearchHistory() {
       }
 
       if (results.length > 0) {
-        openResults(results, configStr);
+        openResults(results, configStr, log.search_type);
         return;
       }
 
@@ -155,10 +169,20 @@ export default function SearchHistory() {
     });
   };
 
-  const getSearchDescription = (config: any) => {
-    const segments = config?.selectedCustomers?.join(", ") || config?.segment || "—";
-    const region = config?.region || "";
+  const getSearchDescription = (config: Record<string, unknown>) => {
+    const products = Array.isArray(config?.products) ? config.products.join(", ") : "";
+    const customers = Array.isArray(config?.selectedCustomers) ? config.selectedCustomers.join(", ") : "";
+    const segment = typeof config?.segment === "string" ? config.segment : "";
+    const region = typeof config?.region === "string" ? config.region : "";
+    const segments = products || customers || segment || "—";
     return { segments, region };
+  };
+
+  const getSearchTypeLabel = (type: string) => {
+    if (type === "leads") return "Leads";
+    if (type === "representatives") return "Representantes";
+    if (type === "suppliers") return "Fornecedores";
+    return type;
   };
 
   return (
@@ -205,7 +229,7 @@ export default function SearchHistory() {
             <div className="space-y-3">
               {logs.map((log) => {
                 const { segments, region } = getSearchDescription(log.search_config);
-                const hasResults = (log.results && (log.results as any[]).length > 0) || (log.results_count ?? 0) > 0;
+                const hasResults = (log.results && log.results.length > 0) || (log.results_count ?? 0) > 0;
 
                 return (
                   <Card key={log.id} className="hover:shadow-md transition-shadow">
@@ -214,7 +238,7 @@ export default function SearchHistory() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <Badge variant={log.search_type === "leads" ? "default" : "secondary"} className="text-xs">
-                              {log.search_type === "leads" ? "Leads" : log.search_type === "representatives" ? "Representantes" : log.search_type}
+                              {getSearchTypeLabel(log.search_type)}
                             </Badge>
                             <span className="text-xs text-muted-foreground flex items-center gap-1">
                               <Calendar className="w-3 h-3" />
@@ -244,7 +268,7 @@ export default function SearchHistory() {
                           className="gap-1 flex-shrink-0"
                         >
                           <Eye className="w-4 h-4" />
-                          {openingLogId === log.id ? "Abrindo..." : "Ver Leads"}
+                          {openingLogId === log.id ? "Abrindo..." : log.search_type === "suppliers" ? "Ver Fornecedores" : "Ver Leads"}
                         </Button>
                       </div>
                     </CardContent>
