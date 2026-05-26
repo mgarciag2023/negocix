@@ -1775,15 +1775,21 @@ serve(async (req) => {
   const isNearSoftTimeout = () => (Date.now() - FUNCTION_START) > SOFT_TIMEOUT_MS;
 
   try {
-    const { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial, neighborhood } = await req.json();
-    console.log('🔍 LOCAL DB SEARCH v1 - Input:', { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial: !!isTrial });
+    const { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial, neighborhood, cnaes: cnaesInput } = await req.json();
+    console.log('🔍 LOCAL DB SEARCH v1 - Input:', { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial: !!isTrial, cnaesCount: Array.isArray(cnaesInput) ? cnaesInput.length : 0 });
 
-    if (!segment || !region) {
-      return new Response(JSON.stringify({ error: 'Segmento e região são obrigatórios.' }), {
+    const cnaesList: string[] = Array.isArray(cnaesInput)
+      ? cnaesInput.map((c: any) => String(c).replace(/\D/g, '')).filter((c: string) => c.length === 7)
+      : [];
+    const hasCnaeSearch = cnaesList.length > 0;
+
+    if ((!segment && !hasCnaeSearch) || !region) {
+      return new Response(JSON.stringify({ error: 'Informe segmento ou CNAE, e região.' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
