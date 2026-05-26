@@ -2002,39 +2002,46 @@ serve(async (req) => {
       // FALLBACK: If tsvector returned 0 (search_vector not populated for this region),
       // retry with ILIKE-based search which doesn't depend on the materialized vector.
       if (bestResults.length === 0) {
-        // ILIKE fallback — estado ainda não indexado. Usar todos os termos possíveis.
+        // ILIKE fallback — busca direta no nome. Reduzido para evitar 502 (gateway 60s).
         const ilikeTerms = Array.from(new Set(
           (terms || [])
             .map((t: string) => (t || '').trim())
-            .filter((t: string) => t.length >= 4 && !/[áéíóúâêôãõç]/i.test(t))
-        )).slice(0, 12);
+            .filter((t: string) => t.length >= 5 && !/[áéíóúâêôãõç]/i.test(t))
+        )).slice(0, 6); // menos termos = query mais leve
         console.log(`🔄 Phase 1 "${seg}" empty — falling back to ILIKE search (${ilikeTerms.length} terms)`);
-        
-        // Paginar ILIKE com múltiplas páginas para trazer o máximo
-        const ilikePageNums = Array.from({ length: 5 }, (_, i) => i); // 5 páginas
-        const ilikePages = await runPool(ilikePageNums, async (p: number) => {
-          const r = await adminClient.rpc('search_companies_ilike', {
-            p_city: city || null,
-            p_state: state || null,
-            p_search_terms: ilikeTerms,
-            p_biz_type: bizType || 'all',
-            p_limit_val: PAGE_SIZE,
-            p_offset_val: p * PAGE_SIZE,
-          });
-          return { ...r, pageIdx: p };
-        }, 2); // concorrência 2 para não sobrecarregar
 
-        for (const r of ilikePages.sort((a: any, b: any) => a.pageIdx - b.pageIdx)) {
-          if (r.error) {
-            console.error(`❌ ILIKE fallback error page ${r.pageIdx} "${seg}":`, r.error.message);
-            continue;
-          }
-          if (r.data && r.data.length > 0) {
+        // Sequencial, páginas pequenas, com abort para não travar no gateway
+        const ILIKE_PAGE = 500;
+        const ILIKE_MAX_PAGES = 2;
+        for (let p = 0; p < ILIKE_MAX_PAGES; p++) {
+          if (isNearSoftTimeout()) break;
+          try {
+            const ilikeController = new AbortController();
+            const ilikeTimer = setTimeout(() => ilikeController.abort(), 25000);
+            const r: any = await (adminClient.rpc('search_companies_ilike', {
+              p_city: city || null,
+              p_state: state || null,
+              p_search_terms: ilikeTerms,
+              p_biz_type: bizType || 'all',
+              p_limit_val: ILIKE_PAGE,
+              p_offset_val: p * ILIKE_PAGE,
+            }) as any).abortSignal?.(ilikeController.signal) ?? adminClient.rpc('search_companies_ilike', {
+              p_city: city || null, p_state: state || null, p_search_terms: ilikeTerms,
+              p_biz_type: bizType || 'all', p_limit_val: ILIKE_PAGE, p_offset_val: p * ILIKE_PAGE,
+            });
+            clearTimeout(ilikeTimer);
+            if (r.error) {
+              console.warn(`⚠️ ILIKE fallback skipped "${seg}" page ${p}: ${(r.error.message || '').slice(0, 150)}`);
+              break;
+            }
+            if (!r.data || r.data.length === 0) break;
             for (const c of r.data) {
               if (!seenIds.has(c.id) && matchesNeighborhood(c)) { seenIds.add(c.id); bestResults.push(c); }
             }
-            lastPageFull = r.data.length === PAGE_SIZE;
-            highestPageFetched = Math.max(highestPageFetched, r.pageIdx);
+            if (r.data.length < ILIKE_PAGE) break;
+          } catch (e: any) {
+            console.warn(`⚠️ ILIKE fallback aborted "${seg}":`, (e?.message || 'error').slice(0, 100));
+            break;
           }
         }
         console.log(`🔄 ILIKE fallback "${seg}": ${bestResults.length} results`);
