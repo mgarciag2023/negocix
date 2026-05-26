@@ -34,6 +34,11 @@ const Configuration = () => {
   const [digitalActivity, setDigitalActivity] = useState("all"); // all, low, basic, active
   const [customerSearch, setCustomerSearch] = useState(""); // Search filter for customer types
   const [visibleCount, setVisibleCount] = useState(100); // Limit rendered items for performance
+  const [searchMode, setSearchMode] = useState<"segment" | "cnae">("segment");
+  const [selectedCnaes, setSelectedCnaes] = useState<string[]>([]);
+  const [cnaeSearch, setCnaeSearch] = useState("");
+  const [cnaeVisibleCount, setCnaeVisibleCount] = useState(100);
+
 
   // Fuzzy search: remove accents, match all words independently
   const normalizeText = (text: string) =>
