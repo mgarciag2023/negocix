@@ -194,14 +194,26 @@ function generateSupplierSearchTerms(product: string): string[] {
   return [cleaned, `distribuidora ${cleaned}`, `atacado ${cleaned}`];
 }
 
+function isNearDeadline(startTime: number, maxMs = 45000): boolean {
+  return Date.now() - startTime > maxMs;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    const startTime = Date.now();
     const { products, location, state, neighborhood } = await req.json();
     console.log("🔍 Searching suppliers in local DB for:", { products, location, state, neighborhood });
+
+    if (!Array.isArray(products) || products.length === 0 || !state) {
+      return new Response(
+        JSON.stringify({ error: "Produtos e estado são obrigatórios", suppliers: [] }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     const nfNorm = (neighborhood && typeof neighborhood === 'string' && neighborhood.trim())
       ? normalizeStr(neighborhood) : null;
     const matchesNeighborhood = (c: any): boolean => {
@@ -239,6 +251,11 @@ serve(async (req) => {
 
     // Query 2 terms at a time to avoid timeout
     for (let i = 0; i < uniqueTerms.length; i += 3) {
+      if (isNearDeadline(startTime)) {
+        console.warn("⏱️ Supplier search stopped early to avoid timeout");
+        break;
+      }
+
       const batch = uniqueTerms.slice(i, i + 3);
       console.log(`🔎 Batch ${Math.floor(i/3)+1}: searching for`, batch);
       
