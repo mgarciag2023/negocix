@@ -21,18 +21,31 @@ interface Supplier {
   porte?: string | null;
 }
 
+interface SupplierSearchConfig {
+  products?: string[];
+  location?: string;
+  state?: string;
+  neighborhood?: string;
+  [key: string]: unknown;
+}
+
+interface SupplierSearchResponse {
+  suppliers?: Supplier[];
+  error?: string;
+}
+
 const SuppliersResults = () => {
   const { toast } = useToast();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchConfig, setSearchConfig] = useState<any>(null);
+  const [searchConfig, setSearchConfig] = useState<SupplierSearchConfig | null>(null);
 
-  const logSupplierSearch = async (config: any, suppliersData: Supplier[], errorMessage?: string) => {
+  const logSupplierSearch = async (config: SupplierSearchConfig, suppliersData: Supplier[], errorMessage?: string) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      await (supabase.from("search_logs") as any).insert({
+      await supabase.from("search_logs").insert({
         user_id: user.id,
         user_email: user.email || "",
         search_type: "suppliers",
@@ -98,7 +111,7 @@ const SuppliersResults = () => {
         const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
         const { data: { session } } = await supabase.auth.getSession();
         
-        let data: any = null;
+        let data: SupplierSearchResponse = {};
         const response = await fetch(`${supabaseUrl}/functions/v1/search-suppliers`, {
           method: 'POST',
           headers: {
