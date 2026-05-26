@@ -2224,6 +2224,11 @@ serve(async (req) => {
       while (true) {
         const myIdx = segIdx++;
         if (myIdx >= segments.length) break;
+        if (isNearSoftTimeout()) {
+          console.warn(`⏱️ Soft timeout reached — skipping segment "${segments[myIdx]}" and remaining`);
+          segmentResults[myIdx] = [];
+          continue;
+        }
         segmentResults[myIdx] = await fetchSegment(segments[myIdx]);
       }
     });
