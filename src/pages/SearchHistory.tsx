@@ -103,8 +103,8 @@ export default function SearchHistory() {
       const configStr = JSON.stringify(config);
       const segment = Array.isArray(config.selectedCustomers)
         ? config.selectedCustomers.join(", ")
-        : config.segment || "";
-      const region = config.region || "";
+        : typeof config.segment === "string" ? config.segment : "";
+      const region = typeof config.region === "string" ? config.region : "";
       const hasFullSavedResults = results.length > 0 && (!log.results_count || results.length >= log.results_count);
 
       if (hasFullSavedResults) {
@@ -121,7 +121,9 @@ export default function SearchHistory() {
           .maybeSingle();
 
         if (!cacheError) {
-          const cachedResults = Array.isArray(cacheData?.results) ? cacheData.results : [];
+          const cachedResults = Array.isArray(cacheData?.results)
+            ? ((cacheData.results as unknown) as Record<string, unknown>[])
+            : [];
           if (cachedResults.length > results.length) {
             openResults(cachedResults, configStr, log.search_type);
             return;
