@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Building, Building2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { customerTypes, countries, brazilianStates } from "@/data/searchConstants";
+import { cnaes as cnaeList } from "@/data/cnaes";
+
 
 import { useToast } from "@/hooks/use-toast";
 
