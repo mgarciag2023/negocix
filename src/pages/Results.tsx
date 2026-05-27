@@ -306,6 +306,7 @@ const Results = () => {
               cnaes: searchConfig.selectedCnaes || [],
               products: searchConfig.products,
               region: searchConfig.region,
+              nationwide: searchConfig.nationwide || false,
               country: searchConfig.country || 'BR',
               ecommerceType: searchConfig.ecommerceType || '',
               businessType: searchConfig.businessType || 'all',
