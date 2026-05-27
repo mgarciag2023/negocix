@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Package, Search, MapPin, CheckCircle2, ArrowRight, Sparkles, Building2 } from "lucide-react";
+import RegisterSupplierDialog from "@/components/RegisterSupplierDialog";
 
 const SearchSuppliers = () => {
   const navigate = useNavigate();
@@ -338,6 +339,10 @@ const SearchSuppliers = () => {
                   Buscar Fornecedores
                   <ArrowRight className="ml-2 h-5 w-5 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
                 </Button>
+
+                <div className="pt-3 border-t">
+                  <RegisterSupplierDialog />
+                </div>
               </form>
             </CardContent>
           </Card>

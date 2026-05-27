@@ -350,10 +350,53 @@ serve(async (req) => {
       };
     });
 
-    console.log(`📦 Returning ${suppliers.length} unique suppliers`);
+    // Prepend manually registered suppliers that match products + state
+    let registeredSuppliers: any[] = [];
+    try {
+      let query = supabase
+        .from('registered_suppliers')
+        .select('*')
+        .eq('is_active', true)
+        .overlaps('products', products);
+
+      if (stateParam) {
+        query = query.or(`state.eq.${stateParam},delivers_nationwide.eq.true`);
+      }
+
+      const { data: regRows, error: regErr } = await query.limit(50);
+      if (regErr) {
+        console.error('⚠️ registered_suppliers error:', regErr.message);
+      } else if (regRows && regRows.length) {
+        registeredSuppliers = regRows.map((r: any, idx: number) => {
+          const phoneValidation = validatePhone(r.phone || '');
+          const addr = [r.cities?.[0], r.state].filter(Boolean).join(', ');
+          return {
+            id: `registered-supplier-${r.id}`,
+            name: r.company_name,
+            address: addr || (r.state || ''),
+            phone: phoneValidation.normalized || r.phone || '',
+            email: r.email ? r.email.toLowerCase() : null,
+            cnpj: null,
+            website: r.website || null,
+            category: (r.products && r.products[0]) || 'Fornecedor',
+            hasWhatsApp: phoneValidation.isWhatsApp || !!r.whatsapp,
+            porte: null,
+            isRegistered: true,
+            description: r.description || null,
+            responsible: r.responsible_name || null,
+          };
+        });
+        console.log(`⭐ Registered suppliers matched: ${registeredSuppliers.length}`);
+      }
+    } catch (e) {
+      console.error('⚠️ registered_suppliers fetch failed:', e);
+    }
+
+    const finalSuppliers = [...registeredSuppliers, ...suppliers];
+    console.log(`📦 Returning ${finalSuppliers.length} suppliers (${registeredSuppliers.length} registered + ${suppliers.length} from DB)`);
 
     return new Response(
-      JSON.stringify({ suppliers }),
+      JSON.stringify({ suppliers: finalSuppliers }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

@@ -4,25 +4,31 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserPlus, Trash2, Loader2 } from "lucide-react";
+import { Building2, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { brazilianStates } from "@/data/searchConstants";
+import { productCategories } from "@/data/productCategories";
 
-export default function RegisterRepresentativeDialog() {
+export default function RegisterSupplierDialog() {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [existingId, setExistingId] = useState<string | null>(null);
 
-  const [fullName, setFullName] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [responsibleName, setResponsibleName] = useState("");
   const [phone, setPhone] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [email, setEmail] = useState("");
+  const [website, setWebsite] = useState("");
   const [state, setState] = useState("");
   const [cities, setCities] = useState("");
-  const [segments, setSegments] = useState("");
+  const [products, setProducts] = useState<string[]>([]);
+  const [deliversNationwide, setDeliversNationwide] = useState(false);
+  const [description, setDescription] = useState("");
   const [notes, setNotes] = useState("");
 
   useEffect(() => {
@@ -31,19 +37,23 @@ export default function RegisterRepresentativeDialog() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const { data } = await supabase
-        .from("registered_representatives")
+        .from("registered_suppliers")
         .select("*")
         .eq("user_id", user.id)
         .maybeSingle();
       if (data) {
         setExistingId(data.id);
-        setFullName(data.full_name || "");
+        setCompanyName(data.company_name || "");
+        setResponsibleName(data.responsible_name || "");
         setPhone(data.phone || "");
         setWhatsapp(data.whatsapp || "");
         setEmail(data.email || "");
+        setWebsite(data.website || "");
         setState(data.state || "");
         setCities((data.cities || []).join(", "));
-        setSegments((data.segments || []).join(", "));
+        setProducts(data.products || []);
+        setDeliversNationwide(!!data.delivers_nationwide);
+        setDescription(data.description || "");
         setNotes(data.notes || "");
       } else {
         const { data: profile } = await supabase
@@ -52,7 +62,7 @@ export default function RegisterRepresentativeDialog() {
           .eq("user_id", user.id)
           .maybeSingle();
         if (profile) {
-          setFullName(profile.full_name || "");
+          setResponsibleName(profile.full_name || "");
           setPhone(profile.phone || "");
           setEmail(profile.email || "");
         }
@@ -60,9 +70,13 @@ export default function RegisterRepresentativeDialog() {
     })();
   }, [open]);
 
+  const toggleProduct = (p: string) => {
+    setProducts(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
+  };
+
   const handleSave = async () => {
-    if (!fullName.trim() || !phone.trim() || !state) {
-      toast({ title: "Preencha nome, telefone e estado", variant: "destructive" });
+    if (!companyName.trim() || !phone.trim() || !state || products.length === 0) {
+      toast({ title: "Preencha nome da empresa, telefone, estado e ao menos 1 produto", variant: "destructive" });
       return;
     }
     setLoading(true);
@@ -72,23 +86,27 @@ export default function RegisterRepresentativeDialog() {
 
       const payload = {
         user_id: user.id,
-        full_name: fullName.trim(),
+        company_name: companyName.trim(),
+        responsible_name: responsibleName.trim() || null,
         phone: phone.trim(),
         whatsapp: whatsapp.trim() || phone.trim(),
         email: email.trim() || null,
+        website: website.trim() || null,
         state,
         cities: cities.split(",").map(c => c.trim()).filter(Boolean),
-        segments: segments.split(",").map(s => s.trim()).filter(Boolean),
+        products,
+        delivers_nationwide: deliversNationwide,
+        description: description.trim() || null,
         notes: notes.trim() || null,
         is_active: true,
       };
 
       const { error } = existingId
-        ? await supabase.from("registered_representatives").update(payload).eq("id", existingId)
-        : await supabase.from("registered_representatives").insert(payload);
+        ? await supabase.from("registered_suppliers").update(payload).eq("id", existingId)
+        : await supabase.from("registered_suppliers").insert(payload);
 
       if (error) throw error;
-      toast({ title: existingId ? "Cadastro atualizado!" : "Cadastro realizado!", description: "Você já aparece nas buscas por representantes." });
+      toast({ title: existingId ? "Cadastro atualizado!" : "Cadastro realizado!", description: "Sua empresa já aparece nas buscas por fornecedores." });
       setOpen(false);
     } catch (e: any) {
       toast({ title: "Erro ao salvar", description: e.message, variant: "destructive" });
@@ -99,9 +117,9 @@ export default function RegisterRepresentativeDialog() {
 
   const handleDelete = async () => {
     if (!existingId) return;
-    if (!confirm("Remover seu cadastro de representante?")) return;
+    if (!confirm("Remover seu cadastro de fornecedor?")) return;
     setLoading(true);
-    const { error } = await supabase.from("registered_representatives").delete().eq("id", existingId);
+    const { error } = await supabase.from("registered_suppliers").delete().eq("id", existingId);
     setLoading(false);
     if (error) {
       toast({ title: "Erro ao remover", description: error.message, variant: "destructive" });
@@ -116,22 +134,26 @@ export default function RegisterRepresentativeDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full gap-2 h-auto py-3 whitespace-normal text-center leading-tight">
-          <UserPlus className="w-4 h-4 flex-shrink-0" />
-          <span className="text-sm">Sou representante — quero aparecer nas buscas</span>
+          <Building2 className="w-4 h-4 flex-shrink-0" />
+          <span className="text-sm">Sou fornecedor — quero aparecer nas buscas</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle>Cadastro de Representante</DialogTitle>
+          <DialogTitle>Cadastro de Fornecedor</DialogTitle>
           <DialogDescription>
-            Preencha seus dados e regiões de atuação. Você aparecerá nas buscas de quem procurar representantes nessas regiões.
+            Preencha os dados da sua empresa. Você aparecerá nas buscas por fornecedores que correspondam aos produtos e regiões cadastrados.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
           <div className="space-y-1">
-            <Label>Nome completo *</Label>
-            <Input value={fullName} onChange={e => setFullName(e.target.value)} maxLength={120} />
+            <Label>Nome da empresa *</Label>
+            <Input value={companyName} onChange={e => setCompanyName(e.target.value)} maxLength={150} />
+          </div>
+          <div className="space-y-1">
+            <Label>Responsável (opcional)</Label>
+            <Input value={responsibleName} onChange={e => setResponsibleName(e.target.value)} maxLength={120} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
@@ -143,13 +165,19 @@ export default function RegisterRepresentativeDialog() {
               <Input value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder="(11) 99999-9999" />
             </div>
           </div>
-          <div className="space-y-1">
-            <Label>E-mail</Label>
-            <Input type="email" value={email} onChange={e => setEmail(e.target.value)} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label>E-mail</Label>
+              <Input type="email" value={email} onChange={e => setEmail(e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label>Site</Label>
+              <Input value={website} onChange={e => setWebsite(e.target.value)} placeholder="https://..." />
+            </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
-              <Label>Estado de atuação *</Label>
+              <Label>Estado (sede) *</Label>
               <Select value={state} onValueChange={setState}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
@@ -158,17 +186,39 @@ export default function RegisterRepresentativeDialog() {
               </Select>
             </div>
             <div className="space-y-1">
-              <Label>Cidades (separe por vírgula)</Label>
+              <Label>Cidades atendidas (vírgula)</Label>
               <Input value={cities} onChange={e => setCities(e.target.value)} placeholder="São Paulo, Campinas" />
             </div>
           </div>
+          <div className="flex items-center gap-2 rounded-md border p-3 bg-muted/30">
+            <Checkbox id="nationwide" checked={deliversNationwide} onCheckedChange={(v) => setDeliversNationwide(!!v)} />
+            <Label htmlFor="nationwide" className="text-sm font-normal cursor-pointer">
+              Entrego para todo o Brasil
+            </Label>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Produtos que fornece * ({products.length} selecionado{products.length === 1 ? "" : "s"})</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-56 overflow-y-auto border rounded-md p-2 bg-muted/20">
+              {productCategories.map(p => {
+                const checked = products.includes(p);
+                return (
+                  <label key={p} className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer text-sm transition-colors ${checked ? 'bg-primary/10 text-foreground font-medium' : 'hover:bg-muted text-muted-foreground'}`}>
+                    <Checkbox checked={checked} onCheckedChange={() => toggleProduct(p)} />
+                    <span className="leading-tight">{p}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="space-y-1">
-            <Label>Segmentos que representa (separe por vírgula)</Label>
-            <Input value={segments} onChange={e => setSegments(e.target.value)} placeholder="Alimentos, Bebidas, Cosméticos" />
+            <Label>Descrição da empresa</Label>
+            <Textarea value={description} onChange={e => setDescription(e.target.value)} maxLength={500} rows={3} placeholder="Conte rapidamente sobre sua empresa, diferenciais, prazos, etc." />
           </div>
           <div className="space-y-1">
-            <Label>Observações</Label>
-            <Textarea value={notes} onChange={e => setNotes(e.target.value)} maxLength={500} rows={3} />
+            <Label>Observações internas</Label>
+            <Textarea value={notes} onChange={e => setNotes(e.target.value)} maxLength={300} rows={2} />
           </div>
         </div>
 
@@ -180,7 +230,7 @@ export default function RegisterRepresentativeDialog() {
           )}
           <Button onClick={handleSave} disabled={loading} className="flex-1 gap-2">
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            {existingId ? "Atualizar cadastro" : "Cadastrar-me"}
+            {existingId ? "Atualizar cadastro" : "Cadastrar minha empresa"}
           </Button>
         </div>
       </DialogContent>
