@@ -1775,16 +1775,17 @@ serve(async (req) => {
   const isNearSoftTimeout = () => (Date.now() - FUNCTION_START) > SOFT_TIMEOUT_MS;
 
   try {
-    const { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial, neighborhood, cnaes: cnaesInput } = await req.json();
-    console.log('🔍 LOCAL DB SEARCH v1 - Input:', { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial: !!isTrial, cnaesCount: Array.isArray(cnaesInput) ? cnaesInput.length : 0 });
+    const { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial, neighborhood, cnaes: cnaesInput, nationwide: nationwideInput } = await req.json();
+    const nationwide = !!nationwideInput;
+    console.log('🔍 LOCAL DB SEARCH v1 - Input:', { segment, region, nationwide, businessType, whatsappOnly, receitaFederalOnly, isTrial: !!isTrial, cnaesCount: Array.isArray(cnaesInput) ? cnaesInput.length : 0 });
 
     const cnaesList: string[] = Array.isArray(cnaesInput)
       ? cnaesInput.map((c: any) => String(c).replace(/\D/g, '')).filter((c: string) => c.length === 7)
       : [];
     const hasCnaeSearch = cnaesList.length > 0;
 
-    if ((!segment && !hasCnaeSearch) || !region) {
-      return new Response(JSON.stringify({ error: 'Informe segmento ou CNAE, e região.' }), {
+    if ((!segment && !hasCnaeSearch) || (!region && !nationwide)) {
+      return new Response(JSON.stringify({ error: 'Informe segmento ou CNAE, e região (ou marque busca nacional).' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -1795,13 +1796,22 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    const dbCacheKey = generateDbCacheKey(segment, region.trim());
+    const dbCacheKey = generateDbCacheKey(segment, nationwide ? 'BR_ALL' : (region || '').trim());
     const bizType = businessType || 'all';
     const filterWhatsappOnly = whatsappOnly || false;
 
     // ===== PARSE REGION =====
-    let { city, state, isStateOnly } = parseRegion(region.trim());
-    console.log(`📍 Parsed region: city=${city}, state=${state}, isStateOnly=${isStateOnly}`);
+    let city: string | null = null;
+    let state: string | null = null;
+    let isStateOnly = false;
+    if (nationwide) {
+      console.log('🇧🇷 NATIONWIDE search — bypassing region parsing');
+      isStateOnly = true; // tratamos como busca ampla para limites/caps
+    } else {
+      const parsed = parseRegion((region || '').trim());
+      city = parsed.city; state = parsed.state; isStateOnly = parsed.isStateOnly;
+    }
+    console.log(`📍 Parsed region: city=${city}, state=${state}, isStateOnly=${isStateOnly}, nationwide=${nationwide}`);
 
     // ===== CITY AUTO-CORRECT (corrige erros de digitação) =====
     const originalCity: string | null = city;
@@ -1969,8 +1979,9 @@ serve(async (req) => {
     // Hard cap on total raw companies to prevent CPU Time exceeded errors
     // Edge functions have a strict CPU time limit; processing too many rows in JS will fail.
     // State-wide searches are capped lower because they pull much more data.
-    const isHeavySearch = segments.length > 5;
-    const MAX_TOTAL_RAW = isStateOnly ? 30_000 : 50_000;
+    const isHeavySearch = segments.length > 5 || nationwide;
+    // Nacional: cap mais baixo + amostragem (35M registros tornam paginação completa inviável)
+    const MAX_TOTAL_RAW = nationwide ? 20_000 : (isStateOnly ? 30_000 : 50_000);
 
     // Fetch a single segment using paginated queries (SDK caps RPC at 1000 rows)
     // Pre-compute neighborhood filter normalization (used inside fetchSegment)
@@ -2045,7 +2056,7 @@ serve(async (req) => {
       // Phase 1: Fetch first batch of pages in parallel using the COMBINED query
       // (all terms OR'd together in a single tsquery — one GIN index scan in Postgres).
       const PAGE_CONCURRENCY = 5;
-      const INITIAL_PAGES = isHeavySearch ? 8 : 15;
+      const INITIAL_PAGES = nationwide ? 6 : (isHeavySearch ? 8 : 15);
       const initialPageNums = Array.from({ length: INITIAL_PAGES }, (_, i) => i);
 
       const initialPages = await runPool(initialPageNums, async (p: number) => {
@@ -2080,7 +2091,7 @@ serve(async (req) => {
 
       // FALLBACK: If tsvector returned 0 (search_vector not populated for this region),
       // retry with ILIKE-based search which doesn't depend on the materialized vector.
-      if (bestResults.length === 0) {
+      if (bestResults.length === 0 && !nationwide) {
         // ILIKE fallback — busca direta no nome. Reduzido para evitar 502 (gateway 60s).
         const ilikeTerms = Array.from(new Set(
           (terms || [])
@@ -2129,7 +2140,7 @@ serve(async (req) => {
 
       // Phase 2: Continue paginating in parallel batches if last page was full
       // (means there's likely more data). Stop on soft-timeout, target reached, or empty page.
-      if (lastPageFull && bestResults.length < targetPerSegment) {
+      if (lastPageFull && bestResults.length < targetPerSegment && !nationwide) {
         const MAX_EXTRA_BATCHES = isHeavySearch ? 2 : 6;
         let nextPage = highestPageFetched + 1;
         let stop = false;
@@ -2170,7 +2181,7 @@ serve(async (req) => {
       // Para nichos onde o nome da empresa não contém a palavra-chave (ex: DAJU LTDA),
       // buscamos diretamente por CNAEs oficiais. Esses resultados pulam o filtro de relevância.
       const cnaes = getCnaesForSegment(seg);
-      if (cnaes.length > 0 && !isNearSoftTimeout()) {
+      if (cnaes.length > 0 && !isNearSoftTimeout() && !nationwide) {
         console.log(`🏷️ CNAE search "${seg}": ${cnaes.length} CNAEs - ${cnaes.join(', ')}`);
         try {
           const cnaeOrFilter = cnaes
