@@ -272,6 +272,66 @@ export type Database = {
         }
         Relationships: []
       }
+      registered_suppliers: {
+        Row: {
+          cities: string[]
+          company_name: string
+          created_at: string
+          delivers_nationwide: boolean
+          description: string | null
+          email: string | null
+          id: string
+          is_active: boolean
+          notes: string | null
+          phone: string
+          products: string[]
+          responsible_name: string | null
+          state: string
+          updated_at: string
+          user_id: string
+          website: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          cities?: string[]
+          company_name: string
+          created_at?: string
+          delivers_nationwide?: boolean
+          description?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          phone: string
+          products?: string[]
+          responsible_name?: string | null
+          state: string
+          updated_at?: string
+          user_id: string
+          website?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          cities?: string[]
+          company_name?: string
+          created_at?: string
+          delivers_nationwide?: boolean
+          description?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          phone?: string
+          products?: string[]
+          responsible_name?: string | null
+          state?: string
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       saved_leads: {
         Row: {
           address: string
