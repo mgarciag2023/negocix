@@ -2181,7 +2181,7 @@ serve(async (req) => {
       // Para nichos onde o nome da empresa não contém a palavra-chave (ex: DAJU LTDA),
       // buscamos diretamente por CNAEs oficiais. Esses resultados pulam o filtro de relevância.
       const cnaes = getCnaesForSegment(seg);
-      if (cnaes.length > 0 && !isNearSoftTimeout()) {
+      if (cnaes.length > 0 && !isNearSoftTimeout() && !nationwide) {
         console.log(`🏷️ CNAE search "${seg}": ${cnaes.length} CNAEs - ${cnaes.join(', ')}`);
         try {
           const cnaeOrFilter = cnaes
