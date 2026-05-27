@@ -172,7 +172,7 @@ export default function RegisterRepresentativeDialog() {
           </div>
         </div>
 
-        <div className="flex gap-2 pt-2">
+        <div className="flex flex-col sm:flex-row gap-2 pt-2">
           {existingId && (
             <Button variant="outline" onClick={handleDelete} disabled={loading} className="gap-2">
               <Trash2 className="w-4 h-4" /> Remover
