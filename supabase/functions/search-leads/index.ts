@@ -1775,16 +1775,17 @@ serve(async (req) => {
   const isNearSoftTimeout = () => (Date.now() - FUNCTION_START) > SOFT_TIMEOUT_MS;
 
   try {
-    const { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial, neighborhood, cnaes: cnaesInput } = await req.json();
-    console.log('🔍 LOCAL DB SEARCH v1 - Input:', { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial: !!isTrial, cnaesCount: Array.isArray(cnaesInput) ? cnaesInput.length : 0 });
+    const { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial, neighborhood, cnaes: cnaesInput, nationwide: nationwideInput } = await req.json();
+    const nationwide = !!nationwideInput;
+    console.log('🔍 LOCAL DB SEARCH v1 - Input:', { segment, region, nationwide, businessType, whatsappOnly, receitaFederalOnly, isTrial: !!isTrial, cnaesCount: Array.isArray(cnaesInput) ? cnaesInput.length : 0 });
 
     const cnaesList: string[] = Array.isArray(cnaesInput)
       ? cnaesInput.map((c: any) => String(c).replace(/\D/g, '')).filter((c: string) => c.length === 7)
       : [];
     const hasCnaeSearch = cnaesList.length > 0;
 
-    if ((!segment && !hasCnaeSearch) || !region) {
-      return new Response(JSON.stringify({ error: 'Informe segmento ou CNAE, e região.' }), {
+    if ((!segment && !hasCnaeSearch) || (!region && !nationwide)) {
+      return new Response(JSON.stringify({ error: 'Informe segmento ou CNAE, e região (ou marque busca nacional).' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -1795,13 +1796,22 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    const dbCacheKey = generateDbCacheKey(segment, region.trim());
+    const dbCacheKey = generateDbCacheKey(segment, nationwide ? 'BR_ALL' : (region || '').trim());
     const bizType = businessType || 'all';
     const filterWhatsappOnly = whatsappOnly || false;
 
     // ===== PARSE REGION =====
-    let { city, state, isStateOnly } = parseRegion(region.trim());
-    console.log(`📍 Parsed region: city=${city}, state=${state}, isStateOnly=${isStateOnly}`);
+    let city: string | null = null;
+    let state: string | null = null;
+    let isStateOnly = false;
+    if (nationwide) {
+      console.log('🇧🇷 NATIONWIDE search — bypassing region parsing');
+      isStateOnly = true; // tratamos como busca ampla para limites/caps
+    } else {
+      const parsed = parseRegion((region || '').trim());
+      city = parsed.city; state = parsed.state; isStateOnly = parsed.isStateOnly;
+    }
+    console.log(`📍 Parsed region: city=${city}, state=${state}, isStateOnly=${isStateOnly}, nationwide=${nationwide}`);
 
     // ===== CITY AUTO-CORRECT (corrige erros de digitação) =====
     const originalCity: string | null = city;
