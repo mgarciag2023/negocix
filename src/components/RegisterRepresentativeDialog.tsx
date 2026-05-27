@@ -115,12 +115,12 @@ export default function RegisterRepresentativeDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="w-full gap-2">
-          <UserPlus className="w-4 h-4" />
-          Sou representante — quero aparecer nas buscas
+        <Button variant="outline" className="w-full gap-2 h-auto py-3 whitespace-normal text-center leading-tight">
+          <UserPlus className="w-4 h-4 flex-shrink-0" />
+          <span className="text-sm">Sou representante — quero aparecer nas buscas</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg w-[calc(100vw-2rem)] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>Cadastro de Representante</DialogTitle>
           <DialogDescription>
@@ -133,7 +133,7 @@ export default function RegisterRepresentativeDialog() {
             <Label>Nome completo *</Label>
             <Input value={fullName} onChange={e => setFullName(e.target.value)} maxLength={120} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label>Telefone *</Label>
               <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="(11) 99999-9999" />
@@ -147,7 +147,7 @@ export default function RegisterRepresentativeDialog() {
             <Label>E-mail</Label>
             <Input type="email" value={email} onChange={e => setEmail(e.target.value)} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label>Estado de atuação *</Label>
               <Select value={state} onValueChange={setState}>
