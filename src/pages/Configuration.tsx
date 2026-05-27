@@ -518,11 +518,12 @@ const Configuration = () => {
                       Estado: {country === "BR" ? "*" : "(opcional)"}
                     </Label>
                     {country === "BR" ? (
-                      <Select value={state} onValueChange={setState}>
+                      <Select value={state} onValueChange={(v) => { setState(v); if (v === "ALL_BR") setCity(""); }}>
                         <SelectTrigger className="mt-2" id="state" translate="no">
                           <SelectValue placeholder="Selecione o estado" translate="no" />
                         </SelectTrigger>
                         <SelectContent sideOffset={5} translate="no">
+                          <SelectItem value="ALL_BR">🇧🇷 Brasil inteiro (todos os estados)</SelectItem>
                           {brazilianStates.map((st) => (
                             <SelectItem key={st} value={st}>{st}</SelectItem>
                           ))}
@@ -538,7 +539,13 @@ const Configuration = () => {
                         translate="no"
                       />
                     )}
+                    {state === "ALL_BR" && (
+                      <p className="text-xs text-warning mt-2">
+                        ⚠️ Busca nacional pode demorar mais e retornar resultados mais variados. O campo de cidade será ignorado.
+                      </p>
+                    )}
                   </div>
+
 
                   {/* Cidade com Autocomplete */}
                   <div>
