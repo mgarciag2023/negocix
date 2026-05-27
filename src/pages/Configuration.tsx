@@ -68,16 +68,23 @@ const Configuration = () => {
     
     // Determine final country
     const finalCountry = country === "OTHER" ? customCountry : country;
+
+    // Nationwide search (Brasil inteiro)
+    const isNationwide = country === "BR" && state === "ALL_BR";
+    const effectiveState = isNationwide ? "" : state;
+    const effectiveCity = isNationwide ? "" : city;
     
     // Build region string based on filled fields
     let region = "";
-    if (country === "BR") {
-      if (city && state) {
-        region = `${city}, ${state}`;
-      } else if (state) {
-        region = state;
-      } else if (city) {
-        region = city;
+    if (isNationwide) {
+      region = "";
+    } else if (country === "BR") {
+      if (effectiveCity && effectiveState) {
+        region = `${effectiveCity}, ${effectiveState}`;
+      } else if (effectiveState) {
+        region = effectiveState;
+      } else if (effectiveCity) {
+        region = effectiveCity;
       }
     } else {
       region = city || state || "";
@@ -120,17 +127,17 @@ const Configuration = () => {
       return;
     }
 
-    if (!state && !city) {
+    if (!isNationwide && !state && !city) {
       toast({
         title: "Informe a localização da busca",
-        description: "Selecione um estado ou digite uma cidade para a pesquisa.",
+        description: 'Selecione um estado, digite uma cidade ou escolha "Brasil inteiro".',
         variant: "destructive",
       });
       return;
     }
 
     // Validate: only ONE city allowed (commas/slashes/semicolons not supported)
-    if (city && /[,;/]| e | & /i.test(city.trim())) {
+    if (effectiveCity && /[,;/]| e | & /i.test(effectiveCity.trim())) {
       toast({
         title: "Apenas uma cidade por busca",
         description: "Digite somente uma cidade no campo. Para buscar em várias cidades, faça uma pesquisa por estado ou repita a busca para cada cidade.",
@@ -148,8 +155,9 @@ const Configuration = () => {
       selectedCustomers: searchMode === "segment" ? selectedCustomers : [],
       selectedCnaes: searchMode === "cnae" ? selectedCnaes : [],
       region,
-      state,
-      city,
+      state: effectiveState,
+      city: effectiveCity,
+      nationwide: isNationwide,
       neighborhood: neighborhood.trim(),
       country: finalCountry,
       companySizes: companySizes.length > 0 ? companySizes : ['all'],
@@ -510,11 +518,12 @@ const Configuration = () => {
                       Estado: {country === "BR" ? "*" : "(opcional)"}
                     </Label>
                     {country === "BR" ? (
-                      <Select value={state} onValueChange={setState}>
+                      <Select value={state} onValueChange={(v) => { setState(v); if (v === "ALL_BR") setCity(""); }}>
                         <SelectTrigger className="mt-2" id="state" translate="no">
                           <SelectValue placeholder="Selecione o estado" translate="no" />
                         </SelectTrigger>
                         <SelectContent sideOffset={5} translate="no">
+                          <SelectItem value="ALL_BR">🇧🇷 Brasil inteiro (todos os estados)</SelectItem>
                           {brazilianStates.map((st) => (
                             <SelectItem key={st} value={st}>{st}</SelectItem>
                           ))}
@@ -530,7 +539,13 @@ const Configuration = () => {
                         translate="no"
                       />
                     )}
+                    {state === "ALL_BR" && (
+                      <p className="text-xs text-warning mt-2">
+                        ⚠️ Busca nacional pode demorar mais e retornar resultados mais variados. O campo de cidade será ignorado.
+                      </p>
+                    )}
                   </div>
+
 
                   {/* Cidade com Autocomplete */}
                   <div>
