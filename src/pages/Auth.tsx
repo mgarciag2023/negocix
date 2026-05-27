@@ -207,7 +207,7 @@ const Auth = () => {
   };
 
   const features = [
-    { icon: Target, text: "Leads qualificados do Google Maps" },
+    { icon: Target, text: "Milhões de empresas qualificadas no Brasil" },
     { icon: Sparkles, text: "Abordagens personalizadas com IA" },
     { icon: TrendingUp, text: "Aumente suas conversões" },
   ];
