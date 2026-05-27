@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Package, Search, MapPin, CheckCircle2, ArrowRight, Sparkles, Building2 } from "lucide-react";
+import RegisterSupplierDialog from "@/components/RegisterSupplierDialog";
 
 const SearchSuppliers = () => {
   const navigate = useNavigate();
