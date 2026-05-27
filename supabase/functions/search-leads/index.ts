@@ -1979,8 +1979,9 @@ serve(async (req) => {
     // Hard cap on total raw companies to prevent CPU Time exceeded errors
     // Edge functions have a strict CPU time limit; processing too many rows in JS will fail.
     // State-wide searches are capped lower because they pull much more data.
-    const isHeavySearch = segments.length > 5;
-    const MAX_TOTAL_RAW = isStateOnly ? 30_000 : 50_000;
+    const isHeavySearch = segments.length > 5 || nationwide;
+    // Nacional: cap mais baixo + amostragem (35M registros tornam paginação completa inviável)
+    const MAX_TOTAL_RAW = nationwide ? 20_000 : (isStateOnly ? 30_000 : 50_000);
 
     // Fetch a single segment using paginated queries (SDK caps RPC at 1000 rows)
     // Pre-compute neighborhood filter normalization (used inside fetchSegment)
