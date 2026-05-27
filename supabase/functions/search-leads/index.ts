@@ -2091,7 +2091,7 @@ serve(async (req) => {
 
       // FALLBACK: If tsvector returned 0 (search_vector not populated for this region),
       // retry with ILIKE-based search which doesn't depend on the materialized vector.
-      if (bestResults.length === 0) {
+      if (bestResults.length === 0 && !nationwide) {
         // ILIKE fallback — busca direta no nome. Reduzido para evitar 502 (gateway 60s).
         const ilikeTerms = Array.from(new Set(
           (terms || [])
