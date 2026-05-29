@@ -34,7 +34,9 @@ interface LeadSample {
 
 interface SearchLog {
   id: string;
+  user_id?: string;
   user_email: string;
+  user_full_name?: string;
   search_type: string;
   search_config: Record<string, unknown>;
   results_count: number;
@@ -46,6 +48,7 @@ export default function SearchLogsTable() {
   const [logs, setLogs] = useState<SearchLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<SearchLog | null>(null);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     fetchLogs();
@@ -56,10 +59,19 @@ export default function SearchLogsTable() {
       .from("search_logs")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(100);
+      .limit(500);
 
     if (!error && data) {
-      setLogs(data as SearchLog[]);
+      const userIds = Array.from(new Set((data as SearchLog[]).map((l) => l.user_id).filter(Boolean))) as string[];
+      let profileMap = new Map<string, string>();
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, full_name")
+          .in("user_id", userIds);
+        profileMap = new Map((profiles || []).map((p) => [p.user_id, p.full_name || ""]));
+      }
+      setLogs((data as SearchLog[]).map((l) => ({ ...l, user_full_name: l.user_id ? profileMap.get(l.user_id) : "" })));
     }
     setLoading(false);
   };
