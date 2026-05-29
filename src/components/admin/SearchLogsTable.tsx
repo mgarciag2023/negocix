@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, History, Search, Users, Eye, Package } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Loader2, History, Search, Users, Eye, Package, X } from "lucide-react";
 import {
   Table,
   TableBody,
