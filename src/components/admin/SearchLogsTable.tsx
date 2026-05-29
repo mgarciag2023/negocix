@@ -104,6 +104,34 @@ export default function SearchLogsTable() {
 
   const sample = selected?.results || [];
 
+  const filteredLogs = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return logs;
+    const norm = (s: unknown) =>
+      String(s ?? "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+    const nq = norm(q);
+    return logs.filter((log) => {
+      const cfg = log.search_config || {};
+      const haystack = [
+        log.user_email,
+        log.user_full_name,
+        cfg.state,
+        cfg.city,
+        cfg.region,
+        cfg.segment,
+        Array.isArray(cfg.selectedCustomers) ? (cfg.selectedCustomers as string[]).join(" ") : "",
+        Array.isArray(cfg.products) ? (cfg.products as string[]).join(" ") : "",
+        Array.isArray(cfg.cities) ? (cfg.cities as string[]).join(" ") : "",
+      ]
+        .map(norm)
+        .join(" | ");
+      return haystack.includes(nq);
+    });
+  }, [logs, query]);
+
   return (
     <Card>
       <CardHeader>
@@ -111,9 +139,32 @@ export default function SearchLogsTable() {
           <History className="h-5 w-5" />
           Pesquisas dos Usuários
         </CardTitle>
-        <CardDescription>Últimas 100 pesquisas realizadas — clique em "Ver" para auditar os leads retornados</CardDescription>
+        <CardDescription>
+          Últimas 500 pesquisas — busque por e-mail, nome do usuário, estado, cidade ou segmento
+        </CardDescription>
       </CardHeader>
       <CardContent>
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar por e-mail, nome, estado, cidade ou segmento..."
+            className="pl-9 pr-9"
+          />
+          {query && (
+            <button
+              onClick={() => setQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="Limpar busca"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        <div className="text-xs text-muted-foreground mb-2">
+          {filteredLogs.length} de {logs.length} pesquisas
+        </div>
         <div className="rounded-md border">
           <Table>
             <TableHeader>
@@ -127,9 +178,18 @@ export default function SearchLogsTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {logs.map((log) => (
+              {filteredLogs.map((log) => (
                 <TableRow key={log.id}>
-                  <TableCell className="font-medium text-sm">{log.user_email}</TableCell>
+                  <TableCell className="font-medium text-sm">
+                    <div className="flex flex-col">
+                      {log.user_full_name && (
+                        <span className="text-foreground">{log.user_full_name}</span>
+                      )}
+                      <span className={log.user_full_name ? "text-xs text-muted-foreground" : ""}>
+                        {log.user_email}
+                      </span>
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <Badge variant="secondary" className="gap-1">
                       {log.search_type === "representatives" ? (
