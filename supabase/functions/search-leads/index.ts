@@ -2031,7 +2031,7 @@ serve(async (req) => {
     // Hard cap on total raw companies to prevent CPU Time exceeded errors
     // Edge functions have a strict CPU time limit; processing too many rows in JS will fail.
     // State-wide searches are capped lower because they pull much more data.
-    const isHeavySearch = segments.length > 5 || nationwide;
+    const isHeavySearch = segments.length >= 4 || nationwide;
     // Nacional: cap mais baixo + amostragem (35M registros tornam paginação completa inviável)
     const MAX_TOTAL_RAW = nationwide ? 20_000 : (isStateOnly ? 30_000 : 50_000);
 
@@ -2107,8 +2107,8 @@ serve(async (req) => {
 
       // Phase 1: Fetch first batch of pages in parallel using the COMBINED query
       // (all terms OR'd together in a single tsquery — one GIN index scan in Postgres).
-      const PAGE_CONCURRENCY = 5;
-      const INITIAL_PAGES = nationwide ? 6 : (isHeavySearch ? 8 : 15);
+      const PAGE_CONCURRENCY = isHeavySearch ? 3 : 5;
+      const INITIAL_PAGES = nationwide ? 4 : (isHeavySearch ? 5 : 15);
       const initialPageNums = Array.from({ length: INITIAL_PAGES }, (_, i) => i);
 
       const initialPages = await runPool(initialPageNums, async (p: number) => {
@@ -2290,7 +2290,7 @@ serve(async (req) => {
 
     // Run segments in parallel. Each segment now does ONE combined-tsquery RPC per page,
     // so we can safely raise segment concurrency without overloading the DB pool.
-    const SEGMENT_CONCURRENCY = 5;
+    const SEGMENT_CONCURRENCY = isHeavySearch ? 2 : 5;
     const segmentResults: any[][] = new Array(segments.length);
     let segIdx = 0;
     const segWorkers = Array.from({ length: Math.min(SEGMENT_CONCURRENCY, segments.length) }, async () => {
