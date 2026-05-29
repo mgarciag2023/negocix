@@ -1802,6 +1802,51 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    earlyAdminClient = adminClient;
+
+    // ===== EARLY LOG: register the search BEFORE doing heavy work =====
+    // Garante que toda tentativa de busca fique registrada, mesmo que dê timeout/erro.
+    try {
+      const authHeader = req.headers.get('authorization');
+      if (authHeader) {
+        const supabaseAuth = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || "", {
+          global: { headers: { Authorization: authHeader } }
+        });
+        const { data: { user } } = await supabaseAuth.auth.getUser();
+        if (user) {
+          earlyUserId = user.id;
+          earlyUserEmail = user.email || '';
+        }
+      }
+    } catch (_e) { /* ignore auth errors at this stage */ }
+
+    earlySearchConfig = {
+      segment,
+      region: (region || '').trim(),
+      businessType: businessType || 'all',
+      whatsappOnly: !!whatsappOnly,
+      receitaFederalOnly: !!receitaFederalOnly,
+      isTrial: !!isTrial,
+      nationwide,
+      cnaesCount: cnaesList.length,
+      status: 'started',
+    };
+
+    if (earlyUserId) {
+      try {
+        const { data: logRow } = await adminClient.from("search_logs").insert({
+          user_id: earlyUserId,
+          user_email: earlyUserEmail || '',
+          search_type: 'leads',
+          search_config: earlySearchConfig,
+          results_count: -1, // -1 = ainda em execução
+          results: [],
+        }).select('id').single();
+        if (logRow?.id) earlyLogId = logRow.id;
+      } catch (e) {
+        console.error("⚠️ Early search log error:", e instanceof Error ? e.message : String(e));
+      }
+    }
 
     const dbCacheKey = generateDbCacheKey(segment, nationwide ? 'BR_ALL' : (region || '').trim());
     const bizType = businessType || 'all';
