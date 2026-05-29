@@ -3185,36 +3185,42 @@ serve(async (req) => {
     // 🚫 CACHE DESABILITADO: não gravamos mais resultados em cache
     // Toda pesquisa será sempre executada ao vivo na próxima vez.
 
-    // ===== LOG SEARCH (skip if near timeout) =====
-    // Loga TODAS as buscas, inclusive as com 0 resultados — para auditoria e diagnóstico
-    if (!isNearTimeout() && userId) {
+    // ===== LOG SEARCH =====
+    // Atualiza o log inicial (ou cria um novo se o log inicial falhou)
+    const effectiveUserId = userId || earlyUserId;
+    const effectiveUserEmail = cachedUserEmail || earlyUserEmail || '';
+    const finalSearchConfig = {
+      segment,
+      region: region.trim(),
+      businessType: bizType,
+      whatsappOnly: !!whatsappOnly,
+      receitaFederalOnly: !!receitaFederalOnly,
+      isTrial: !!isTrial,
+      originalCity,
+      correctedCity,
+      status: 'completed',
+    };
+    const sampleResults = (leads as any[]).slice(0, 300).map((l: any) => ({
+      name: l.name, address: l.address, phone: l.phone, category: l.category,
+      website: l.website, instagram: l.instagram, email: l.email,
+    }));
+
+    if (effectiveUserId) {
       try {
-        await adminClient.from("search_logs").insert({
-          user_id: userId,
-          user_email: cachedUserEmail || '',
-          search_type: 'leads',
-          search_config: {
-            segment,
-            region: region.trim(),
-            businessType: bizType,
-            whatsappOnly: !!whatsappOnly,
-            receitaFederalOnly: !!receitaFederalOnly,
-            isTrial: !!isTrial,
-            originalCity,
-            correctedCity,
-          },
-          results_count: leads.length,
-          // Store a lightweight sample (up to 300 leads, essential fields) so admin can audit lead quality
-          results: (leads as any[]).slice(0, 300).map((l: any) => ({
-            name: l.name,
-            address: l.address,
-            phone: l.phone,
-            category: l.category,
-            website: l.website,
-            instagram: l.instagram,
-            email: l.email,
-          })),
-        });
+        if (earlyLogId) {
+          await adminClient.from("search_logs")
+            .update({ search_config: finalSearchConfig, results_count: leads.length, results: sampleResults })
+            .eq('id', earlyLogId);
+        } else {
+          await adminClient.from("search_logs").insert({
+            user_id: effectiveUserId,
+            user_email: effectiveUserEmail,
+            search_type: 'leads',
+            search_config: finalSearchConfig,
+            results_count: leads.length,
+            results: sampleResults,
+          });
+        }
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         if (!msg.includes('request closed') && !msg.includes('connection closed')) {
@@ -3222,6 +3228,7 @@ serve(async (req) => {
         }
       }
     }
+
 
     // Sempre retorna 200 — array vazio quando não há leads (frontend trata 0 resultados)
     return new Response(JSON.stringify({
