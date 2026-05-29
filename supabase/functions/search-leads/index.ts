@@ -2181,7 +2181,10 @@ serve(async (req) => {
       // Para nichos onde o nome da empresa não contém a palavra-chave (ex: DAJU LTDA),
       // buscamos diretamente por CNAEs oficiais. Esses resultados pulam o filtro de relevância.
       const cnaes = getCnaesForSegment(seg);
-      if (cnaes.length > 0 && !isNearSoftTimeout() && !nationwide) {
+      // Pula CNAE search em multi-segment (4+) porque .or(cnae_secundaria.ilike.%XXX%)
+      // em 35M linhas trava o Postgres e o abortSignal do supabase-js NÃO mata a query.
+      const skipCnaeForMultiSeg = segments.length >= 4;
+      if (cnaes.length > 0 && !isNearSoftTimeout() && !nationwide && !skipCnaeForMultiSeg) {
         console.log(`🏷️ CNAE search "${seg}": ${cnaes.length} CNAEs - ${cnaes.join(', ')}`);
         try {
           const cnaeOrFilter = cnaes
@@ -2198,11 +2201,16 @@ serve(async (req) => {
           if (neighborhoodFilter) q = q.ilike('bairro', `%${neighborhoodFilter}%`);
           if (bizType === 'matriz') q = q.eq('matriz_filial', 'MATRIZ');
           if (bizType === 'filial') q = q.eq('matriz_filial', 'FILIAL');
-          // Abort se ultrapassar 20s — evita travar o gateway (150s wall-clock)
           const cnaeController = new AbortController();
-          const cnaeTimer = setTimeout(() => cnaeController.abort(), 20000);
+          const cnaeTimer = setTimeout(() => cnaeController.abort(), 15000);
           const qWithAbort: any = (q as any).abortSignal?.(cnaeController.signal) ?? q;
-          const { data: cnaeData, error: cnaeErr } = await qWithAbort.limit(5000);
+          // HARD timeout via Promise.race — abortSignal não mata a query no Postgres,
+          // sem race o worker fica preso aguardando para sempre.
+          const cnaePromise = qWithAbort.limit(5000);
+          const cnaeHardTimeout = new Promise<{ data: null; error: { message: string } }>((resolve) =>
+            setTimeout(() => resolve({ data: null, error: { message: 'hard-timeout-18s' } }), 18000)
+          );
+          const { data: cnaeData, error: cnaeErr } = await Promise.race([cnaePromise, cnaeHardTimeout]);
           clearTimeout(cnaeTimer);
           if (cnaeErr) {
             console.warn(`⚠️ CNAE search skipped "${seg}": ${(cnaeErr.message || '').slice(0, 150)}`);
@@ -2220,6 +2228,8 @@ serve(async (req) => {
         } catch (e) {
           console.warn(`⚠️ CNAE search aborted "${seg}":`, ((e as Error).message || '').slice(0, 100));
         }
+      } else if (cnaes.length > 0 && skipCnaeForMultiSeg) {
+        console.log(`⏭️ CNAE skip "${seg}" (multi-segment=${segments.length}, evita travar Postgres)`);
       }
 
       console.log(`📊 Segment "${seg}": ${bestResults.length} total results`);
