@@ -3243,9 +3243,35 @@ serve(async (req) => {
     });
 
   } catch (error) {
+    const errMsg = error instanceof Error ? error.message : "Erro desconhecido";
     console.error("❌ Error:", error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Erro desconhecido" }), {
+
+    // Marca o log inicial como erro para que a busca apareça no histórico
+    if (earlyLogId && earlyAdminClient) {
+      try {
+        await earlyAdminClient.from("search_logs")
+          .update({
+            search_config: { ...(earlySearchConfig || {}), status: 'error', error: errMsg.slice(0, 500) },
+            results_count: 0,
+          })
+          .eq('id', earlyLogId);
+      } catch (_e) { /* swallow */ }
+    } else if (earlyAdminClient && earlyUserId) {
+      try {
+        await earlyAdminClient.from("search_logs").insert({
+          user_id: earlyUserId,
+          user_email: earlyUserEmail || '',
+          search_type: 'leads',
+          search_config: { ...(earlySearchConfig || {}), status: 'error', error: errMsg.slice(0, 500) },
+          results_count: 0,
+          results: [],
+        });
+      } catch (_e) { /* swallow */ }
+    }
+
+    return new Response(JSON.stringify({ error: errMsg }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
+
 });
