@@ -220,10 +220,10 @@ export default function SearchLogsTable() {
                   </TableCell>
                 </TableRow>
               ))}
-              {logs.length === 0 && (
+              {filteredLogs.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                    Nenhuma pesquisa registrada
+                    {logs.length === 0 ? "Nenhuma pesquisa registrada" : "Nenhum resultado para essa busca"}
                   </TableCell>
                 </TableRow>
               )}
