@@ -2290,7 +2290,7 @@ serve(async (req) => {
 
     // Run segments in parallel. Each segment now does ONE combined-tsquery RPC per page,
     // so we can safely raise segment concurrency without overloading the DB pool.
-    const SEGMENT_CONCURRENCY = 5;
+    const SEGMENT_CONCURRENCY = isHeavySearch ? 2 : 5;
     const segmentResults: any[][] = new Array(segments.length);
     let segIdx = 0;
     const segWorkers = Array.from({ length: Math.min(SEGMENT_CONCURRENCY, segments.length) }, async () => {
