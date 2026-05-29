@@ -1774,6 +1774,13 @@ serve(async (req) => {
   const isNearTimeout = () => (Date.now() - FUNCTION_START) > MAX_EXECUTION_MS;
   const isNearSoftTimeout = () => (Date.now() - FUNCTION_START) > SOFT_TIMEOUT_MS;
 
+  // Variables shared with catch block so we can record failed searches too
+  let earlyLogId: string | null = null;
+  let earlyAdminClient: any = null;
+  let earlyUserId: string | null = null;
+  let earlyUserEmail: string | null = null;
+  let earlySearchConfig: any = null;
+
   try {
     const { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial, neighborhood, cnaes: cnaesInput, nationwide: nationwideInput } = await req.json();
     const nationwide = !!nationwideInput;
