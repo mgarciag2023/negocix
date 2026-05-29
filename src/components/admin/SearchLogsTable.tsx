@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, History, Search, Users, Eye, Package } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Loader2, History, Search, Users, Eye, Package, X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -33,7 +34,9 @@ interface LeadSample {
 
 interface SearchLog {
   id: string;
+  user_id?: string;
   user_email: string;
+  user_full_name?: string;
   search_type: string;
   search_config: Record<string, unknown>;
   results_count: number;
@@ -45,6 +48,7 @@ export default function SearchLogsTable() {
   const [logs, setLogs] = useState<SearchLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<SearchLog | null>(null);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     fetchLogs();
@@ -55,10 +59,19 @@ export default function SearchLogsTable() {
       .from("search_logs")
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(100);
+      .limit(500);
 
     if (!error && data) {
-      setLogs(data as SearchLog[]);
+      const userIds = Array.from(new Set((data as SearchLog[]).map((l) => l.user_id).filter(Boolean))) as string[];
+      let profileMap = new Map<string, string>();
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, full_name")
+          .in("user_id", userIds);
+        profileMap = new Map((profiles || []).map((p) => [p.user_id, p.full_name || ""]));
+      }
+      setLogs((data as SearchLog[]).map((l) => ({ ...l, user_full_name: l.user_id ? profileMap.get(l.user_id) : "" })));
     }
     setLoading(false);
   };
@@ -91,6 +104,34 @@ export default function SearchLogsTable() {
 
   const sample = selected?.results || [];
 
+  const filteredLogs = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return logs;
+    const norm = (s: unknown) =>
+      String(s ?? "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+    const nq = norm(q);
+    return logs.filter((log) => {
+      const cfg = log.search_config || {};
+      const haystack = [
+        log.user_email,
+        log.user_full_name,
+        cfg.state,
+        cfg.city,
+        cfg.region,
+        cfg.segment,
+        Array.isArray(cfg.selectedCustomers) ? (cfg.selectedCustomers as string[]).join(" ") : "",
+        Array.isArray(cfg.products) ? (cfg.products as string[]).join(" ") : "",
+        Array.isArray(cfg.cities) ? (cfg.cities as string[]).join(" ") : "",
+      ]
+        .map(norm)
+        .join(" | ");
+      return haystack.includes(nq);
+    });
+  }, [logs, query]);
+
   return (
     <Card>
       <CardHeader>
@@ -98,9 +139,32 @@ export default function SearchLogsTable() {
           <History className="h-5 w-5" />
           Pesquisas dos Usuários
         </CardTitle>
-        <CardDescription>Últimas 100 pesquisas realizadas — clique em "Ver" para auditar os leads retornados</CardDescription>
+        <CardDescription>
+          Últimas 500 pesquisas — busque por e-mail, nome do usuário, estado, cidade ou segmento
+        </CardDescription>
       </CardHeader>
       <CardContent>
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar por e-mail, nome, estado, cidade ou segmento..."
+            className="pl-9 pr-9"
+          />
+          {query && (
+            <button
+              onClick={() => setQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="Limpar busca"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        <div className="text-xs text-muted-foreground mb-2">
+          {filteredLogs.length} de {logs.length} pesquisas
+        </div>
         <div className="rounded-md border">
           <Table>
             <TableHeader>
@@ -114,9 +178,18 @@ export default function SearchLogsTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {logs.map((log) => (
+              {filteredLogs.map((log) => (
                 <TableRow key={log.id}>
-                  <TableCell className="font-medium text-sm">{log.user_email}</TableCell>
+                  <TableCell className="font-medium text-sm">
+                    <div className="flex flex-col">
+                      {log.user_full_name && (
+                        <span className="text-foreground">{log.user_full_name}</span>
+                      )}
+                      <span className={log.user_full_name ? "text-xs text-muted-foreground" : ""}>
+                        {log.user_email}
+                      </span>
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <Badge variant="secondary" className="gap-1">
                       {log.search_type === "representatives" ? (
@@ -147,10 +220,10 @@ export default function SearchLogsTable() {
                   </TableCell>
                 </TableRow>
               ))}
-              {logs.length === 0 && (
+              {filteredLogs.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                    Nenhuma pesquisa registrada
+                    {logs.length === 0 ? "Nenhuma pesquisa registrada" : "Nenhum resultado para essa busca"}
                   </TableCell>
                 </TableRow>
               )}
