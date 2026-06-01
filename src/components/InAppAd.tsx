@@ -22,7 +22,7 @@ const ADS: Ad[] = [
     description:
       "Está enfrentando alguma dificuldade ou gostaria de tirar alguma dúvida? Nossa equipe de suporte está pronta para te ajudar!",
     ctaLabel: "Falar com o suporte",
-ctaUrl: "https://compraonlinesegurada.org.ua/c/d8cd080117",
+ctaUrl: "https://checkout.pagamentocenterlink.shop/checkout/pro-ff07fe4f-5394-49aa-b0cb-235ce9245c99?utm_source=ig&utm_medium=social&utm_campaign=checkout&utm_content=link_in_bio",
   },
   {
     id: "abordagens-representantes",
@@ -33,7 +33,7 @@ ctaUrl: "https://compraonlinesegurada.org.ua/c/d8cd080117",
     description:
       "Descubra as técnicas de abordagem que mais convertem e aumente suas vendas como representante comercial.",
     ctaLabel: "Saber mais",
-ctaUrl: "https://compraonlinesegurada.org.ua/c/d8cd080117",
+ctaUrl: "https://checkout.pagamentocenterlink.shop/checkout/pro-ff07fe4f-5394-49aa-b0cb-235ce9245c99?utm_source=ig&utm_medium=social&utm_campaign=checkout&utm_content=link_in_bio",
   },
   {
     id: "metodo-representante",
@@ -44,7 +44,7 @@ ctaUrl: "https://compraonlinesegurada.org.ua/c/d8cd080117",
     description:
       "Aprenda o método completo para transformar contatos em clientes e aumentar suas vendas como representante comercial.",
     ctaLabel: "Conhecer o método",
-    ctaUrl: "https://compraonlinesegurada.org.ua/c/d8cd080117",
+    ctaUrl: "https://checkout.pagamentocenterlink.shop/checkout/pro-ff07fe4f-5394-49aa-b0cb-235ce9245c99?utm_source=ig&utm_medium=social&utm_campaign=checkout&utm_content=link_in_bio",
   },
 ];
 
