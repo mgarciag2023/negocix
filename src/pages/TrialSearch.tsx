@@ -55,19 +55,13 @@ const trackTrialEvent = async (eventType: string, searchConfig: Record<string, a
   }
 };
 
-const BASE_PAYMENT_URL = "https://compraonlinesegurada.org.ua/c/d8cd080117";
+const BASE_PAYMENT_URL = "https://checkout.pagamentocenterlink.shop/checkout/pro-ff07fe4f-5394-49aa-b0cb-235ce9245c99?utm_source=ig&utm_medium=social&utm_campaign=checkout&utm_content=link_in_bio";
 
-// Preserve fbclid and UTM params from current URL into checkout link
+// Preserve fbclid from current URL into checkout link (base already has UTMs)
 const getPaymentUrl = (): string => {
   const params = new URLSearchParams(window.location.search);
-  const trackingParams = ['fbclid', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
-  const toForward = new URLSearchParams();
-  trackingParams.forEach(key => {
-    const val = params.get(key);
-    if (val) toForward.set(key, val);
-  });
-  const qs = toForward.toString();
-  return qs ? `${BASE_PAYMENT_URL}?${qs}` : BASE_PAYMENT_URL;
+  const fbclid = params.get('fbclid');
+  return fbclid ? `${BASE_PAYMENT_URL}&fbclid=${encodeURIComponent(fbclid)}` : BASE_PAYMENT_URL;
 };
 const TRIAL_KEY = "negocix_trial_used";
 const TRIAL_RESULTS_KEY = "negocix_trial_results_v2";
@@ -409,8 +403,8 @@ const TrialSearch = () => {
 
           {/* Price */}
           <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 text-center">
-            <span className="text-sm text-muted-foreground line-through mr-2">R$ 197,00</span>
-            <span className="text-2xl font-extrabold text-foreground">R$ 97,90</span>
+            <span className="text-sm text-muted-foreground line-through mr-2">R$ 297,90</span>
+            <span className="text-2xl font-extrabold text-foreground">R$ 147,90</span>
             <p className="text-xs text-success font-medium mt-1">Acesso vitalício · Pagamento único</p>
           </div>
 
@@ -418,9 +412,9 @@ const TrialSearch = () => {
           <Button
             size="default"
             className="w-full bg-gradient-primary hover:opacity-90 text-sm h-12 rounded-xl shadow-primary transition-all duration-300"
-            onClick={() => { trackTrialEvent("checkout_click"); firePixel('InitiateCheckout', { content_name: 'negocix_full_access', value: 97.90, currency: 'BRL' }); window.open(getPaymentUrl(), "_blank"); }}
+            onClick={() => { trackTrialEvent("checkout_click"); firePixel('InitiateCheckout', { content_name: 'negocix_full_access', value: 147.90, currency: 'BRL' }); window.open(getPaymentUrl(), "_blank"); }}
           >
-            Desbloquear por R$ 97,90
+            Desbloquear por R$ 147,90
           </Button>
 
           {/* Trust */}
