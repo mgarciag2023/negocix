@@ -403,8 +403,8 @@ const TrialSearch = () => {
 
           {/* Price */}
           <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 text-center">
-            <span className="text-sm text-muted-foreground line-through mr-2">R$ 197,00</span>
-            <span className="text-2xl font-extrabold text-foreground">R$ 97,90</span>
+            <span className="text-sm text-muted-foreground line-through mr-2">R$ 297,90</span>
+            <span className="text-2xl font-extrabold text-foreground">R$ 147,90</span>
             <p className="text-xs text-success font-medium mt-1">Acesso vitalício · Pagamento único</p>
           </div>
 
@@ -412,9 +412,9 @@ const TrialSearch = () => {
           <Button
             size="default"
             className="w-full bg-gradient-primary hover:opacity-90 text-sm h-12 rounded-xl shadow-primary transition-all duration-300"
-            onClick={() => { trackTrialEvent("checkout_click"); firePixel('InitiateCheckout', { content_name: 'negocix_full_access', value: 97.90, currency: 'BRL' }); window.open(getPaymentUrl(), "_blank"); }}
+            onClick={() => { trackTrialEvent("checkout_click"); firePixel('InitiateCheckout', { content_name: 'negocix_full_access', value: 147.90, currency: 'BRL' }); window.open(getPaymentUrl(), "_blank"); }}
           >
-            Desbloquear por R$ 97,90
+            Desbloquear por R$ 147,90
           </Button>
 
           {/* Trust */}
