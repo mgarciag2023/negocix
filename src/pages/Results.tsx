@@ -551,6 +551,15 @@ const Results = () => {
             )}
           </div>
           <div className="flex gap-2 flex-wrap">
+            <Button
+              onClick={handleEditSearch}
+              variant="outline"
+              className="gap-2"
+            >
+              <Pencil className="h-4 w-4" />
+              <span className="hidden sm:inline">Editar busca</span>
+              <span className="sm:hidden">Editar</span>
+            </Button>
             {isAdmin && (
               <Button
                 onClick={handleToggleTop}
