@@ -125,6 +125,8 @@ const LEADS_PER_PAGE = 30;
 
 const Results = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [allLeads, setAllLeads] = useState<Lead[]>([]);
+  const [topMode, setTopMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sortOrder, setSortOrder] = useState<'alphabetical' | 'category'>('alphabetical');
   const [visibleCount, setVisibleCount] = useState(LEADS_PER_PAGE);
@@ -133,6 +135,7 @@ const Results = () => {
   const location = useLocation();
   const { restoreScrollPosition } = useScrollPosition();
   const hasRestoredScroll = useRef(false);
+  const { isAdmin } = useAdminCheck();
 
   const exportToExcel = async () => {
     if (leads.length === 0) {
