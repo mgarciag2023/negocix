@@ -401,6 +401,7 @@ const Results = () => {
         if (data?.leads && data.leads.length > 0) {
           const sortedLeads = sortLeadsAlphabetically(data.leads);
           setLeads(sortedLeads);
+          setAllLeads(sortedLeads);
           if (data.correctedCity && data.originalCity && data.correctedCity !== data.originalCity) {
             const toTitle = (s: string) => s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
             setCityCorrection({ original: toTitle(data.originalCity), corrected: toTitle(data.correctedCity) });
