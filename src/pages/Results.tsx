@@ -470,6 +470,20 @@ const Results = () => {
     }
   };
 
+  // Admin-only: toggle Top 15 biggest companies
+  const handleToggleTop = () => {
+    if (topMode) {
+      setTopMode(false);
+      setLeads(sortOrder === 'alphabetical' ? sortLeadsAlphabetically(allLeads) : alternateLeadsByCategory(allLeads));
+      setVisibleCount(LEADS_PER_PAGE);
+    } else {
+      const top = [...allLeads].sort((a, b) => sizeScore(b) - sizeScore(a)).slice(0, 15);
+      setTopMode(true);
+      setLeads(top);
+      setVisibleCount(15);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
