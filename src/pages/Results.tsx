@@ -1,6 +1,6 @@
-import { Building2, TrendingUp, Users, Zap, Download, Crown } from "lucide-react";
+import { Building2, TrendingUp, Users, Zap, Download, Crown, Pencil } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import LeadCard from "@/components/LeadCard";
 import StatsCard from "@/components/StatsCard";
