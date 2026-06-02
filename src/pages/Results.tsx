@@ -1,4 +1,4 @@
-import { Building2, TrendingUp, Users, Zap, Download } from "lucide-react";
+import { Building2, TrendingUp, Users, Zap, Download, Crown } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -8,7 +8,40 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 import * as XLSX from 'xlsx';
+
+// Score a lead by "size" using multiple factors: porte, employees, revenue
+const sizeScore = (lead: any): number => {
+  let score = 0;
+  const porte = String(lead.companySize || lead.porte || '').toUpperCase();
+  if (porte.includes('GRANDE')) score += 1000;
+  else if (porte.includes('MEDIA') || porte.includes('MÉDIA') || porte.includes('MEDIO') || porte.includes('MÉDIO')) score += 600;
+  else if (porte.includes('PEQUEN')) score += 300;
+  else if (porte.includes('MICRO')) score += 100;
+  else if (porte.includes('DEMAIS')) score += 500;
+
+  const emp = String(lead.employeeCount || '');
+  const nums = emp.match(/\d+/g)?.map(Number) || [];
+  if (nums.length) {
+    const maxEmp = Math.max(...nums);
+    score += Math.min(maxEmp, 5000) / 5;
+  }
+
+  const rev = String(lead.revenue || '');
+  const revDigits = rev.replace(/[^\d]/g, '');
+  if (revDigits) {
+    const n = Number(revDigits);
+    if (isFinite(n) && n > 0) score += Math.min(Math.log10(n + 1) * 100, 800);
+  }
+  if (/milh/i.test(rev)) score += 200;
+  if (/bilh/i.test(rev)) score += 600;
+
+  const cap = Number((lead as any).capitalSocial || 0);
+  if (isFinite(cap) && cap > 0) score += Math.min(Math.log10(cap + 1) * 50, 400);
+
+  return score;
+};
 
 interface Lead {
   id: string;
@@ -92,6 +125,8 @@ const LEADS_PER_PAGE = 30;
 
 const Results = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [allLeads, setAllLeads] = useState<Lead[]>([]);
+  const [topMode, setTopMode] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sortOrder, setSortOrder] = useState<'alphabetical' | 'category'>('alphabetical');
   const [visibleCount, setVisibleCount] = useState(LEADS_PER_PAGE);
@@ -100,6 +135,7 @@ const Results = () => {
   const location = useLocation();
   const { restoreScrollPosition } = useScrollPosition();
   const hasRestoredScroll = useRef(false);
+  const { isAdmin } = useAdminCheck();
 
   const exportToExcel = async () => {
     if (leads.length === 0) {
@@ -365,6 +401,7 @@ const Results = () => {
         if (data?.leads && data.leads.length > 0) {
           const sortedLeads = sortLeadsAlphabetically(data.leads);
           setLeads(sortedLeads);
+          setAllLeads(sortedLeads);
           if (data.correctedCity && data.originalCity && data.correctedCity !== data.originalCity) {
             const toTitle = (s: string) => s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
             setCityCorrection({ original: toTitle(data.originalCity), corrected: toTitle(data.correctedCity) });
@@ -433,6 +470,20 @@ const Results = () => {
     }
   };
 
+  // Admin-only: toggle Top 15 biggest companies
+  const handleToggleTop = () => {
+    if (topMode) {
+      setTopMode(false);
+      setLeads(sortOrder === 'alphabetical' ? sortLeadsAlphabetically(allLeads) : alternateLeadsByCategory(allLeads));
+      setVisibleCount(LEADS_PER_PAGE);
+    } else {
+      const top = [...allLeads].sort((a, b) => sizeScore(b) - sizeScore(a)).slice(0, 15);
+      setTopMode(true);
+      setLeads(top);
+      setVisibleCount(15);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -468,6 +519,16 @@ const Results = () => {
             )}
           </div>
           <div className="flex gap-2 flex-wrap">
+            {isAdmin && (
+              <Button
+                onClick={handleToggleTop}
+                variant={topMode ? "default" : "outline"}
+                className="gap-2"
+              >
+                <Crown className="h-4 w-4" />
+                {topMode ? "Mostrar todos" : "Top 15 Maiores"}
+              </Button>
+            )}
             <Button 
               onClick={handleToggleSort}
               variant="outline"
