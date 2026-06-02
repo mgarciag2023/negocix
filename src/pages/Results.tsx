@@ -298,6 +298,16 @@ const Results = () => {
   useEffect(() => {
     const fetchLeads = async () => {
       try {
+        // If navigated from history with saved leads, render them directly (no refetch)
+        const historyLeads = (location.state as { historyLeads?: Lead[] } | null)?.historyLeads;
+        if (historyLeads && Array.isArray(historyLeads) && historyLeads.length > 0) {
+          const sorted = sortLeadsAlphabetically(historyLeads);
+          setLeads(sorted);
+          setAllLeads(sorted);
+          setLoading(false);
+          return;
+        }
+
         const searchConfigStr = localStorage.getItem('leadSearchConfig');
 
         // Cache desabilitado: toda busca bate na edge function ao vivo
@@ -305,6 +315,7 @@ const Results = () => {
           localStorage.removeItem('cachedLeads');
           localStorage.removeItem('cachedSearchConfig');
         } catch {}
+
 
         // Get search configuration from localStorage
         if (!searchConfigStr) {
