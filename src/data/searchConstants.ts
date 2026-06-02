@@ -46,7 +46,7 @@ export const customerTypes = [
 
   // Varejo - Alimentos
   "Supermercados",
-  "Hipermercados",
+  
   "Mercados",
   "Mercearias",
   "Hortifrútis",
