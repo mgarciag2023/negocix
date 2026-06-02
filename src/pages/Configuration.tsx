@@ -39,6 +39,48 @@ const Configuration = () => {
   const [cnaeSearch, setCnaeSearch] = useState("");
   const [cnaeVisibleCount, setCnaeVisibleCount] = useState(100);
 
+  // Pre-fill form with last search config when editing
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('leadSearchConfig');
+      if (!saved) return;
+      const config = JSON.parse(saved);
+
+      if (config.category !== undefined) setCategory(config.category);
+      if (config.products !== undefined) setProducts(config.products);
+      if (config.searchMode !== undefined) setSearchMode(config.searchMode);
+      if (config.selectedCustomers !== undefined) setSelectedCustomers(config.selectedCustomers);
+      if (config.selectedCnaes !== undefined) setSelectedCnaes(config.selectedCnaes);
+      if (config.neighborhood !== undefined) setNeighborhood(config.neighborhood);
+      if (config.revenueRange !== undefined) setRevenueRange(config.revenueRange);
+      if (config.businessType !== undefined) setBusinessType(config.businessType);
+      if (config.digitalPresence !== undefined) setDigitalPresence(config.digitalPresence);
+      if (config.digitalActivity !== undefined) setDigitalActivity(config.digitalActivity);
+      if (config.ecommerceType !== undefined) setEcommerceType(config.ecommerceType);
+      if (config.companySizes !== undefined) setCompanySizes(config.companySizes);
+
+      // Country handling
+      const knownCodes = countries.map(c => c.code);
+      if (config.country && knownCodes.includes(config.country)) {
+        setCountry(config.country);
+      } else if (config.country) {
+        setCountry("OTHER");
+        setCustomCountry(config.country);
+      }
+
+      // State / city / nationwide
+      if (config.nationwide) {
+        setState("ALL_BR");
+        setCity("");
+      } else {
+        if (config.state !== undefined) setState(config.state);
+        if (config.city !== undefined) setCity(config.city);
+      }
+    } catch {
+      // ignore corrupted localStorage
+    }
+  }, []);
+
 
   // Fuzzy search: remove accents, match all words independently
   const normalizeText = (text: string) =>
