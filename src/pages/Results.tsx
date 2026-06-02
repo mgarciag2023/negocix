@@ -1,6 +1,6 @@
-import { Building2, TrendingUp, Users, Zap, Download, Crown } from "lucide-react";
+import { Building2, TrendingUp, Users, Zap, Download, Crown, Pencil } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import LeadCard from "@/components/LeadCard";
 import StatsCard from "@/components/StatsCard";
@@ -136,6 +136,7 @@ const Results = () => {
   const { restoreScrollPosition } = useScrollPosition();
   const hasRestoredScroll = useRef(false);
   const { isAdmin } = useAdminCheck();
+  const navigate = useNavigate();
 
   const exportToExcel = async () => {
     if (leads.length === 0) {
@@ -481,6 +482,10 @@ const Results = () => {
     }
   };
 
+  const handleEditSearch = () => {
+    navigate('/configuracao');
+  };
+
   // Admin-only: toggle Top 15 biggest companies
   const handleToggleTop = () => {
     if (topMode) {
@@ -546,6 +551,15 @@ const Results = () => {
             )}
           </div>
           <div className="flex gap-2 flex-wrap">
+            <Button
+              onClick={handleEditSearch}
+              variant="outline"
+              className="gap-2"
+            >
+              <Pencil className="h-4 w-4" />
+              <span className="hidden sm:inline">Editar busca</span>
+              <span className="sm:hidden">Editar</span>
+            </Button>
             {isAdmin && (
               <Button
                 onClick={handleToggleTop}
