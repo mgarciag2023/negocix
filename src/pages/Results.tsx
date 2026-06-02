@@ -519,6 +519,16 @@ const Results = () => {
             )}
           </div>
           <div className="flex gap-2 flex-wrap">
+            {isAdmin && (
+              <Button
+                onClick={handleToggleTop}
+                variant={topMode ? "default" : "outline"}
+                className="gap-2"
+              >
+                <Crown className="h-4 w-4" />
+                {topMode ? "Mostrar todos" : "Top 15 Maiores"}
+              </Button>
+            )}
             <Button 
               onClick={handleToggleSort}
               variant="outline"
