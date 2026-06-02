@@ -136,6 +136,7 @@ const Results = () => {
   const { restoreScrollPosition } = useScrollPosition();
   const hasRestoredScroll = useRef(false);
   const { isAdmin } = useAdminCheck();
+  const navigate = useNavigate();
 
   const exportToExcel = async () => {
     if (leads.length === 0) {
