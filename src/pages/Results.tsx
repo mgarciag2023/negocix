@@ -1,4 +1,4 @@
-import { Building2, TrendingUp, Users, Zap, Download } from "lucide-react";
+import { Building2, TrendingUp, Users, Zap, Download, Crown } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import Navbar from "@/components/Navbar";
@@ -8,7 +8,40 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 import * as XLSX from 'xlsx';
+
+// Score a lead by "size" using multiple factors: porte, employees, revenue
+const sizeScore = (lead: any): number => {
+  let score = 0;
+  const porte = String(lead.companySize || lead.porte || '').toUpperCase();
+  if (porte.includes('GRANDE')) score += 1000;
+  else if (porte.includes('MEDIA') || porte.includes('MÉDIA') || porte.includes('MEDIO') || porte.includes('MÉDIO')) score += 600;
+  else if (porte.includes('PEQUEN')) score += 300;
+  else if (porte.includes('MICRO')) score += 100;
+  else if (porte.includes('DEMAIS')) score += 500;
+
+  const emp = String(lead.employeeCount || '');
+  const nums = emp.match(/\d+/g)?.map(Number) || [];
+  if (nums.length) {
+    const maxEmp = Math.max(...nums);
+    score += Math.min(maxEmp, 5000) / 5;
+  }
+
+  const rev = String(lead.revenue || '');
+  const revDigits = rev.replace(/[^\d]/g, '');
+  if (revDigits) {
+    const n = Number(revDigits);
+    if (isFinite(n) && n > 0) score += Math.min(Math.log10(n + 1) * 100, 800);
+  }
+  if (/milh/i.test(rev)) score += 200;
+  if (/bilh/i.test(rev)) score += 600;
+
+  const cap = Number((lead as any).capitalSocial || 0);
+  if (isFinite(cap) && cap > 0) score += Math.min(Math.log10(cap + 1) * 50, 400);
+
+  return score;
+};
 
 interface Lead {
   id: string;
