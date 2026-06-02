@@ -482,6 +482,10 @@ const Results = () => {
     }
   };
 
+  const handleEditSearch = () => {
+    navigate('/configuracao');
+  };
+
   // Admin-only: toggle Top 15 biggest companies
   const handleToggleTop = () => {
     if (topMode) {
