@@ -91,7 +91,7 @@ export default function SearchHistory() {
     }
     localStorage.setItem("leadSearchConfig", configStr);
     sessionStorage.removeItem('results_scroll_position');
-    navigate("/resultados");
+    navigate("/resultados", { state: { historyLeads: results } });
   };
 
   const handleViewLeads = async (log: SearchLog) => {
