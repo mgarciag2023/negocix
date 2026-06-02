@@ -91,7 +91,7 @@ export default function SearchHistory() {
     }
     localStorage.setItem("leadSearchConfig", configStr);
     sessionStorage.removeItem('results_scroll_position');
-    navigate("/resultados");
+    navigate("/resultados", { state: { historyLeads: results } });
   };
 
   const handleViewLeads = async (log: SearchLog) => {
@@ -105,46 +105,24 @@ export default function SearchHistory() {
         ? config.selectedCustomers.join(", ")
         : typeof config.segment === "string" ? config.segment : "";
       const region = typeof config.region === "string" ? config.region : "";
-      const hasFullSavedResults = results.length > 0 && (!log.results_count || results.length >= log.results_count);
-
-      if (hasFullSavedResults) {
+      // If we have ANY saved leads, just show them — don't refetch (slow and error-prone)
+      if (results.length > 0) {
         openResults(results, configStr, log.search_type);
         return;
       }
 
+      // No saved leads — try to refetch via Results page
       if (log.search_type === "leads" && segment && region) {
-        const cacheKey = generateDbCacheKey(segment, region);
-        const { data: cacheData, error: cacheError } = await supabase
-          .from("cached_search_results")
-          .select("results, results_count")
-          .eq("cache_key", cacheKey)
-          .maybeSingle();
-
-        if (!cacheError) {
-          const cachedResults = Array.isArray(cacheData?.results)
-            ? ((cacheData.results as unknown) as Record<string, unknown>[])
-            : [];
-          if (cachedResults.length > results.length) {
-            openResults(cachedResults, configStr, log.search_type);
-            return;
-          }
-        }
-
         localStorage.removeItem("cachedLeads");
         localStorage.removeItem("cachedSearchConfig");
         localStorage.setItem("leadSearchConfig", configStr);
 
         toast({
           title: "Recarregando resultados",
-          description: "Essa busca antiga será reprocessada para abrir todos os leads disponíveis.",
+          description: "Essa busca antiga será reprocessada.",
         });
 
         navigate("/resultados");
-        return;
-      }
-
-      if (results.length > 0) {
-        openResults(results, configStr, log.search_type);
         return;
       }
 
