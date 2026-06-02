@@ -488,10 +488,26 @@ const Results = () => {
       setLeads(sortOrder === 'alphabetical' ? sortLeadsAlphabetically(allLeads) : alternateLeadsByCategory(allLeads));
       setVisibleCount(LEADS_PER_PAGE);
     } else {
-      const top = [...allLeads].sort((a, b) => sizeScore(b) - sizeScore(a)).slice(0, 15);
+      // Dedup por telefone e e-mail (mesma rede/CNPJ raiz) antes de pegar os maiores
+      const normPhone = (p?: string) => (p || '').replace(/\D/g, '').replace(/^55/, '').slice(-10);
+      const normEmail = (e?: string) => (e || '').trim().toLowerCase();
+      const seenPhones = new Set<string>();
+      const seenEmails = new Set<string>();
+      const sorted = [...allLeads].sort((a, b) => sizeScore(b) - sizeScore(a));
+      const unique: typeof allLeads = [];
+      for (const lead of sorted) {
+        const ph = normPhone((lead as any).phone);
+        const em = normEmail((lead as any).email);
+        if (ph && seenPhones.has(ph)) continue;
+        if (em && seenEmails.has(em)) continue;
+        if (ph) seenPhones.add(ph);
+        if (em) seenEmails.add(em);
+        unique.push(lead);
+        if (unique.length >= 15) break;
+      }
       setTopMode(true);
-      setLeads(top);
-      setVisibleCount(15);
+      setLeads(unique);
+      setVisibleCount(unique.length);
     }
   };
 
