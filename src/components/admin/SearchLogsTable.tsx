@@ -94,16 +94,6 @@ export default function SearchLogsTable() {
     return parts.join(" | ") || "—";
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  const sample = selected?.results || [];
-
   const filteredLogs = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return logs;
@@ -131,6 +121,17 @@ export default function SearchLogsTable() {
       return haystack.includes(nq);
     });
   }, [logs, query]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const sample = selected?.results || [];
+
 
   return (
     <Card>
