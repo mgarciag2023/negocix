@@ -2826,6 +2826,7 @@ serve(async (req) => {
       }
 
       const beforeIndustryFilter = allCompanies.length;
+      const indSnapshot = allCompanies;
       allCompanies = allCompanies.filter(c => {
         if (c._viaCnae) return true;
         const seg = (c._segment || '').toLowerCase();
@@ -2842,19 +2843,29 @@ serve(async (req) => {
         }
 
         // Accept if company has industry indicator OR has the product keyword prominently
-        // (e.g. "Estofados Silva Ltda" is a legitimate estofados industry even without "industria" in the name)
         const isIndustry = industryKeywords.some(kw => combined.includes(kw));
         if (isIndustry) return true;
 
-        // If product keywords match the name, accept even without "industria" keyword
-        // This handles "Estofados Silva", "Colchões Brasil", etc.
         if (productKws && productKws.length > 0) {
           return productKws.some(pk => combined.includes(pk));
         }
 
         return false;
       });
+      // 🩹 Fallback: se filtro estrito zerou tudo, relaxa para "tem indicador de indústria/fábrica"
+      if (allCompanies.length === 0 && beforeIndustryFilter > 0) {
+        console.log(`⚠️ Industry strict zeroed results — relaxing to indicator-only`);
+        allCompanies = indSnapshot.filter(c => {
+          if (c._viaCnae) return true;
+          const seg = (c._segment || '').toLowerCase();
+          const isIndustrySeg = seg.includes('industria') || seg.includes('indústria') || seg.includes('fabrica') || seg.includes('fábrica');
+          if (!isIndustrySeg) return true;
+          const combined = c._nameText || '';
+          return industryKeywords.some(kw => combined.includes(kw));
+        });
+      }
       console.log(`🏭 Industry strict filter: ${allCompanies.length} (removed ${beforeIndustryFilter - allCompanies.length} non-matching industries)`);
+
     }
 
     // ===== STRICT UNIVERSAL RELEVANCE FILTER FOR ALL SEGMENTS =====
