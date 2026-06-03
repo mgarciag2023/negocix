@@ -2728,6 +2728,7 @@ serve(async (req) => {
       }
 
       const beforeDistFilter = allCompanies.length;
+      const distSnapshot = allCompanies;
       allCompanies = allCompanies.filter(c => {
         // Results found via official CNAE code always pass distributor filter
         if (c._viaCnae) return true;
@@ -2751,8 +2752,21 @@ serve(async (req) => {
 
         return true;
       });
+      // 🩹 Fallback: se filtro estrito zerou tudo, mas havia resultados antes,
+      // mantém apenas as empresas que tenham PELO MENOS o indicador de distribuidor.
+      if (allCompanies.length === 0 && beforeDistFilter > 0) {
+        console.log(`⚠️ Distributor strict zeroed results — relaxing to indicator-only`);
+        allCompanies = distSnapshot.filter(c => {
+          if (c._viaCnae) return true;
+          const seg = (c._segment || '').toLowerCase();
+          if (!seg.includes('distribuidor') && !seg.includes('distribuidora')) return true;
+          const combined = `${normalizeText(c.nome_fantasia || '').toLowerCase()} ${normalizeText(c.razao_social || '').toLowerCase()}`;
+          return distributorKeywords.some(kw => combined.includes(kw));
+        });
+      }
       console.log(`🔍 Distributor strict filter: ${allCompanies.length} (removed ${beforeDistFilter - allCompanies.length} non-matching distributors)`);
     }
+
 
     // ===== STRICT INDUSTRY RELEVANCE FILTER =====
     // When searching for "indústrias de X" or "fábricas de X", ensure companies are actual factories/industries
