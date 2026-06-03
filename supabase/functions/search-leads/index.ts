@@ -2000,14 +2000,25 @@ serve(async (req) => {
         });
       }
     });
-    const segments = segmentToSplit.split(',')
+    let segments = segmentToSplit.split(',')
       .map((s: string) => {
         let v = s.trim();
         placeholders.forEach(p => { v = v.replace(p.token, p.original); });
         return v;
       })
       .filter((s: string) => s.length > 0);
+
+    // 🛡️ Hard cap on segments per request: 30+ categorias misturadas
+    // estouravam CPU/wall-time do worker e geravam 0 leads ou status=-1.
+    const MAX_SEGMENTS = 15;
+    let segmentsTruncated = false;
+    if (segments.length > MAX_SEGMENTS) {
+      console.warn(`⚠️ Too many segments (${segments.length}). Processing only first ${MAX_SEGMENTS}.`);
+      segments = segments.slice(0, MAX_SEGMENTS);
+      segmentsTruncated = true;
+    }
     console.log(`📋 Segments: ${segments.join(' | ')}`);
+
 
     // No per-user limits - search all available leads
 
