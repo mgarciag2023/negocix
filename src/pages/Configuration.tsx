@@ -97,13 +97,22 @@ const Configuration = () => {
 
   // customerTypes, countries, brazilianStates imported from @/data/searchConstants
 
+  const MAX_SELECTED_CUSTOMERS = 15;
   const handleCustomerToggle = (customer: string) => {
-    setSelectedCustomers(prev =>
-      prev.includes(customer)
-        ? prev.filter(c => c !== customer)
-        : [...prev, customer]
-    );
+    setSelectedCustomers(prev => {
+      if (prev.includes(customer)) return prev.filter(c => c !== customer);
+      if (prev.length >= MAX_SELECTED_CUSTOMERS) {
+        toast({
+          title: `Limite de ${MAX_SELECTED_CUSTOMERS} segmentos`,
+          description: "Misturar muitos segmentos prejudica os resultados. Faça buscas separadas para outros segmentos.",
+          variant: "destructive",
+        });
+        return prev;
+      }
+      return [...prev, customer];
+    });
   };
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
