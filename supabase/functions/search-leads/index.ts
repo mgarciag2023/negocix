@@ -2000,14 +2000,25 @@ serve(async (req) => {
         });
       }
     });
-    const segments = segmentToSplit.split(',')
+    let segments = segmentToSplit.split(',')
       .map((s: string) => {
         let v = s.trim();
         placeholders.forEach(p => { v = v.replace(p.token, p.original); });
         return v;
       })
       .filter((s: string) => s.length > 0);
+
+    // 🛡️ Hard cap on segments per request: 30+ categorias misturadas
+    // estouravam CPU/wall-time do worker e geravam 0 leads ou status=-1.
+    const MAX_SEGMENTS = 15;
+    let segmentsTruncated = false;
+    if (segments.length > MAX_SEGMENTS) {
+      console.warn(`⚠️ Too many segments (${segments.length}). Processing only first ${MAX_SEGMENTS}.`);
+      segments = segments.slice(0, MAX_SEGMENTS);
+      segmentsTruncated = true;
+    }
     console.log(`📋 Segments: ${segments.join(' | ')}`);
+
 
     // No per-user limits - search all available leads
 
@@ -2369,11 +2380,23 @@ serve(async (req) => {
       const quickInput = allCompanies.length > 10_000 ? allCompanies.slice(0, 10_000) : allCompanies;
       const quickLeads = buildQuickLeads(quickInput);
       if (quickLeads.length > 0) {
+        // 🩹 Atualiza o log para não ficar preso em status=started/results_count=-1
+        if (earlyLogId && earlyAdminClient) {
+          try {
+            await earlyAdminClient.from("search_logs")
+              .update({
+                search_config: { ...(earlySearchConfig || {}), status: 'partial', partial: true },
+                results_count: quickLeads.length,
+              })
+              .eq('id', earlyLogId);
+          } catch (_e) { /* swallow */ }
+        }
         return new Response(JSON.stringify({ leads: quickLeads, partial: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
     }
+
 
     // ===== FILTER: valid phone required (check both telefone_1 and telefone_2) =====
     allCompanies = allCompanies.filter(c => isPhoneValid(c.telefone_1) || isPhoneValid(c.telefone_2));
@@ -2705,6 +2728,7 @@ serve(async (req) => {
       }
 
       const beforeDistFilter = allCompanies.length;
+      const distSnapshot = allCompanies;
       allCompanies = allCompanies.filter(c => {
         // Results found via official CNAE code always pass distributor filter
         if (c._viaCnae) return true;
@@ -2728,8 +2752,21 @@ serve(async (req) => {
 
         return true;
       });
+      // 🩹 Fallback: se filtro estrito zerou tudo, mas havia resultados antes,
+      // mantém apenas as empresas que tenham PELO MENOS o indicador de distribuidor.
+      if (allCompanies.length === 0 && beforeDistFilter > 0) {
+        console.log(`⚠️ Distributor strict zeroed results — relaxing to indicator-only`);
+        allCompanies = distSnapshot.filter(c => {
+          if (c._viaCnae) return true;
+          const seg = (c._segment || '').toLowerCase();
+          if (!seg.includes('distribuidor') && !seg.includes('distribuidora')) return true;
+          const combined = `${normalizeText(c.nome_fantasia || '').toLowerCase()} ${normalizeText(c.razao_social || '').toLowerCase()}`;
+          return distributorKeywords.some(kw => combined.includes(kw));
+        });
+      }
       console.log(`🔍 Distributor strict filter: ${allCompanies.length} (removed ${beforeDistFilter - allCompanies.length} non-matching distributors)`);
     }
+
 
     // ===== STRICT INDUSTRY RELEVANCE FILTER =====
     // When searching for "indústrias de X" or "fábricas de X", ensure companies are actual factories/industries
@@ -2789,6 +2826,7 @@ serve(async (req) => {
       }
 
       const beforeIndustryFilter = allCompanies.length;
+      const indSnapshot = allCompanies;
       allCompanies = allCompanies.filter(c => {
         if (c._viaCnae) return true;
         const seg = (c._segment || '').toLowerCase();
@@ -2805,19 +2843,29 @@ serve(async (req) => {
         }
 
         // Accept if company has industry indicator OR has the product keyword prominently
-        // (e.g. "Estofados Silva Ltda" is a legitimate estofados industry even without "industria" in the name)
         const isIndustry = industryKeywords.some(kw => combined.includes(kw));
         if (isIndustry) return true;
 
-        // If product keywords match the name, accept even without "industria" keyword
-        // This handles "Estofados Silva", "Colchões Brasil", etc.
         if (productKws && productKws.length > 0) {
           return productKws.some(pk => combined.includes(pk));
         }
 
         return false;
       });
+      // 🩹 Fallback: se filtro estrito zerou tudo, relaxa para "tem indicador de indústria/fábrica"
+      if (allCompanies.length === 0 && beforeIndustryFilter > 0) {
+        console.log(`⚠️ Industry strict zeroed results — relaxing to indicator-only`);
+        allCompanies = indSnapshot.filter(c => {
+          if (c._viaCnae) return true;
+          const seg = (c._segment || '').toLowerCase();
+          const isIndustrySeg = seg.includes('industria') || seg.includes('indústria') || seg.includes('fabrica') || seg.includes('fábrica');
+          if (!isIndustrySeg) return true;
+          const combined = c._nameText || '';
+          return industryKeywords.some(kw => combined.includes(kw));
+        });
+      }
       console.log(`🏭 Industry strict filter: ${allCompanies.length} (removed ${beforeIndustryFilter - allCompanies.length} non-matching industries)`);
+
     }
 
     // ===== STRICT UNIVERSAL RELEVANCE FILTER FOR ALL SEGMENTS =====
