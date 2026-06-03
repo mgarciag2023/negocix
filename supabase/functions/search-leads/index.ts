@@ -2380,11 +2380,23 @@ serve(async (req) => {
       const quickInput = allCompanies.length > 10_000 ? allCompanies.slice(0, 10_000) : allCompanies;
       const quickLeads = buildQuickLeads(quickInput);
       if (quickLeads.length > 0) {
+        // 🩹 Atualiza o log para não ficar preso em status=started/results_count=-1
+        if (earlyLogId && earlyAdminClient) {
+          try {
+            await earlyAdminClient.from("search_logs")
+              .update({
+                search_config: { ...(earlySearchConfig || {}), status: 'partial', partial: true },
+                results_count: quickLeads.length,
+              })
+              .eq('id', earlyLogId);
+          } catch (_e) { /* swallow */ }
+        }
         return new Response(JSON.stringify({ leads: quickLeads, partial: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
     }
+
 
     // ===== FILTER: valid phone required (check both telefone_1 and telefone_2) =====
     allCompanies = allCompanies.filter(c => isPhoneValid(c.telefone_1) || isPhoneValid(c.telefone_2));
