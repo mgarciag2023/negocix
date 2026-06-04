@@ -239,6 +239,10 @@ const Admin = () => {
         {/* Analytics */}
         <AdminAnalytics />
 
+        {/* Segment Monitor */}
+        <SegmentMonitor />
+
+
         {/* Stats Card */}
         <Card className="mt-6">
           <CardHeader>
