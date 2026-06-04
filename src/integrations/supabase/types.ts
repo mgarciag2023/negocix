@@ -458,6 +458,87 @@ export type Database = {
         }
         Relationships: []
       }
+      segment_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          id: string
+          impact: string | null
+          priority: string
+          reason: string
+          recommended_action: string | null
+          resolved: boolean
+          segment_key: string
+          updated_at: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          id?: string
+          impact?: string | null
+          priority?: string
+          reason: string
+          recommended_action?: string | null
+          resolved?: boolean
+          segment_key: string
+          updated_at?: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          impact?: string | null
+          priority?: string
+          reason?: string
+          recommended_action?: string | null
+          resolved?: boolean
+          segment_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      segment_stats: {
+        Row: {
+          alerts_count: number
+          companies_count: number
+          created_at: string
+          id: string
+          last_computed_at: string
+          quality_score: number
+          segment_key: string
+          segment_label: string
+          status: string
+          terms_count: number
+          updated_at: string
+        }
+        Insert: {
+          alerts_count?: number
+          companies_count?: number
+          created_at?: string
+          id?: string
+          last_computed_at?: string
+          quality_score?: number
+          segment_key: string
+          segment_label: string
+          status?: string
+          terms_count?: number
+          updated_at?: string
+        }
+        Update: {
+          alerts_count?: number
+          companies_count?: number
+          created_at?: string
+          id?: string
+          last_computed_at?: string
+          quality_score?: number
+          segment_key?: string
+          segment_label?: string
+          status?: string
+          terms_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           description: string | null
