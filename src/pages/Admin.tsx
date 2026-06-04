@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Shield, Users, Ban, CheckCircle, Loader2, Save, KeyRound, Trash2, Search } from "lucide-react";
 import SearchLogsTable from "@/components/admin/SearchLogsTable";
 import AdminAnalytics from "@/components/admin/AdminAnalytics";
+import SegmentMonitor from "@/components/admin/SegmentMonitor";
 import {
   Table,
   TableBody,
