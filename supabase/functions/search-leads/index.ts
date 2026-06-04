@@ -1848,6 +1848,23 @@ serve(async (req) => {
       }
     }
 
+    // ===== WATCHDOG: marca log como timeout se o worker for morto por CPU/wall-time =====
+    // Evita que pesquisas fiquem para sempre com results_count=-1 / status=started.
+    if (earlyLogId) {
+      const watchdogLogId = earlyLogId;
+      const watchdogCfg = earlySearchConfig;
+      setTimeout(() => {
+        adminClient.from("search_logs")
+          .update({
+            search_config: { ...(watchdogCfg || {}), status: 'timeout', timedOut: true },
+            results_count: 0,
+          })
+          .eq('id', watchdogLogId)
+          .eq('results_count', -1) // só se ainda estiver "em execução"
+          .then(() => {}, () => {});
+      }, 380_000);
+    }
+
     const dbCacheKey = generateDbCacheKey(segment, nationwide ? 'BR_ALL' : (region || '').trim());
     const bizType = businessType || 'all';
     const filterWhatsappOnly = whatsappOnly || false;
