@@ -497,6 +497,72 @@ export type Database = {
         }
         Relationships: []
       }
+      segment_changes: {
+        Row: {
+          change_type: string
+          changed_by: string | null
+          changed_by_email: string | null
+          created_at: string
+          details: Json | null
+          id: string
+          segment_key: string
+          term: string | null
+        }
+        Insert: {
+          change_type: string
+          changed_by?: string | null
+          changed_by_email?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          segment_key: string
+          term?: string | null
+        }
+        Update: {
+          change_type?: string
+          changed_by?: string | null
+          changed_by_email?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          segment_key?: string
+          term?: string | null
+        }
+        Relationships: []
+      }
+      segment_overrides: {
+        Row: {
+          added_terms: string[]
+          created_at: string
+          id: string
+          removed_terms: string[]
+          segment_key: string
+          segment_label: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          added_terms?: string[]
+          created_at?: string
+          id?: string
+          removed_terms?: string[]
+          segment_key: string
+          segment_label: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          added_terms?: string[]
+          created_at?: string
+          id?: string
+          removed_terms?: string[]
+          segment_key?: string
+          segment_label?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       segment_stats: {
         Row: {
           alerts_count: number
@@ -536,6 +602,45 @@ export type Database = {
           status?: string
           terms_count?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      segment_suggestions: {
+        Row: {
+          decided_at: string | null
+          decided_by: string | null
+          generated_at: string
+          id: string
+          rationale: string | null
+          segment_key: string
+          segment_label: string
+          status: string
+          suggestion_type: string
+          term: string
+        }
+        Insert: {
+          decided_at?: string | null
+          decided_by?: string | null
+          generated_at?: string
+          id?: string
+          rationale?: string | null
+          segment_key: string
+          segment_label: string
+          status?: string
+          suggestion_type?: string
+          term: string
+        }
+        Update: {
+          decided_at?: string | null
+          decided_by?: string | null
+          generated_at?: string
+          id?: string
+          rationale?: string | null
+          segment_key?: string
+          segment_label?: string
+          status?: string
+          suggestion_type?: string
+          term?: string
         }
         Relationships: []
       }
