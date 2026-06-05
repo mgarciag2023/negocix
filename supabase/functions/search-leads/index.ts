@@ -1825,6 +1825,15 @@ serve(async (req) => {
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
     earlyAdminClient = adminClient;
 
+    // Carrega overrides editáveis de segmentos (admin pode adicionar/remover termos)
+    SEGMENT_OVERRIDES = new Map();
+    try {
+      const { data: ovRows } = await adminClient.from("segment_overrides").select("segment_key, added_terms, removed_terms");
+      for (const r of (ovRows || [])) SEGMENT_OVERRIDES.set(r.segment_key, r as OverrideRow);
+      if (SEGMENT_OVERRIDES.size) console.log(`🧩 ${SEGMENT_OVERRIDES.size} segment overrides loaded`);
+    } catch (e) { console.warn("overrides load failed:", (e as Error).message); }
+
+
     // ===== EARLY LOG: register the search BEFORE doing heavy work =====
     // Garante que toda tentativa de busca fique registrada, mesmo que dê timeout/erro.
     try {
