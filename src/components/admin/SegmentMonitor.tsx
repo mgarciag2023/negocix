@@ -192,6 +192,7 @@ export default function SegmentMonitor() {
                   <TableHead className="text-center">Status</TableHead>
                   <TableHead className="text-center">Alertas</TableHead>
                   <TableHead className="text-right">Atualizado</TableHead>
+                  <TableHead className="text-center">Ações</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
@@ -222,11 +223,16 @@ export default function SegmentMonitor() {
                         <TableCell className="text-right text-xs text-muted-foreground whitespace-nowrap">
                           {formatDistanceToNow(new Date(s.last_computed_at), { addSuffix: true, locale: ptBR })}
                         </TableCell>
+                        <TableCell className="text-center" onClick={e => e.stopPropagation()}>
+                          <Button size="sm" variant="outline" onClick={() => setEditLabel(s.segment_label)}>
+                            <Pencil className="h-3 w-3 mr-1" /> Editar
+                          </Button>
+                        </TableCell>
                         <TableCell>{isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}</TableCell>
                       </TableRow>
                       {isOpen && (
                         <TableRow>
-                          <TableCell colSpan={8} className="bg-muted/30">
+                          <TableCell colSpan={9} className="bg-muted/30">
                             {segAlerts.length === 0 ? (
                               <p className="text-sm text-muted-foreground py-2">Sem alertas ativos para este segmento.</p>
                             ) : (
@@ -253,10 +259,18 @@ export default function SegmentMonitor() {
             </Table>
           </div>
         )}
+
+        <SegmentEditDialog
+          open={!!editLabel}
+          label={editLabel || ""}
+          onClose={() => setEditLabel(null)}
+          onChanged={() => void load()}
+        />
       </CardContent>
     </Card>
   );
 }
+
 
 function Kpi({ label, value, hint, cls }: { label: string; value: any; hint?: string; cls?: string }) {
   return (
