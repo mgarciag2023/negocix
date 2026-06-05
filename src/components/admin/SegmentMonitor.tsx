@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Activity, AlertTriangle, CheckCircle2, RefreshCw, Search as SearchIcon, Loader2, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
+import { Activity, AlertTriangle, CheckCircle2, RefreshCw, Search as SearchIcon, Loader2, ChevronDown, ChevronUp, Sparkles, Pencil } from "lucide-react";
+import SegmentEditDialog from "./SegmentEditDialog";
 import { customerTypes } from "@/data/searchConstants";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -56,6 +57,7 @@ export default function SegmentMonitor() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [onlyWithAlerts, setOnlyWithAlerts] = useState(false);
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  const [editLabel, setEditLabel] = useState<string | null>(null);
 
   useEffect(() => { void load(); }, []);
 
