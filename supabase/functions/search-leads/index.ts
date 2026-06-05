@@ -1,6 +1,27 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// ===== SEGMENT OVERRIDES (editáveis pelo admin via manage-segment) =====
+// Map preenchido no início de cada request; aplicado em generateSearchTerms.
+type OverrideRow = { segment_key: string; added_terms: string[]; removed_terms: string[] };
+let SEGMENT_OVERRIDES: Map<string, OverrideRow> = new Map();
+function normalizeSegKey(s: string): string {
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+}
+function applySegmentOverride(segment: string, terms: string[]): string[] {
+  const key = normalizeSegKey(segment.split(",")[0]);
+  const ov = SEGMENT_OVERRIDES.get(key);
+  if (!ov) return terms;
+  const removed = new Set((ov.removed_terms || []).map(t => t.toLowerCase().trim()));
+  const out = new Set<string>();
+  for (const t of terms) if (!removed.has(t.toLowerCase().trim())) out.add(t);
+  for (const t of (ov.added_terms || [])) {
+    const tn = (t || "").trim();
+    if (tn && !removed.has(tn.toLowerCase())) out.add(tn);
+  }
+  return Array.from(out);
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
@@ -1296,7 +1317,7 @@ function generateSearchTerms(segment: string): string[] {
     searchTerms = [...new Set(baseTerms)];
   }
 
-  return searchTerms;
+  return applySegmentOverride(segment, searchTerms);
 }
 
 // ===== REGION PARSING =====
@@ -1803,6 +1824,15 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const adminClient = createClient(supabaseUrl, supabaseServiceKey);
     earlyAdminClient = adminClient;
+
+    // Carrega overrides editáveis de segmentos (admin pode adicionar/remover termos)
+    SEGMENT_OVERRIDES = new Map();
+    try {
+      const { data: ovRows } = await adminClient.from("segment_overrides").select("segment_key, added_terms, removed_terms");
+      for (const r of (ovRows || [])) SEGMENT_OVERRIDES.set(r.segment_key, r as OverrideRow);
+      if (SEGMENT_OVERRIDES.size) console.log(`🧩 ${SEGMENT_OVERRIDES.size} segment overrides loaded`);
+    } catch (e) { console.warn("overrides load failed:", (e as Error).message); }
+
 
     // ===== EARLY LOG: register the search BEFORE doing heavy work =====
     // Garante que toda tentativa de busca fique registrada, mesmo que dê timeout/erro.

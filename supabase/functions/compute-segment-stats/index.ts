@@ -4,6 +4,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { categoryTerms } from "../_shared/category-terms.ts";
+import { loadAllOverrides, effectiveTermsFor } from "../_shared/segment-overrides.ts";
 
 interface ComputeRequest {
   segments?: string[];   // labels (do customerTypes). Se vazio/ausente => "all"
@@ -119,14 +120,17 @@ Deno.serve(async (req) => {
       : Object.keys(categoryTerms);
     labels = labels.slice(0, limit);
 
+    const overrides = await loadAllOverrides(admin);
+
     const results: any[] = [];
     for (const label of labels) {
       if (Date.now() - FUNCTION_START > SOFT_TIMEOUT_MS) {
         console.warn("⏱️ Soft timeout — bailing");
         break;
       }
-      const terms = resolveTerms(label);
+      const terms = effectiveTermsFor(label, overrides);
       const segmentKey = normalize(label);
+
 
       // Conta empresas via FTS index. Usa ts_query com OR entre os 6 primeiros termos
       // (limitar termos evita explosão do tsquery).
