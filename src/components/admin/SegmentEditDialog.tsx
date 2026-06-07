@@ -6,10 +6,15 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Plus, RotateCcw, Sparkles, Trash2, Check, X, History } from "lucide-react";
+import { Loader2, Plus, RotateCcw, Sparkles, Trash2, Check, X, History, ShieldAlert, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+
+interface AuditRow {
+  id: string; lead_name: string; lead_category: string | null;
+  matched_terms: string[]; relevance_score: number; is_suspicious: boolean; created_at: string;
+}
 
 interface Suggestion {
   id: string; segment_key: string; segment_label: string;
