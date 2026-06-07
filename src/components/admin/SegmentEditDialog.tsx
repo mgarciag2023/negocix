@@ -53,7 +53,25 @@ export default function SegmentEditDialog({ open, onClose, label, onChanged }: {
     } finally { setLoading(false); }
   };
 
-  useEffect(() => { if (open) void load(); }, [open, label]);
+  useEffect(() => { if (open) { void load(); void loadAudit(); } }, [open, label]);
+
+  const loadAudit = async () => {
+    if (!label) return;
+    setAuditLoading(true);
+    try {
+      const normalize = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+      const segKey = normalize(label.split(",")[0]);
+      const { data: rows } = await supabase
+        .from("search_lead_audit")
+        .select("id, lead_name, lead_category, matched_terms, relevance_score, is_suspicious, created_at")
+        .eq("segment_key", segKey)
+        .order("created_at", { ascending: false })
+        .limit(500);
+      setAudit((rows as AuditRow[]) || []);
+    } catch (e) {
+      setAudit([]);
+    } finally { setAuditLoading(false); }
+  };
 
   const call = async (body: any, successMsg?: string) => {
     setBusy(true);
