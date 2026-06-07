@@ -38,6 +38,9 @@ export default function SegmentEditDialog({ open, onClose, label, onChanged }: {
   const [busy, setBusy] = useState(false);
   const [newTerm, setNewTerm] = useState("");
 
+  const [audit, setAudit] = useState<AuditRow[] | null>(null);
+  const [auditLoading, setAuditLoading] = useState(false);
+
   const load = async () => {
     if (!label) return;
     setLoading(true);
