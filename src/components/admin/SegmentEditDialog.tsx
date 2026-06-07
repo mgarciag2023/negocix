@@ -116,6 +116,9 @@ export default function SegmentEditDialog({ open, onClose, label, onChanged }: {
               <TabsTrigger value="history">
                 <History className="h-3 w-3 mr-1" /> Histórico ({data.history.length})
               </TabsTrigger>
+              <TabsTrigger value="audit">
+                <BarChart3 className="h-3 w-3 mr-1" /> Auditoria{audit ? ` (${audit.length})` : ""}
+              </TabsTrigger>
             </TabsList>
 
             {/* TERMOS */}
