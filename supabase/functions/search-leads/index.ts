@@ -3322,6 +3322,55 @@ serve(async (req) => {
           console.error("⚠️ Search log error:", msg);
         }
       }
+
+      // ===== AUDITORIA POR LEAD: registra termos que casaram e flag de suspeito =====
+      try {
+        const normalize = (s: string) => (s || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        const segLabel = String(segment || '');
+        const segKey = normalize(segLabel.split(',')[0]).trim();
+        if (segKey && leads.length > 0) {
+          const { data: ovRow } = await adminClient
+            .from("segment_overrides")
+            .select("added_terms, removed_terms")
+            .eq("segment_key", segKey)
+            .maybeSingle();
+          const { categoryTerms } = await import("../_shared/category-terms.ts");
+          const ct = categoryTerms as Record<string, string[]>;
+          const baseTerms: string[] = ct[segKey]
+            || (Object.entries(ct).find(([k]) => k === segKey || k.includes(segKey) || segKey.includes(k))?.[1] ?? [segKey]);
+          const removed = new Set(((ovRow?.removed_terms as string[]) || []).map((t: string) => t.toLowerCase().trim()));
+          const effectiveTerms = Array.from(new Set([
+            ...baseTerms.filter(t => !removed.has(t.toLowerCase().trim())),
+            ...((ovRow?.added_terms as string[]) || []),
+          ])).map(t => normalize(t).trim()).filter(Boolean);
+
+          const auditRows = (leads as any[]).slice(0, 30).map((l: any) => {
+            const nameNorm = normalize(l.name || '');
+            const catNorm = normalize(l.category || '');
+            const haystack = `${nameNorm} ${catNorm}`;
+            const matched = effectiveTerms.filter(t => haystack.includes(t));
+            const inName = effectiveTerms.some(t => nameNorm.includes(t));
+            const score = Math.min(100, Math.round((matched.length / Math.max(effectiveTerms.length, 1)) * 100) + (inName ? 30 : 0));
+            const isSuspicious = matched.length === 0 || (!inName && score < 25);
+            return {
+              search_log_id: earlyLogId || null,
+              user_id: effectiveUserId,
+              segment_key: segKey,
+              segment_label: segLabel,
+              lead_name: String(l.name || '').slice(0, 300),
+              lead_category: String(l.category || '').slice(0, 200),
+              matched_terms: matched.slice(0, 10),
+              relevance_score: score,
+              is_suspicious: isSuspicious,
+            };
+          });
+          if (auditRows.length > 0) {
+            await adminClient.from("search_lead_audit").insert(auditRows);
+          }
+        }
+      } catch (e) {
+        console.warn("audit insert failed:", e instanceof Error ? e.message : String(e));
+      }
     }
 
 
