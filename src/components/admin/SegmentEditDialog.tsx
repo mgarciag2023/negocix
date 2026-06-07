@@ -253,6 +253,102 @@ export default function SegmentEditDialog({ open, onClose, label, onChanged }: {
                 )}
               </ScrollArea>
             </TabsContent>
+
+            {/* AUDITORIA */}
+            <TabsContent value="audit" className="flex-1 overflow-hidden flex flex-col gap-3">
+              {auditLoading ? (
+                <div className="flex items-center justify-center py-8"><Loader2 className="h-5 w-5 animate-spin" /></div>
+              ) : !audit || audit.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  Nenhuma pesquisa registrada para este segmento ainda.
+                </p>
+              ) : (() => {
+                const total = audit.length;
+                const suspicious = audit.filter(a => a.is_suspicious).length;
+                const avgScore = Math.round(audit.reduce((s, a) => s + a.relevance_score, 0) / total);
+                // Agrupa por termo
+                const byTerm = new Map<string, { count: number; suspicious: number }>();
+                for (const a of audit) {
+                  if (a.matched_terms.length === 0) {
+                    const e = byTerm.get("(nenhum termo casou)") || { count: 0, suspicious: 0 };
+                    e.count++; e.suspicious++;
+                    byTerm.set("(nenhum termo casou)", e);
+                  } else {
+                    for (const t of a.matched_terms) {
+                      const e = byTerm.get(t) || { count: 0, suspicious: 0 };
+                      e.count++;
+                      if (a.is_suspicious) e.suspicious++;
+                      byTerm.set(t, e);
+                    }
+                  }
+                }
+                const termList = Array.from(byTerm.entries()).sort((a, b) => b[1].count - a[1].count);
+                const suspList = audit.filter(a => a.is_suspicious).slice(0, 50);
+                return (
+                  <ScrollArea className="flex-1 border rounded-md p-3">
+                    <div className="grid grid-cols-3 gap-2 mb-4">
+                      <div className="p-2 rounded bg-muted/30 border">
+                        <p className="text-xs text-muted-foreground">Leads analisados</p>
+                        <p className="text-lg font-bold">{total}</p>
+                      </div>
+                      <div className="p-2 rounded bg-muted/30 border">
+                        <p className="text-xs text-muted-foreground">Score médio</p>
+                        <p className="text-lg font-bold">{avgScore}/100</p>
+                      </div>
+                      <div className="p-2 rounded bg-muted/30 border">
+                        <p className="text-xs text-muted-foreground">Suspeitos</p>
+                        <p className={`text-lg font-bold ${suspicious > total * 0.2 ? "text-red-400" : ""}`}>
+                          {suspicious} ({Math.round(suspicious / total * 100)}%)
+                        </p>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-muted-foreground mb-2 font-semibold">DESEMPENHO POR TERMO</p>
+                    <div className="space-y-1 mb-4">
+                      {termList.map(([term, s]) => {
+                        const pctSusp = s.count > 0 ? Math.round((s.suspicious / s.count) * 100) : 0;
+                        return (
+                          <div key={term} className="flex items-center justify-between text-xs p-2 border rounded">
+                            <span className="font-mono truncate flex-1">{term}</span>
+                            <div className="flex gap-2 items-center ml-2">
+                              <Badge variant="secondary">{s.count} leads</Badge>
+                              {s.suspicious > 0 && (
+                                <Badge variant="outline" className={pctSusp > 30 ? "bg-red-500/15 text-red-400 border-red-500/30" : "bg-yellow-500/15 text-yellow-500 border-yellow-500/30"}>
+                                  {pctSusp}% susp.
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {suspList.length > 0 && (
+                      <>
+                        <p className="text-xs text-muted-foreground mb-2 font-semibold flex items-center gap-1">
+                          <ShieldAlert className="h-3 w-3 text-red-400" />
+                          LEADS SUSPEITOS ({suspList.length})
+                        </p>
+                        <div className="space-y-1">
+                          {suspList.map(a => (
+                            <div key={a.id} className="text-xs p-2 border rounded bg-red-500/5">
+                              <div className="flex justify-between gap-2">
+                                <span className="font-medium truncate">{a.lead_name}</span>
+                                <Badge variant="outline" className="text-xs">score {a.relevance_score}</Badge>
+                              </div>
+                              {a.lead_category && <p className="text-muted-foreground truncate">{a.lead_category}</p>}
+                              <p className="text-muted-foreground mt-1">
+                                Casou: {a.matched_terms.length > 0 ? a.matched_terms.join(", ") : <em>nenhum termo</em>}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </ScrollArea>
+                );
+              })()}
+            </TabsContent>
           </Tabs>
         )}
       </DialogContent>
