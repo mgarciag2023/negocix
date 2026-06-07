@@ -425,6 +425,48 @@ export type Database = {
         }
         Relationships: []
       }
+      search_lead_audit: {
+        Row: {
+          created_at: string
+          id: string
+          is_suspicious: boolean
+          lead_category: string | null
+          lead_name: string
+          matched_terms: string[]
+          relevance_score: number
+          search_log_id: string | null
+          segment_key: string
+          segment_label: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_suspicious?: boolean
+          lead_category?: string | null
+          lead_name: string
+          matched_terms?: string[]
+          relevance_score?: number
+          search_log_id?: string | null
+          segment_key: string
+          segment_label: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_suspicious?: boolean
+          lead_category?: string | null
+          lead_name?: string
+          matched_terms?: string[]
+          relevance_score?: number
+          search_log_id?: string | null
+          segment_key?: string
+          segment_label?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       search_logs: {
         Row: {
           created_at: string
