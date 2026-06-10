@@ -21,6 +21,12 @@ interface SegmentStat {
   status: string;
   alerts_count: number;
   last_computed_at: string;
+  searches_count?: number;
+  last_search_at?: string | null;
+  total_leads_returned?: number;
+  zero_result_searches?: number;
+  avg_relevance?: number;
+  suspicious_pct?: number;
 }
 
 interface SegmentAlert {
