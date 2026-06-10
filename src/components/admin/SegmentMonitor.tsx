@@ -70,7 +70,7 @@ export default function SegmentMonitor() {
   const load = async () => {
     setLoading(true);
     const [{ data: s }, { data: a }] = await Promise.all([
-      supabase.from("segment_stats").select("*").order("quality_score", { ascending: true }),
+      supabase.from("segment_stats").select("*").order("searches_count", { ascending: false }).order("quality_score", { ascending: true }),
       supabase.from("segment_alerts").select("*").eq("resolved", false),
     ]);
     setStats((s as any) || []);
