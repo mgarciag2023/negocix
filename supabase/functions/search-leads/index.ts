@@ -3367,6 +3367,17 @@ serve(async (req) => {
           if (auditRows.length > 0) {
             await adminClient.from("search_lead_audit").insert(auditRows);
           }
+
+          // Atualiza segment_stats automaticamente a partir desta e das pesquisas recentes
+          try {
+            await adminClient.rpc("refresh_segment_stats_from_audit", {
+              p_segment_key: segKey,
+              p_segment_label: segLabel,
+              p_terms_count: effectiveTerms.length,
+            });
+          } catch (e) {
+            console.warn("refresh_segment_stats_from_audit failed:", e instanceof Error ? e.message : String(e));
+          }
         }
       } catch (e) {
         console.warn("audit insert failed:", e instanceof Error ? e.message : String(e));

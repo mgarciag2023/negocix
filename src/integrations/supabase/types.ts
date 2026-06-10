@@ -608,42 +608,60 @@ export type Database = {
       segment_stats: {
         Row: {
           alerts_count: number
+          avg_relevance: number
           companies_count: number
           created_at: string
           id: string
           last_computed_at: string
+          last_search_at: string | null
           quality_score: number
+          searches_count: number
           segment_key: string
           segment_label: string
           status: string
+          suspicious_pct: number
           terms_count: number
+          total_leads_returned: number
           updated_at: string
+          zero_result_searches: number
         }
         Insert: {
           alerts_count?: number
+          avg_relevance?: number
           companies_count?: number
           created_at?: string
           id?: string
           last_computed_at?: string
+          last_search_at?: string | null
           quality_score?: number
+          searches_count?: number
           segment_key: string
           segment_label: string
           status?: string
+          suspicious_pct?: number
           terms_count?: number
+          total_leads_returned?: number
           updated_at?: string
+          zero_result_searches?: number
         }
         Update: {
           alerts_count?: number
+          avg_relevance?: number
           companies_count?: number
           created_at?: string
           id?: string
           last_computed_at?: string
+          last_search_at?: string | null
           quality_score?: number
+          searches_count?: number
           segment_key?: string
           segment_label?: string
           status?: string
+          suspicious_pct?: number
           terms_count?: number
+          total_leads_returned?: number
           updated_at?: string
+          zero_result_searches?: number
         }
         Relationships: []
       }
@@ -890,6 +908,14 @@ export type Database = {
       populate_search_vector_batch: {
         Args: { p_batch_size?: number; p_estado: string }
         Returns: number
+      }
+      refresh_segment_stats_from_audit: {
+        Args: {
+          p_segment_key: string
+          p_segment_label: string
+          p_terms_count?: number
+        }
+        Returns: undefined
       }
       search_companies: {
         Args: {
