@@ -193,11 +193,15 @@ export default function SegmentMonitor() {
                 <TableRow>
                   <TableHead>Segmento</TableHead>
                   <TableHead className="text-center">Termos</TableHead>
-                  <TableHead className="text-center">Empresas</TableHead>
+                  <TableHead className="text-center">Pesquisas (30d)</TableHead>
+                  <TableHead className="text-center">Sem result.</TableHead>
+                  <TableHead className="text-center">Leads</TableHead>
+                  <TableHead className="text-center">Relev.</TableHead>
+                  <TableHead className="text-center">Susp.</TableHead>
                   <TableHead className="text-center">Score</TableHead>
                   <TableHead className="text-center">Status</TableHead>
                   <TableHead className="text-center">Alertas</TableHead>
-                  <TableHead className="text-right">Atualizado</TableHead>
+                  <TableHead className="text-right">Últ. pesquisa</TableHead>
                   <TableHead className="text-center">Ações</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
