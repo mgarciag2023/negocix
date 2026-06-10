@@ -216,7 +216,23 @@ export default function SegmentMonitor() {
                       <TableRow key={s.segment_key} className="cursor-pointer" onClick={() => setExpandedKey(isOpen ? null : s.segment_key)}>
                         <TableCell className="font-medium">{s.segment_label}</TableCell>
                         <TableCell className="text-center">{s.terms_count}</TableCell>
-                        <TableCell className="text-center">{s.companies_count.toLocaleString("pt-BR")}</TableCell>
+                        <TableCell className="text-center">{(s.searches_count ?? 0).toLocaleString("pt-BR")}</TableCell>
+                        <TableCell className="text-center">
+                          {(s.zero_result_searches ?? 0) > 0 ? (
+                            <span className="text-red-400 font-medium">{s.zero_result_searches}</span>
+                          ) : <span className="text-muted-foreground">—</span>}
+                        </TableCell>
+                        <TableCell className="text-center">{(s.total_leads_returned ?? s.companies_count).toLocaleString("pt-BR")}</TableCell>
+                        <TableCell className="text-center">
+                          <span className={(s.avg_relevance ?? 0) >= 60 ? "text-green-400" : (s.avg_relevance ?? 0) >= 35 ? "text-amber-400" : "text-red-400"}>
+                            {s.avg_relevance ?? 0}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className={(s.suspicious_pct ?? 0) <= 15 ? "text-green-400" : (s.suspicious_pct ?? 0) <= 35 ? "text-amber-400" : "text-red-400"}>
+                            {s.suspicious_pct ?? 0}%
+                          </span>
+                        </TableCell>
                         <TableCell className="text-center">
                           <span className={`font-bold ${s.quality_score >= 75 ? "text-green-400" : s.quality_score >= 50 ? "text-amber-400" : "text-red-400"}`}>
                             {s.quality_score}
@@ -231,7 +247,9 @@ export default function SegmentMonitor() {
                           ) : <span className="text-muted-foreground">—</span>}
                         </TableCell>
                         <TableCell className="text-right text-xs text-muted-foreground whitespace-nowrap">
-                          {formatDistanceToNow(new Date(s.last_computed_at), { addSuffix: true, locale: ptBR })}
+                          {s.last_search_at
+                            ? formatDistanceToNow(new Date(s.last_search_at), { addSuffix: true, locale: ptBR })
+                            : <span className="text-muted-foreground">nunca</span>}
                         </TableCell>
                         <TableCell className="text-center" onClick={e => e.stopPropagation()}>
                           <Button size="sm" variant="outline" onClick={() => setEditLabel(s.segment_label)}>
@@ -242,7 +260,7 @@ export default function SegmentMonitor() {
                       </TableRow>
                       {isOpen && (
                         <TableRow>
-                          <TableCell colSpan={9} className="bg-muted/30">
+                          <TableCell colSpan={14} className="bg-muted/30">
                             {segAlerts.length === 0 ? (
                               <p className="text-sm text-muted-foreground py-2">Sem alertas ativos para este segmento.</p>
                             ) : (
