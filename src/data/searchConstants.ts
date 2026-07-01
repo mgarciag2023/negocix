@@ -296,6 +296,7 @@ export const customerTypes = [
   "Concessionárias",
   "Retíficas de Motores",
   "Autovidros",
+  "Lojas de Rodas Esportivas",
   "Empresas de Estética Automotiva",
 
   // Agropecuária
