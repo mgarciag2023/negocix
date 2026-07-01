@@ -1879,20 +1879,26 @@ serve(async (req) => {
     }
 
     // ===== WATCHDOG: marca log como timeout se o worker for morto por CPU/wall-time =====
-    // Evita que pesquisas fiquem para sempre com results_count=-1 / status=started.
+    // Fire cedo (90s) e usa EdgeRuntime.waitUntil para sobreviver ao teardown do isolate.
     if (earlyLogId) {
       const watchdogLogId = earlyLogId;
       const watchdogCfg = earlySearchConfig;
-      setTimeout(() => {
-        adminClient.from("search_logs")
-          .update({
-            search_config: { ...(watchdogCfg || {}), status: 'timeout', timedOut: true },
-            results_count: 0,
-          })
-          .eq('id', watchdogLogId)
-          .eq('results_count', -1) // só se ainda estiver "em execução"
-          .then(() => {}, () => {});
-      }, 380_000);
+      const watchdogPromise = new Promise<void>((resolve) => {
+        setTimeout(async () => {
+          try {
+            await adminClient.from("search_logs")
+              .update({
+                search_config: { ...(watchdogCfg || {}), status: 'timeout', timedOut: true },
+                results_count: 0,
+              })
+              .eq('id', watchdogLogId)
+              .eq('results_count', -1);
+          } catch (_e) { /* ignore */ }
+          resolve();
+        }, 90_000);
+      });
+      // @ts-ignore Deno edge runtime
+      try { (globalThis as any).EdgeRuntime?.waitUntil?.(watchdogPromise); } catch (_e) {}
     }
 
     const dbCacheKey = generateDbCacheKey(segment, nationwide ? 'BR_ALL' : (region || '').trim());
