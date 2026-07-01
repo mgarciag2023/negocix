@@ -1791,7 +1791,7 @@ serve(async (req) => {
   // Time guard: track when we started so we can bail before Supabase kills us
   const FUNCTION_START = Date.now();
   const MAX_EXECUTION_MS = 395_000; // 395s safety margin (Supabase Pro hard limit ~400s)
-  const SOFT_TIMEOUT_MS = 50_000; // 50s — return partial results well before CPU limit is hit
+  const SOFT_TIMEOUT_MS = 40_000; // 40s — return partial results well before CPU limit is hit
   const isNearTimeout = () => (Date.now() - FUNCTION_START) > MAX_EXECUTION_MS;
   const isNearSoftTimeout = () => (Date.now() - FUNCTION_START) > SOFT_TIMEOUT_MS;
 
@@ -1879,20 +1879,26 @@ serve(async (req) => {
     }
 
     // ===== WATCHDOG: marca log como timeout se o worker for morto por CPU/wall-time =====
-    // Evita que pesquisas fiquem para sempre com results_count=-1 / status=started.
+    // Fire cedo (90s) e usa EdgeRuntime.waitUntil para sobreviver ao teardown do isolate.
     if (earlyLogId) {
       const watchdogLogId = earlyLogId;
       const watchdogCfg = earlySearchConfig;
-      setTimeout(() => {
-        adminClient.from("search_logs")
-          .update({
-            search_config: { ...(watchdogCfg || {}), status: 'timeout', timedOut: true },
-            results_count: 0,
-          })
-          .eq('id', watchdogLogId)
-          .eq('results_count', -1) // só se ainda estiver "em execução"
-          .then(() => {}, () => {});
-      }, 380_000);
+      const watchdogPromise = new Promise<void>((resolve) => {
+        setTimeout(async () => {
+          try {
+            await adminClient.from("search_logs")
+              .update({
+                search_config: { ...(watchdogCfg || {}), status: 'timeout', timedOut: true },
+                results_count: 0,
+              })
+              .eq('id', watchdogLogId)
+              .eq('results_count', -1);
+          } catch (_e) { /* ignore */ }
+          resolve();
+        }, 90_000);
+      });
+      // @ts-ignore Deno edge runtime
+      try { (globalThis as any).EdgeRuntime?.waitUntil?.(watchdogPromise); } catch (_e) {}
     }
 
     const dbCacheKey = generateDbCacheKey(segment, nationwide ? 'BR_ALL' : (region || '').trim());
@@ -2057,7 +2063,7 @@ serve(async (req) => {
 
     // 🛡️ Hard cap on segments per request: 30+ categorias misturadas
     // estouravam CPU/wall-time do worker e geravam 0 leads ou status=-1.
-    const MAX_SEGMENTS = 15;
+    const MAX_SEGMENTS = 8;
     let segmentsTruncated = false;
     if (segments.length > MAX_SEGMENTS) {
       console.warn(`⚠️ Too many segments (${segments.length}). Processing only first ${MAX_SEGMENTS}.`);
