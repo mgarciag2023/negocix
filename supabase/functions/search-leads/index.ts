@@ -2063,7 +2063,7 @@ serve(async (req) => {
 
     // 🛡️ Hard cap on segments per request: 30+ categorias misturadas
     // estouravam CPU/wall-time do worker e geravam 0 leads ou status=-1.
-    const MAX_SEGMENTS = 15;
+    const MAX_SEGMENTS = 8;
     let segmentsTruncated = false;
     if (segments.length > MAX_SEGMENTS) {
       console.warn(`⚠️ Too many segments (${segments.length}). Processing only first ${MAX_SEGMENTS}.`);
