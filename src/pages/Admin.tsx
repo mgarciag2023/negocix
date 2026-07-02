@@ -237,44 +237,47 @@ const Admin = () => {
           </div>
         </div>
 
-        {/* Analytics */}
-        <AdminAnalytics />
+        <Tabs defaultValue="pesquisas" className="w-full">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="pesquisas" className="gap-2">
+              <BarChart3 className="h-4 w-4" /> Pesquisas
+            </TabsTrigger>
+            <TabsTrigger value="usuarios" className="gap-2">
+              <Users className="h-4 w-4" /> Usuários
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Segment Monitor */}
-        <SegmentMonitor />
+          <TabsContent value="pesquisas" className="space-y-6 mt-6">
+            <AdminAnalytics />
+            <SegmentMonitor />
+            <SearchLogsTable />
+          </TabsContent>
 
+          <TabsContent value="usuarios" className="space-y-6 mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Estatísticas
+                </CardTitle>
+                <CardDescription>Resumo dos usuários do sistema</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 rounded-lg bg-muted/50">
+                    <p className="text-2xl font-bold">{profiles.length}</p>
+                    <p className="text-sm text-muted-foreground">Total de usuários</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted/50">
+                    <p className="text-2xl font-bold text-destructive">
+                      {profiles.filter((p) => p.is_blocked).length}
+                    </p>
+                    <p className="text-sm text-muted-foreground">Usuários bloqueados</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-        {/* Stats Card */}
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Estatísticas
-            </CardTitle>
-            <CardDescription>
-              Resumo dos usuários do sistema
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-lg bg-muted/50">
-                <p className="text-2xl font-bold">{profiles.length}</p>
-                <p className="text-sm text-muted-foreground">Total de usuários</p>
-              </div>
-              <div className="p-4 rounded-lg bg-muted/50">
-                <p className="text-2xl font-bold text-destructive">
-                  {profiles.filter((p) => p.is_blocked).length}
-                </p>
-                <p className="text-sm text-muted-foreground">Usuários bloqueados</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Search Logs */}
-        <div className="mt-6">
-          <SearchLogsTable />
-        </div>
 
         {/* Users Table */}
         <Card className="mt-6">
