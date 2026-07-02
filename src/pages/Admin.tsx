@@ -474,6 +474,10 @@ const Admin = () => {
             </div>
           </CardContent>
         </Card>
+          </TabsContent>
+        </Tabs>
+
+
 
 
         {/* Password Reset Dialog */}
