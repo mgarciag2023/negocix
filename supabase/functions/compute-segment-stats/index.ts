@@ -132,61 +132,29 @@ Deno.serve(async (req) => {
       const segmentKey = normalize(label);
 
 
-      // Conta empresas via FTS index. Usa ts_query com OR entre os 6 primeiros termos
-      // (limitar termos evita explosão do tsquery).
-      const tsTerms = terms.slice(0, 6).map(t => t.replace(/[':!&|()]/g, " ").trim()).filter(Boolean);
-      const tsQuery = tsTerms.length > 0
-        ? tsTerms.map(t => t.split(/\s+/).join(" & ")).map(t => `(${t})`).join(" | ")
-        : "";
+      // O monitoramento precisa refletir as pesquisas reais dos usuários, não uma
+      // contagem teórica do catálogo. A função do banco consolida search_logs + auditoria.
+      const { error: refreshError } = await admin.rpc("refresh_segment_stats_from_audit", {
+        p_segment_key: segmentKey,
+        p_segment_label: label,
+        p_terms_count: terms.length,
+      });
+      if (refreshError) throw refreshError;
 
-      let companiesCount = 0;
-      if (tsQuery) {
-        try {
-          // Usa head:true + count: 'planned' para ser rápido em índice
-          const { count, error } = await admin
-            .from("companies")
-            .select("id", { count: "estimated", head: true })
-            .eq("situacao_cadastral", "ATIVA")
-            .textSearch("search_vector", tsQuery, { config: "portuguese" });
-          if (!error && typeof count === "number") {
-            companiesCount = Math.min(count, COUNT_CAP * 1000);
-          }
-        } catch (e) {
-          console.warn(`count failed "${label}":`, (e as Error).message);
-        }
-      }
+      const { data: refreshed } = await admin
+        .from("segment_stats")
+        .select("companies_count, quality_score, status, alerts_count")
+        .eq("segment_key", segmentKey)
+        .maybeSingle();
 
-      const { score, status } = computeScore(terms.length, companiesCount);
-      const alerts = deriveAlerts(terms.length, companiesCount);
-
-      // Upsert stats
-      await admin.from("segment_stats").upsert({
-        segment_key: segmentKey,
-        segment_label: label,
-        terms_count: terms.length,
-        companies_count: companiesCount,
-        quality_score: score,
-        status,
-        alerts_count: alerts.length,
-        last_computed_at: new Date().toISOString(),
-      }, { onConflict: "segment_key" });
-
-      // Limpa alertas antigos não-resolvidos deste segmento e insere os novos
-      await admin.from("segment_alerts").delete().eq("segment_key", segmentKey).eq("resolved", false);
-      if (alerts.length > 0) {
-        await admin.from("segment_alerts").insert(
-          alerts.map(a => ({
-            segment_key: segmentKey,
-            alert_type: a.type,
-            priority: a.priority,
-            reason: a.reason,
-            impact: a.impact,
-            recommended_action: a.action,
-          }))
-        );
-      }
-
-      results.push({ label, terms: terms.length, companies: companiesCount, score, status, alerts: alerts.length });
+      results.push({
+        label,
+        terms: terms.length,
+        companies: refreshed?.companies_count ?? 0,
+        score: refreshed?.quality_score ?? 0,
+        status: refreshed?.status ?? "unknown",
+        alerts: refreshed?.alerts_count ?? 0,
+      });
     }
 
     return new Response(JSON.stringify({ ok: true, processed: results.length, results }), {
