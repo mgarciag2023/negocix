@@ -284,7 +284,7 @@ function generateSearchTerms(segment: string): string[] {
     // ===== CONSTRUÇÃO CIVIL =====
     'materiais de construção': ['material de construcao', 'material de construção', 'materiais de construcao', 'materiais de construção', 'home center', 'homecenter', 'deposito de construcao', 'depósito de construção', 'deposito de materiais de construcao', 'depósito de materiais de construção', 'casa de construcao', 'casa de construção', 'casa do construtor', 'loja de construcao', 'loja de construção', 'loja de materiais de construcao', 'loja de materiais de construção', 'comercio de materiais de construcao', 'comércio de materiais de construção', 'comercial de construcao', 'comercial de construção', 'centro de construcao', 'centro de construção', 'mundo da construcao', 'mundo da construção', 'madeireira', 'leroy merlin', 'telhanorte', 'tend tudo', 'casa show', 'balaroti', 'quero quero', 'cassol', 'loja construcao', 'loja construção', 'loja material', 'loja materiais', 'loja constru', 'casa construcao', 'casa construção', 'casa material', 'casa materiais', 'comercial construcao', 'comercial construção', 'comercial material', 'comercial materiais', 'comercio construcao', 'comércio construção', 'comercio material', 'comercio materiais', 'centro construcao', 'centro construção', 'deposito material', 'depósito material', 'deposito materiais', 'depósito materiais'],
     'depósitos de materiais de construção': ['deposito de construcao', 'depósito de construção', 'deposito de materiais de construcao', 'depósito de materiais de construção', 'deposito de obra', 'depósito de obra', 'home center', 'homecenter', 'casa de construcao', 'casa de construção', 'casa do construtor', 'loja de construcao', 'loja de construção', 'comercial de construcao', 'comercial de construção', 'leroy merlin', 'telhanorte', 'balaroti', 'quero quero', 'cassol', 'tend tudo', 'casa show', 'deposito construcao', 'depósito construção', 'deposito material', 'depósito material', 'deposito materiais', 'depósito materiais', 'deposito obra', 'depósito obra', 'loja construcao', 'loja construção', 'loja material', 'loja materiais', 'casa construcao', 'casa construção', 'casa material', 'casa materiais', 'comercial construcao', 'comercial construção'],
-    'construtoras': ['construtora', 'construtoras', 'construcoes', 'construções', 'construcao civil', 'construção civil', 'empreiteira', 'empreiteiras', 'incorporadora', 'incorporadoras', 'engenharia civil', 'engenharia e construcao', 'obras e servicos', 'edificacoes', 'edificações', 'construtora e incorporadora', 'obras civis', 'engenharia e empreendimentos', 'empreendimentos imobiliarios', 'empreendimentos imobiliários', 'incorporacao imobiliaria', 'incorporação imobiliária', 'obras e edificacoes', 'obras e edificações', 'engenharia construcao', 'engenharia construção', 'obra civil', 'reformas e construcoes', 'predial', 'edificios', 'edifícios', 'urbanismo', 'loteadora', 'loteamentos', 'engenharia predial'],
+    'construtoras': ['construtora', 'construtoras', 'construcao', 'construção', 'construcoes', 'construções', 'construcao civil', 'construção civil', 'empreiteira', 'empreiteiras', 'incorporadora', 'incorporadoras', 'incorporacao', 'incorporação', 'incorporacoes', 'incorporações', 'engenharia civil', 'engenharia e construcao', 'obras e servicos', 'edificacoes', 'edificações', 'construtora e incorporadora', 'obras civis', 'engenharia e empreendimentos', 'empreendimento imobiliario', 'empreendimento imobiliário', 'empreendimentos imobiliarios', 'empreendimentos imobiliários', 'incorporacao imobiliaria', 'incorporação imobiliária', 'obras e edificacoes', 'obras e edificações', 'engenharia construcao', 'engenharia construção', 'obra civil', 'reformas e construcoes', 'predial', 'edificios', 'edifícios', 'urbanismo', 'loteadora', 'loteamento', 'loteamentos', 'engenharia predial'],
     'empreiteiras': ['empreiteira', 'empreiteiras', 'empreiteira de obras', 'construcao civil', 'construção civil', 'obra', 'obras civis', 'subempreiteira', 'mao de obra para construcao', 'mão de obra para construção', 'empreitada', 'empreitada de obras', 'empresa de obras', 'prestadora de servicos para construcao', 'execucao de obras', 'execução de obras', 'gerenciadora de obras', 'gerenciamento de obras', 'construtora terceirizada', 'engenharia civil', 'servicos de engenharia', 'serviços de engenharia', 'reformas e construcao', 'mao de obra civil', 'empreiteira predial', 'empreiteira industrial'],
     'incorporadoras': ['incorporadora', 'incorporadoras', 'incorporacao', 'incorporação', 'incorporacao imobiliaria', 'empreendimento imobiliario', 'empreendimentos imobiliarios', 'empreendimento residencial', 'empreendimento comercial', 'incorporadora e construtora', 'construtora e incorporadora', 'desenvolvimento imobiliario', 'lancamento imobiliario', 'lançamento imobiliário', 'lancamentos imobiliarios', 'lancamento residencial', 'lancamento comercial', 'condominio em construcao', 'incorporadora de imoveis', 'incorporadora de imóveis', 'cyrela incorporadora', 'mrv incorporadora', 'gafisa incorporadora', 'tenda incorporadora', 'eztec incorporadora', 'helbor incorporadora', 'jhsf incorporadora', 'incorporadora de luxo', 'incorporadora de alto padrao', 'incorporadora de alto padrão', 'incorporadora minha casa minha vida', 'mcmv incorporadora', 'sbpe incorporadora', 'incorporadora vertical', 'incorporadora horizontal', 'condominio fechado incorporadora', 'incorporadora condominio', 'plano e plano incorporadora', 'tegra incorporadora', 'mitre incorporadora'],
     'lojas de pisos e azulejos': ['pisos', 'azulejos', 'ceramica', 'cerâmica', 'porcelanato', 'loja de pisos', 'loja de azulejos', 'loja de porcelanato', 'revestimentos cerâmicos', 'revestimentos ceramicos', 'pisos e revestimentos', 'pastilhas', 'pastilha de vidro', 'pisos laminados', 'piso laminado', 'piso vinilico', 'piso vinílico', 'piso de madeira', 'pisos vinílicos', 'porcelanato polido', 'porcelanato acetinado', 'casa do porcelanato', 'casa do azulejo', 'mundo dos pisos', 'rei do piso', 'império dos pisos', 'pisos premium', 'porcelanato premium', 'cerâmica e porcelanato', 'pisos e azulejos loja', 'piso ceramico', 'piso cerâmico', 'casa de revestimentos', 'revestimentos para parede', 'pisos para área externa', 'pisos antiderrapantes'],
@@ -3331,38 +3331,70 @@ serve(async (req) => {
 
       // ===== AUDITORIA POR LEAD: registra termos que casaram e flag de suspeito =====
       try {
-        const normalize = (s: string) => (s || '').normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-        const segLabel = String(segment || '');
-        const segKey = normalize(segLabel.split(',')[0]).trim();
-        if (segKey && leads.length > 0) {
-          const { data: ovRow } = await adminClient
-            .from("segment_overrides")
-            .select("added_terms, removed_terms")
-            .eq("segment_key", segKey)
-            .maybeSingle();
+        const normalize = (s: string) => (s || '')
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase()
+          .replace(/[^a-z0-9\s]/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+        const selectedSegments = Array.isArray(segments) && segments.length > 0 ? segments.map(String) : [String(segment || '')].filter(Boolean);
+        const displayForSegment = (seg: string) => {
+          const lower = seg.toLowerCase();
+          let display = seg;
+          if (lower.endsWith('rias')) display = seg.slice(0, -1);
+          else if (lower.endsWith('as') && lower.length > 4) display = seg.slice(0, -1);
+          return display.charAt(0).toUpperCase() + display.slice(1);
+        };
+        const displayToSegment = new Map<string, string>();
+        for (const seg of selectedSegments) displayToSegment.set(normalize(displayForSegment(seg)), seg);
+
+        if (selectedSegments.length > 0 && leads.length > 0) {
           const { categoryTerms } = await import("../_shared/category-terms.ts");
           const ct = categoryTerms as Record<string, string[]>;
-          const baseTerms: string[] = ct[segKey]
-            || (Object.entries(ct).find(([k]) => k === segKey || k.includes(segKey) || segKey.includes(k))?.[1] ?? [segKey]);
-          const removed = new Set(((ovRow?.removed_terms as string[]) || []).map((t: string) => t.toLowerCase().trim()));
-          const effectiveTerms = Array.from(new Set([
-            ...baseTerms.filter(t => !removed.has(t.toLowerCase().trim())),
-            ...((ovRow?.added_terms as string[]) || []),
-          ])).map(t => normalize(t).trim()).filter(Boolean);
 
+          const termsCache = new Map<string, string[]>();
+          const resolveSegmentForLead = (leadCategory: string) => {
+            const categoryKey = normalize(leadCategory);
+            return displayToSegment.get(categoryKey) || (selectedSegments.length === 1 ? selectedSegments[0] : selectedSegments[0]);
+          };
+          const effectiveTermsFor = (segLabel: string) => {
+            const segKey = normalize(segLabel.split(',')[0]);
+            if (termsCache.has(segKey)) return termsCache.get(segKey)!;
+            const baseTerms: string[] = ct[segKey]
+              || (Object.entries(ct).find(([k]) => k === segKey || k.includes(segKey) || segKey.includes(k))?.[1] ?? [segKey]);
+            const ov = SEGMENT_OVERRIDES.get(segKey);
+            const removed = new Set(((ov?.removed_terms as string[]) || []).map((t: string) => normalize(t)));
+            const effective = Array.from(new Set([
+              ...baseTerms.map(t => normalize(t)).filter(t => t && !removed.has(t)),
+              ...((ov?.added_terms as string[]) || []).map(t => normalize(t)).filter(t => t && !removed.has(t)),
+            ])).filter(Boolean);
+            termsCache.set(segKey, effective);
+            return effective;
+          };
+
+          const refreshedSegments = new Map<string, { label: string; termsCount: number }>();
           const auditRows = (leads as any[]).slice(0, 30).map((l: any) => {
-            const nameNorm = normalize(l.name || '');
-            const catNorm = normalize(l.category || '');
-            const haystack = `${nameNorm} ${catNorm}`;
-            const matched = effectiveTerms.filter(t => haystack.includes(t));
-            const inName = effectiveTerms.some(t => nameNorm.includes(t));
-            const score = Math.min(100, Math.round((matched.length / Math.max(effectiveTerms.length, 1)) * 100) + (inName ? 30 : 0));
-            const isSuspicious = matched.length === 0 || (!inName && score < 25);
+            const auditSegmentLabel = resolveSegmentForLead(String(l.category || ''));
+            const auditSegmentKey = normalize(auditSegmentLabel.split(',')[0]);
+            const effectiveTerms = effectiveTermsFor(auditSegmentLabel);
+            refreshedSegments.set(auditSegmentKey, { label: auditSegmentLabel, termsCount: effectiveTerms.length });
+
+            // Confiabilidade do monitor: validar somente pelo NOME REAL da empresa.
+            // Usa nome exibido + razão social + nome fantasia; NÃO usa a categoria gerada pelo app,
+            // pois isso criava falso positivo/falso alerta em pesquisas multi-segmento.
+            const companyNameText = normalize([l.name, l.razaoSocial, l.nomeFantasia].filter(Boolean).join(' '));
+            const matched = effectiveTerms.filter(t => companyNameText.includes(t));
+            const phraseMatches = matched.filter(t => t.includes(' ')).length;
+            const score = matched.length === 0
+              ? 0
+              : Math.min(100, 70 + Math.min(matched.length, 4) * 5 + phraseMatches * 10);
+            const isSuspicious = matched.length === 0;
             return {
               search_log_id: earlyLogId || null,
               user_id: effectiveUserId,
-              segment_key: segKey,
-              segment_label: segLabel,
+              segment_key: auditSegmentKey,
+              segment_label: auditSegmentLabel,
               lead_name: String(l.name || '').slice(0, 300),
               lead_category: String(l.category || '').slice(0, 200),
               matched_terms: matched.slice(0, 10),
@@ -3376,11 +3408,13 @@ serve(async (req) => {
 
           // Atualiza segment_stats automaticamente a partir desta e das pesquisas recentes
           try {
-            await adminClient.rpc("refresh_segment_stats_from_audit", {
-              p_segment_key: segKey,
-              p_segment_label: segLabel,
-              p_terms_count: effectiveTerms.length,
-            });
+            for (const [segKey, meta] of refreshedSegments.entries()) {
+              await adminClient.rpc("refresh_segment_stats_from_audit", {
+                p_segment_key: segKey,
+                p_segment_label: meta.label,
+                p_terms_count: meta.termsCount,
+              });
+            }
           } catch (e) {
             console.warn("refresh_segment_stats_from_audit failed:", e instanceof Error ? e.message : String(e));
           }
