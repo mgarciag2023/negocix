@@ -1879,7 +1879,8 @@ serve(async (req) => {
     }
 
     // ===== WATCHDOG: marca log como timeout se o worker for morto por CPU/wall-time =====
-    // Fire cedo (90s) e usa EdgeRuntime.waitUntil para sobreviver ao teardown do isolate.
+    // Fire tarde (300s) para não marcar como timeout uma busca que ainda está em andamento.
+    // O limite real do edge function é 380s; a busca costuma terminar antes.
     if (earlyLogId) {
       const watchdogLogId = earlyLogId;
       const watchdogCfg = earlySearchConfig;
@@ -1895,7 +1896,7 @@ serve(async (req) => {
               .eq('results_count', -1);
           } catch (_e) { /* ignore */ }
           resolve();
-        }, 90_000);
+        }, 300_000);
       });
       // @ts-ignore Deno edge runtime
       try { (globalThis as any).EdgeRuntime?.waitUntil?.(watchdogPromise); } catch (_e) {}
