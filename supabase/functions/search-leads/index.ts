@@ -1879,8 +1879,7 @@ serve(async (req) => {
     }
 
     // ===== WATCHDOG: marca log como timeout se o worker for morto por CPU/wall-time =====
-    // Fire tarde (300s) para não marcar como timeout uma busca que ainda está em andamento.
-    // O limite real do edge function é 380s; a busca costuma terminar antes.
+    // Fire antes do limite real para evitar histórico preso em results_count=-1.
     if (earlyLogId) {
       const watchdogLogId = earlyLogId;
       const watchdogCfg = earlySearchConfig;
@@ -1896,7 +1895,7 @@ serve(async (req) => {
               .eq('results_count', -1);
           } catch (_e) { /* ignore */ }
           resolve();
-        }, 300_000);
+        }, 120_000);
       });
       // @ts-ignore Deno edge runtime
       try { (globalThis as any).EdgeRuntime?.waitUntil?.(watchdogPromise); } catch (_e) {}
@@ -2064,7 +2063,8 @@ serve(async (req) => {
 
     // 🛡️ Hard cap on segments per request: 30+ categorias misturadas
     // estouravam CPU/wall-time do worker e geravam 0 leads ou status=-1.
-    const MAX_SEGMENTS = 8;
+    // Em busca por cidade específica, usamos varredura local leve e podemos aceitar mais segmentos.
+    const MAX_SEGMENTS = city && state && !isStateOnly && !nationwide ? 20 : 8;
     let segmentsTruncated = false;
     if (segments.length > MAX_SEGMENTS) {
       console.warn(`⚠️ Too many segments (${segments.length}). Processing only first ${MAX_SEGMENTS}.`);
@@ -2099,6 +2099,95 @@ serve(async (req) => {
     const isHeavySearch = segments.length >= 4 || nationwide;
     // Nacional: cap mais baixo + amostragem (35M registros tornam paginação completa inviável)
     const MAX_TOTAL_RAW = nationwide ? 20_000 : (isStateOnly ? 30_000 : 50_000);
+
+    async function fetchCityNameScan(): Promise<any[] | null> {
+      if (!city || !state || isStateOnly || nationwide || !isHeavySearch) return null;
+
+      const CITY_SCAN_LIMIT = 50_000;
+      const CITY_SCAN_PAGE = 1000;
+      const CITY_SCAN_CONCURRENCY = 4;
+
+      const { count, error: countErr } = await adminClient
+        .from('companies')
+        .select('id', { count: 'exact', head: true })
+        .eq('estado', state)
+        .eq('cidade', city)
+        .eq('situacao_cadastral', 'ATIVA');
+
+      if (countErr) {
+        console.warn(`⚠️ City scan count failed (${city}/${state}): ${countErr.message}`);
+        return null;
+      }
+
+      const totalInCity = count || 0;
+      if (totalInCity <= 0 || totalInCity > CITY_SCAN_LIMIT) {
+        console.log(`⏭️ City scan skipped: ${totalInCity} active companies in ${city}/${state}`);
+        return null;
+      }
+
+      const normalizeTerm = (s: string) => (s || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      const segmentTerms = segments.map((seg: string) => ({
+        segment: seg,
+        terms: Array.from(new Set(generateSearchTerms(seg).map(normalizeTerm).filter((t: string) => t.length >= 3))),
+      }));
+
+      console.log(`🚀 City name scan: ${totalInCity} empresas em ${city}/${state}, ${segments.length} segmentos`);
+      const pages = Math.ceil(totalInCity / CITY_SCAN_PAGE);
+      const rowsByPage: any[][] = new Array(pages);
+      let pageCursor = 0;
+      const workers = Array.from({ length: Math.min(CITY_SCAN_CONCURRENCY, pages) }, async () => {
+        while (true) {
+          const p = pageCursor++;
+          if (p >= pages || isNearSoftTimeout()) break;
+          const from = p * CITY_SCAN_PAGE;
+          const to = from + CITY_SCAN_PAGE - 1;
+          const { data, error } = await adminClient
+            .from('companies')
+            .select('*')
+            .eq('estado', state)
+            .eq('cidade', city)
+            .eq('situacao_cadastral', 'ATIVA')
+            .range(from, to);
+          if (error) {
+            console.warn(`⚠️ City scan page ${p} skipped: ${(error.message || '').slice(0, 150)}`);
+            rowsByPage[p] = [];
+          } else {
+            rowsByPage[p] = data || [];
+          }
+        }
+      });
+      await Promise.all(workers);
+
+      const matched: any[] = [];
+      const seenIds = new Set<string>();
+      for (const pageRows of rowsByPage) {
+        for (const c of pageRows || []) {
+          if (seenIds.has(c.id)) continue;
+          if (!isPhoneValid(c.telefone_1) && !isPhoneValid(c.telefone_2)) continue;
+          const nameText = normalizeTerm([c.nome_fantasia, c.razao_social].filter(Boolean).join(' '));
+          if (!nameText) continue;
+          const hit = segmentTerms.find(({ terms }: { segment: string; terms: string[] }) => terms.some(t => nameText.includes(t)));
+          if (!hit) continue;
+          seenIds.add(c.id);
+          matched.push({ ...c, _segment: hit.segment });
+        }
+      }
+
+      console.log(`✅ City name scan matched ${matched.length} empresas em ${Date.now() - FUNCTION_START}ms`);
+      return matched;
+    }
+
+    const cityScanResults = await fetchCityNameScan();
+    const usedCityNameScan = Array.isArray(cityScanResults);
+    if (usedCityNameScan) {
+      allCompanies = cityScanResults.slice(0, MAX_TOTAL_RAW);
+    }
 
     // Fetch a single segment using paginated queries (SDK caps RPC at 1000 rows)
     // Pre-compute neighborhood filter normalization (used inside fetchSegment)
@@ -2143,9 +2232,18 @@ serve(async (req) => {
       // We paginate this single combined query instead of paginating per-term.
 
       // Helper: run RPC with retry on timeout/pool errors
-      const rpcWithRetry = async (params: any, attempts = 3): Promise<any> => {
+      const rpcWithRetry = async (params: any, attempts = isHeavySearch ? 1 : 3): Promise<any> => {
         for (let i = 0; i < attempts; i++) {
-          const r = await adminClient.rpc('search_companies', params);
+          const rpcController = new AbortController();
+          const rpcTimeoutMs = isHeavySearch ? 12_000 : 25_000;
+          const rpcTimer = setTimeout(() => rpcController.abort(), rpcTimeoutMs);
+          const rpcQuery: any = adminClient.rpc('search_companies', params);
+          const rpcWithAbort = rpcQuery.abortSignal?.(rpcController.signal) ?? rpcQuery;
+          const hardTimeout = new Promise<{ data: null; error: { message: string } }>((resolve) =>
+            setTimeout(() => resolve({ data: null, error: { message: `hard-timeout-${rpcTimeoutMs}ms` } }), rpcTimeoutMs + 1000)
+          );
+          const r: any = await Promise.race([rpcWithAbort, hardTimeout]);
+          clearTimeout(rpcTimer);
           if (!r.error) return r;
           const msg = String(r.error?.message || '').toLowerCase();
           const retriable = msg.includes('timeout') || msg.includes('connection pool') || msg.includes('502') || msg.includes('bad gateway');
@@ -2172,8 +2270,8 @@ serve(async (req) => {
 
       // Phase 1: Fetch first batch of pages in parallel using the COMBINED query
       // (all terms OR'd together in a single tsquery — one GIN index scan in Postgres).
-      const PAGE_CONCURRENCY = isHeavySearch ? 3 : 5;
-      const INITIAL_PAGES = nationwide ? 4 : (isHeavySearch ? 5 : 15);
+      const PAGE_CONCURRENCY = isHeavySearch ? 1 : 5;
+      const INITIAL_PAGES = nationwide ? 4 : (isHeavySearch ? 1 : 15);
       const initialPageNums = Array.from({ length: INITIAL_PAGES }, (_, i) => i);
 
       const initialPages = await runPool(initialPageNums, async (p: number) => {
@@ -2257,7 +2355,7 @@ serve(async (req) => {
 
       // Phase 2: Continue paginating in parallel batches if last page was full
       // (means there's likely more data). Stop on soft-timeout, target reached, or empty page.
-      if (lastPageFull && bestResults.length < targetPerSegment && !nationwide) {
+      if (lastPageFull && bestResults.length < targetPerSegment && !nationwide && !isHeavySearch) {
         const MAX_EXTRA_BATCHES = isHeavySearch ? 2 : 6;
         let nextPage = highestPageFetched + 1;
         let stop = false;
@@ -2353,28 +2451,29 @@ serve(async (req) => {
       return bestResults.map((c: any) => ({ ...c, _segment: seg }));
     }
 
-    // Run segments in parallel. Each segment now does ONE combined-tsquery RPC per page,
-    // so we can safely raise segment concurrency without overloading the DB pool.
-    const SEGMENT_CONCURRENCY = isHeavySearch ? 2 : 5;
-    const segmentResults: any[][] = new Array(segments.length);
-    let segIdx = 0;
-    const segWorkers = Array.from({ length: Math.min(SEGMENT_CONCURRENCY, segments.length) }, async () => {
-      while (true) {
-        const myIdx = segIdx++;
-        if (myIdx >= segments.length) break;
-        if (isNearSoftTimeout()) {
-          console.warn(`⏱️ Soft timeout reached — skipping segment "${segments[myIdx]}" and remaining`);
-          segmentResults[myIdx] = [];
-          continue;
+    if (!usedCityNameScan) {
+      // Run segments in parallel. Heavy multi-segment searches use lower concurrency to avoid DB timeouts.
+      const SEGMENT_CONCURRENCY = isHeavySearch ? 1 : 5;
+      const segmentResults: any[][] = new Array(segments.length);
+      let segIdx = 0;
+      const segWorkers = Array.from({ length: Math.min(SEGMENT_CONCURRENCY, segments.length) }, async () => {
+        while (true) {
+          const myIdx = segIdx++;
+          if (myIdx >= segments.length) break;
+          if (isNearSoftTimeout()) {
+            console.warn(`⏱️ Soft timeout reached — skipping segment "${segments[myIdx]}" and remaining`);
+            segmentResults[myIdx] = [];
+            continue;
+          }
+          segmentResults[myIdx] = await fetchSegment(segments[myIdx]);
         }
-        segmentResults[myIdx] = await fetchSegment(segments[myIdx]);
+      });
+      await Promise.all(segWorkers);
+      for (const sr of segmentResults) {
+        const remaining = MAX_TOTAL_RAW - allCompanies.length;
+        if (remaining <= 0) break;
+        allCompanies.push(...sr.slice(0, remaining));
       }
-    });
-    await Promise.all(segWorkers);
-    for (const sr of segmentResults) {
-      const remaining = MAX_TOTAL_RAW - allCompanies.length;
-      if (remaining <= 0) break;
-      allCompanies.push(...sr.slice(0, remaining));
     }
 
     console.log(`📊 Total raw companies: ${allCompanies.length} (capped at ${MAX_TOTAL_RAW}) (elapsed: ${Date.now() - FUNCTION_START}ms)`);
