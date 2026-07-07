@@ -74,23 +74,9 @@ const TrialLeadCard = ({
 
   // Alternating mask pattern based on index (CNPJ never blocked - public info)
   const isPhoneBlocked = index % 3 === 0;
-  const isEmailBlocked = index % 4 !== 3; // most emails blurred
+  const isEmailBlocked = index % 3 === 1;
   const isWhatsAppBlocked = index % 3 === 2;
   const isCnpjBlocked = false;
-  // Randomize an extra "mystery" field to blur (employees on some, responsible on others)
-  const isEmployeesBlocked = index % 2 === 0;
-  const isResponsibleBlocked = index % 2 === 1;
-
-  // Fake Instagram handle (real data source doesn't have it — always blur)
-  const fakeInstagramHandle = (() => {
-    const base = (nomeFantasia || razaoSocial || name || "empresa")
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]/g, "")
-      .slice(0, 18) || "empresa";
-    return `@${base}`;
-  })();
 
   const getScoreColor = (score: number) => {
     if (score >= 85) return "bg-success text-success-foreground";
@@ -186,11 +172,7 @@ const TrialLeadCard = ({
             <User className="h-3 w-3 md:h-4 md:w-4 text-primary flex-shrink-0" />
             <div>
               <span className="text-muted-foreground block text-[10px]">Funcionários</span>
-              {isEmployeesBlocked ? (
-                <BlockedField>{employeeCount}</BlockedField>
-              ) : (
-                <span className="text-foreground font-medium">{employeeCount}</span>
-              )}
+              <span className="text-foreground font-medium">{employeeCount}</span>
             </div>
           </div>
         )}
@@ -244,12 +226,13 @@ const TrialLeadCard = ({
           )}
         </div>
         
-        {/* Instagram - always shown as blurred fake handle (real source doesn't expose it) */}
-        <div className="flex items-center gap-2 text-xs md:text-sm">
-          <Instagram className="h-3 w-3 md:h-4 md:w-4 text-pink-500 flex-shrink-0" />
-          <BlockedField>{fakeInstagramHandle}</BlockedField>
-        </div>
-
+        {hasInstagram && (
+          <div className="flex items-center gap-2 text-xs md:text-sm">
+            <Instagram className="h-3 w-3 md:h-4 md:w-4 text-pink-500 flex-shrink-0" />
+            <span className="text-primary truncate">{instagram}</span>
+          </div>
+        )}
+        
         {hasWebsite && (
           <div className="flex items-center gap-2 text-xs md:text-sm">
             <Globe className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
@@ -259,16 +242,11 @@ const TrialLeadCard = ({
             </span>
           </div>
         )}
-
+        
         {responsible && (
           <div className="flex items-center gap-2 text-xs md:text-sm">
             <User className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
-            <span className="text-muted-foreground text-[10px] mr-1">Comprador:</span>
-            {isResponsibleBlocked ? (
-              <BlockedField>{formattedResponsible}</BlockedField>
-            ) : (
-              <span className="text-foreground truncate">{formattedResponsible}</span>
-            )}
+            <span className="text-foreground truncate">{formattedResponsible}</span>
           </div>
         )}
       </div>
