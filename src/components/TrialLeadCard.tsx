@@ -250,7 +250,12 @@ const TrialLeadCard = ({
             <span className="text-primary truncate">{instagram}</span>
           </div>
         )}
-        
+        {/* Instagram - always shown as blurred fake handle (real source doesn't expose it) */}
+        <div className="flex items-center gap-2 text-xs md:text-sm">
+          <Instagram className="h-3 w-3 md:h-4 md:w-4 text-pink-500 flex-shrink-0" />
+          <BlockedField>{fakeInstagramHandle}</BlockedField>
+        </div>
+
         {hasWebsite && (
           <div className="flex items-center gap-2 text-xs md:text-sm">
             <Globe className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
@@ -260,11 +265,16 @@ const TrialLeadCard = ({
             </span>
           </div>
         )}
-        
+
         {responsible && (
           <div className="flex items-center gap-2 text-xs md:text-sm">
             <User className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
-            <span className="text-foreground truncate">{formattedResponsible}</span>
+            <span className="text-muted-foreground text-[10px] mr-1">Comprador:</span>
+            {isResponsibleBlocked ? (
+              <BlockedField>{formattedResponsible}</BlockedField>
+            ) : (
+              <span className="text-foreground truncate">{formattedResponsible}</span>
+            )}
           </div>
         )}
       </div>
