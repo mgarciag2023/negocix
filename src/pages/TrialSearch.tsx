@@ -719,7 +719,7 @@ const TrialSearch = () => {
                     placeholder="Buscar segmento..."
                     value={customerSearch}
                     onChange={(e) => { setCustomerSearch(e.target.value); setVisibleCount(100); }}
-                    className="mb-3"
+                    className="mb-3 font-bold placeholder:font-bold placeholder:text-foreground/80"
                     translate="no"
                   />
                   {(() => {
