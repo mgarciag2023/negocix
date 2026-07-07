@@ -74,9 +74,23 @@ const TrialLeadCard = ({
 
   // Alternating mask pattern based on index (CNPJ never blocked - public info)
   const isPhoneBlocked = index % 3 === 0;
-  const isEmailBlocked = index % 3 === 1;
+  const isEmailBlocked = index % 4 !== 3; // most emails blurred
   const isWhatsAppBlocked = index % 3 === 2;
   const isCnpjBlocked = false;
+  // Randomize an extra "mystery" field to blur (employees on some, responsible on others)
+  const isEmployeesBlocked = index % 2 === 0;
+  const isResponsibleBlocked = index % 2 === 1;
+
+  // Fake Instagram handle (real data source doesn't have it — always blur)
+  const fakeInstagramHandle = (() => {
+    const base = (nomeFantasia || razaoSocial || name || "empresa")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]/g, "")
+      .slice(0, 18) || "empresa";
+    return `@${base}`;
+  })();
 
   const getScoreColor = (score: number) => {
     if (score >= 85) return "bg-success text-success-foreground";
