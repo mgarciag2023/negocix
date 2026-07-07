@@ -370,57 +370,80 @@ const TrialSearch = () => {
   // ==================== LOCK DIALOG (rendered via Portal, works in any step) ====================
   const lockDialog = (
     <Dialog open={showLockDialog} onOpenChange={setShowLockDialog}>
-      <DialogContent className="w-[90vw] max-w-sm z-[100] p-0 overflow-hidden border-0 rounded-2xl top-[45%]">
+      <DialogContent className="w-[92vw] max-w-md z-[100] p-0 overflow-hidden border-0 rounded-3xl top-[45%] shadow-2xl">
         {/* Header */}
-        <div className="relative bg-gradient-hero px-5 pt-5 pb-4 text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 mb-2">
-            <Sparkles className="h-5 w-5 text-white" />
+        <div className="relative bg-gradient-hero px-6 pt-7 pb-6 text-center overflow-hidden">
+          <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20% 30%, rgba(255,255,255,0.4) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(255,255,255,0.3) 0%, transparent 40%)' }} />
+          <div className="relative">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/25 mb-3 shadow-lg">
+              <Sparkles className="h-8 w-8 text-white" />
+            </div>
+            <DialogHeader className="items-center space-y-1">
+              <div className="inline-block px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 mb-2">
+                <span className="text-[11px] font-bold uppercase tracking-widest text-white">✨ Acesso Vitalício</span>
+              </div>
+              <DialogTitle className="text-3xl font-black text-white tracking-tight leading-tight" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+                Pague uma vez.<br/>Use pra sempre.
+              </DialogTitle>
+              <DialogDescription className="text-sm text-white/85 pt-1 font-medium">
+                Sem mensalidade. Sem renovação. Sem pegadinha.
+              </DialogDescription>
+            </DialogHeader>
           </div>
-          <DialogHeader className="items-center space-y-0.5">
-            <DialogTitle className="text-lg font-bold text-white">Acesso Completo</DialogTitle>
-            <DialogDescription className="text-sm text-white/70">
-              Desbloqueie todo o potencial da plataforma
-            </DialogDescription>
-          </DialogHeader>
         </div>
 
         {/* Body */}
-        <div className="px-5 pb-5 pt-3 space-y-3.5">
+        <div className="px-6 pb-6 pt-5 space-y-4 bg-background">
           {/* Benefits */}
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {[
-              "Pesquisas ilimitadas",
-              "Contatos completos (telefone, email, WhatsApp)",
+              "Pesquisas ilimitadas pra sempre",
+              "Todos os contatos (telefone, email, WhatsApp, Instagram)",
               "Fornecedores e representantes",
               "Exportação para Excel",
             ].map((text, i) => (
-              <div key={i} className="flex items-center gap-2.5">
-                <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
-                <span className="text-sm text-foreground">{text}</span>
+              <div key={i} className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-success/15 flex items-center justify-center">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                </div>
+                <span className="text-sm text-foreground font-medium">{text}</span>
               </div>
             ))}
           </div>
 
-          {/* Price */}
-          <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 text-center">
-            <span className="text-sm text-muted-foreground line-through mr-2">R$ 297,90</span>
-            <span className="text-2xl font-extrabold text-foreground">R$ 147,90</span>
-            <p className="text-xs text-success font-medium mt-1">Acesso vitalício · Pagamento único</p>
+          {/* Price - hero */}
+          <div className="relative rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 via-primary/10 to-transparent p-5 text-center overflow-hidden">
+            <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-success text-success-foreground text-[10px] font-bold uppercase tracking-wider">
+              50% OFF
+            </div>
+            <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold mb-1">Pagamento único</p>
+            <div className="flex items-baseline justify-center gap-2 mb-1">
+              <span className="text-sm text-muted-foreground line-through">R$ 297,90</span>
+              <span className="text-5xl font-black text-foreground tracking-tight" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>
+                R$ 147,90
+              </span>
+            </div>
+            <p className="text-sm text-success font-bold flex items-center justify-center gap-1.5 mt-2">
+              <Sparkles className="h-3.5 w-3.5" />
+              Acesso vitalício · Sem mensalidade
+            </p>
           </div>
 
           {/* CTA */}
           <Button
             size="default"
-            className="w-full bg-gradient-primary hover:opacity-90 text-sm h-12 rounded-xl shadow-primary transition-all duration-300"
+            className="w-full bg-gradient-primary hover:opacity-90 text-base font-bold h-14 rounded-2xl shadow-primary transition-all duration-300 hover:-translate-y-0.5"
             onClick={() => { trackTrialEvent("checkout_click"); firePixel('InitiateCheckout', { content_name: 'negocix_full_access', value: 147.90, currency: 'BRL' }); window.open(getPaymentUrl(), "_blank"); }}
           >
-            Desbloquear por R$ 147,90
+            🔓 Desbloquear Agora
+            <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
 
           {/* Trust */}
-          <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
+          <div className="flex items-center justify-center gap-4 text-[11px] text-muted-foreground font-medium">
             <span>🔒 Pagamento seguro</span>
             <span>⚡ Acesso imediato</span>
+            <span>♾️ Vitalício</span>
           </div>
         </div>
       </DialogContent>
