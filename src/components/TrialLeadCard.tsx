@@ -244,12 +244,6 @@ const TrialLeadCard = ({
           )}
         </div>
         
-        {hasInstagram && (
-          <div className="flex items-center gap-2 text-xs md:text-sm">
-            <Instagram className="h-3 w-3 md:h-4 md:w-4 text-pink-500 flex-shrink-0" />
-            <span className="text-primary truncate">{instagram}</span>
-          </div>
-        )}
         {/* Instagram - always shown as blurred fake handle (real source doesn't expose it) */}
         <div className="flex items-center gap-2 text-xs md:text-sm">
           <Instagram className="h-3 w-3 md:h-4 md:w-4 text-pink-500 flex-shrink-0" />
