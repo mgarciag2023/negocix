@@ -100,11 +100,11 @@ const TrialSearch = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [step, setStep] = useState<TrialStep>(() => {
-    if (isUnlimitedDevice()) return "home";
+    if (isUnlimitedDevice()) return "config";
     const saved = localStorage.getItem(TRIAL_RESULTS_KEY);
     if (saved) return "results";
     if (localStorage.getItem(TRIAL_KEY)) return "results";
-    return "home";
+    return "config";
   });
 
   // Config state
