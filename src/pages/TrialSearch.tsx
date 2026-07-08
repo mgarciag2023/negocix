@@ -370,55 +370,70 @@ const TrialSearch = () => {
   // ==================== LOCK DIALOG (rendered via Portal, works in any step) ====================
   const lockDialog = (
     <Dialog open={showLockDialog} onOpenChange={setShowLockDialog}>
-      <DialogContent className="w-[90vw] max-w-sm z-[100] p-0 overflow-hidden border-0 rounded-2xl top-[45%]">
+      <DialogContent className="w-[92vw] max-w-md z-[100] p-0 overflow-hidden border-0 rounded-3xl top-[50%] shadow-2xl">
         {/* Header */}
-        <div className="relative bg-gradient-hero px-5 pt-5 pb-4 text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white/15 backdrop-blur-sm border border-white/20 mb-2">
-            <Sparkles className="h-5 w-5 text-white" />
+        <div className="relative bg-gradient-hero px-6 pt-7 pb-6 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/20 mb-3">
+            <Sparkles className="h-7 w-7 text-white" />
           </div>
-          <DialogHeader className="items-center space-y-0.5">
-            <DialogTitle className="text-lg font-bold text-white">Acesso Completo</DialogTitle>
-            <DialogDescription className="text-sm text-white/70">
-              Desbloqueie todo o potencial da plataforma
+          <DialogHeader className="items-center space-y-1.5">
+            <DialogTitle className="text-2xl md:text-3xl font-extrabold text-white leading-tight tracking-tight">
+              Acesso Vitalício
+            </DialogTitle>
+            <DialogDescription className="text-base text-white/85 font-medium">
+              Pague uma vez. Use para sempre.
             </DialogDescription>
           </DialogHeader>
         </div>
 
         {/* Body */}
-        <div className="px-5 pb-5 pt-3 space-y-3.5">
+        <div className="px-6 pb-6 pt-5 space-y-5 bg-background">
           {/* Benefits */}
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {[
-              "Pesquisas ilimitadas",
-              "Contatos completos (telefone, email, WhatsApp)",
+              "Pesquisas ilimitadas de clientes",
+              "Contatos completos (telefone, e-mail, WhatsApp)",
               "Fornecedores e representantes",
               "Exportação para Excel",
             ].map((text, i) => (
-              <div key={i} className="flex items-center gap-2.5">
-                <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
-                <span className="text-sm text-foreground">{text}</span>
+              <div key={i} className="flex items-center gap-3">
+                <div className="flex-shrink-0 h-6 w-6 rounded-full bg-success/15 flex items-center justify-center">
+                  <CheckCircle2 className="h-4 w-4 text-success" />
+                </div>
+                <span className="text-base font-medium text-foreground">{text}</span>
               </div>
             ))}
           </div>
 
-          {/* Price */}
-          <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 text-center">
-            <span className="text-sm text-muted-foreground line-through mr-2">R$ 297,90</span>
-            <span className="text-2xl font-extrabold text-foreground">R$ 147,90</span>
-            <p className="text-xs text-success font-medium mt-1">Acesso vitalício · Pagamento único</p>
+          {/* Price highlight */}
+          <div className="rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 to-primary/5 p-5 text-center relative overflow-hidden">
+            <div className="absolute -top-2 left-1/2 -translate-x-1/2 bg-success text-success-foreground text-xs font-bold px-3 py-1 rounded-full shadow-md">
+              OFERTA LIMITADA
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">De <span className="line-through">R$ 297,90</span> por apenas</p>
+            <div className="flex items-baseline justify-center gap-1 mt-1">
+              <span className="text-2xl font-bold text-foreground">R$</span>
+              <span className="text-5xl md:text-6xl font-black text-primary tracking-tight">147,90</span>
+            </div>
+            <p className="text-base font-bold text-success mt-2">
+              ✓ Pagamento único
+            </p>
+            <p className="text-sm text-foreground/80 font-medium mt-1">
+              Sem mensalidades. Sem cobranças recorrentes.
+            </p>
           </div>
 
           {/* CTA */}
           <Button
-            size="default"
-            className="w-full bg-gradient-primary hover:opacity-90 text-sm h-12 rounded-xl shadow-primary transition-all duration-300"
+            size="lg"
+            className="w-full bg-gradient-primary hover:opacity-90 text-base font-bold h-14 rounded-xl shadow-primary transition-all duration-300"
             onClick={() => { trackTrialEvent("checkout_click"); firePixel('InitiateCheckout', { content_name: 'negocix_full_access', value: 147.90, currency: 'BRL' }); window.open(getPaymentUrl(), "_blank"); }}
           >
-            Desbloquear por R$ 147,90
+            Garantir Acesso Vitalício →
           </Button>
 
           {/* Trust */}
-          <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
+          <div className="flex items-center justify-center gap-4 text-xs font-medium text-muted-foreground">
             <span>🔒 Pagamento seguro</span>
             <span>⚡ Acesso imediato</span>
           </div>
@@ -426,6 +441,7 @@ const TrialSearch = () => {
       </DialogContent>
     </Dialog>
   );
+
 
   const renderAdminDot = (wrapperClassName = "pt-2") => (
     <div className={`flex justify-center ${wrapperClassName}`}>
