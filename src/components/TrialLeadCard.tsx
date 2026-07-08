@@ -226,12 +226,11 @@ const TrialLeadCard = ({
           )}
         </div>
         
-        {hasInstagram && (
-          <div className="flex items-center gap-2 text-xs md:text-sm">
-            <Instagram className="h-3 w-3 md:h-4 md:w-4 text-pink-500 flex-shrink-0" />
-            <span className="text-primary truncate">{instagram}</span>
-          </div>
-        )}
+        {/* Instagram - always shown blurred (base does not have real Instagram data) */}
+        <div className="flex items-center gap-2 text-xs md:text-sm">
+          <Instagram className="h-3 w-3 md:h-4 md:w-4 text-pink-500 flex-shrink-0" />
+          <BlockedField>@{(nomeFantasia || name || 'empresa').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 15) || 'empresa_oficial'}</BlockedField>
+        </div>
         
         {hasWebsite && (
           <div className="flex items-center gap-2 text-xs md:text-sm">
