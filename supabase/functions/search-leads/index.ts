@@ -2913,21 +2913,27 @@ serve(async (req) => {
       const beforeDistFilter = allCompanies.length;
       const distSnapshot = allCompanies;
       allCompanies = allCompanies.filter(c => {
-        // Results found via official CNAE code always pass distributor filter
-        if (c._viaCnae) return true;
         const seg = (c._segment || '').toLowerCase();
         const segNorm = seg.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         // Only apply strict filter to distributor segments
         if (!segNorm.includes('distribuidor') && !segNorm.includes('distribuidora')) return true;
-        // "Distribuidoras Agropecuárias": modo estrito — exige "distribuidora/atacado/atacadista/cooperativa"
-        // no nome OU vínculo por CNAE (já tratado no early-return acima).
+        // "Distribuidoras Agropecuárias": modo ESTRITO reforçado.
+        // Nome precisa ter um token agro/rural E também "distribuidor/atacado/cooperativa"
+        // OU CNAE puro-sangue de insumos agro (4683-4/00 defensivos ou 4692-3/00 insumos).
         if (segNorm.includes('agropecuar')) {
           const nfN = normalizeText(c.nome_fantasia || '').toLowerCase();
           const rsN = normalizeText(c.razao_social || '').toLowerCase();
           const combo = `${nfN} ${rsN}`;
-          const isStrictDist = /(distribuidor|atacad|cooperativ)/.test(combo);
-          return isStrictDist;
+          const hasAgroToken = /(agro|agropec|rural|agri|insumo|fertiliz|defensiv|racao|sement|pecuari|veterinar|adubo|calcario|silo|graos|cereal)/.test(combo);
+          if (!hasAgroToken) return false;
+          const cnaeP = String(c.cnae_fiscal_principal || '').replace(/\D/g, '');
+          const isPureAgroCnae = cnaeP === '4683400' || cnaeP === '4692300';
+          const isWholesaleName = /(distribuidor|atacad|cooperativ)/.test(combo);
+          return isWholesaleName || isPureAgroCnae;
         }
+        // Results found via official CNAE code always pass distributor filter (other segments)
+        if (c._viaCnae) return true;
+
 
         const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
         const rs = normalizeText(c.razao_social || '').toLowerCase();
