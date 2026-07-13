@@ -2008,6 +2008,7 @@ serve(async (req) => {
       const cnaeRows = Array.from(merged.values());
       console.log(`🏷️ CNAE-only: principal=${((pRes as any).data || []).length}, secundária=${((sRes as any).data || []).length}, merged=${cnaeRows.length}`);
 
+      const raw = cnaeRows;
       const filtered = raw.filter((c: any) => isPhoneValid(c.telefone_1) || isPhoneValid(c.telefone_2));
       const seenC = new Set<string>();
       const dedup = filtered.filter((c: any) => { if (!c.cnpj) return true; if (seenC.has(c.cnpj)) return false; seenC.add(c.cnpj); return true; });
