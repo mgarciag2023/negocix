@@ -1644,12 +1644,13 @@ async function resolveCityName(
   // Start with major cities, then supplement with a targeted DB query
   let unique: string[] = [...(MAJOR_CITIES[state] || [])];
   
-  // Also do a DB query with narrow prefix to catch smaller cities not in the hardcoded list
-  const inputPrefix = inputNorm.length >= 4 ? inputNorm.substring(0, 4) : (inputNorm.length >= 3 ? inputNorm.substring(0, 3) : inputNorm);
+  // Also do a DB query with narrow prefix to catch smaller cities not in the hardcoded list.
+  // Use 2-char prefix to tolerate typos in the 3rd/4th letter (e.g. "casemiro" → "CASIMIRO DE ABREU").
+  const inputPrefix = inputNorm.length >= 2 ? inputNorm.substring(0, 2) : inputNorm;
   try {
     const { data: dbCities } = await client.from('companies').select('cidade')
       .eq('estado', state).not('cidade', 'is', null)
-      .ilike('cidade', `${inputPrefix}%`).limit(1000);
+      .ilike('cidade', `${inputPrefix}%`).limit(3000);
     if (dbCities) {
       const existing = new Set(unique);
       for (const c of dbCities) {
