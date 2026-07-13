@@ -2615,6 +2615,27 @@ serve(async (req) => {
     }
     console.log(`🔤 Pre-computed normalized names for ${allCompanies.length} companies (elapsed: ${Date.now() - FUNCTION_START}ms)`);
 
+    // ===== GLOBAL COMPANY BLACKLIST =====
+    // Empresas explicitamente banidas pelo usuário — nunca devem aparecer em nenhum resultado.
+    const GLOBAL_BLACKLIST_PATTERNS: RegExp[] = [
+      /\bcem\s*lixo\b/i,
+      /\ba3t\b.*intermediac/i,
+      /intermediac[aã]o\s+de\s+neg[oó]cios/i,
+      /\bagricola\s+sol\b/i,
+    ];
+    const beforeBlacklist = allCompanies.length;
+    allCompanies = allCompanies.filter((c: any) => {
+      const hay = `${c._nfNorm} ${c._rsNorm}`;
+      for (const rx of GLOBAL_BLACKLIST_PATTERNS) {
+        if (rx.test(hay)) {
+          console.log(`🚫 Blacklist removeu: ${c.razao_social || c.nome_fantasia}`);
+          return false;
+        }
+      }
+      return true;
+    });
+    console.log(`🚫 Blacklist: ${beforeBlacklist} → ${allCompanies.length}`);
+
     // ===== SOFT TIMEOUT CHECK: if near timeout after dedup, skip heavy filters and go straight to lead transform =====
     if (isNearSoftTimeout()) {
       console.log(`⚠️ NEAR TIMEOUT after dedup — skipping relevance filters, transforming ${allCompanies.length} leads directly`);
