@@ -1964,28 +1964,50 @@ serve(async (req) => {
     // ===== CNAE-ONLY SEARCH (atalho — bypassa fluxo de segmentos) =====
     if (hasCnaeSearch) {
       console.log(`🏷️ CNAE-ONLY SEARCH: ${cnaesList.length} código(s) - ${cnaesList.join(', ')}`);
-      const orFilter = cnaesList
-        .map((code) => `cnae_principal.eq.${code},cnae_secundaria.ilike.%${code}%`)
-        .join(',');
-      let q = adminClient
-        .from('companies')
-        .select('*')
-        .or(orFilter)
-        .eq('situacao_cadastral', 'ATIVA')
-        .not('telefone_1', 'is', null);
-      if (city) q = q.eq('cidade', city);
-      if (state) q = q.eq('estado', state);
-      if (neighborhoodFilter) q = q.ilike('bairro', `%${neighborhoodFilter}%`);
-      if (bizType === 'matriz') q = q.eq('matriz_filial', 'MATRIZ');
-      if (bizType === 'filial') q = q.eq('matriz_filial', 'FILIAL');
-      const { data: cnaeRows, error: cnaeErr } = await q.limit(10000);
-      if (cnaeErr) {
-        console.error('❌ CNAE-only search error:', cnaeErr.message);
-        return new Response(JSON.stringify({ error: cnaeErr.message }), {
-          status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      const raw = cnaeRows || [];
+
+      // Estratégia: separar query em cnae_principal (indexado, rápido) e cnae_secundaria (ilike, mais lento).
+      // Rodamos as duas em paralelo com timeout individual para evitar wall-time do worker.
+      const applyCommon = (q: any) => {
+        let x = q.eq('situacao_cadastral', 'ATIVA').not('telefone_1', 'is', null);
+        if (city) x = x.eq('cidade', city);
+        if (state) x = x.eq('estado', state);
+        if (neighborhoodFilter) x = x.ilike('bairro', `%${neighborhoodFilter}%`);
+        if (bizType === 'matriz') x = x.eq('matriz_filial', 'MATRIZ');
+        if (bizType === 'filial') x = x.eq('matriz_filial', 'FILIAL');
+        return x;
+      };
+
+      const principalQuery = applyCommon(
+        adminClient.from('companies').select('*').in('cnae_principal', cnaesList)
+      ).limit(8000);
+
+      // cnae_secundaria uses ilike (unindexed). Só executa se filtro geográfico existir OU só 1 CNAE.
+      const canRunSecundaria = !!city || !!state;
+      const secundariaOr = cnaesList.map((code) => `cnae_secundaria.ilike.%${code}%`).join(',');
+      const secundariaQuery = canRunSecundaria
+        ? applyCommon(
+            adminClient.from('companies').select('*').or(secundariaOr)
+          ).limit(3000)
+        : Promise.resolve({ data: [], error: null });
+
+      const hardTimeout = (ms: number) => new Promise<{ data: any[]; error: any }>((resolve) =>
+        setTimeout(() => resolve({ data: [], error: { message: `hard-timeout ${ms}ms` } }), ms)
+      );
+
+      const [pRes, sRes] = await Promise.all([
+        Promise.race([principalQuery, hardTimeout(25000)]),
+        Promise.race([secundariaQuery, hardTimeout(25000)]),
+      ]);
+
+      if ((pRes as any).error) console.warn('⚠️ CNAE principal:', (pRes as any).error.message);
+      if ((sRes as any).error) console.warn('⚠️ CNAE secundária:', (sRes as any).error.message);
+
+      const merged = new Map<string, any>();
+      for (const c of ((pRes as any).data || [])) if (c?.id) merged.set(c.id, c);
+      for (const c of ((sRes as any).data || [])) if (c?.id && !merged.has(c.id)) merged.set(c.id, c);
+      const cnaeRows = Array.from(merged.values());
+      console.log(`🏷️ CNAE-only: principal=${((pRes as any).data || []).length}, secundária=${((sRes as any).data || []).length}, merged=${cnaeRows.length}`);
+
       const filtered = raw.filter((c: any) => isPhoneValid(c.telefone_1) || isPhoneValid(c.telefone_2));
       const seenC = new Set<string>();
       const dedup = filtered.filter((c: any) => { if (!c.cnpj) return true; if (seenC.has(c.cnpj)) return false; seenC.add(c.cnpj); return true; });
