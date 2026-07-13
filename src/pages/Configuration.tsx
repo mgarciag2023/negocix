@@ -49,8 +49,10 @@ const Configuration = () => {
       if (config.category !== undefined) setCategory(config.category);
       if (config.products !== undefined) setProducts(config.products);
       if (config.searchMode !== undefined) setSearchMode(config.searchMode);
-      if (config.selectedCustomers !== undefined) setSelectedCustomers(config.selectedCustomers);
-      if (config.selectedCnaes !== undefined) setSelectedCnaes(config.selectedCnaes);
+      // Segmentos e CNAEs NÃO são restaurados de propósito — usuário sempre
+      // começa com segmentos vazios para não precisar desmarcar 15+ itens antes
+      // de fazer uma nova busca diferente.
+      // (mantido comentado: config.selectedCustomers / config.selectedCnaes)
       if (config.neighborhood !== undefined) setNeighborhood(config.neighborhood);
       if (config.revenueRange !== undefined) setRevenueRange(config.revenueRange);
       if (config.businessType !== undefined) setBusinessType(config.businessType);
