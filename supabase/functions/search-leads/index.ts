@@ -2911,10 +2911,11 @@ serve(async (req) => {
         // Results found via official CNAE code always pass distributor filter
         if (c._viaCnae) return true;
         const seg = (c._segment || '').toLowerCase();
+        const segNorm = seg.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         // Only apply strict filter to distributor segments
-        if (!seg.includes('distribuidor') && !seg.includes('distribuidora')) return true;
-        // Exceção: "Distribuidoras Agropecuárias" — o nome típico é "Agropecuária X", não "Distribuidora X"
-        if (seg.includes('agropecuar')) return true;
+        if (!segNorm.includes('distribuidor') && !segNorm.includes('distribuidora')) return true;
+        // Exceção: "Distribuidoras Agropecuárias" — nome típico é "Agropecuária X", não "Distribuidora X"
+        if (segNorm.includes('agropecuar')) return true;
 
         const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
         const rs = normalizeText(c.razao_social || '').toLowerCase();
