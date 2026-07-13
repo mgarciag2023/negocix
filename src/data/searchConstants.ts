@@ -92,6 +92,7 @@ export const customerTypes = [
   "Distribuidoras de Ferragens",
   "Distribuidoras de Embalagens",
   "Distribuidoras de Ração Animal",
+  "Distribuidoras Agropecuárias",
   "Distribuidoras de Autopeças",
   "Distribuidoras de Produtos Hospitalares",
   "Distribuidoras de Produtos Odontológicos",
