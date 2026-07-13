@@ -2913,6 +2913,8 @@ serve(async (req) => {
         const seg = (c._segment || '').toLowerCase();
         // Only apply strict filter to distributor segments
         if (!seg.includes('distribuidor') && !seg.includes('distribuidora')) return true;
+        // Exceção: "Distribuidoras Agropecuárias" — o nome típico é "Agropecuária X", não "Distribuidora X"
+        if (seg.includes('agropecuar')) return true;
 
         const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
         const rs = normalizeText(c.razao_social || '').toLowerCase();
@@ -3181,9 +3183,11 @@ serve(async (req) => {
       }
 
       // Apply distributor-specific filter BEFORE the universal filter
-      const isDistributorSegment = segments.some((s: string) => 
-        s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes('distribuid')
-      );
+      const isDistributorSegment = segments.some((s: string) => {
+        const norm = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        if (norm.includes('agropecuar')) return false; // agropecuárias não seguem padrão de nome "distribuidora"
+        return norm.includes('distribuid');
+      });
       
       if (isDistributorSegment) {
         const beforeDistFilter = allCompanies.length;
