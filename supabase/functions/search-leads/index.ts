@@ -2913,6 +2913,8 @@ serve(async (req) => {
         const seg = (c._segment || '').toLowerCase();
         // Only apply strict filter to distributor segments
         if (!seg.includes('distribuidor') && !seg.includes('distribuidora')) return true;
+        // Exceção: "Distribuidoras Agropecuárias" — o nome típico é "Agropecuária X", não "Distribuidora X"
+        if (seg.includes('agropecuar')) return true;
 
         const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
         const rs = normalizeText(c.razao_social || '').toLowerCase();
