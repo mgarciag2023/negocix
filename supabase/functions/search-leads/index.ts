@@ -111,6 +111,11 @@ function getCnaesForSegment(segment: string): string[] {
     'distribuidoras de laticinios': ['4637104', '4631100', '4639701', '4691500', '1052000'],
     'distribuidores de food service': ['4634601', '4634699', '4637104', '4639701', '4639702', '4691500', '4631100'],
     'distribuidoras de food service': ['4634601', '4634699', '4637104', '4639701', '4639702', '4691500', '4631100'],
+    // Distribuidoras Agropecuárias — CNAEs de atacado agro puro-sangue
+    'distribuidoras agropecuárias': ['4683400', '4692300', '4623101', '4623102', '4623103', '4623106', '4623109', '4623199'],
+    'distribuidoras agropecuarias': ['4683400', '4692300', '4623101', '4623102', '4623103', '4623106', '4623109', '4623199'],
+    'distribuidores agropecuários': ['4683400', '4692300', '4623101', '4623102', '4623103', '4623106', '4623109', '4623199'],
+    'distribuidores agropecuarios': ['4683400', '4692300', '4623101', '4623102', '4623103', '4623106', '4623109', '4623199'],
   };
   return cnaeMap[seg] || [];
 }
@@ -2914,8 +2919,15 @@ serve(async (req) => {
         const segNorm = seg.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         // Only apply strict filter to distributor segments
         if (!segNorm.includes('distribuidor') && !segNorm.includes('distribuidora')) return true;
-        // Exceção: "Distribuidoras Agropecuárias" — nome típico é "Agropecuária X", não "Distribuidora X"
-        if (segNorm.includes('agropecuar')) return true;
+        // "Distribuidoras Agropecuárias": modo estrito — exige "distribuidora/atacado/atacadista/cooperativa"
+        // no nome OU vínculo por CNAE (já tratado no early-return acima).
+        if (segNorm.includes('agropecuar')) {
+          const nfN = normalizeText(c.nome_fantasia || '').toLowerCase();
+          const rsN = normalizeText(c.razao_social || '').toLowerCase();
+          const combo = `${nfN} ${rsN}`;
+          const isStrictDist = /(distribuidor|atacad|cooperativ)/.test(combo);
+          return isStrictDist;
+        }
 
         const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
         const rs = normalizeText(c.razao_social || '').toLowerCase();
@@ -3186,7 +3198,7 @@ serve(async (req) => {
       // Apply distributor-specific filter BEFORE the universal filter
       const isDistributorSegment = segments.some((s: string) => {
         const norm = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-        if (norm.includes('agropecuar')) return false; // agropecuárias não seguem padrão de nome "distribuidora"
+        // "agropecuar" agora entra no filtro estrito (exige indicador de distribuidor no nome ou _viaCnae)
         return norm.includes('distribuid');
       });
       
