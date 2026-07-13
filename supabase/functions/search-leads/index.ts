@@ -2927,9 +2927,10 @@ serve(async (req) => {
           const hasAgroToken = /(agro|agropec|rural|agri|insumo|fertiliz|defensiv|racao|sement|pecuari|veterinar|adubo|calcario|silo|graos|cereal)/.test(combo);
           if (!hasAgroToken) return false;
           const cnaeP = String(c.cnae_fiscal_principal || '').replace(/\D/g, '');
-          const isPureAgroCnae = cnaeP === '4683400' || cnaeP === '4692300';
-          const isWholesaleName = /(distribuidor|atacad|cooperativ)/.test(combo);
-          return isWholesaleName || isPureAgroCnae;
+          const agroWholesaleCnaes = new Set(['4683400','4692300','4623101','4623102','4623103','4623106','4623109','4623199']);
+          const isAgroWholesaleCnae = agroWholesaleCnaes.has(cnaeP);
+          const isWholesaleName = /(distribuidor|atacad|cooperativ|agro\s*center|agro\s*industri|insumo|fertiliz|defensiv|agroquim)/.test(combo);
+          return isWholesaleName || isAgroWholesaleCnae;
         }
         // Results found via official CNAE code always pass distributor filter (other segments)
         if (c._viaCnae) return true;
