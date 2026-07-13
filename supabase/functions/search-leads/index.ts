@@ -2917,20 +2917,11 @@ serve(async (req) => {
         const segNorm = seg.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         // Only apply strict filter to distributor segments
         if (!segNorm.includes('distribuidor') && !segNorm.includes('distribuidora')) return true;
-        // "Distribuidoras Agropecuárias": modo ESTRITO reforçado.
-        // Nome precisa ter um token agro/rural E também "distribuidor/atacado/cooperativa"
-        // OU CNAE puro-sangue de insumos agro (4683-4/00 defensivos ou 4692-3/00 insumos).
+        // "Distribuidoras Agropecuárias": bypass do filtro estrito de distribuidor
+        // (retorna todas que vieram da busca por termo + CNAE agro). Filtros de qualidade
+        // ficam a cargo dos passos seguintes.
         if (segNorm.includes('agropecuar')) {
-          const nfN = normalizeText(c.nome_fantasia || '').toLowerCase();
-          const rsN = normalizeText(c.razao_social || '').toLowerCase();
-          const combo = `${nfN} ${rsN}`;
-          const hasAgroToken = /(agro|agropec|rural|agri|insumo|fertiliz|defensiv|racao|sement|pecuari|veterinar|adubo|calcario|silo|graos|cereal)/.test(combo);
-          if (!hasAgroToken) return false;
-          const cnaeP = String(c.cnae_fiscal_principal || '').replace(/\D/g, '');
-          const agroWholesaleCnaes = new Set(['4683400','4692300','4623101','4623102','4623103','4623106','4623109','4623199']);
-          const isAgroWholesaleCnae = agroWholesaleCnaes.has(cnaeP);
-          const isWholesaleName = /(distribuidor|atacad|cooperativ|agro\s*center|agro\s*industri|insumo|fertiliz|defensiv|agroquim)/.test(combo);
-          return isWholesaleName || isAgroWholesaleCnae;
+          return true;
         }
         // Results found via official CNAE code always pass distributor filter (other segments)
         if (c._viaCnae) return true;
