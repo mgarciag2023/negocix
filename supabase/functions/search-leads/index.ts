@@ -3198,7 +3198,7 @@ serve(async (req) => {
       // Apply distributor-specific filter BEFORE the universal filter
       const isDistributorSegment = segments.some((s: string) => {
         const norm = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-        if (norm.includes('agropecuar')) return false; // agropecuárias não seguem padrão de nome "distribuidora"
+        // "agropecuar" agora entra no filtro estrito (exige indicador de distribuidor no nome ou _viaCnae)
         return norm.includes('distribuid');
       });
       
