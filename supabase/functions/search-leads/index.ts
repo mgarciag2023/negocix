@@ -2919,8 +2919,15 @@ serve(async (req) => {
         const segNorm = seg.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         // Only apply strict filter to distributor segments
         if (!segNorm.includes('distribuidor') && !segNorm.includes('distribuidora')) return true;
-        // Exceção: "Distribuidoras Agropecuárias" — nome típico é "Agropecuária X", não "Distribuidora X"
-        if (segNorm.includes('agropecuar')) return true;
+        // "Distribuidoras Agropecuárias": modo estrito — exige "distribuidora/atacado/atacadista/cooperativa"
+        // no nome OU vínculo por CNAE (já tratado no early-return acima).
+        if (segNorm.includes('agropecuar')) {
+          const nfN = normalizeText(c.nome_fantasia || '').toLowerCase();
+          const rsN = normalizeText(c.razao_social || '').toLowerCase();
+          const combo = `${nfN} ${rsN}`;
+          const isStrictDist = /(distribuidor|atacad|cooperativ)/.test(combo);
+          return isStrictDist;
+        }
 
         const nf = normalizeText(c.nome_fantasia || '').toLowerCase();
         const rs = normalizeText(c.razao_social || '').toLowerCase();
