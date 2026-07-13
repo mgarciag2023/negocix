@@ -333,105 +333,121 @@ const Results = () => {
         console.log('🔍 Fetching NEW leads with config:', searchConfig);
         
         // Call the edge function with raw fetch to support long timeout (10 min)
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 600000);
-        
-        let data: any = null;
-        try {
-          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-          const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-          const { data: { session } } = await supabase.auth.getSession();
-          
-          const response = await fetch(`${supabaseUrl}/functions/v1/search-leads`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session?.access_token || supabaseKey}`,
-              'apikey': supabaseKey,
-            },
-            body: JSON.stringify({
-              segment: (searchConfig.selectedCustomers || []).join(', '),
-              cnaes: searchConfig.selectedCnaes || [],
-              products: searchConfig.products,
-              region: searchConfig.region,
-              nationwide: searchConfig.nationwide || false,
-              country: searchConfig.country || 'BR',
-              ecommerceType: searchConfig.ecommerceType || '',
-              businessType: searchConfig.businessType || 'all',
-              digitalPresence: searchConfig.digitalPresence || 'all',
-              digitalActivity: searchConfig.digitalActivity || 'all',
-              whatsappOnly: searchConfig.whatsappOnly || false,
-              receitaFederalOnly: searchConfig.receitaFederalOnly || false,
-              neighborhood: searchConfig.neighborhood || '',
-              filters: {
-                category: searchConfig.category,
-                companySizes: searchConfig.companySizes || ['all'],
-                revenueRange: searchConfig.revenueRange,
-              }
-            }),
+        // Retry automático (1x) para erros transitórios: rede caiu, 5xx, resposta truncada.
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        const { data: { session } } = await supabase.auth.getSession();
 
-            signal: controller.signal,
+        const body = JSON.stringify({
+          segment: (searchConfig.selectedCustomers || []).join(', '),
+          cnaes: searchConfig.selectedCnaes || [],
+          products: searchConfig.products,
+          region: searchConfig.region,
+          nationwide: searchConfig.nationwide || false,
+          country: searchConfig.country || 'BR',
+          ecommerceType: searchConfig.ecommerceType || '',
+          businessType: searchConfig.businessType || 'all',
+          digitalPresence: searchConfig.digitalPresence || 'all',
+          digitalActivity: searchConfig.digitalActivity || 'all',
+          whatsappOnly: searchConfig.whatsappOnly || false,
+          receitaFederalOnly: searchConfig.receitaFederalOnly || false,
+          neighborhood: searchConfig.neighborhood || '',
+          filters: {
+            category: searchConfig.category,
+            companySizes: searchConfig.companySizes || ['all'],
+            revenueRange: searchConfig.revenueRange,
+          }
+        });
+
+        // Guarda-chuva no cliente: bloqueia buscas obviamente inválidas antes de gastar
+        // wall-time no servidor. Evita "0 leads" silencioso por input vazio.
+        const hasAnyCriterion =
+          (searchConfig.selectedCustomers && searchConfig.selectedCustomers.length > 0) ||
+          (searchConfig.selectedCnaes && searchConfig.selectedCnaes.length > 0);
+        if (!hasAnyCriterion) {
+          toast({
+            title: "Selecione ao menos 1 segmento ou CNAE",
+            description: "A busca precisa de pelo menos um critério para retornar leads.",
+            variant: "destructive",
           });
-          
-          
-          // Sanity check: se o servidor informou N leads via header mas o body
-          // não bateu (truncamento/parse parcial), tentamos ler como texto e re-parsear.
-          const serverLeadCount = parseInt(response.headers.get('x-leads-count') || '0', 10);
-          let rawText: string | null = null;
-          try {
-            data = await response.json();
-          } catch (parseErr) {
-            console.warn('⚠️ JSON parse falhou, tentando texto bruto…', parseErr);
-            try {
-              rawText = await response.text();
-              data = JSON.parse(rawText);
-            } catch {
-              data = null;
-            }
-          }
-
-          const parsedCount = Array.isArray(data?.leads) ? data.leads.length : 0;
-          if (serverLeadCount > 0 && parsedCount === 0) {
-            console.error(`⚠️ Mismatch: servidor retornou ${serverLeadCount} leads mas cliente parseou 0. Payload possivelmente truncado.`);
-            toast({
-              title: "Falha no transporte dos resultados",
-              description: `O servidor gerou ${serverLeadCount} leads mas a resposta chegou incompleta. Tente de novo ou reduza a região/segmentos.`,
-              variant: "destructive",
-            });
-            setLoading(false);
-            return;
-          }
-          
-          if (!response.ok && !data?.leads) {
-            console.error('❌ Edge function error:', response.status, data);
-            toast({
-              title: data?.allSeen ? "Leads já exibidos" : "Erro ao buscar leads",
-              description: data?.error || "Tente novamente mais tarde",
-              variant: data?.allSeen ? "default" : "destructive",
-            });
-            setLoading(false);
-            return;
-          }
-        } catch (fetchErr: any) {
-          clearTimeout(timeoutId);
-          if (fetchErr?.name === 'AbortError') {
-            toast({
-              title: "Tempo esgotado",
-              description: "A busca demorou demais. Tente novamente ou busque por uma região menor.",
-              variant: "destructive",
-            });
-          } else {
-            console.error('❌ Fetch error:', fetchErr);
-            toast({
-              title: "Erro ao buscar leads",
-              description: "Tente novamente mais tarde",
-              variant: "destructive",
-            });
-          }
           setLoading(false);
           return;
-        } finally {
-          clearTimeout(timeoutId);
+        }
+
+        const attemptFetch = async (attempt: number): Promise<{ data: any; transient: boolean; abort: boolean }> => {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 600000);
+          try {
+            const response = await fetch(`${supabaseUrl}/functions/v1/search-leads`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session?.access_token || supabaseKey}`,
+                'apikey': supabaseKey,
+              },
+              body,
+              signal: controller.signal,
+            });
+
+            const serverLeadCount = parseInt(response.headers.get('x-leads-count') || '0', 10);
+            let parsed: any = null;
+            try {
+              parsed = await response.json();
+            } catch (parseErr) {
+              console.warn('⚠️ JSON parse falhou, tentando texto bruto…', parseErr);
+              try {
+                const raw = await response.text();
+                parsed = JSON.parse(raw);
+              } catch {
+                parsed = null;
+              }
+            }
+
+            const parsedCount = Array.isArray(parsed?.leads) ? parsed.leads.length : 0;
+            // 5xx → transitório
+            if (response.status >= 500) {
+              console.warn(`⚠️ HTTP ${response.status} (tentativa ${attempt})`);
+              return { data: parsed, transient: true, abort: false };
+            }
+            // Payload truncado → transitório
+            if (serverLeadCount > 0 && parsedCount === 0) {
+              console.warn(`⚠️ Mismatch header=${serverLeadCount} body=0 (tentativa ${attempt})`);
+              return { data: parsed, transient: true, abort: false };
+            }
+            return { data: parsed, transient: false, abort: false };
+          } catch (fetchErr: any) {
+            const isAbort = fetchErr?.name === 'AbortError';
+            console.warn(`⚠️ Fetch erro (tentativa ${attempt}):`, fetchErr?.message || fetchErr);
+            // Rede caiu / DNS / connection reset → transitório (mas abort de 10min não retrata)
+            return { data: null, transient: !isAbort, abort: isAbort };
+          } finally {
+            clearTimeout(timeoutId);
+          }
+        };
+
+        let data: any = null;
+        let lastAbort = false;
+        for (let attempt = 1; attempt <= 2; attempt++) {
+          const res = await attemptFetch(attempt);
+          data = res.data;
+          lastAbort = res.abort;
+          if (!res.transient) break;
+          if (attempt < 2) {
+            console.log(`🔁 Retentando busca (tentativa ${attempt + 1}/2) em 1.5s…`);
+            await new Promise(r => setTimeout(r, 1500));
+          }
+        }
+
+        if (!data || !Array.isArray(data.leads)) {
+          toast({
+            title: lastAbort ? "Tempo esgotado" : "Erro ao buscar leads",
+            description: lastAbort
+              ? "A busca demorou demais. Tente novamente ou busque por uma região menor."
+              : (data?.error || "Falha temporária no servidor. Tente novamente em alguns segundos."),
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
         }
 
       console.log('✅ API returned leads:', data?.leads?.length || 0);
