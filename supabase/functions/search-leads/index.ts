@@ -111,6 +111,11 @@ function getCnaesForSegment(segment: string): string[] {
     'distribuidoras de laticinios': ['4637104', '4631100', '4639701', '4691500', '1052000'],
     'distribuidores de food service': ['4634601', '4634699', '4637104', '4639701', '4639702', '4691500', '4631100'],
     'distribuidoras de food service': ['4634601', '4634699', '4637104', '4639701', '4639702', '4691500', '4631100'],
+    // Distribuidoras Agropecuárias — CNAEs de atacado agro puro-sangue
+    'distribuidoras agropecuárias': ['4683400', '4692300', '4623101', '4623102', '4623103', '4623106', '4623109', '4623199'],
+    'distribuidoras agropecuarias': ['4683400', '4692300', '4623101', '4623102', '4623103', '4623106', '4623109', '4623199'],
+    'distribuidores agropecuários': ['4683400', '4692300', '4623101', '4623102', '4623103', '4623106', '4623109', '4623199'],
+    'distribuidores agropecuarios': ['4683400', '4692300', '4623101', '4623102', '4623103', '4623106', '4623109', '4623199'],
   };
   return cnaeMap[seg] || [];
 }
