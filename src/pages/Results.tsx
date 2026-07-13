@@ -373,7 +373,34 @@ const Results = () => {
             signal: controller.signal,
           });
           
-          data = await response.json();
+          
+          // Sanity check: se o servidor informou N leads via header mas o body
+          // não bateu (truncamento/parse parcial), tentamos ler como texto e re-parsear.
+          const serverLeadCount = parseInt(response.headers.get('x-leads-count') || '0', 10);
+          let rawText: string | null = null;
+          try {
+            data = await response.json();
+          } catch (parseErr) {
+            console.warn('⚠️ JSON parse falhou, tentando texto bruto…', parseErr);
+            try {
+              rawText = await response.text();
+              data = JSON.parse(rawText);
+            } catch {
+              data = null;
+            }
+          }
+
+          const parsedCount = Array.isArray(data?.leads) ? data.leads.length : 0;
+          if (serverLeadCount > 0 && parsedCount === 0) {
+            console.error(`⚠️ Mismatch: servidor retornou ${serverLeadCount} leads mas cliente parseou 0. Payload possivelmente truncado.`);
+            toast({
+              title: "Falha no transporte dos resultados",
+              description: `O servidor gerou ${serverLeadCount} leads mas a resposta chegou incompleta. Tente de novo ou reduza a região/segmentos.`,
+              variant: "destructive",
+            });
+            setLoading(false);
+            return;
+          }
           
           if (!response.ok && !data?.leads) {
             console.error('❌ Edge function error:', response.status, data);

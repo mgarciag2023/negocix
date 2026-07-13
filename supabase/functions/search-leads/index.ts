@@ -24,7 +24,8 @@ function applySegmentOverride(segment: string, terms: string[]): string[] {
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version, accept-encoding',
+  'Access-Control-Expose-Headers': 'x-leads-count',
 };
 
 // ===== PHONE VALIDATION =====
@@ -3550,15 +3551,44 @@ serve(async (req) => {
 
 
     // Sempre retorna 200 — array vazio quando não há leads (frontend trata 0 resultados)
-    return new Response(JSON.stringify({
+    const responseBody = JSON.stringify({
       leads,
       originalCity,
       correctedCity,
+      total: leads.length,
       message: leads.length === 0
         ? `Nenhum estabelecimento encontrado para "${segment}" em ${region}. Tente outra região ou outro segmento.`
         : undefined,
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
+    // 🗜️ GZIP para payloads grandes — evita truncamento em mobile/redes lentas.
+    // Sem isso, respostas de 5-8MB podem falhar no transporte e o cliente recebe 0 leads
+    // mesmo quando o servidor logou "completed" com centenas/milhares de resultados.
+    const acceptEnc = (req.headers.get('accept-encoding') || '').toLowerCase();
+    const shouldGzip = acceptEnc.includes('gzip') && responseBody.length > 100_000;
+    if (shouldGzip) {
+      try {
+        const stream = new Blob([responseBody]).stream().pipeThrough(new CompressionStream('gzip'));
+        return new Response(stream, {
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json',
+            'Content-Encoding': 'gzip',
+            'Vary': 'Accept-Encoding',
+            'X-Leads-Count': String(leads.length),
+          },
+        });
+      } catch (gzErr) {
+        console.warn('gzip failed, sending uncompressed:', gzErr instanceof Error ? gzErr.message : String(gzErr));
+      }
+    }
+
+    return new Response(responseBody, {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json',
+        'X-Leads-Count': String(leads.length),
+      },
     });
 
   } catch (error) {
