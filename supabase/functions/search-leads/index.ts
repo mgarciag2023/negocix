@@ -1652,11 +1652,14 @@ async function resolveCityName(
   
   // Also do a DB query with narrow prefix to catch smaller cities not in the hardcoded list.
   // Use 2-char prefix to tolerate typos in the 3rd/4th letter (e.g. "casemiro" → "CASIMIRO DE ABREU").
+  // Use get_distinct_cities RPC to avoid the row-limit issue where big cities (CANOAS, CAXIAS)
+  // fill the limit before smaller ones (CANGUCU) are reached.
   const inputPrefix = inputNorm.length >= 2 ? inputNorm.substring(0, 2) : inputNorm;
   try {
-    const { data: dbCities } = await client.from('companies').select('cidade')
-      .eq('estado', state).not('cidade', 'is', null)
-      .ilike('cidade', `${inputPrefix}%`).limit(3000);
+    const { data: dbCities } = await client.rpc('get_distinct_cities', {
+      p_state: state,
+      p_prefix: inputPrefix,
+    });
     if (dbCities) {
       const existing = new Set(unique);
       for (const c of dbCities) {
