@@ -2434,6 +2434,45 @@ serve(async (req) => {
       const skipCnaeForMultiSeg = segments.length >= 4;
       if (cnaes.length > 0 && !isNearSoftTimeout() && !nationwide && !skipCnaeForMultiSeg) {
         console.log(`🏷️ CNAE search "${seg}": ${cnaes.length} CNAEs - ${cnaes.join(', ')}`);
+        // Pré-passe rápido: cnae_principal via .in() (index scan). Garante
+        // que agropecuária sempre tenha resultados via CNAE mesmo se ilike travar.
+        try {
+          const segNormPre = seg.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          const isAgroPre = segNormPre.includes('agropecuar') || segNormPre.includes('agricol');
+          if (isAgroPre) {
+            let qPre = adminClient
+              .from('companies')
+              .select('*')
+              .in('cnae_principal', cnaes)
+              .eq('situacao_cadastral', 'ATIVA')
+              .not('telefone_1', 'is', null);
+            if (city) qPre = qPre.eq('cidade', city);
+            if (state) qPre = qPre.eq('estado', state);
+            if (neighborhoodFilter) qPre = qPre.ilike('bairro', `%${neighborhoodFilter}%`);
+            if (bizType === 'matriz') qPre = qPre.eq('matriz_filial', 'MATRIZ');
+            if (bizType === 'filial') qPre = qPre.eq('matriz_filial', 'FILIAL');
+            const preHard = new Promise<{ data: null; error: { message: string } }>((resolve) =>
+              setTimeout(() => resolve({ data: null, error: { message: 'pre-hard-20s' } }), 20000)
+            );
+            const { data: preData, error: preErr } = await Promise.race([qPre.limit(5000), preHard]);
+            if (!preErr && preData) {
+              let addedPre = 0;
+              for (const c of preData) {
+                if (!seenIds.has(c.id) && matchesNeighborhood(c)) {
+                  seenIds.add(c.id);
+                  bestResults.push({ ...c, _viaCnae: true, _viaCnaePrincipal: true });
+                  addedPre++;
+                }
+              }
+              console.log(`🏷️ CNAE pré-passe (principal) "${seg}": +${addedPre} novos (total: ${preData.length})`);
+            } else if (preErr) {
+              console.warn(`⚠️ CNAE pré-passe falhou "${seg}": ${(preErr.message || '').slice(0,120)}`);
+            }
+          }
+        } catch (e) {
+          console.warn(`⚠️ CNAE pré-passe erro "${seg}":`, ((e as Error).message || '').slice(0, 100));
+        }
+
         try {
           const cnaeOrFilter = cnaes
             .map(code => `cnae_principal.eq.${code},cnae_secundaria.ilike.%${code}%`)
