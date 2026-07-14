@@ -237,19 +237,25 @@ const Admin = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="pesquisas" className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="pesquisas" className="gap-2">
-              <BarChart3 className="h-4 w-4" /> Pesquisas
+        <Tabs defaultValue="segmentos" className="w-full">
+          <TabsList className="grid w-full max-w-2xl grid-cols-3">
+            <TabsTrigger value="segmentos" className="gap-2">
+              <BarChart3 className="h-4 w-4" /> Segmentos
+            </TabsTrigger>
+            <TabsTrigger value="historico" className="gap-2">
+              <Search className="h-4 w-4" /> Histórico
             </TabsTrigger>
             <TabsTrigger value="usuarios" className="gap-2">
               <Users className="h-4 w-4" /> Usuários
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="pesquisas" className="space-y-6 mt-6">
-            <AdminAnalytics />
+          <TabsContent value="segmentos" className="space-y-6 mt-6">
             <SegmentMonitor />
+          </TabsContent>
+
+          <TabsContent value="historico" className="space-y-6 mt-6">
+            <AdminAnalytics />
             <SearchLogsTable />
           </TabsContent>
 
