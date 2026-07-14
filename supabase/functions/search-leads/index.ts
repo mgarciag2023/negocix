@@ -112,10 +112,10 @@ function getCnaesForSegment(segment: string): string[] {
     'distribuidores de food service': ['4634601', '4634699', '4637104', '4639701', '4639702', '4691500', '4631100'],
     'distribuidoras de food service': ['4634601', '4634699', '4637104', '4639701', '4639702', '4691500', '4631100'],
     // Distribuidoras Agropecuárias — CNAEs de atacado agro puro-sangue
-    'distribuidoras agropecuárias': ['4683400', '4692300', '4623101', '4623102', '4623103', '4623106', '4623109', '4623199'],
-    'distribuidoras agropecuarias': ['4683400', '4692300', '4623101', '4623102', '4623103', '4623106', '4623109', '4623199'],
-    'distribuidores agropecuários': ['4683400', '4692300', '4623101', '4623102', '4623103', '4623106', '4623109', '4623199'],
-    'distribuidores agropecuarios': ['4683400', '4692300', '4623101', '4623102', '4623103', '4623106', '4623109', '4623199'],
+    'distribuidoras agropecuárias': ['4683400', '4692300', '4623101', '4623102', '4623103', '4623109', '4623199'],
+    'distribuidoras agropecuarias': ['4683400', '4692300', '4623101', '4623102', '4623103', '4623109', '4623199'],
+    'distribuidores agropecuários': ['4683400', '4692300', '4623101', '4623102', '4623103', '4623109', '4623199'],
+    'distribuidores agropecuarios': ['4683400', '4692300', '4623101', '4623102', '4623103', '4623109', '4623199'],
   };
   return cnaeMap[seg] || [];
 }
@@ -3200,7 +3200,6 @@ serve(async (req) => {
           '4623101', // Animais vivos
           '4623102', // Couros, lãs, peles
           '4623103', // Algodão
-          '4623106', // Sementes, flores, plantas e gramas
           '4623109', // Alimentos para animais
           '4623199', // Matérias-primas agrícolas não especificadas
           '4623104', // Fumo em folha
@@ -3220,6 +3219,10 @@ serve(async (req) => {
           '7500100', // veterinária (clínica)
           '4753900', // eletrodomésticos
           '4930201','4930202','4930203','4930204', // transporte rodoviário
+          '2122000', // Fabricação de medicamentos para uso veterinário (indústria, não distribuidora)
+          '4693100', // Atacado de mercadorias em geral SEM predominância de insumos agropecuários
+          '9511800', // Reparação e manutenção de computadores
+          '4623106', // Sementes, flores, plantas e gramas (foco floricultura decorativa)
         ]);
         const AGRO_STRONG_WORDS = [
           'agropecuaria','agropecuária','agropecuarias','agropecuárias',
