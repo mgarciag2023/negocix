@@ -3455,8 +3455,11 @@ serve(async (req) => {
       // Aceita o lead apenas se o nome (nome_fantasia/razao_social) contiver
       // termos relevantes ao segmento.
       allCompanies = allCompanies.filter(c => {
+        // Agropecuária: já validada pelo scoring pipeline (CNAE + descrição + nome + negativos)
+        if (c._agroScored) return true;
         // Results found via official CNAE code always pass relevance filter
         if (c._viaCnae) return true;
+
 
         const seg = (c._segment || '').trim().toLowerCase();
         const termSets = segTermSetsMap.get(seg);
