@@ -3230,31 +3230,34 @@ serve(async (req) => {
           if (c._viaCnae) return true;
           const seg = (c._segment || '').trim().toLowerCase();
           if (!seg.includes('distribuid')) return true; // Not a distributor segment, skip
-          
-          const productKeywords = getDistributorProductType(seg);
+
+          const segNorm = seg.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          const isAgroDist = segNorm.includes('agropecuar') || segNorm.includes('agricol');
+
+          const productKeywords = getDistributorProductType(seg)
+            || (isAgroDist ? ['agropecuar', 'agricol', 'agro', 'rural', 'insumo', 'fertilizante', 'defensivo', 'semente', 'racao', 'ração', 'veterinar'] : null);
           if (!productKeywords) return true; // Can't determine product type, keep
-          
+
           const nameText = c._nameText || '';
           const descCnae = (c.descricao_cnae || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
           const fullText = `${nameText} ${descCnae}`;
-          
-          // Must have a distributor indicator in NAME
+
           const hasDistIndicator = distributorIndicators.some(ind => nameText.includes(ind));
-          
-          // Check if CNAE description indicates wholesale/distribution
           const isWholesaleCnae = descCnae.includes('atacad') || descCnae.includes('distribui');
-          
-          // Must have at least one product keyword (in name OR CNAE description)
           const hasProductMatch = productKeywords.some(pk => fullText.includes(pk));
-          
+
+          // AGRO: aceita casas/lojas agropecuárias (varejo especializado) sem exigir indicador de distribuidor
+          if (isAgroDist) {
+            return hasProductMatch && (hasDistIndicator || isWholesaleCnae || nameText.includes('agropecuar') || nameText.includes('agricol') || nameText.includes('agro'));
+          }
+
           // STRICT: company must be a distributor/wholesaler (by name OR CNAE)
           if (!hasDistIndicator && !isWholesaleCnae) return false;
-          
-          // Then must match product type
           return hasProductMatch;
         });
         console.log(`🏪 Distributor strict filter: ${allCompanies.length} (removed ${beforeDistFilter - allCompanies.length} off-type distributors)`);
       }
+
 
       // Política (100% baseada em NOME, sem CNAE):
       // Aceita o lead apenas se o nome (nome_fantasia/razao_social) contiver
