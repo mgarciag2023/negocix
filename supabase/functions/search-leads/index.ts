@@ -2434,6 +2434,45 @@ serve(async (req) => {
       const skipCnaeForMultiSeg = segments.length >= 4;
       if (cnaes.length > 0 && !isNearSoftTimeout() && !nationwide && !skipCnaeForMultiSeg) {
         console.log(`🏷️ CNAE search "${seg}": ${cnaes.length} CNAEs - ${cnaes.join(', ')}`);
+        // Pré-passe rápido: cnae_principal via .in() (index scan). Garante
+        // que agropecuária sempre tenha resultados via CNAE mesmo se ilike travar.
+        try {
+          const segNormPre = seg.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          const isAgroPre = segNormPre.includes('agropecuar') || segNormPre.includes('agricol');
+          if (isAgroPre) {
+            let qPre = adminClient
+              .from('companies')
+              .select('*')
+              .in('cnae_principal', cnaes)
+              .eq('situacao_cadastral', 'ATIVA')
+              .not('telefone_1', 'is', null);
+            if (city) qPre = qPre.eq('cidade', city);
+            if (state) qPre = qPre.eq('estado', state);
+            if (neighborhoodFilter) qPre = qPre.ilike('bairro', `%${neighborhoodFilter}%`);
+            if (bizType === 'matriz') qPre = qPre.eq('matriz_filial', 'MATRIZ');
+            if (bizType === 'filial') qPre = qPre.eq('matriz_filial', 'FILIAL');
+            const preHard = new Promise<{ data: null; error: { message: string } }>((resolve) =>
+              setTimeout(() => resolve({ data: null, error: { message: 'pre-hard-20s' } }), 20000)
+            );
+            const { data: preData, error: preErr } = await Promise.race([qPre.limit(5000), preHard]);
+            if (!preErr && preData) {
+              let addedPre = 0;
+              for (const c of preData) {
+                if (!seenIds.has(c.id) && matchesNeighborhood(c)) {
+                  seenIds.add(c.id);
+                  bestResults.push({ ...c, _viaCnae: true, _viaCnaePrincipal: true });
+                  addedPre++;
+                }
+              }
+              console.log(`🏷️ CNAE pré-passe (principal) "${seg}": +${addedPre} novos (total: ${preData.length})`);
+            } else if (preErr) {
+              console.warn(`⚠️ CNAE pré-passe falhou "${seg}": ${(preErr.message || '').slice(0,120)}`);
+            }
+          }
+        } catch (e) {
+          console.warn(`⚠️ CNAE pré-passe erro "${seg}":`, ((e as Error).message || '').slice(0, 100));
+        }
+
         try {
           const cnaeOrFilter = cnaes
             .map(code => `cnae_principal.eq.${code},cnae_secundaria.ilike.%${code}%`)
@@ -2449,14 +2488,19 @@ serve(async (req) => {
           if (neighborhoodFilter) q = q.ilike('bairro', `%${neighborhoodFilter}%`);
           if (bizType === 'matriz') q = q.eq('matriz_filial', 'MATRIZ');
           if (bizType === 'filial') q = q.eq('matriz_filial', 'FILIAL');
+          // Timeouts maiores para segmentos que dependem fortemente do CNAE (agropecuária)
+          const segNormForTimeout = seg.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          const isAgroSeg = segNormForTimeout.includes('agropecuar') || segNormForTimeout.includes('agricol');
+          const softMs = isAgroSeg ? 40000 : 15000;
+          const hardMs = isAgroSeg ? 45000 : 18000;
           const cnaeController = new AbortController();
-          const cnaeTimer = setTimeout(() => cnaeController.abort(), 15000);
+          const cnaeTimer = setTimeout(() => cnaeController.abort(), softMs);
           const qWithAbort: any = (q as any).abortSignal?.(cnaeController.signal) ?? q;
           // HARD timeout via Promise.race — abortSignal não mata a query no Postgres,
           // sem race o worker fica preso aguardando para sempre.
           const cnaePromise = qWithAbort.limit(5000);
           const cnaeHardTimeout = new Promise<{ data: null; error: { message: string } }>((resolve) =>
-            setTimeout(() => resolve({ data: null, error: { message: 'hard-timeout-18s' } }), 18000)
+            setTimeout(() => resolve({ data: null, error: { message: `hard-timeout-${hardMs}ms` } }), hardMs)
           );
           const { data: cnaeData, error: cnaeErr } = await Promise.race([cnaePromise, cnaeHardTimeout]);
           clearTimeout(cnaeTimer);
@@ -3137,7 +3181,162 @@ serve(async (req) => {
         segCoreKeywordsMap.set(seg.toLowerCase(), extractCoreKeywords(seg));
       }
 
-      // ===== DISTRIBUTOR-SPECIFIC STRICT FILTER =====
+      // ============================================================
+      // ===== SCORING PIPELINE — DISTRIBUIDORAS AGROPECUÁRIAS ======
+      // ============================================================
+      // Substitui os filtros baseados apenas em nome por um score
+      // combinado (CNAE + descrição da atividade + nome + negativos).
+      // Objetivo: priorizar precisão sobre quantidade e eliminar
+      // falsos positivos (energia solar, tecnologia, consultorias etc.).
+      const hasAgroSeg = segments.some((s: string) => {
+        const n = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        return n.includes('agropecuar') || n.includes('agricol');
+      });
+      if (hasAgroSeg) {
+        // CNAEs oficiais (peso alto)
+        const AGRO_CNAES_PRINCIPAIS = new Set([
+          '4683400', // Comércio atacadista de defensivos agrícolas, adubos, fertilizantes
+          '4692300', // Com. atacadista de mercadorias em geral (alimentação animal, sementes)
+          '4623101', // Animais vivos
+          '4623102', // Couros, lãs, peles
+          '4623103', // Algodão
+          '4623106', // Sementes, flores, plantas e gramas
+          '4623109', // Alimentos para animais
+          '4623199', // Matérias-primas agrícolas não especificadas
+          '4623104', // Fumo em folha
+          '4623105', // Cacau
+          '4623107', // Café em grão
+          '4623108', // Soja
+        ]);
+        // CNAEs que reduzem drasticamente o score (contexto errado)
+        const AGRO_CNAES_NEGATIVOS = new Set([
+          '3511500','3512300','3513100','3514000', // energia elétrica
+          '6201500','6202300','6203100','6204000','6209100', // TI/software
+          '7020400','7021000', // consultoria
+          '7112000','7111100', // engenharia/arquitetura
+          '6911701','6911702','6912500','6920601','6920602', // jurídico/contábil
+          '6810201','6810202','6810203','6821801','6822600', // imobiliárias
+          '4771701','4771702','4771703','4772500', // farmácias
+          '7500100', // veterinária (clínica)
+          '4753900', // eletrodomésticos
+          '4930201','4930202','4930203','4930204', // transporte rodoviário
+        ]);
+        const AGRO_STRONG_WORDS = [
+          'agropecuaria','agropecuária','agropecuarias','agropecuárias',
+          'revenda agropecuaria','revenda agropecuária',
+          'casa do produtor','casa do agricultor','casa do fazendeiro','casa do pecuarista',
+          'insumos','defensivos','fertilizantes','sementes',
+          'racao','ração','nutricao animal','nutrição animal',
+          'agroveterinaria','agroveterinária',
+          'comercio agricola','comércio agrícola','atacado agricola','atacado agrícola',
+          'distribuidora agricola','distribuidora agrícola',
+          'produtos agropecuarios','produtos agropecuários',
+          'revenda agricola','revenda agrícola',
+          'agro insumos','agroquimicos','agroquímicos',
+          'casa rural','rural shop',
+        ];
+        const AGRO_WEAK_WORDS = [
+          'agro','agronegocio','agronegócio','rural','campo','fazenda',
+          'agrocenter','agrocentro','celeiro','cooperativa',
+        ];
+        // Palavras negativas por contexto (Agro + X = não é agropecuária)
+        const AGRO_NEG_CONTEXT = [
+          'solar','energia','fotovoltaic','tech','tecnologia','software','sistemas',
+          'consultoria','engenharia','carbono','ambiental','automacao','automação',
+          'logistica','logística','transporte','locacao','locação','locadora',
+        ];
+        // Blacklist geral (aplica-se independente de "agro")
+        const AGRO_BLACKLIST = [
+          'pet shop','petshop','clinica veterinaria','clínica veterinária',
+          'consultoria','software','tecnologia','solar','fotovoltaica',
+          'energia','engenharia','contabilidade','advocacia','imobiliaria','imobiliária',
+          'representacoes','representações','representacao comercial','representação comercial',
+          'marketing','informatica','informática','farmacia','farmácia',
+          'papelaria','escola','restaurante','hotel','maquinas industriais','máquinas industriais',
+          'carbono','ambiental','automacao','automação','logistica','logística','transportes',
+        ];
+        // Descrições de atividade compatíveis
+        const AGRO_DESC_OK = [
+          'agropecu','agricol','defensivo','fertilizant','sement','racao','ração',
+          'insumo','veterinar','animal','pecuar','adubo','nutricao animal','nutrição animal',
+        ];
+        // Descrições de atividade incompatíveis
+        const AGRO_DESC_BAD = [
+          'energia eletrica','energia elétrica','solar','fotovoltaic',
+          'software','tecnologia da informacao','tecnologia da informação',
+          'consultoria em gestao','consultoria em gestão','engenharia',
+          'juridic','contabil','contábil','imobiliar',
+          'farmaceutic','farmacêutic','clinica veterinar','clínica veterinár',
+          'locacao','locação','transporte','representacao','representação',
+        ];
+
+        const MIN_SCORE = 70;
+        const norm = (s: string) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+        const scoreAgro = (c: any): { score: number; reasons: string[] } => {
+          const reasons: string[] = [];
+          let score = 0;
+          const nf = norm(c.nome_fantasia || '');
+          const rs = norm(c.razao_social || '');
+          const nameText = `${nf} ${rs}`.trim();
+          const cnaeP = String(c.cnae_principal || '').replace(/\D/g, '');
+          const cnaeS = String(c.cnae_secundaria || '');
+          const desc = norm(c.descricao_cnae || '');
+
+          // CNAE principal
+          if (AGRO_CNAES_PRINCIPAIS.has(cnaeP)) { score += 60; reasons.push(`✔ CNAE principal agro (${cnaeP})`); }
+          else if (AGRO_CNAES_NEGATIVOS.has(cnaeP)) { score -= 80; reasons.push(`✖ CNAE principal incompatível (${cnaeP})`); }
+
+          // CNAE secundário
+          let hasSecAgro = false;
+          for (const code of AGRO_CNAES_PRINCIPAIS) {
+            if (cnaeS.includes(code)) { hasSecAgro = true; break; }
+          }
+          if (hasSecAgro) { score += 45; reasons.push('✔ CNAE secundário agro'); }
+
+          // Descrição da atividade
+          if (AGRO_DESC_OK.some(k => desc.includes(k))) { score += 35; reasons.push('✔ descrição da atividade compatível'); }
+          if (AGRO_DESC_BAD.some(k => desc.includes(k))) { score -= 80; reasons.push('✖ descrição da atividade incompatível'); }
+
+          // Nome — palavras fortes
+          const strongHit = AGRO_STRONG_WORDS.find(w => nameText.includes(w));
+          if (strongHit) { score += 20; reasons.push(`✔ nome forte "${strongHit}"`); }
+          // Nome — palavras fracas
+          const weakHit = AGRO_WEAK_WORDS.find(w => new RegExp(`(^|\\W)${w}(\\W|$)`).test(nameText));
+          if (weakHit && !strongHit) { score += 10; reasons.push(`~ nome fraco "${weakHit}"`); }
+
+          // Contexto negativo em nome (ex.: "Agro Solar", "Agro Tech")
+          for (const neg of AGRO_NEG_CONTEXT) {
+            if (nameText.includes(neg)) { score -= 60; reasons.push(`✖ contexto negativo em nome "${neg}"`); break; }
+          }
+          // Blacklist geral
+          for (const bl of AGRO_BLACKLIST) {
+            if (nameText.includes(bl)) { score -= 80; reasons.push(`✖ blacklist "${bl}"`); break; }
+          }
+          return { score, reasons };
+        };
+
+        const beforeAgro = allCompanies.length;
+        let agroKept = 0;
+        const kept: any[] = [];
+        for (const c of allCompanies) {
+          const seg = (c._segment || '').toLowerCase();
+          const segN = seg.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          const isAgroCompany = segN.includes('agropecuar') || segN.includes('agricol');
+          if (!isAgroCompany) { kept.push(c); continue; }
+          const { score, reasons } = scoreAgro(c);
+          if (score >= MIN_SCORE) {
+            c._agroScore = score;
+            c._agroReasons = reasons;
+            c._agroScored = true; // marca para pular filtros baseados só em nome
+            kept.push(c);
+            agroKept++;
+          }
+        }
+        allCompanies = kept;
+        console.log(`🌾 Agro scoring pipeline: ${agroKept} aprovados (score >= ${MIN_SCORE}) | antes=${beforeAgro} depois=${allCompanies.length}`);
+      }
+
       // For distributor segments, the name MUST contain BOTH:
       // 1) A distributor indicator (distribuidora, distribuidor, atacado, atacadista, deposito, depósito, fornecedor)
       // 2) A product-specific keyword matching the segment type
@@ -3256,8 +3455,11 @@ serve(async (req) => {
       // Aceita o lead apenas se o nome (nome_fantasia/razao_social) contiver
       // termos relevantes ao segmento.
       allCompanies = allCompanies.filter(c => {
+        // Agropecuária: já validada pelo scoring pipeline (CNAE + descrição + nome + negativos)
+        if (c._agroScored) return true;
         // Results found via official CNAE code always pass relevance filter
         if (c._viaCnae) return true;
+
 
         const seg = (c._segment || '').trim().toLowerCase();
         const termSets = segTermSetsMap.get(seg);
