@@ -3334,7 +3334,7 @@ serve(async (req) => {
           }
         }
         allCompanies = kept;
-        console.log(`🌾 Agro scoring pipeline: ${agroKept}/${beforeAgro - (beforeAgro - agroKept - (kept.length - agroKept))} passaram (min score ${MIN_SCORE}); total após filtro: ${allCompanies.length}`);
+        console.log(`🌾 Agro scoring pipeline: ${agroKept} aprovados (score >= ${MIN_SCORE}) | antes=${beforeAgro} depois=${allCompanies.length}`);
       }
 
       // For distributor segments, the name MUST contain BOTH:
