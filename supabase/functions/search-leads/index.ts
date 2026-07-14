@@ -2449,14 +2449,19 @@ serve(async (req) => {
           if (neighborhoodFilter) q = q.ilike('bairro', `%${neighborhoodFilter}%`);
           if (bizType === 'matriz') q = q.eq('matriz_filial', 'MATRIZ');
           if (bizType === 'filial') q = q.eq('matriz_filial', 'FILIAL');
+          // Timeouts maiores para segmentos que dependem fortemente do CNAE (agropecuária)
+          const segNormForTimeout = seg.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          const isAgroSeg = segNormForTimeout.includes('agropecuar') || segNormForTimeout.includes('agricol');
+          const softMs = isAgroSeg ? 40000 : 15000;
+          const hardMs = isAgroSeg ? 45000 : 18000;
           const cnaeController = new AbortController();
-          const cnaeTimer = setTimeout(() => cnaeController.abort(), 15000);
+          const cnaeTimer = setTimeout(() => cnaeController.abort(), softMs);
           const qWithAbort: any = (q as any).abortSignal?.(cnaeController.signal) ?? q;
           // HARD timeout via Promise.race — abortSignal não mata a query no Postgres,
           // sem race o worker fica preso aguardando para sempre.
           const cnaePromise = qWithAbort.limit(5000);
           const cnaeHardTimeout = new Promise<{ data: null; error: { message: string } }>((resolve) =>
-            setTimeout(() => resolve({ data: null, error: { message: 'hard-timeout-18s' } }), 18000)
+            setTimeout(() => resolve({ data: null, error: { message: `hard-timeout-${hardMs}ms` } }), hardMs)
           );
           const { data: cnaeData, error: cnaeErr } = await Promise.race([cnaePromise, cnaeHardTimeout]);
           clearTimeout(cnaeTimer);
