@@ -3218,25 +3218,23 @@ serve(async (req) => {
       }
 
       // Apply distributor-specific filter BEFORE the universal filter
+      // AGROPECUÁRIAS ficam FORA deste filtro (voltamos ao comportamento que trazia 150+ leads):
+      // casa/loja agropecuária é o próprio lead-alvo, não precisa da palavra "distribuidor" no nome.
       const isDistributorSegment = segments.some((s: string) => {
         const norm = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-        // "agropecuar" agora entra no filtro estrito (exige indicador de distribuidor no nome ou _viaCnae)
+        if (norm.includes('agropecuar') || norm.includes('agricol')) return false;
         return norm.includes('distribuid');
       });
-      
+
       if (isDistributorSegment) {
         const beforeDistFilter = allCompanies.length;
         allCompanies = allCompanies.filter(c => {
           if (c._viaCnae) return true;
           const seg = (c._segment || '').trim().toLowerCase();
-          if (!seg.includes('distribuid')) return true; // Not a distributor segment, skip
+          if (!seg.includes('distribuid')) return true;
 
-          const segNorm = seg.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-          const isAgroDist = segNorm.includes('agropecuar') || segNorm.includes('agricol');
-
-          const productKeywords = getDistributorProductType(seg)
-            || (isAgroDist ? ['agropecuar', 'agricol', 'agro', 'rural', 'insumo', 'fertilizante', 'defensivo', 'semente', 'racao', 'ração', 'veterinar'] : null);
-          if (!productKeywords) return true; // Can't determine product type, keep
+          const productKeywords = getDistributorProductType(seg);
+          if (!productKeywords) return true;
 
           const nameText = c._nameText || '';
           const descCnae = (c.descricao_cnae || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -3246,17 +3244,12 @@ serve(async (req) => {
           const isWholesaleCnae = descCnae.includes('atacad') || descCnae.includes('distribui');
           const hasProductMatch = productKeywords.some(pk => fullText.includes(pk));
 
-          // AGRO: aceita casas/lojas agropecuárias (varejo especializado) sem exigir indicador de distribuidor
-          if (isAgroDist) {
-            return hasProductMatch && (hasDistIndicator || isWholesaleCnae || nameText.includes('agropecuar') || nameText.includes('agricol') || nameText.includes('agro'));
-          }
-
-          // STRICT: company must be a distributor/wholesaler (by name OR CNAE)
           if (!hasDistIndicator && !isWholesaleCnae) return false;
           return hasProductMatch;
         });
         console.log(`🏪 Distributor strict filter: ${allCompanies.length} (removed ${beforeDistFilter - allCompanies.length} off-type distributors)`);
       }
+
 
 
       // Política (100% baseada em NOME, sem CNAE):
