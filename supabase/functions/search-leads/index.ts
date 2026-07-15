@@ -1997,8 +1997,12 @@ serve(async (req) => {
         adminClient.from('companies').select('*').in('cnae_principal', cnaesList)
       ).limit(8000);
 
-      // cnae_secundaria uses ilike (unindexed). Só executa se filtro geográfico existir OU só 1 CNAE.
-      const canRunSecundaria = !!city || !!state;
+      // cnae_secundaria uses ilike (unindexed). É a query mais pesada — só executa quando
+      // há filtro de CIDADE (drasticamente reduz o scan). Em state-only ela sozinha
+      // consome todo o wall-time do worker e mata a função. Regra:
+      //   - com city → roda (universo pequeno)
+      //   - state-only → PULA (evita timeout; principal já cobre o essencial)
+      const canRunSecundaria = !!city;
       const secundariaOr = cnaesList.map((code) => `cnae_secundaria.ilike.%${code}%`).join(',');
       const secundariaQuery = canRunSecundaria
         ? applyCommon(
@@ -2011,9 +2015,10 @@ serve(async (req) => {
       );
 
       const [pRes, sRes] = await Promise.all([
-        Promise.race([principalQuery, hardTimeout(25000)]),
-        Promise.race([secundariaQuery, hardTimeout(25000)]),
+        Promise.race([principalQuery, hardTimeout(35000)]),
+        Promise.race([secundariaQuery, hardTimeout(20000)]),
       ]);
+
 
       if ((pRes as any).error) console.warn('⚠️ CNAE principal:', (pRes as any).error.message);
       if ((sRes as any).error) console.warn('⚠️ CNAE secundária:', (sRes as any).error.message);
