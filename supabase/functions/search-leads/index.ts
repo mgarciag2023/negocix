@@ -1973,9 +1973,28 @@ serve(async (req) => {
           console.log(`🏘️ "${city}" detectado como BAIRRO (não cidade). Buscando no estado ${state} todo e filtrando por bairro.`);
           neighborhoodFilter = city;
           city = null; // remove filtro de cidade — busca no estado todo
+        } else {
+          // ===== CROSS-STATE FALLBACK =====
+          // Ex: "Petrolina, PB" — Petrolina existe em PE, não PB. Procura a cidade em qualquer UF.
+          const { data: crossState } = await adminClient
+            .from('companies')
+            .select('estado')
+            .eq('cidade', city)
+            .eq('situacao_cadastral', 'ATIVA')
+            .limit(50);
+          if (crossState && crossState.length > 0) {
+            const counts: Record<string, number> = {};
+            for (const r of crossState) counts[r.estado] = (counts[r.estado] || 0) + 1;
+            const bestState = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+            if (bestState && bestState !== state) {
+              console.log(`🗺️ Cidade "${city}" não existe em ${state} — corrigindo UF para ${bestState}`);
+              state = bestState;
+            }
+          }
         }
       }
     }
+
 
     // ===== CNAE-ONLY SEARCH (atalho — bypassa fluxo de segmentos) =====
     if (hasCnaeSearch) {
