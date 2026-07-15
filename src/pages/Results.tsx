@@ -454,7 +454,38 @@ const Results = () => {
         // Edge function already logs the search — no duplicate logging needed here
 
         if (data?.leads && data.leads.length > 0) {
-          const sortedLeads = sortLeadsAlphabetically(data.leads);
+          let workingLeads: Lead[] = data.leads;
+
+          // "Somente Grande porte" selecionado → retorna apenas os 10 maiores.
+          // Regra: usuário quer só os top 10 maiores empresas do segmento/região.
+          const sizes: string[] = Array.isArray(searchConfig.companySizes) ? searchConfig.companySizes : [];
+          const onlyLarge = sizes.length > 0
+            && sizes.includes('large')
+            && !sizes.includes('all')
+            && !sizes.includes('small')
+            && !sizes.includes('medium');
+          if (onlyLarge) {
+            const normPhone = (p?: string) => (p || '').replace(/\D/g, '').replace(/^55/, '').slice(-10);
+            const normEmail = (e?: string) => (e || '').trim().toLowerCase();
+            const seenPhones = new Set<string>();
+            const seenEmails = new Set<string>();
+            const sortedBySize = [...data.leads].sort((a: any, b: any) => sizeScore(b) - sizeScore(a));
+            const top: Lead[] = [];
+            for (const lead of sortedBySize) {
+              const ph = normPhone((lead as any).phone);
+              const em = normEmail((lead as any).email);
+              if (ph && seenPhones.has(ph)) continue;
+              if (em && seenEmails.has(em)) continue;
+              if (ph) seenPhones.add(ph);
+              if (em) seenEmails.add(em);
+              top.push(lead);
+              if (top.length >= 10) break;
+            }
+            workingLeads = top;
+            console.log(`🏆 Filtro "Grande porte": ${data.leads.length} leads → top ${top.length} maiores`);
+          }
+
+          const sortedLeads = sortLeadsAlphabetically(workingLeads);
           setLeads(sortedLeads);
           setAllLeads(sortedLeads);
           if (data.correctedCity && data.originalCity && data.correctedCity !== data.originalCity) {
