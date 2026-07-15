@@ -1372,7 +1372,7 @@ function parseRegion(region: string): { city: string | null; state: string | nul
     const cityRaw = parts[0];
     const stateRaw = parts[parts.length - 1].toUpperCase().trim();
     const normalizedState = normalizeText(stateRaw);
-    
+
     let state: string | null = null;
     if (stateAbbrevs.includes(normalizedState)) {
       state = normalizedState;
@@ -1380,10 +1380,17 @@ function parseRegion(region: string): { city: string | null; state: string | nul
       const normalizedLower = stateRaw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       state = stateNameMap[normalizedLower] || null;
     }
-    
+
+    // Fix: "RS, RS" / "SP, SP" — user duplicou o estado. Trata como state-only.
+    const cityNorm = normalizeText(cityRaw);
+    if (state && (cityNorm === state || (stateAbbrevs.includes(cityNorm)))) {
+      return { city: null, state, isStateOnly: true };
+    }
+
     const city = cleanCityName(cityRaw, state);
-    return { city: city || normalizeText(cityRaw), state, isStateOnly: false };
+    return { city: city || cityNorm, state, isStateOnly: false };
   }
+
 
   // Single value — but first check if it contains a trailing state abbreviation or name separated by space
   // e.g. "Joinvile SC", "São Paulo SP", "Blumenau Santa Catarina"
@@ -1966,9 +1973,28 @@ serve(async (req) => {
           console.log(`🏘️ "${city}" detectado como BAIRRO (não cidade). Buscando no estado ${state} todo e filtrando por bairro.`);
           neighborhoodFilter = city;
           city = null; // remove filtro de cidade — busca no estado todo
+        } else {
+          // ===== CROSS-STATE FALLBACK =====
+          // Ex: "Petrolina, PB" — Petrolina existe em PE, não PB. Procura a cidade em qualquer UF.
+          const { data: crossState } = await adminClient
+            .from('companies')
+            .select('estado')
+            .eq('cidade', city)
+            .eq('situacao_cadastral', 'ATIVA')
+            .limit(50);
+          if (crossState && crossState.length > 0) {
+            const counts: Record<string, number> = {};
+            for (const r of crossState) counts[r.estado] = (counts[r.estado] || 0) + 1;
+            const bestState = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+            if (bestState && bestState !== state) {
+              console.log(`🗺️ Cidade "${city}" não existe em ${state} — corrigindo UF para ${bestState}`);
+              state = bestState;
+            }
+          }
         }
       }
     }
+
 
     // ===== CNAE-ONLY SEARCH (atalho — bypassa fluxo de segmentos) =====
     if (hasCnaeSearch) {
@@ -1990,8 +2016,12 @@ serve(async (req) => {
         adminClient.from('companies').select('*').in('cnae_principal', cnaesList)
       ).limit(8000);
 
-      // cnae_secundaria uses ilike (unindexed). Só executa se filtro geográfico existir OU só 1 CNAE.
-      const canRunSecundaria = !!city || !!state;
+      // cnae_secundaria uses ilike (unindexed). É a query mais pesada — só executa quando
+      // há filtro de CIDADE (drasticamente reduz o scan). Em state-only ela sozinha
+      // consome todo o wall-time do worker e mata a função. Regra:
+      //   - com city → roda (universo pequeno)
+      //   - state-only → PULA (evita timeout; principal já cobre o essencial)
+      const canRunSecundaria = !!city;
       const secundariaOr = cnaesList.map((code) => `cnae_secundaria.ilike.%${code}%`).join(',');
       const secundariaQuery = canRunSecundaria
         ? applyCommon(
@@ -2004,9 +2034,10 @@ serve(async (req) => {
       );
 
       const [pRes, sRes] = await Promise.all([
-        Promise.race([principalQuery, hardTimeout(25000)]),
-        Promise.race([secundariaQuery, hardTimeout(25000)]),
+        Promise.race([principalQuery, hardTimeout(35000)]),
+        Promise.race([secundariaQuery, hardTimeout(20000)]),
       ]);
+
 
       if ((pRes as any).error) console.warn('⚠️ CNAE principal:', (pRes as any).error.message);
       if ((sRes as any).error) console.warn('⚠️ CNAE secundária:', (sRes as any).error.message);
