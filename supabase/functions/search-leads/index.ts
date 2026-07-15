@@ -1372,7 +1372,7 @@ function parseRegion(region: string): { city: string | null; state: string | nul
     const cityRaw = parts[0];
     const stateRaw = parts[parts.length - 1].toUpperCase().trim();
     const normalizedState = normalizeText(stateRaw);
-    
+
     let state: string | null = null;
     if (stateAbbrevs.includes(normalizedState)) {
       state = normalizedState;
@@ -1380,10 +1380,17 @@ function parseRegion(region: string): { city: string | null; state: string | nul
       const normalizedLower = stateRaw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       state = stateNameMap[normalizedLower] || null;
     }
-    
+
+    // Fix: "RS, RS" / "SP, SP" — user duplicou o estado. Trata como state-only.
+    const cityNorm = normalizeText(cityRaw);
+    if (state && (cityNorm === state || (stateAbbrevs.includes(cityNorm)))) {
+      return { city: null, state, isStateOnly: true };
+    }
+
     const city = cleanCityName(cityRaw, state);
-    return { city: city || normalizeText(cityRaw), state, isStateOnly: false };
+    return { city: city || cityNorm, state, isStateOnly: false };
   }
+
 
   // Single value — but first check if it contains a trailing state abbreviation or name separated by space
   // e.g. "Joinvile SC", "São Paulo SP", "Blumenau Santa Catarina"
