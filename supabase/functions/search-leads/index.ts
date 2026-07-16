@@ -2165,9 +2165,10 @@ serve(async (req) => {
     const MAX_TOTAL_RAW = nationwide ? 20_000 : (isStateOnly ? 30_000 : 50_000);
 
     async function fetchCityNameScan(): Promise<any[] | null> {
-      if (!city || !state || isStateOnly || nationwide || !isHeavySearch) return null;
+      if (!city || !state || isStateOnly || nationwide) return null;
 
       const CITY_SCAN_LIMIT = 50_000;
+      const SMALL_CITY_THRESHOLD = 15_000; // cidades pequenas sempre usam scan (evita zero-result em 1-3 segmentos)
       const CITY_SCAN_PAGE = 1000;
       const CITY_SCAN_CONCURRENCY = 4;
 
@@ -2186,6 +2187,10 @@ serve(async (req) => {
       const totalInCity = count || 0;
       if (totalInCity <= 0 || totalInCity > CITY_SCAN_LIMIT) {
         console.log(`⏭️ City scan skipped: ${totalInCity} active companies in ${city}/${state}`);
+        return null;
+      }
+      // Para cidades maiores, só roda em pesquisa pesada (4+ segmentos / nacional) para não competir com FTS
+      if (totalInCity > SMALL_CITY_THRESHOLD && !isHeavySearch) {
         return null;
       }
 

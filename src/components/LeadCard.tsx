@@ -102,7 +102,15 @@ const LeadCard = ({
           <Badge variant="secondary" className="mb-2 text-xs">{category}</Badge>
           <div className="flex items-start text-muted-foreground text-xs md:text-sm">
             <MapPin className="h-3 w-3 md:h-4 md:w-4 mr-1 mt-0.5 flex-shrink-0" />
-            <span className="line-clamp-2">{address}</span>
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="line-clamp-2 hover:text-primary hover:underline transition-colors"
+              title="Abrir no Google Maps"
+            >
+              {address}
+            </a>
           </div>
         </div>
         
