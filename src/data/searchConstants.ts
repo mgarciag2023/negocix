@@ -356,6 +356,8 @@ export const customerTypes = [
   "Livrarias",
   "Antiquários",
   "Brechós",
+  "Bazares",
+
   "Artigos de Caça, Pesca e Camping",
   "Loja de Caça e Pesca",
 
