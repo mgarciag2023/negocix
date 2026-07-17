@@ -116,7 +116,11 @@ function getCnaesForSegment(segment: string): string[] {
     'distribuidoras agropecuarias': ['4683400', '4692300', '4623101', '4623102', '4623103', '4623109', '4623199'],
     'distribuidores agropecuários': ['4683400', '4692300', '4623101', '4623102', '4623103', '4623109', '4623199'],
     'distribuidores agropecuarios': ['4683400', '4692300', '4623101', '4623102', '4623103', '4623109', '4623199'],
+    // Adegas / Vinhos — CNAEs exclusivos deste segmento (fabricação e fracionamento de vinho)
+    'adegas e distribuidoras de vinhos': ['1112700', '4635403'],
+    'adegas': ['1112700', '4635403'],
   };
+
   return cnaeMap[seg] || [];
 }
 
