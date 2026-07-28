@@ -2096,9 +2096,38 @@ serve(async (req) => {
         };
       });
       console.log(`✅ CNAE-only search: ${raw.length} raw → ${leads.length} leads`);
+
+      // 🩹 Registra o resultado no log. Sem isso o log ficava em results_count=-1
+      // e o watchdog (120s) marcava a busca como "timeout / 0 leads" no painel admin,
+      // mesmo o usuário tendo recebido os leads normalmente.
+      try {
+        const cnaeCfg = { ...earlySearchConfig, status: 'completed', cnaeOnly: true };
+        const cnaeSample = (leads as any[]).slice(0, 300).map((l: any) => ({
+          name: l.name, address: l.address, phone: l.phone, category: l.category,
+          website: l.website, instagram: l.instagram, email: l.email,
+        }));
+        if (earlyLogId) {
+          await adminClient.from("search_logs")
+            .update({ search_config: cnaeCfg, results_count: leads.length, results: cnaeSample })
+            .eq('id', earlyLogId);
+        } else if (earlyUserId) {
+          await adminClient.from("search_logs").insert({
+            user_id: earlyUserId,
+            user_email: earlyUserEmail || '',
+            search_type: 'leads',
+            search_config: cnaeCfg,
+            results_count: leads.length,
+            results: cnaeSample,
+          });
+        }
+      } catch (e) {
+        console.error("⚠️ CNAE-only log update error:", e instanceof Error ? e.message : String(e));
+      }
+
       return new Response(JSON.stringify({ leads }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Leads-Count': String(leads.length) },
       });
+
     }
 
 
