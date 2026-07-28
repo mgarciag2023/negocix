@@ -95,8 +95,10 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <PageTracker />
         <Routes>
           {/* Public pages */}
+
           <Route path="/auth" element={<Auth />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/teste" element={<TrialSearch />} />
