@@ -26,6 +26,8 @@ import TrialSearch from "./pages/TrialSearch";
 import TrialAdmin from "./pages/TrialAdmin";
 import ResetPassword from "./pages/ResetPassword";
 import InAppAd from "./components/InAppAd";
+import PageTracker from "./components/PageTracker";
+
 
 const queryClient = new QueryClient();
 
@@ -95,8 +97,10 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <PageTracker />
         <Routes>
           {/* Public pages */}
+
           <Route path="/auth" element={<Auth />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/teste" element={<TrialSearch />} />
