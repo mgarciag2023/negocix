@@ -2336,6 +2336,7 @@ serve(async (req) => {
     // Pre-compute neighborhood filter normalization (used inside fetchSegment)
     const nfNorm = neighborhoodFilter ? normalizeText(neighborhoodFilter).toLowerCase() : null;
     const matchesNeighborhood = (c: any): boolean => {
+      if (!matchesMetro(c)) return false;
       if (!nfNorm) return true;
       const b = (c?.bairro || '').toString();
       if (!b) return false;
