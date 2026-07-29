@@ -1945,6 +1945,27 @@ serve(async (req) => {
     }
     console.log(`📍 Parsed region: city=${city}, state=${state}, isStateOnly=${isStateOnly}, nationwide=${nationwide}`);
 
+    // ===== METRO REGIONS (ex: "Grande Porto Alegre") =====
+    // Busca em várias cidades de uma vez: roda no estado e filtra pelas cidades da região.
+    let metroCities: string[] | null = null;
+    if (!nationwide) {
+      const regionNorm = normalizeText((region || '').replace(/[,\-\/]+/g, ' ').trim()).toUpperCase().replace(/\s+/g, ' ');
+      const cityNorm = city ? normalizeText(city).toUpperCase().replace(/\s+/g, ' ') : '';
+      const metro = METRO_REGIONS[regionNorm] || METRO_REGIONS[cityNorm];
+      if (metro) {
+        metroCities = metro.cities;
+        state = metro.state;
+        city = null;
+        isStateOnly = true;
+        console.log(`🌆 Região metropolitana detectada (${metro.state}): ${metro.cities.length} cidades`);
+      }
+    }
+    const metroSet = metroCities ? new Set(metroCities.map(c => normalizeText(c).toUpperCase())) : null;
+    const matchesMetro = (c: any): boolean => {
+      if (!metroSet) return true;
+      return metroSet.has(normalizeText((c?.cidade || '').toString()).toUpperCase());
+    };
+
     // ===== CITY AUTO-CORRECT (corrige erros de digitação) =====
     const originalCity: string | null = city;
     let correctedCity: string | null = null;
