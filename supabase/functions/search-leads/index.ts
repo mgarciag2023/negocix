@@ -2743,6 +2743,13 @@ serve(async (req) => {
     allCompanies = allCompanies.filter(c => isPhoneValid(c.telefone_1) || isPhoneValid(c.telefone_2));
     console.log(`📞 After phone filter: ${allCompanies.length}`);
 
+    // ===== METRO REGION FILTER =====
+    if (metroCities) {
+      const beforeMetro = allCompanies.length;
+      allCompanies = allCompanies.filter(matchesMetro);
+      console.log(`🌆 Metro filter: ${beforeMetro} → ${allCompanies.length}`);
+    }
+
     // ===== NEIGHBORHOOD FILTER (when "city" was actually a neighborhood) =====
     if (neighborhoodFilter) {
       const nf = normalizeText(neighborhoodFilter).toLowerCase();
