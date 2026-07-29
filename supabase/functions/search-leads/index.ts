@@ -1448,6 +1448,19 @@ function parseRegion(region: string): { city: string | null; state: string | nul
 // ===== CITY ALIAS MAP =====
 // Maps common abbreviations, misspellings, and concatenated city names to their correct DB names.
 // Also handles regions that should trigger state-wide search (returns null city).
+// ===== METRO REGIONS =====
+// Permite buscar "Grande Porto Alegre" e afins em uma única pesquisa.
+const METRO_REGIONS: { [key: string]: { state: string; cities: string[] } } = {
+  'GRANDE PORTO ALEGRE': {
+    state: 'RS',
+    cities: ['PORTO ALEGRE', 'CANOAS', 'NOVO HAMBURGO', 'SAO LEOPOLDO', 'GRAVATAI', 'CACHOEIRINHA', 'ESTEIO', 'SAPUCAIA DO SUL', 'GUAIBA', 'VIAMAO'],
+  },
+};
+METRO_REGIONS['GRANDE POA'] = METRO_REGIONS['GRANDE PORTO ALEGRE'];
+METRO_REGIONS['GRANDE PORTO ALEGRE RS'] = METRO_REGIONS['GRANDE PORTO ALEGRE'];
+METRO_REGIONS['REGIAO METROPOLITANA DE PORTO ALEGRE'] = METRO_REGIONS['GRANDE PORTO ALEGRE'];
+METRO_REGIONS['REGIAO METROPOLITANA DE PORTO ALEGRE RS'] = METRO_REGIONS['GRANDE PORTO ALEGRE'];
+
 const CITY_ALIASES: { [state: string]: { [alias: string]: string | null } } = {
   'RS': {
     'CAXIAS': 'CAXIAS DO SUL',
@@ -1945,6 +1958,27 @@ serve(async (req) => {
     }
     console.log(`📍 Parsed region: city=${city}, state=${state}, isStateOnly=${isStateOnly}, nationwide=${nationwide}`);
 
+    // ===== METRO REGIONS (ex: "Grande Porto Alegre") =====
+    // Busca em várias cidades de uma vez: roda no estado e filtra pelas cidades da região.
+    let metroCities: string[] | null = null;
+    if (!nationwide) {
+      const regionNorm = normalizeText((region || '').replace(/[,\-\/]+/g, ' ').trim()).toUpperCase().replace(/\s+/g, ' ');
+      const cityNorm = city ? normalizeText(city).toUpperCase().replace(/\s+/g, ' ') : '';
+      const metro = METRO_REGIONS[regionNorm] || METRO_REGIONS[cityNorm];
+      if (metro) {
+        metroCities = metro.cities;
+        state = metro.state;
+        city = null;
+        isStateOnly = true;
+        console.log(`🌆 Região metropolitana detectada (${metro.state}): ${metro.cities.length} cidades`);
+      }
+    }
+    const metroSet = metroCities ? new Set(metroCities.map(c => normalizeText(c).toUpperCase())) : null;
+    const matchesMetro = (c: any): boolean => {
+      if (!metroSet) return true;
+      return metroSet.has(normalizeText((c?.cidade || '').toString()).toUpperCase());
+    };
+
     // ===== CITY AUTO-CORRECT (corrige erros de digitação) =====
     const originalCity: string | null = city;
     let correctedCity: string | null = null;
@@ -2015,6 +2049,7 @@ serve(async (req) => {
       const applyCommon = (q: any) => {
         let x = q.eq('situacao_cadastral', 'ATIVA').not('telefone_1', 'is', null);
         if (city) x = x.eq('cidade', city);
+        if (metroCities) x = x.in('cidade', metroCities);
         if (state) x = x.eq('estado', state);
         if (neighborhoodFilter) x = x.ilike('bairro', `%${neighborhoodFilter}%`);
         if (bizType === 'matriz') x = x.eq('matriz_filial', 'MATRIZ');
@@ -2301,6 +2336,7 @@ serve(async (req) => {
     // Pre-compute neighborhood filter normalization (used inside fetchSegment)
     const nfNorm = neighborhoodFilter ? normalizeText(neighborhoodFilter).toLowerCase() : null;
     const matchesNeighborhood = (c: any): boolean => {
+      if (!matchesMetro(c)) return false;
       if (!nfNorm) return true;
       const b = (c?.bairro || '').toString();
       if (!b) return false;
@@ -2706,6 +2742,13 @@ serve(async (req) => {
     // ===== FILTER: valid phone required (check both telefone_1 and telefone_2) =====
     allCompanies = allCompanies.filter(c => isPhoneValid(c.telefone_1) || isPhoneValid(c.telefone_2));
     console.log(`📞 After phone filter: ${allCompanies.length}`);
+
+    // ===== METRO REGION FILTER =====
+    if (metroCities) {
+      const beforeMetro = allCompanies.length;
+      allCompanies = allCompanies.filter(matchesMetro);
+      console.log(`🌆 Metro filter: ${beforeMetro} → ${allCompanies.length}`);
+    }
 
     // ===== NEIGHBORHOOD FILTER (when "city" was actually a neighborhood) =====
     if (neighborhoodFilter) {
