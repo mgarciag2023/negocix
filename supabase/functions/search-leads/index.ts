@@ -2049,6 +2049,7 @@ serve(async (req) => {
       const applyCommon = (q: any) => {
         let x = q.eq('situacao_cadastral', 'ATIVA').not('telefone_1', 'is', null);
         if (city) x = x.eq('cidade', city);
+        if (metroCities) x = x.in('cidade', metroCities);
         if (state) x = x.eq('estado', state);
         if (neighborhoodFilter) x = x.ilike('bairro', `%${neighborhoodFilter}%`);
         if (bizType === 'matriz') x = x.eq('matriz_filial', 'MATRIZ');
