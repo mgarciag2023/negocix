@@ -1448,6 +1448,19 @@ function parseRegion(region: string): { city: string | null; state: string | nul
 // ===== CITY ALIAS MAP =====
 // Maps common abbreviations, misspellings, and concatenated city names to their correct DB names.
 // Also handles regions that should trigger state-wide search (returns null city).
+// ===== METRO REGIONS =====
+// Permite buscar "Grande Porto Alegre" e afins em uma única pesquisa.
+const METRO_REGIONS: { [key: string]: { state: string; cities: string[] } } = {
+  'GRANDE PORTO ALEGRE': {
+    state: 'RS',
+    cities: ['PORTO ALEGRE', 'CANOAS', 'NOVO HAMBURGO', 'SAO LEOPOLDO', 'GRAVATAI', 'CACHOEIRINHA', 'ESTEIO', 'SAPUCAIA DO SUL', 'GUAIBA', 'VIAMAO'],
+  },
+};
+METRO_REGIONS['GRANDE POA'] = METRO_REGIONS['GRANDE PORTO ALEGRE'];
+METRO_REGIONS['GRANDE PORTO ALEGRE RS'] = METRO_REGIONS['GRANDE PORTO ALEGRE'];
+METRO_REGIONS['REGIAO METROPOLITANA DE PORTO ALEGRE'] = METRO_REGIONS['GRANDE PORTO ALEGRE'];
+METRO_REGIONS['REGIAO METROPOLITANA DE PORTO ALEGRE RS'] = METRO_REGIONS['GRANDE PORTO ALEGRE'];
+
 const CITY_ALIASES: { [state: string]: { [alias: string]: string | null } } = {
   'RS': {
     'CAXIAS': 'CAXIAS DO SUL',
