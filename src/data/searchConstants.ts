@@ -463,6 +463,9 @@ export const customerTypes = [
   "Empresas de Refrigeração Industrial",
   "Fábricas de Pão de Queijo",
   "Fábricas de Salgados Congelados",
+  "Fábricas de Bolsas",
+  "Fábricas de Bolas",
+  "Fábricas de Capas de Chuva",
 ];
 export const countries = [
 { code: "BR", name: "Brasil" },
