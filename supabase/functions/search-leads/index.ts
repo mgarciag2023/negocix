@@ -70,11 +70,11 @@ function getCnaesForSegment(segment: string): string[] {
   const seg = segment.toLowerCase();
   const cnaeMap: { [key: string]: string[] } = {
     'loja de caça e pesca': ['4763604', '4789009', '9319101', '4763601', '4789099'],
-    // Capas de chuva / guarda-chuvas — CNAE exclusivo do nicho
-    'fábricas de capas de chuva': ['3299001'],
-    'fabricas de capas de chuva': ['3299001'],
-    'fábrica de capas de chuva': ['3299001'],
-    'fabrica de capas de chuva': ['3299001'],
+    // Capas de chuva / guarda-chuvas / impermeáveis — CNAEs do nicho
+    'fábricas de capas de chuva': ['3299001', '1354500', '2229302', '1412601'],
+    'fabricas de capas de chuva': ['3299001', '1354500', '2229302', '1412601'],
+    'fábrica de capas de chuva': ['3299001', '1354500', '2229302', '1412601'],
+    'fabrica de capas de chuva': ['3299001', '1354500', '2229302', '1412601'],
     'artigos de caça, pesca e camping': ['4763604', '4789009', '9319101', '4763601', '4789099'],
     // ===== HIGH-VOLUME / CNAE-AMPLO: removidos do CNAE map (usar APENAS FTS por nome) =====
     // Removidos: pizzarias, padarias, restaurantes, lanchonetes, hamburguerias, churrascarias,
@@ -138,7 +138,7 @@ function generateSearchTerms(segment: string): string[] {
     // ===== FÁBRICAS ADICIONADAS =====
     'fábricas de bolsas': ['fabrica de bolsas', 'fábrica de bolsas', 'fabricas de bolsas', 'fábricas de bolsas', 'industria de bolsas', 'indústria de bolsas', 'confeccao de bolsas', 'confecção de bolsas', 'fabricacao de bolsas', 'fabricação de bolsas', 'bolsas e mochilas', 'fabrica de mochilas', 'fábrica de mochilas', 'industria de mochilas', 'fabrica de malas', 'fábrica de malas', 'industria de malas', 'artefatos de couro', 'artefatos em couro', 'bolsas em couro', 'bolsas de couro fabrica', 'fabrica de carteiras', 'industria de carteiras', 'fabrica de cintos', 'industria de cintos', 'marroquinaria', 'fabrica de necessaires', 'fabrica de sacolas de tecido', 'fabrica de ecobags', 'ecobag', 'fabrica de bolsas termicas', 'fábrica de bolsas térmicas', 'bolsas termicas', 'fabrica de pastas executivas', 'industria de artigos de viagem', 'fabrica de bolsas personalizadas'],
     'fábricas de bolas': ['fabrica de bolas', 'fábrica de bolas', 'fabricas de bolas', 'fábricas de bolas', 'industria de bolas', 'indústria de bolas', 'fabricacao de bolas', 'fabricação de bolas', 'bolas esportivas fabrica', 'fabrica de bolas de futebol', 'fabrica de bolas de volei', 'fabrica de bolas de vôlei', 'fabrica de bolas de basquete', 'fabrica de bolas de futsal', 'fabrica de bolas de handebol', 'industria de material esportivo', 'indústria de material esportivo', 'fabrica de artigos esportivos', 'fábrica de artigos esportivos', 'industria de artigos esportivos', 'fabricante de bolas', 'costura de bolas', 'bolas oficiais fabrica', 'fabrica de bolas infantis', 'fabrica de bolas de borracha', 'fabrica de bolas de pilates', 'fabrica de bolas de ginastica', 'fábrica de bolas de ginástica'],
-    'fábricas de capas de chuva': ['fabrica de capas de chuva', 'fábrica de capas de chuva', 'fabricas de capas de chuva', 'fábricas de capas de chuva', 'industria de capas de chuva', 'indústria de capas de chuva', 'capas de chuva', 'capa de chuva', 'fabricacao de capas de chuva', 'fabricação de capas de chuva', 'confeccao de capas de chuva', 'confecção de capas de chuva', 'capas de chuva industrial', 'fabrica de capas plasticas', 'fábrica de capas plásticas', 'vestuario impermeavel', 'vestuário impermeável', 'roupa impermeavel', 'conjunto de chuva', 'capa de motoqueiro', 'capa para motociclista', 'fabrica de galochas', 'fabrica de ponchos', 'ponchos impermeaveis', 'industria de pvc vestuario', 'fabrica de guarda chuva', 'fábrica de guarda-chuva', 'guarda chuvas fabrica', 'epi capa de chuva', 'fabrica de epi vestuario', 'capas impermeaveis', 'capas impermeáveis'],
+    'fábricas de capas de chuva': ['fabrica de capas de chuva', 'fábrica de capas de chuva', 'fabricas de capas de chuva', 'fábricas de capas de chuva', 'industria de capas de chuva', 'indústria de capas de chuva', 'capas de chuva', 'capa de chuva', 'fabricacao de capas de chuva', 'fabricação de capas de chuva', 'confeccao de capas de chuva', 'confecção de capas de chuva', 'capas de chuva industrial', 'fabrica de capas plasticas', 'fábrica de capas plásticas', 'vestuario impermeavel', 'vestuário impermeável', 'roupa impermeavel', 'roupas impermeaveis', 'conjunto de chuva', 'capa de motoqueiro', 'capa para motociclista', 'capa motoboy', 'fabrica de galochas', 'galochas', 'fabrica de ponchos', 'poncho', 'ponchos impermeaveis', 'industria de pvc vestuario', 'fabrica de guarda chuva', 'fábrica de guarda-chuva', 'guarda chuva', 'guarda chuvas fabrica', 'guarda sol', 'epi capa de chuva', 'fabrica de epi vestuario', 'capas impermeaveis', 'capas impermeáveis', 'impermeaveis', 'impermeáveis', 'impermeavel', 'confeccao de epi', 'confecção de epi', 'vestimenta de seguranca', 'vestimenta de segurança', 'vestimentas impermeaveis', 'fabrica de lonas', 'lonas plasticas', 'lonas plásticas', 'artefatos de pvc', 'artefatos plasticos pvc', 'plasticos flexiveis', 'plásticos flexíveis', 'fabrica de encerados', 'encerados', 'tecidos impermeaveis', 'tecidos impermeáveis', 'tecido plastificado', 'fabrica de aventais', 'aventais plasticos', 'fabrica de botas de borracha', 'artefatos de borracha vestuario', 'capas para motociclistas', 'roupas para chuva', 'equipamentos de protecao individual', 'equipamentos de proteção individual', 'confeccao de uniformes industriais'],
     // ===== ALIMENTAÇÃO / RESTAURANTES =====
     // "Restaurantes" é amplo: inclui todos os subtipos (pizzarias, hamburguerias, etc.)
     'restaurantes': ['restaurante', 'restaurantes', 'self service', 'bistro', 'bistrô', 'comida', 'bar e restaurante', 'cantina', 'buffet', 'por quilo', 'grelhados', 'cozinha', 'pizzaria', 'pizza', 'hamburgueria', 'burger', 'lanchonete', 'churrascaria', 'rodizio', 'rodízio', 'espetaria', 'marmitaria', 'rotisserie', 'sushi', 'temakeria', 'trattoria', 'taqueria', 'restaurante a la carte', 'restaurante à la carte', 'casa de massas', 'cozinha contemporanea', 'cozinha contemporânea', 'restaurante familiar', 'culinaria internacional', 'casa de carnes restaurante'],
@@ -2553,8 +2553,11 @@ serve(async (req) => {
         // Pré-passe rápido: cnae_principal via .in() (index scan). Garante
         // que agropecuária sempre tenha resultados via CNAE mesmo se ilike travar.
         try {
-          const segNormPre = seg.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-          const isAgroPre = segNormPre.includes('agropecuar') || segNormPre.includes('agricol');
+          
+          // Pré-passe por cnae_principal é indexado e barato: roda para TODOS os
+          // segmentos com CNAE mapeado (antes só agro), garantindo leads mesmo
+          // quando o passe .or(cnae_secundaria.ilike) estoura o hard-timeout.
+          const isAgroPre = true;
           if (isAgroPre) {
             let qPre = adminClient
               .from('companies')
