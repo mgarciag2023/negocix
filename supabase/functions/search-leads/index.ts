@@ -70,6 +70,11 @@ function getCnaesForSegment(segment: string): string[] {
   const seg = segment.toLowerCase();
   const cnaeMap: { [key: string]: string[] } = {
     'loja de caça e pesca': ['4763604', '4789009', '9319101', '4763601', '4789099'],
+    // Capas de chuva / guarda-chuvas — CNAE exclusivo do nicho
+    'fábricas de capas de chuva': ['3299001'],
+    'fabricas de capas de chuva': ['3299001'],
+    'fábrica de capas de chuva': ['3299001'],
+    'fabrica de capas de chuva': ['3299001'],
     'artigos de caça, pesca e camping': ['4763604', '4789009', '9319101', '4763601', '4789099'],
     // ===== HIGH-VOLUME / CNAE-AMPLO: removidos do CNAE map (usar APENAS FTS por nome) =====
     // Removidos: pizzarias, padarias, restaurantes, lanchonetes, hamburguerias, churrascarias,
@@ -349,7 +354,7 @@ function generateSearchTerms(segment: string): string[] {
     'auto elétricas': ['auto eletrica', 'eletrica automotiva', 'eletricista automotivo', 'autoeletrica', 'autoelétrica', 'eletrica veicular', 'elétrica veicular', 'eletricista de carros', 'eletrica de veiculos'],
     'borracharias': ['borracharia', 'borracharias', 'borracheiro', 'pneus', 'pneu', 'loja de pneus', 'centro de pneus', 'comercio de pneus', 'borracharia 24 horas', 'borracharia movel', 'pneus novos', 'pneus usados', 'pneus remoldados', 'recauchutagem', 'recapagem', 'recapadora', 'alinhamento e balanceamento', 'alinhamento de pneus', 'balanceamento de rodas', 'troca de pneus', 'conserto de pneus', 'reparo de pneus', 'pneus para caminhao', 'pneus para carro', 'pneus de moto', 'distribuidora de pneus', 'autocenter pneus', 'centro automotivo pneus', 'borracharia automotiva', 'cambio de pneus', 'rodas e pneus', 'borracharia caminhão'],
     'lojas de pneus': ['pneus', 'borracharia', 'borracharias', 'recapagem', 'recauchutagem', 'loja de pneus', 'centro de pneus', 'pneu', 'pneus novos', 'pneus usados', 'pneus remoldados', 'pneus para carros', 'pneus para caminhao', 'pneus para caminhão', 'pneus para motos', 'centro automotivo de pneus', 'auto pneus', 'super pneus', 'distribuidora de pneus', 'comercio de pneus', 'comércio de pneus', 'rede de pneus', 'pneus michelin', 'pneus pirelli', 'pneus goodyear', 'pneus continental', 'pneus bridgestone', 'alinhamento balanceamento pneus', 'troca de pneus', 'instalacao de pneus'],
-    'lojas de rodas esportivas': ['rodas esportivas', 'rodas automotivas', 'rodas liga leve', 'rodas aro', 'rodas liga', 'loja de rodas', 'centro de rodas', 'house of rodas', 'aro esportivo loja', 'roda automotiva loja', 'loja de aros e pneus'],
+    'lojas de rodas esportivas': ['rodas esportivas', 'roda esportiva', 'loja de rodas', 'lojas de rodas', 'comercio de rodas', 'centro de rodas', 'rodas e pneus', 'pneus e rodas', 'rodas liga leve', 'roda liga leve', 'aros e rodas', 'rodas automotivas', 'roda automotiva', 'house of rodas', 'rodas tuning', 'rodas premium'],
     'lava-rápidos': ['lava rapido', 'lava jato', 'lavagem de carros', 'lava car', 'car wash', 'lavagem automotiva', 'lavagem de veiculos', 'lava auto', 'auto lava', 'ecolav', 'eco lav'],
     'concessionárias': ['concessionaria', 'concessionarias', 'concessionaria de veiculos', 'concessionaria autorizada', 'revenda autorizada', 'concessionaria fiat', 'concessionaria volkswagen', 'concessionaria chevrolet', 'concessionaria ford', 'concessionaria toyota', 'concessionaria honda', 'concessionaria hyundai', 'concessionaria renault', 'concessionaria nissan', 'concessionaria jeep', 'concessionaria peugeot', 'concessionaria citroen', 'concessionaria mitsubishi', 'concessionaria caoa', 'concessionaria bmw', 'concessionaria mercedes', 'concessionaria audi', 'veiculos novos', 'veiculos zero km', 'showroom de veiculos', 'revenda de veiculos novos', 'concessionaria de caminhoes', 'concessionaria de motos', 'concessionaria volvo', 'concessionaria scania', 'concessionaria iveco', 'concessionaria mercedes-benz'],
     'postos de combustível': ['posto de combustivel', 'posto de combustível', 'postos de combustivel', 'postos de combustível', 'posto de gasolina', 'postos de gasolina', 'auto posto', 'autoposto', 'auto-posto', 'posto shell', 'posto ipiranga', 'posto petrobras', 'posto br', 'posto ale', 'posto raizen', 'posto graal', 'posto de etanol', 'posto de alcool', 'posto de álcool', 'posto de diesel', 'posto de gnv', 'posto bandeirado', 'posto bandeira branca', 'posto rodoviario', 'posto rodoviário', 'posto urbano', 'rede de postos', 'posto 24 horas', 'posto 24h', 'posto e conveniencia', 'posto e conveniência', 'posto multi-bandeira', 'posto multibandeira', 'revenda de combustiveis', 'revenda de combustíveis', 'revendedor de combustiveis'],
@@ -2800,6 +2805,35 @@ serve(async (req) => {
       return true;
     });
     console.log(`🚫 Blacklist: ${beforeBlacklist} → ${allCompanies.length}`);
+
+    // ===== FILTROS NEGATIVOS POR SEGMENTO =====
+    // Evita falsos positivos onde as palavras do termo aparecem soltas no nome
+    // (ex.: "Liga de Basquete em Cadeira de Rodas" caindo em "Lojas de Rodas Esportivas").
+    const SEGMENT_NEGATIVE_PATTERNS: { match: RegExp; blocks: RegExp[] }[] = [
+      {
+        match: /roda/,
+        blocks: [
+          /cadeira[s]?\s+de\s+roda/i,
+          /\bliga\b/i,
+          /basquete|futebol|handebol|volei|paradesport|paralimp/i,
+          /associac|federac|clube|esporte\s+clube|confederac|sindicat|instituto|ong\b/i,
+          /moinho|roda\s+d[' ]?agua/i,
+        ],
+      },
+    ];
+    const beforeSegNeg = allCompanies.length;
+    allCompanies = allCompanies.filter((c: any) => {
+      const segNorm = (c._segment || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const hay = `${c._nfNorm || ''} ${c._rsNorm || ''}`;
+      for (const rule of SEGMENT_NEGATIVE_PATTERNS) {
+        if (!rule.match.test(segNorm)) continue;
+        if (rule.blocks.some(rx => rx.test(hay))) return false;
+      }
+      return true;
+    });
+    if (beforeSegNeg !== allCompanies.length) {
+      console.log(`⛔ Filtro negativo por segmento: ${beforeSegNeg} → ${allCompanies.length}`);
+    }
 
     // ===== SOFT TIMEOUT CHECK: if near timeout after dedup, skip heavy filters and go straight to lead transform =====
     if (isNearSoftTimeout()) {
