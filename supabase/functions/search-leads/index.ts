@@ -2801,6 +2801,35 @@ serve(async (req) => {
     });
     console.log(`🚫 Blacklist: ${beforeBlacklist} → ${allCompanies.length}`);
 
+    // ===== FILTROS NEGATIVOS POR SEGMENTO =====
+    // Evita falsos positivos onde as palavras do termo aparecem soltas no nome
+    // (ex.: "Liga de Basquete em Cadeira de Rodas" caindo em "Lojas de Rodas Esportivas").
+    const SEGMENT_NEGATIVE_PATTERNS: { match: RegExp; blocks: RegExp[] }[] = [
+      {
+        match: /roda/,
+        blocks: [
+          /cadeira[s]?\s+de\s+roda/i,
+          /\bliga\b/i,
+          /basquete|futebol|handebol|volei|paradesport|paralimp/i,
+          /associac|federac|clube|esporte\s+clube|confederac|sindicat|instituto|ong\b/i,
+          /moinho|roda\s+d[' ]?agua/i,
+        ],
+      },
+    ];
+    const beforeSegNeg = allCompanies.length;
+    allCompanies = allCompanies.filter((c: any) => {
+      const segNorm = (c._segment || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const hay = `${c._nfNorm || ''} ${c._rsNorm || ''}`;
+      for (const rule of SEGMENT_NEGATIVE_PATTERNS) {
+        if (!rule.match.test(segNorm)) continue;
+        if (rule.blocks.some(rx => rx.test(hay))) return false;
+      }
+      return true;
+    });
+    if (beforeSegNeg !== allCompanies.length) {
+      console.log(`⛔ Filtro negativo por segmento: ${beforeSegNeg} → ${allCompanies.length}`);
+    }
+
     // ===== SOFT TIMEOUT CHECK: if near timeout after dedup, skip heavy filters and go straight to lead transform =====
     if (isNearSoftTimeout()) {
       console.log(`⚠️ NEAR TIMEOUT after dedup — skipping relevance filters, transforming ${allCompanies.length} leads directly`);
