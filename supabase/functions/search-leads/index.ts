@@ -2553,7 +2553,7 @@ serve(async (req) => {
         // Pré-passe rápido: cnae_principal via .in() (index scan). Garante
         // que agropecuária sempre tenha resultados via CNAE mesmo se ilike travar.
         try {
-          const segNormPre = seg.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+          
           // Pré-passe por cnae_principal é indexado e barato: roda para TODOS os
           // segmentos com CNAE mapeado (antes só agro), garantindo leads mesmo
           // quando o passe .or(cnae_secundaria.ilike) estoura o hard-timeout.
