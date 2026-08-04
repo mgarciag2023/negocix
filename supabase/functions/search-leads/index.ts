@@ -70,11 +70,11 @@ function getCnaesForSegment(segment: string): string[] {
   const seg = segment.toLowerCase();
   const cnaeMap: { [key: string]: string[] } = {
     'loja de caça e pesca': ['4763604', '4789009', '9319101', '4763601', '4789099'],
-    // Capas de chuva / guarda-chuvas — CNAE exclusivo do nicho
-    'fábricas de capas de chuva': ['3299001'],
-    'fabricas de capas de chuva': ['3299001'],
-    'fábrica de capas de chuva': ['3299001'],
-    'fabrica de capas de chuva': ['3299001'],
+    // Capas de chuva / guarda-chuvas / impermeáveis — CNAEs do nicho
+    'fábricas de capas de chuva': ['3299001', '1354500', '2229302', '1412601'],
+    'fabricas de capas de chuva': ['3299001', '1354500', '2229302', '1412601'],
+    'fábrica de capas de chuva': ['3299001', '1354500', '2229302', '1412601'],
+    'fabrica de capas de chuva': ['3299001', '1354500', '2229302', '1412601'],
     'artigos de caça, pesca e camping': ['4763604', '4789009', '9319101', '4763601', '4789099'],
     // ===== HIGH-VOLUME / CNAE-AMPLO: removidos do CNAE map (usar APENAS FTS por nome) =====
     // Removidos: pizzarias, padarias, restaurantes, lanchonetes, hamburguerias, churrascarias,
