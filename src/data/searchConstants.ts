@@ -172,6 +172,7 @@ export const customerTypes = [
   "Metalúrgicas",
   "Siderúrgicas",
   "Usinagens",
+  "Usinagem de Precisão",
   "Estruturas Metálicas",
   "Caldeirarias",
 
