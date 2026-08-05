@@ -2599,10 +2599,19 @@ serve(async (req) => {
           console.warn(`⚠️ CNAE pré-passe erro "${seg}":`, ((e as Error).message || '').slice(0, 100));
         }
 
+        // Passe pesado (cnae_secundaria ilike): com muitos CNAEs o Postgres sempre
+        // estoura o statement timeout e ainda consome 18s do orçamento da função,
+        // empurrando a busca para o retorno parcial. O pré-passe indexado já cobre.
+        const skipHeavyCnaePass = cnaes.length > 25 && !city;
         try {
+          if (skipHeavyCnaePass) {
+            console.log(`⏭️ CNAE passe secundário pulado "${seg}" (${cnaes.length} CNAEs em busca estadual)`);
+            throw { __skip: true };
+          }
           const cnaeOrFilter = cnaes
             .map(code => `cnae_principal.eq.${code},cnae_secundaria.ilike.%${code}%`)
             .join(',');
+
           let q = adminClient
             .from('companies')
             .select('*')
