@@ -2653,7 +2653,7 @@ serve(async (req) => {
             console.log(`🏷️ CNAE search "${seg}" (principal+secundária): +${added} novos (total CNAE: ${cnaeData.length})`);
           }
         } catch (e) {
-          console.warn(`⚠️ CNAE search aborted "${seg}":`, ((e as Error).message || '').slice(0, 100));
+          if (!(e as any)?.__skip) console.warn(`⚠️ CNAE search aborted "${seg}":`, ((e as Error).message || '').slice(0, 100));
         }
       } else if (cnaes.length > 0 && skipCnaeForMultiSeg) {
         console.log(`⏭️ CNAE skip "${seg}" (multi-segment=${segments.length}, evita travar Postgres)`);
@@ -2694,7 +2694,7 @@ serve(async (req) => {
     // This helper transforms raw companies into leads quickly (no heavy filters)
     const buildQuickLeads = (companies: any[]) => {
       // Cap input to avoid CPU time exceeded on transformation
-      const capped = companies.length > 10_000 ? companies.slice(0, 10_000) : companies;
+      const capped = companies.length > 3_000 ? companies.slice(0, 3_000) : companies;
       // Quick phone filter
       let filtered = capped.filter(c => isPhoneValid(c.telefone_1) || isPhoneValid(c.telefone_2));
       // Quick CNPJ dedup
@@ -2742,7 +2742,7 @@ serve(async (req) => {
     if (isNearSoftTimeout() && allCompanies.length > 0) {
       console.log(`⚠️ NEAR TIMEOUT — returning ${allCompanies.length} partial results without full filtering`);
       // Cap to 10K to avoid CPU death during transformation
-      const quickInput = allCompanies.length > 10_000 ? allCompanies.slice(0, 10_000) : allCompanies;
+      const quickInput = allCompanies.length > 3_000 ? allCompanies.slice(0, 3_000) : allCompanies;
       const quickLeads = buildQuickLeads(quickInput);
       if (quickLeads.length > 0) {
         // 🩹 Atualiza o log para não ficar preso em status=started/results_count=-1
