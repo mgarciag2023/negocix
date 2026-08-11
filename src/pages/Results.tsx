@@ -725,6 +725,16 @@ const Results = () => {
               <span className="hidden sm:inline">Exportar para Excel</span>
               <span className="sm:hidden">Exportar</span>
             </Button>
+            <Button
+              onClick={exportToPDF}
+              variant="outline"
+              className="gap-2"
+              size="lg"
+            >
+              <FileText className="h-5 w-5" />
+              <span className="hidden sm:inline">Exportar em PDF</span>
+              <span className="sm:hidden">PDF</span>
+            </Button>
           </div>
         </div>
 
