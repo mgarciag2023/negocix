@@ -94,6 +94,7 @@ export const customerTypes = [
   "Distribuidoras de Ração Animal",
   "Distribuidoras Agropecuárias",
   "Distribuidoras de Autopeças",
+  "Distribuidores de Acessórios Automotivos",
   "Distribuidoras de Produtos Hospitalares",
   "Distribuidoras de Produtos Odontológicos",
   "Distribuidoras de Gases Industriais",
