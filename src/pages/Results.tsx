@@ -296,6 +296,68 @@ const Results = () => {
     });
   };
 
+  const exportToPDF = async () => {
+    if (leads.length === 0) {
+      toast({
+        title: "Nenhum dado para exportar",
+        description: "Faça uma busca primeiro para gerar leads",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { default: jsPDF } = await import("jspdf");
+    const { default: autoTable } = await import("jspdf-autotable");
+
+    const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+
+    doc.setFontSize(16);
+    doc.text("Negocix — Relatório de Leads", 40, 40);
+    doc.setFontSize(10);
+    doc.text(
+      `${leads.length} leads • Gerado em ${new Date().toLocaleDateString("pt-BR")}`,
+      40,
+      58,
+    );
+
+    const body = leads.map((lead: any) => [
+      lead.name || "",
+      lead.phone || "",
+      lead.email || "-",
+      lead.address || "",
+      lead.category || "",
+      lead.companySize || "-",
+      `${lead.matchScore ?? ""}%`,
+    ]);
+
+    autoTable(doc, {
+      startY: 75,
+      head: [["Nome", "Telefone", "Email", "Endereço", "Categoria", "Porte", "Match"]],
+      body,
+      styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
+      headStyles: { fillColor: [30, 58, 95], textColor: 255 },
+      alternateRowStyles: { fillColor: [244, 247, 251] },
+      columnStyles: {
+        0: { cellWidth: 150 },
+        1: { cellWidth: 85 },
+        2: { cellWidth: 130 },
+        3: { cellWidth: 220 },
+        4: { cellWidth: 100 },
+        5: { cellWidth: 60 },
+        6: { cellWidth: 45 },
+      },
+      margin: { left: 40, right: 40 },
+    });
+
+    const timestamp = new Date().toISOString().split("T")[0];
+    doc.save(`leads-negocix-${timestamp}.pdf`);
+
+    toast({
+      title: "PDF gerado",
+      description: `${leads.length} leads exportados em PDF`,
+    });
+  };
+
   useEffect(() => {
     const fetchLeads = async () => {
       try {
