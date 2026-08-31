@@ -176,6 +176,7 @@ export const customerTypes = [
   "Usinagem de Precisão",
   "Estruturas Metálicas",
   "Caldeirarias",
+  "Indústrias de Cadeiras e Poltronas",
 
   // Saúde
   "Farmácias",
