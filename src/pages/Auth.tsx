@@ -389,13 +389,13 @@ const Auth = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium">Senha</Label>
+                <Label htmlFor="password" className="text-sm font-medium">{isLogin ? "Senha" : "Crie uma senha"}</Label>
                 <div className="relative group">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
+                    placeholder={isLogin ? "Sua senha" : "Mínimo de 6 caracteres"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-11 pr-11 h-12 bg-background/50 border-border/50 focus:border-primary transition-all"
@@ -502,7 +502,7 @@ const Auth = () => {
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    {isLogin ? "Entrar" : "Criar conta"}
+                    {isLogin ? "Entrar" : "Criar minha conta"}
                     <ArrowRight className="h-4 w-4" />
                   </div>
                 )}
