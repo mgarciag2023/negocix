@@ -14,7 +14,7 @@ const emailSchema = z.string().min(1, "Digite um email").max(255);
 const passwordSchema = z.string().min(1, "Digite uma senha").max(100);
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -304,8 +304,19 @@ const Auth = () => {
             <p className="text-muted-foreground">
               {isLogin
                 ? "Entre para continuar prospectando"
-                : "Comece a encontrar clientes agora"}
+                : "Preencha seus dados abaixo para ativar seu acesso"}
             </p>
+            {!isLogin && (
+              <div className="mt-4 rounded-xl border border-primary/30 bg-primary/10 p-4 text-left">
+                <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Check className="h-4 w-4 text-primary shrink-0" />
+                  Acabou de comprar? Você está no lugar certo!
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Preencha <strong className="text-foreground">seu email</strong> e crie <strong className="text-foreground">uma senha</strong> abaixo para criar sua conta e acessar a plataforma imediatamente.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Form Card */}
@@ -378,13 +389,13 @@ const Auth = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium">Senha</Label>
+                <Label htmlFor="password" className="text-sm font-medium">{isLogin ? "Senha" : "Crie uma senha"}</Label>
                 <div className="relative group">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
+                    placeholder={isLogin ? "Sua senha" : "Mínimo de 6 caracteres"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-11 pr-11 h-12 bg-background/50 border-border/50 focus:border-primary transition-all"
@@ -491,7 +502,7 @@ const Auth = () => {
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    {isLogin ? "Entrar" : "Criar conta"}
+                    {isLogin ? "Entrar" : "Criar minha conta"}
                     <ArrowRight className="h-4 w-4" />
                   </div>
                 )}
