@@ -2003,7 +2003,12 @@ serve(async (req) => {
     // ===== CITY AUTO-CORRECT (corrige erros de digitação) =====
     const originalCity: string | null = city;
     let correctedCity: string | null = null;
-    let neighborhoodFilter: string | null = (neighborhood && typeof neighborhood === 'string' && neighborhood.trim()) ? neighborhood.trim() : null; // se "cidade" é na verdade bairro, ou se usuário forneceu bairro explicitamente
+    // Sentinelas de "sem filtro" enviadas pela UI — NUNCA devem virar filtro de bairro
+    const NEIGHBORHOOD_ALL = new Set(['todos', 'todas', 'todos os bairros', 'todas as regioes', 'todas as regiões', 'all', 'qualquer', 'qualquer bairro', 'nenhum', 'none', '-', 'null', 'undefined']);
+    const rawNeighborhood = (neighborhood && typeof neighborhood === 'string') ? neighborhood.trim() : '';
+    const rawNeighborhoodNorm = normalizeText(rawNeighborhood).toLowerCase().replace(/\s+/g, ' ').trim();
+    let neighborhoodFilter: string | null = (rawNeighborhood && !NEIGHBORHOOD_ALL.has(rawNeighborhoodNorm)) ? rawNeighborhood : null; // se "cidade" é na verdade bairro, ou se usuário forneceu bairro explicitamente
+    if (rawNeighborhood && !neighborhoodFilter) console.log(`🏘️ Bairro "${rawNeighborhood}" = todos os bairros — filtro ignorado`);
     if (city && state) {
       const corrected = await resolveCityName(adminClient, city, state);
       if (corrected === null) {
