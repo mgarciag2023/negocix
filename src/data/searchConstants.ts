@@ -342,6 +342,7 @@ export const customerTypes = [
   "Lojas de Material Esportivo",
   "Lojas de Cama, Mesa e Banho",
   "Lojas de Utilidades Domésticas",
+  "Lojas de Utilidades",
   "Lojas de Artigos para Festas",
   "Lojas de Instrumentos Musicais",
   "Lojas de Artesanato",
