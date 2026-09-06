@@ -2853,17 +2853,40 @@ serve(async (req) => {
           /moinho|roda\s+d[' ]?agua/i,
         ],
       },
+      {
+        // "Mercados"/"Mercearias" nunca devem trazer mercado financeiro
+        match: /mercad|mercearia|supermercad|minimercad/,
+        blocks: [
+          /mercado\s+financeiro/i,
+          /fundo[s]?\s+de\s+investimento|fundo\s+de\s+invest/i,
+          /\bfi[ac]?\s+multimercado\b|multimercado/i,
+          /mercado\s+de\s+capitais|mercado\s+futuro|mercado\s+imobiliario|mercado\s+de\s+cambio/i,
+          /\bfidc\b|\bfip\b|\bfii\b|securitizadora|gestora\s+de\s+recursos|asset\s+management/i,
+          /corretora|distribuidora\s+de\s+titulos|titulos\s+e\s+valores\s+mobiliarios|\bctvm\b|\bdtvm\b/i,
+          /banco\s|financeira|credito\s+e\s+investimento|investimentos\s+ltda|holding|participacoes/i,
+          /consorcio|seguradora|previdencia|capitalizacao|criptomoeda|cripto\b|trading\s+de/i,
+        ],
+      },
     ];
+    // CNAEs financeiros (64xx/65xx/66xx) nunca são mercados/mercearias
+    const isMercadoSegmentSearch = segments.some((s: string) =>
+      /mercad|mercearia/.test(normalizeText(s).toLowerCase())
+    );
     const beforeSegNeg = allCompanies.length;
     allCompanies = allCompanies.filter((c: any) => {
       const segNorm = (c._segment || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
       const hay = `${c._nfNorm || ''} ${c._rsNorm || ''}`;
+      if (isMercadoSegmentSearch || /mercad|mercearia/.test(segNorm)) {
+        const cnaeP = String(c.cnae_principal || c.cnaePrincipal || '').replace(/\D/g, '');
+        if (/^(64|65|66)/.test(cnaeP)) return false;
+      }
       for (const rule of SEGMENT_NEGATIVE_PATTERNS) {
         if (!rule.match.test(segNorm)) continue;
         if (rule.blocks.some(rx => rx.test(hay))) return false;
       }
       return true;
     });
+
     if (beforeSegNeg !== allCompanies.length) {
       console.log(`⛔ Filtro negativo por segmento: ${beforeSegNeg} → ${allCompanies.length}`);
     }
