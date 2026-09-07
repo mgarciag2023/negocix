@@ -2706,7 +2706,49 @@ serve(async (req) => {
 
     // ===== EMERGENCY EARLY RETURN: if near timeout, return what we have =====
     // This helper transforms raw companies into leads quickly (no heavy filters)
+    // Filtros negativos essenciais aplicados TAMBÉM no caminho rápido (near timeout),
+    // senão lixo como "fundo de investimento multimercado" vaza nos resultados parciais.
+    const QUICK_NEGATIVE_RULES: { match: RegExp; blocks: RegExp[]; badCnae?: RegExp }[] = [
+      {
+        match: /mercad|mercearia|supermercad|minimercad/,
+        badCnae: /^(64|65|66)/,
+        blocks: [
+          /mercado\s+financeiro/,
+          /fundo[s]?\s+de\s+invest/,
+          /multimercado/,
+          /mercado\s+de\s+capitais|mercado\s+futuro|mercado\s+imobiliario|mercado\s+de\s+cambio/,
+          /\bfidc\b|\bfip\b|\bfii\b|securitizadora|gestora\s+de\s+recursos|asset\s+management/,
+          /corretora|distribuidora\s+de\s+titulos|titulos\s+e\s+valores\s+mobiliarios|\bctvm\b|\bdtvm\b/,
+          /banco\s|financeira|credito\s+e\s+investimento|investimentos\s+ltda|holding|participacoes/,
+          /consorcio|seguradora|previdencia|capitalizacao|criptomoeda|cripto\b|trading\s+de/,
+        ],
+      },
+      {
+        match: /roda/,
+        blocks: [
+          /cadeira[s]?\s+de\s+roda/,
+          /basquete|futebol|handebol|volei|paradesport|paralimp/,
+          /associac|federac|confederac|sindicat/,
+        ],
+      },
+    ];
+    const quickNorm = (v: string) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const quickSegNorms = (segments || []).map((s: string) => quickNorm(s));
+    const passesQuickNegative = (c: any) => {
+      const segNorm = `${quickNorm(c._segment || '')} ${quickSegNorms.join(' ')}`;
+      const hay = `${quickNorm(c.nome_fantasia)} ${quickNorm(c.razao_social)}`;
+      const cnaeP = String(c.cnae_principal || '').replace(/\D/g, '');
+      for (const rule of QUICK_NEGATIVE_RULES) {
+        if (!rule.match.test(segNorm)) continue;
+        if (rule.badCnae && rule.badCnae.test(cnaeP)) return false;
+        if (rule.blocks.some((rx) => rx.test(hay))) return false;
+      }
+      return true;
+    };
+
     const buildQuickLeads = (companies: any[]) => {
+      // Remove lixo óbvio ANTES do cap, para não desperdiçar as 3k vagas
+      companies = companies.filter(passesQuickNegative);
       // Cap input to avoid CPU time exceeded on transformation
       const capped = companies.length > 3_000 ? companies.slice(0, 3_000) : companies;
       // Quick phone filter
