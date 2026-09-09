@@ -55,6 +55,7 @@ export const customerTypes = [
   "Casas de Carnes",
   "Empórios de Queijos",
   "Empórios Naturais",
+  "Lojas de Produtos Naturais",
   "Lojas de Produtos Orgânicos",
   "Lojas de Bebidas",
   "Adegas e Distribuidoras de Vinhos",
