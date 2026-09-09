@@ -2731,6 +2731,24 @@ serve(async (req) => {
           /associac|federac|confederac|sindicat/,
         ],
       },
+      {
+        // Produtos naturais / orgânicos — "natural" aparece em muitos setores
+        match: /produtos naturais|loja natural|emporio natural|produtos organicos|naturais/,
+        blocks: [
+          /\bgas\s+natural\b|\bgnv\b|petroleo|combustivel|posto\s+de\s+gasolina|energia\s+natural/,
+          /pedra[s]?\s+natur|marmore|granito|marmoraria|mineracao|extracao\s+mineral|areia|britagem/,
+          /recursos\s+naturais|ciencias\s+naturais|reserva\s+natural|parque\s+natural|meio\s+ambiente|ambiental|reflorestamento|saneamento/,
+          /fibra[s]?\s+natur|borracha\s+natural|latex|madeira|couro\s+natur|textil|malharia|confec|tecelagem|acessorios|bijuteria|calcados/,
+          /cabelo[s]?\s+natur|peruca|mega\s?hair|unha|salao\s+de\s+beleza|barbearia|estetica|\bspa\b|massagem/,
+          /agua\s+mineral|envasadora|engarrafadora/,
+          /piscina|paisagismo|jardinagem|floricultura|\bgrama\b|gramado|\bpet\b|petshop|pet\s+shop|veterinar|racao/,
+          /academia|clinica|consultorio|hospital|laboratorio\s+de\s+analises|odontolog|fisioterap|psicolog/,
+          /escola|colegio|creche|curso|faculdade|universidade|treinamento/,
+          /construtora|imobiliaria|incorporadora|transportadora|condominio|engenharia|arquitetura|limpeza\s+predial/,
+          /gestora\s+de\s+recursos|fundo[s]?\s+de\s+invest|holding|participacoes|corretora|seguros/,
+          /funeraria|turismo|hotel|pousada|publicidade|software/,
+        ],
+      },
     ];
     const quickNorm = (v: string) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
     const quickSegNorms = (segments || []).map((s: string) => quickNorm(s));
