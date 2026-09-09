@@ -2909,6 +2909,23 @@ serve(async (req) => {
           /consorcio|seguradora|previdencia|capitalizacao|criptomoeda|cripto\b|trading\s+de/i,
         ],
       },
+      {
+        // "Lojas de Produtos Naturais" — a palavra "natural" aparece em muitos setores
+        match: /produtos naturais|loja natural|emporio natural|empório natural|produtos organicos|produtos orgânicos/,
+        blocks: [
+          /\bgas\s+natural\b|\bgnv\b|petroleo|petróleo|combustivel|combustível|posto\s+de\s+gasolina/i,
+          /pedra[s]?\s+natural|pedra[s]?\s+naturais|marmore|mármore|granito|marmoraria|mineracao|mineração|extracao\s+mineral/i,
+          /recursos\s+naturais|ciencias\s+naturais|reserva\s+natural|parque\s+natural|meio\s+ambiente|ambiental|reflorestamento/i,
+          /fibra[s]?\s+natural|borracha\s+natural|latex|látex|madeira|couro\s+natural/i,
+          /cabelo[s]?\s+natural|cabelo[s]?\s+naturais|unha|salao\s+de\s+beleza|salão\s+de\s+beleza|barbearia|estetica|estética/i,
+          /agua\s+mineral|água\s+mineral|envasadora|engarrafadora/i,
+          /piscina|paisagismo|jardinagem|floricultura/i,
+          /academia|clinica|clínica|consultorio|consultório|hospital|laboratorio\s+de\s+analises/i,
+          /escola|colegio|colégio|creche|curso|faculdade|universidade/i,
+          /construtora|imobiliaria|imobiliária|incorporadora|transportadora|condominio|condomínio/i,
+          /gestora\s+de\s+recursos|fundo[s]?\s+de\s+investimento|holding|participacoes|participações/i,
+        ],
+      },
     ];
     // CNAEs financeiros (64xx/65xx/66xx) nunca são mercados/mercearias
     const isMercadoSegmentSearch = segments.some((s: string) =>
