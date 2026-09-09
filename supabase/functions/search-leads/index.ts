@@ -2938,7 +2938,7 @@ serve(async (req) => {
     );
     const beforeSegNeg = allCompanies.length;
     allCompanies = allCompanies.filter((c: any) => {
-      const segNorm = (c._segment || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const segNorm = ((c._segment || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() + ' | ' + searchedSegNorm);
       const hay = `${c._nfNorm || ''} ${c._rsNorm || ''}`;
       if (isMercadoSegmentSearch || /mercad|mercearia/.test(segNorm)) {
         const cnaeP = String(c.cnae_principal || c.cnaePrincipal || '').replace(/\D/g, '');
