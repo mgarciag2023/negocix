@@ -2911,22 +2911,27 @@ serve(async (req) => {
       },
       {
         // "Lojas de Produtos Naturais" — a palavra "natural" aparece em muitos setores
-        match: /produtos naturais|loja natural|emporio natural|empório natural|produtos organicos|produtos orgânicos/,
+        match: /produtos naturais|loja natural|emporio natural|produtos organicos|naturais/,
         blocks: [
-          /\bgas\s+natural\b|\bgnv\b|petroleo|petróleo|combustivel|combustível|posto\s+de\s+gasolina/i,
-          /pedra[s]?\s+natural|pedra[s]?\s+naturais|marmore|mármore|granito|marmoraria|mineracao|mineração|extracao\s+mineral/i,
-          /recursos\s+naturais|ciencias\s+naturais|reserva\s+natural|parque\s+natural|meio\s+ambiente|ambiental|reflorestamento/i,
-          /fibra[s]?\s+natural|borracha\s+natural|latex|látex|madeira|couro\s+natural/i,
-          /cabelo[s]?\s+natural|cabelo[s]?\s+naturais|unha|salao\s+de\s+beleza|salão\s+de\s+beleza|barbearia|estetica|estética/i,
-          /agua\s+mineral|água\s+mineral|envasadora|engarrafadora/i,
-          /piscina|paisagismo|jardinagem|floricultura/i,
-          /academia|clinica|clínica|consultorio|consultório|hospital|laboratorio\s+de\s+analises/i,
-          /escola|colegio|colégio|creche|curso|faculdade|universidade/i,
-          /construtora|imobiliaria|imobiliária|incorporadora|transportadora|condominio|condomínio/i,
-          /gestora\s+de\s+recursos|fundo[s]?\s+de\s+investimento|holding|participacoes|participações/i,
+          /\bgas\s+natural\b|\bgnv\b|petroleo|combustivel|posto\s+de\s+gasolina|energia\s+natural/i,
+          /pedra[s]?\s+natur|marmore|granito|marmoraria|mineracao|extracao\s+mineral|areia|britagem/i,
+          /recursos\s+naturais|ciencias\s+naturais|reserva\s+natural|parque\s+natural|meio\s+ambiente|ambiental|reflorestamento|saneamento/i,
+          /fibra[s]?\s+natur|borracha\s+natural|latex|madeira|couro\s+natur|textil|malharia|confec|tecelagem|acessorios|bijuteria|calcados/i,
+          /cabelo[s]?\s+natur|peruca|megahair|mega\s+hair|unha|salao\s+de\s+beleza|barbearia|estetica|spa\b|massagem/i,
+          /agua\s+mineral|envasadora|engarrafadora/i,
+          /piscina|paisagismo|jardinagem|floricultura|\bgrama\b|gramado|\bpet\b|petshop|pet\s+shop|veterinar|racao/i,
+          /academia|clinica|consultorio|hospital|laboratorio\s+de\s+analises|odontolog|fisioterap|psicolog/i,
+          /escola|colegio|creche|curso|faculdade|universidade|treinamento/i,
+          /construtora|imobiliaria|incorporadora|transportadora|condominio|engenharia|arquitetura|limpeza\s+predial/i,
+          /gestora\s+de\s+recursos|fundo[s]?\s+de\s+investimento|holding|participacoes|corretora|seguros/i,
+          /funeraria|turismo|hotel|pousada|midia|publicidade|software|tecnologia\s+da\s+informacao/i,
         ],
       },
     ];
+    // Alguns caminhos não marcam c._segment; use também os segmentos pesquisados.
+    const searchedSegNorm = segments
+      .map((s: string) => normalizeText(String(s)).toLowerCase())
+      .join(' | ');
     // CNAEs financeiros (64xx/65xx/66xx) nunca são mercados/mercearias
     const isMercadoSegmentSearch = segments.some((s: string) =>
       /mercad|mercearia/.test(normalizeText(s).toLowerCase())
