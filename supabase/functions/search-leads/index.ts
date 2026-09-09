@@ -2438,7 +2438,63 @@ serve(async (req) => {
         return results;
       };
 
+      // ===== METRO REGION FAST PATH =====
+      // Regiões metropolitanas (ex: "Grande Porto Alegre") NÃO devem varrer o estado inteiro:
+      // a query FTS estadual com dezenas/centenas de termos estoura o timeout e retorna 0.
+      // Consultamos cada cidade da região separadamente (filtro indexado por cidade).
+      if (metroCities && metroCities.length > 0) {
+        // Termos são divididos em blocos: uma tsquery com 100+ termos faz o Postgres
+        // varrer o índice inteiro e estourar o statement timeout (retornando 0 leads).
+        const CHUNK = 12;
+        const termChunks: string[][] = [];
+        for (let i = 0; i < terms.length; i += CHUNK) termChunks.push(terms.slice(i, i + CHUNK));
+
+        const metroJobs: { cityName: string; chunk: string[]; idx: number }[] = [];
+        termChunks.forEach((chunk, idx) => {
+          for (const mc of metroCities) metroJobs.push({ cityName: mc, chunk, idx });
+        });
+
+
+        const metroResults = await runPool(metroJobs, async (job: { cityName: string; chunk: string[]; idx: number }) => {
+          if (isNearSoftTimeout()) return { data: null, error: { message: 'soft-timeout' }, cityName: job.cityName, idx: job.idx };
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), 15_000);
+          const q: any = adminClient.rpc('search_companies_exact_city', {
+            p_city: job.cityName,
+            p_state: state || null,
+            p_search_terms: job.chunk,
+            p_biz_type: bizType || 'all',
+            p_limit_val: PAGE_SIZE,
+            p_offset_val: 0,
+          });
+          const withAbort = q.abortSignal?.(ctrl.signal) ?? q;
+          const r: any = await Promise.race([
+            withAbort,
+            new Promise((resolve) => setTimeout(() => resolve({ data: null, error: { message: 'hard-timeout-16s' } }), 16_000)),
+          ]);
+          clearTimeout(timer);
+          return { ...r, cityName: job.cityName, idx: job.idx };
+        }, 12);
+
+        let metroErrors = 0;
+        for (const r of metroResults) {
+          if (!r) continue;
+          if (r.error) {
+            metroErrors++;
+            continue;
+          }
+          for (const c of (r.data || [])) {
+            if (!seenIds.has(c.id) && matchesNeighborhood(c)) { seenIds.add(c.id); bestResults.push(c); }
+          }
+        }
+
+        console.log(`🌆 Metro "${seg}": ${bestResults.length} leads | ${metroCities.length} cidades × ${termChunks.length} blocos | ${metroErrors} falhas | ${Date.now() - FUNCTION_START}ms`);
+        return bestResults;
+      }
+
+
       // Phase 1: Fetch first batch of pages in parallel using the COMBINED query
+
       // (all terms OR'd together in a single tsquery — one GIN index scan in Postgres).
       const PAGE_CONCURRENCY = isHeavySearch ? 1 : 5;
       const INITIAL_PAGES = nationwide ? 4 : (isHeavySearch ? 1 : 15);
