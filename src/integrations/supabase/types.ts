@@ -1066,7 +1066,6 @@ export type Database = {
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
-      tmp_export_auth_dump: { Args: never; Returns: Json }
       unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
