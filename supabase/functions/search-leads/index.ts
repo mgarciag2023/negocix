@@ -2493,12 +2493,66 @@ serve(async (req) => {
       }
 
 
+      // ===== SINGLE CITY FAST PATH =====
+      // Em cidades grandes (ex: Santo André com 122k empresas), a RPC `search_companies`
+      // com dezenas de termos em uma única tsquery estoura o statement timeout e todas as
+      // páginas voltam abortadas → 0 leads. Usamos a mesma estratégia da região metro:
+      // filtro exato de cidade (indexado) + termos divididos em blocos pequenos.
+      let cityFastPathOk = false;
+      if (city && !nationwide) {
+
+        const CHUNK = 12;
+        const cityTermChunks: string[][] = [];
+        for (let i = 0; i < terms.length; i += CHUNK) cityTermChunks.push(terms.slice(i, i + CHUNK));
+        const PAGES_PER_CHUNK = 2;
+        const cityJobs: { chunk: string[]; page: number }[] = [];
+        cityTermChunks.forEach((chunk) => {
+          for (let p = 0; p < PAGES_PER_CHUNK; p++) cityJobs.push({ chunk, page: p });
+        });
+
+        const cityResults = await runPool(cityJobs, async (job: { chunk: string[]; page: number }) => {
+          if (isNearSoftTimeout()) return { data: null, error: { message: 'soft-timeout' } };
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), 15_000);
+          const q: any = adminClient.rpc('search_companies_exact_city', {
+            p_city: city,
+            p_state: state || null,
+            p_search_terms: job.chunk,
+            p_biz_type: bizType || 'all',
+            p_limit_val: PAGE_SIZE,
+            p_offset_val: job.page * PAGE_SIZE,
+          });
+          const withAbort = q.abortSignal?.(ctrl.signal) ?? q;
+          const r: any = await Promise.race([
+            withAbort,
+            new Promise((resolve) => setTimeout(() => resolve({ data: null, error: { message: 'hard-timeout-16s' } }), 16_000)),
+          ]);
+          clearTimeout(timer);
+          return r;
+        }, 10);
+
+        let cityErrors = 0;
+        for (const r of cityResults) {
+          if (!r) continue;
+          if (r.error) { cityErrors++; continue; }
+          for (const c of (r.data || [])) {
+            if (!seenIds.has(c.id) && matchesNeighborhood(c)) { seenIds.add(c.id); bestResults.push(c); }
+          }
+        }
+        console.log(`🏙️ City fast path "${seg}" (${city}/${state}): ${bestResults.length} leads | ${cityTermChunks.length} blocos | ${cityErrors} falhas | ${Date.now() - FUNCTION_START}ms`);
+        cityFastPathOk = bestResults.length > 0;
+        if (!cityFastPathOk) console.log(`↩️ City fast path vazio — seguindo para busca padrão`);
+
+      }
+
       // Phase 1: Fetch first batch of pages in parallel using the COMBINED query
+
 
       // (all terms OR'd together in a single tsquery — one GIN index scan in Postgres).
       const PAGE_CONCURRENCY = isHeavySearch ? 1 : 5;
       const INITIAL_PAGES = nationwide ? 4 : (isHeavySearch ? 1 : 15);
-      const initialPageNums = Array.from({ length: INITIAL_PAGES }, (_, i) => i);
+      const initialPageNums = cityFastPathOk ? [] : Array.from({ length: INITIAL_PAGES }, (_, i) => i);
+
 
       const initialPages = await runPool(initialPageNums, async (p: number) => {
         const r = await rpcWithRetry({
