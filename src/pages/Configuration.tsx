@@ -24,7 +24,7 @@ const Configuration = () => {
   const [customCountry, setCustomCountry] = useState("");
   const [state, setState] = useState("");
   const [city, setCity] = useState("");
-  const [neighborhood, setNeighborhood] = useState("");
+  const neighborhood = ""; // filtro de bairro removido — nunca restringe a busca
   const [companySizes, setCompanySizes] = useState<string[]>([]);
   const [revenueRange, setRevenueRange] = useState("all");
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
@@ -53,7 +53,7 @@ const Configuration = () => {
       // começa com segmentos vazios para não precisar desmarcar 15+ itens antes
       // de fazer uma nova busca diferente.
       // (mantido comentado: config.selectedCustomers / config.selectedCnaes)
-      if (config.neighborhood !== undefined) setNeighborhood(config.neighborhood);
+      
       if (config.revenueRange !== undefined) setRevenueRange(config.revenueRange);
       if (config.businessType !== undefined) setBusinessType(config.businessType);
       if (config.digitalPresence !== undefined) setDigitalPresence(config.digitalPresence);
@@ -619,26 +619,6 @@ const Configuration = () => {
                   </div>
                 </div>
 
-                {/* Bairro - Beta */}
-                <div>
-                  <Label htmlFor="neighborhood" className="text-base font-semibold flex items-center gap-2" translate="no">
-                    Bairro: (opcional)
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-warning/15 text-warning border border-warning/30">
-                      Beta — em testes
-                    </span>
-                  </Label>
-                  <Input
-                    id="neighborhood"
-                    value={neighborhood}
-                    onChange={(e) => setNeighborhood(e.target.value)}
-                    placeholder="Ex: Centro, Armação..."
-                    className="mt-2"
-                    translate="no"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Filtra leads pelo bairro informado. <strong>Funcionalidade experimental</strong> — pode não capturar todas as variações de grafia do bairro.
-                  </p>
-                </div>
 
                 {/* Company Size - Multiple Selection */}
                 <div>
