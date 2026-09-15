@@ -2538,8 +2538,9 @@ serve(async (req) => {
           }
         }
         console.log(`🏙️ City fast path "${seg}" (${city}/${state}): ${bestResults.length} leads | ${cityTermChunks.length} blocos | ${cityErrors} falhas | ${Date.now() - FUNCTION_START}ms`);
-        if (bestResults.length > 0) return bestResults;
-        console.log(`↩️ City fast path vazio — seguindo para busca padrão`);
+        cityFastPathOk = bestResults.length > 0;
+        if (!cityFastPathOk) console.log(`↩️ City fast path vazio — seguindo para busca padrão`);
+
       }
 
       // Phase 1: Fetch first batch of pages in parallel using the COMBINED query
