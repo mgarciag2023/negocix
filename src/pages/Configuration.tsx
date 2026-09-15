@@ -619,26 +619,6 @@ const Configuration = () => {
                   </div>
                 </div>
 
-                {/* Bairro - Beta */}
-                <div>
-                  <Label htmlFor="neighborhood" className="text-base font-semibold flex items-center gap-2" translate="no">
-                    Bairro: (opcional)
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-warning/15 text-warning border border-warning/30">
-                      Beta — em testes
-                    </span>
-                  </Label>
-                  <Input
-                    id="neighborhood"
-                    value={neighborhood}
-                    onChange={(e) => setNeighborhood(e.target.value)}
-                    placeholder="Ex: Centro, Armação..."
-                    className="mt-2"
-                    translate="no"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Filtra leads pelo bairro informado. <strong>Funcionalidade experimental</strong> — pode não capturar todas as variações de grafia do bairro.
-                  </p>
-                </div>
 
                 {/* Company Size - Multiple Selection */}
                 <div>
