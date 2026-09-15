@@ -2551,7 +2551,8 @@ serve(async (req) => {
       // (all terms OR'd together in a single tsquery — one GIN index scan in Postgres).
       const PAGE_CONCURRENCY = isHeavySearch ? 1 : 5;
       const INITIAL_PAGES = nationwide ? 4 : (isHeavySearch ? 1 : 15);
-      const initialPageNums = Array.from({ length: INITIAL_PAGES }, (_, i) => i);
+      const initialPageNums = cityFastPathOk ? [] : Array.from({ length: INITIAL_PAGES }, (_, i) => i);
+
 
       const initialPages = await runPool(initialPageNums, async (p: number) => {
         const r = await rpcWithRetry({
