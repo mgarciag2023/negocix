@@ -2498,7 +2498,9 @@ serve(async (req) => {
       // com dezenas de termos em uma única tsquery estoura o statement timeout e todas as
       // páginas voltam abortadas → 0 leads. Usamos a mesma estratégia da região metro:
       // filtro exato de cidade (indexado) + termos divididos em blocos pequenos.
+      let cityFastPathOk = false;
       if (city && !nationwide) {
+
         const CHUNK = 12;
         const cityTermChunks: string[][] = [];
         for (let i = 0; i < terms.length; i += CHUNK) cityTermChunks.push(terms.slice(i, i + CHUNK));
