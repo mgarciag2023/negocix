@@ -24,7 +24,7 @@ const Configuration = () => {
   const [customCountry, setCustomCountry] = useState("");
   const [state, setState] = useState("");
   const [city, setCity] = useState("");
-  const [neighborhood, setNeighborhood] = useState("");
+  const neighborhood = ""; // filtro de bairro removido — nunca restringe a busca
   const [companySizes, setCompanySizes] = useState<string[]>([]);
   const [revenueRange, setRevenueRange] = useState("all");
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
@@ -53,7 +53,7 @@ const Configuration = () => {
       // começa com segmentos vazios para não precisar desmarcar 15+ itens antes
       // de fazer uma nova busca diferente.
       // (mantido comentado: config.selectedCustomers / config.selectedCnaes)
-      if (config.neighborhood !== undefined) setNeighborhood(config.neighborhood);
+      
       if (config.revenueRange !== undefined) setRevenueRange(config.revenueRange);
       if (config.businessType !== undefined) setBusinessType(config.businessType);
       if (config.digitalPresence !== undefined) setDigitalPresence(config.digitalPresence);
