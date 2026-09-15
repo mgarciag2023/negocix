@@ -46,6 +46,8 @@ export const customerTypes = [
 
   // Varejo - Alimentos
   "Supermercados",
+  "Grandes Redes de Supermercados",
+
   
   "Mercados",
   "Mercearias",
