@@ -3086,6 +3086,56 @@ serve(async (req) => {
       console.log(`⛔ Filtro negativo por segmento: ${beforeSegNeg} → ${allCompanies.length}`);
     }
 
+    // ===== GRANDES REDES DE SUPERMERCADOS: retornar apenas 1 empresa (sede) por rede =====
+    const isGrandesRedesSearch = segments.some((s: string) =>
+      normalizeText(String(s)).toLowerCase().includes('grandes redes de supermercados')
+    );
+    if (isGrandesRedesSearch) {
+      const CHAIN_BRANDS: { key: string; rx: RegExp }[] = [
+        { key: 'zaffari', rx: /\b(zaffari|bourbon)\b/ },
+        { key: 'stok center', rx: /\bstok\s*center\b/ },
+        { key: 'unidasul', rx: /\b(unidasul|rissul|macromix)\b/ },
+        { key: 'andreazza', rx: /\bandreazza\b/ },
+        { key: 'imec', rx: /\bimec\b/ },
+        { key: 'asun', rx: /\basun\b/ },
+        { key: 'master', rx: /\bmaster\b/ },
+        { key: 'peruzzo', rx: /\bperuzzo\b/ },
+        { key: 'libraga brandao', rx: /\b(libraga|rancho atacadista|rede vivo)\b/ },
+        { key: 'guanabara', rx: /\bguanabara\b/ },
+        { key: 'nicolini', rx: /\bnicolini\b/ },
+        { key: 'fort atacadista', rx: /\bfort[e]?\s*atacadista\b/ },
+        { key: 'atacadao', rx: /\batacadao\b/ },
+        { key: 'carrefour', rx: /\bcarrefour\b/ },
+        { key: 'sams club', rx: /\bsam'?s\s*club\b/ },
+        { key: 'bistek', rx: /\bbistek\b/ },
+        { key: 'passarela', rx: /\b(passarela|via atacadista)\b/ },
+        { key: 'baklizi', rx: /\bbaklizi\b/ },
+        { key: 'cotripal', rx: /\bcotripal\b/ },
+        { key: 'rede super', rx: /\brede\s*super\b/ },
+      ];
+      const scoreOf = (c: any) => {
+        let s = 0;
+        if ((c.matriz_filial || '').toUpperCase() === 'MATRIZ') s += 100;
+        if ((c.telefone_1 || c.telefone_2 || '').trim()) s += 20;
+        if ((c.email || '').trim()) s += 10;
+        if (Number(c.capital_social || 0) > 0) s += 5;
+        return s;
+      };
+      const best = new Map<string, any>();
+      for (const c of allCompanies) {
+        const hay = normalizeText(`${c.nome_fantasia || ''} ${c.razao_social || ''}`).toLowerCase();
+        const brand = CHAIN_BRANDS.find(b => b.rx.test(hay));
+        if (!brand) continue;
+        const cur = best.get(brand.key);
+        if (!cur || scoreOf(c) > scoreOf(cur)) best.set(brand.key, c);
+      }
+      const beforeChains = allCompanies.length;
+      allCompanies = Array.from(best.values());
+      console.log(`🏢 Grandes Redes: ${beforeChains} → ${allCompanies.length} (1 sede por rede)`);
+    }
+
+
+
     // ===== SOFT TIMEOUT CHECK: if near timeout after dedup, skip heavy filters and go straight to lead transform =====
     if (isNearSoftTimeout()) {
       console.log(`⚠️ NEAR TIMEOUT after dedup — skipping relevance filters, transforming ${allCompanies.length} leads directly`);
