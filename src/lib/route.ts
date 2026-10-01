@@ -3,9 +3,13 @@ const UFS = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","P
 /** Extracts "Cidade - UF" from a free-form Brazilian address. */
 export const extractCity = (address: string | null | undefined): string => {
   if (!address) return "Sem cidade";
-  const parts = address.split(/[,\-–]/).map((p) => p.trim()).filter(Boolean);
+  const parts = address
+    .replace(/\b\d{5}-?\d{3}\b/g, " ")
+    .split(/[,–]|\s-\s/)
+    .map((p) => p.trim())
+    .filter(Boolean);
   for (let i = parts.length - 1; i > 0; i--) {
-    const uf = parts[i].toUpperCase();
+    const uf = parts[i].toUpperCase().replace(/[^A-Z]/g, "");
     if (UFS.includes(uf)) {
       const city = parts[i - 1].replace(/\d{5}-?\d{3}/, "").trim();
       if (city && !/^\d+$/.test(city)) {
@@ -29,6 +33,9 @@ const writeCache = (c: Record<string, LatLng | null>) => {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+const expandAbbrev = (a: string) =>
+  a.replace(/\bR\.?\s/gi, "Rua ").replace(/\bAV\.?\s/gi, "Avenida ").replace(/\bROD\.?\s/gi, "Rodovia ").replace(/\bTV\.?\s/gi, "Travessa ");
+
 const nominatim = async (q: string): Promise<LatLng | null> => {
   const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q=${encodeURIComponent(q)}`;
   const res = await fetch(url, { headers: { "Accept-Language": "pt-BR" } });
@@ -42,7 +49,7 @@ const nominatim = async (q: string): Promise<LatLng | null> => {
 export const geocodeAddress = async (address: string): Promise<{ point: LatLng | null; cached: boolean }> => {
   const cache = readCache();
   if (address in cache) return { point: cache[address], cached: true };
-  let point = await nominatim(address);
+  let point = await nominatim(expandAbbrev(address));
   if (!point) {
     // fallback: drop street number/complement, keep street + city + UF
     const parts = address.split(",").map((p) => p.trim());
@@ -64,14 +71,31 @@ export const distanceKm = (a: LatLng, b: LatLng) => {
   return 2 * R * Math.asin(Math.sqrt(s));
 };
 
-/** Nearest-neighbour + 2-opt ordering of stops starting from `start`. Returns indices. */
+const routeLength = (start: LatLng | null, stops: LatLng[], order: number[]) =>
+  order.reduce((sum, idx, k) => {
+    const prev = k === 0 ? start : stops[order[k - 1]];
+    return sum + (prev ? distanceKm(prev, stops[idx]) : 0);
+  }, 0);
+
+/** Best ordering of stops. Without a start point, tries every stop as the first one. */
 export const optimizeRoute = (start: LatLng | null, stops: LatLng[]): number[] => {
+  if (start || stops.length <= 2) return optimizeFrom(start, stops, 0);
+  let best: number[] = [], bestLen = Infinity;
+  for (let f = 0; f < stops.length; f++) {
+    const o = optimizeFrom(null, stops, f);
+    const len = routeLength(null, stops, o);
+    if (len < bestLen) { bestLen = len; best = o; }
+  }
+  return best;
+};
+
+const optimizeFrom = (start: LatLng | null, stops: LatLng[], firstIdx: number): number[] => {
   const n = stops.length;
   if (n <= 1) return stops.map((_, i) => i);
   const remaining = new Set(stops.map((_, i) => i));
   const order: number[] = [];
-  let current: LatLng = start ?? stops[0];
-  if (!start) { order.push(0); remaining.delete(0); }
+  let current: LatLng = start ?? stops[firstIdx];
+  if (!start) { order.push(firstIdx); remaining.delete(firstIdx); }
   while (remaining.size) {
     let best = -1, bestD = Infinity;
     remaining.forEach((i) => { const d = distanceKm(current, stops[i]); if (d < bestD) { bestD = d; best = i; } });

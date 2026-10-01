@@ -22,7 +22,7 @@ const RoutePlanner = () => {
     return [...m.entries()].sort((a, b) => b[1] - a[1]);
   }, [savedLeads]);
   const [city, setCity] = useState<string>(params.get("cidade") || "");
-  const activeCity = city || cities[0]?.[0] || "";
+  const activeCity = cities.some(([c]) => c === city) ? city : cities[0]?.[0] || "";
   const cityLeads = savedLeads.filter((l) => extractCity(l.address) === activeCity);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [userLoc, setUserLoc] = useState<LatLng | null>(null);
