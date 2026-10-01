@@ -14,7 +14,6 @@ interface SearchLog {
   search_type: string;
   search_config: Record<string, unknown>;
   results_count: number | null;
-  results: Record<string, unknown>[];
   created_at: string;
 }
 
@@ -32,7 +31,7 @@ export default function SearchHistory() {
 
       const { data, error } = await supabase
         .from("search_logs")
-        .select("id, search_type, search_config, results_count, results, created_at")
+        .select("id, search_type, search_config, results_count, created_at")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(50);
@@ -68,12 +67,13 @@ export default function SearchHistory() {
 
   const openResults = (results: Record<string, unknown>[], configStr: string, type: string = "leads") => {
     if (type === "suppliers") {
-      localStorage.setItem("supplierSearchConfig", configStr);
-      localStorage.setItem("suppliersCache", JSON.stringify({
-        suppliers: results,
-        timestamp: Date.now(),
-      }));
-      navigate("/suppliers-results");
+      try {
+        localStorage.setItem("supplierSearchConfig", configStr);
+        localStorage.setItem("suppliersCache", JSON.stringify({ suppliers: results, timestamp: Date.now() }));
+      } catch (e) {
+        console.warn("Cache de fornecedores pulado:", e);
+      }
+      navigate("/suppliers-results", { state: { historySuppliers: results } });
       return;
     }
 
@@ -89,8 +89,10 @@ export default function SearchHistory() {
         console.warn("Não foi possível limpar cache local:", clearErr);
       }
     }
-    localStorage.setItem("leadSearchConfig", configStr);
-    sessionStorage.removeItem('results_scroll_position');
+    try {
+      localStorage.setItem("leadSearchConfig", configStr);
+      sessionStorage.removeItem('results_scroll_position');
+    } catch { /* ignore */ }
     navigate("/resultados", { state: { historyLeads: results } });
   };
 
@@ -98,7 +100,14 @@ export default function SearchHistory() {
     setOpeningLogId(log.id);
 
     try {
-      const results = Array.isArray(log.results) ? log.results : [];
+      const { data: row, error } = await supabase
+        .from("search_logs")
+        .select("results")
+        .eq("id", log.id)
+        .maybeSingle();
+      if (error) throw error;
+      const raw = (row as { results?: unknown } | null)?.results;
+      const results = (Array.isArray(raw) ? raw : []) as Record<string, unknown>[];
       const config = log.search_config || {};
       const configStr = JSON.stringify(config);
       const segment = Array.isArray(config.selectedCustomers)
@@ -131,6 +140,9 @@ export default function SearchHistory() {
         description: "Os leads desta pesquisa não foram salvos. Faça uma nova busca.",
         variant: "destructive",
       });
+    } catch (err) {
+      console.error("Erro ao abrir pesquisa:", err);
+      toast({ title: "Não foi possível abrir a pesquisa", description: "Tente novamente.", variant: "destructive" });
     } finally {
       setOpeningLogId(null);
     }
@@ -207,7 +219,7 @@ export default function SearchHistory() {
             <div className="space-y-3">
               {logs.map((log) => {
                 const { segments, region } = getSearchDescription(log.search_config);
-                const hasResults = (log.results && log.results.length > 0) || (log.results_count ?? 0) > 0;
+                const hasResults = (log.results_count ?? 0) > 0;
 
                 return (
                   <Card key={log.id} className="hover:shadow-md transition-shadow">
