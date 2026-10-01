@@ -364,7 +364,24 @@ const Results = () => {
         // If navigated from history with saved leads, render them directly (no refetch)
         const historyLeads = (location.state as { historyLeads?: Lead[] } | null)?.historyLeads;
         if (historyLeads && Array.isArray(historyLeads) && historyLeads.length > 0) {
-          const sorted = sortLeadsAlphabetically(historyLeads);
+          // Histórico guarda leads "enxutos" (sem id/reasons/score): completa os campos para não quebrar a tela
+          const normalized: Lead[] = historyLeads.map((l, i) => {
+            const r = l as Partial<Lead>;
+            return {
+              ...r,
+              id: r.id || `hist-${i}-${(r.phone || r.name || "").toString().replace(/\W/g, "")}`,
+              name: r.name || "Empresa",
+              address: r.address || "",
+              phone: r.phone || "",
+              responsible: r.responsible || "",
+              matchScore: typeof r.matchScore === "number" ? r.matchScore : 80,
+              category: r.category || "",
+              revenue: r.revenue || "",
+              openedDate: r.openedDate || "",
+              reasons: Array.isArray(r.reasons) ? r.reasons : [],
+            } as Lead;
+          });
+          const sorted = sortLeadsAlphabetically(normalized);
           setLeads(sorted);
           setAllLeads(sorted);
           setLoading(false);

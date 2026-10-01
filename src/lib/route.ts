@@ -36,13 +36,22 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const expandAbbrev = (a: string) =>
   a.replace(/\bR\.?\s/gi, "Rua ").replace(/\bAV\.?\s/gi, "Avenida ").replace(/\bROD\.?\s/gi, "Rodovia ").replace(/\bTV\.?\s/gi, "Travessa ");
 
+const fetchJson = async (url: string, ms = 8000) => {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal });
+    return res.ok ? await res.json() : null;
+  } catch { return null; } finally { clearTimeout(t); }
+};
+
 const nominatim = async (q: string): Promise<LatLng | null> => {
-  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&q=${encodeURIComponent(q)}`;
-  const res = await fetch(url, { headers: { "Accept-Language": "pt-BR" } });
-  if (!res.ok) return null;
-  const data = await res.json();
-  if (!Array.isArray(data) || !data[0]) return null;
-  return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+  const data = await fetchJson(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&accept-language=pt-BR&q=${encodeURIComponent(q)}`);
+  if (Array.isArray(data) && data[0]) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+  // fallback: Photon (OpenStreetMap)
+  const ph = await fetchJson(`https://photon.komoot.io/api/?limit=1&lang=default&bbox=-74,-34,-34,6&q=${encodeURIComponent(q)}`);
+  const c = ph?.features?.[0]?.geometry?.coordinates;
+  return Array.isArray(c) ? { lat: c[1], lng: c[0] } : null;
 };
 
 /** Geocodes an address (free OpenStreetMap service, cached, ~1 req/s). */
