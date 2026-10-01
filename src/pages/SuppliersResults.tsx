@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -72,8 +72,16 @@ const SuppliersResults = () => {
     }
   };
 
+  const location = useLocation();
   useEffect(() => {
     const fetchSuppliers = async () => {
+      const historySuppliers = (location.state as { historySuppliers?: unknown[] } | null)?.historySuppliers;
+      if (Array.isArray(historySuppliers) && historySuppliers.length > 0) {
+        setSuppliers(historySuppliers as typeof suppliers);
+        setLoading(false);
+        return;
+      }
+
       const configStr = localStorage.getItem("supplierSearchConfig");
       if (!configStr) {
         toast({
@@ -87,13 +95,6 @@ const SuppliersResults = () => {
 
       const config = JSON.parse(configStr);
       setSearchConfig(config);
-
-      const historySuppliers = (location.state as { historySuppliers?: unknown[] } | null)?.historySuppliers;
-      if (Array.isArray(historySuppliers) && historySuppliers.length > 0) {
-        setSuppliers(historySuppliers as typeof suppliers);
-        setLoading(false);
-        return;
-      }
 
       // Check cache
       const cacheStr = localStorage.getItem("suppliersCache");
