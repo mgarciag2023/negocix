@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Users, ArrowUpDown, Filter, Search, Loader2, Download } from 'lucide-react';
+import { Users, ArrowUpDown, Filter, Search, Loader2, Download, MapPin, Route as RouteIcon } from 'lucide-react';
+import { extractCity } from '@/lib/route';
 import * as XLSX from 'xlsx';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,12 @@ const SavedLeads = () => {
   const { loading, updateLead, deleteLead, sortBy, setSortBy, getSortedLeads } = useSavedLeads();
   const [searchQuery, setSearchQuery] = useState('');
   const [stageFilter, setStageFilter] = useState<LeadStage | 'all'>('all');
+  const [cityFilter, setCityFilter] = useState<string>('all');
+  const cityOptions = (() => {
+    const m = new Map<string, number>();
+    getSortedLeads().forEach((l) => { const c = extractCity(l.address); m.set(c, (m.get(c) || 0) + 1); });
+    return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  })();
   const [showOverdueOnly, setShowOverdueOnly] = useState(false);
 
   const sortedLeads = getSortedLeads();
@@ -60,6 +67,10 @@ const SavedLeads = () => {
       }
     }
     
+    if (cityFilter !== 'all' && extractCity(lead.address) !== cityFilter) {
+      return false;
+    }
+
     // Stage filter
     if (stageFilter !== 'all' && lead.lead_stage !== stageFilter) {
       return false;
@@ -140,10 +151,18 @@ const SavedLeads = () => {
             </p>
           </div>
           {filteredLeads.length > 0 && (
-            <Button variant="outline" onClick={exportToExcel} className="gap-2 shrink-0">
-              <Download className="h-4 w-4" />
-              Exportar Excel
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+              <Button asChild className="gap-2">
+                <Link to={`/rotas${cityFilter !== 'all' ? `?cidade=${encodeURIComponent(cityFilter)}` : ''}`}>
+                  <RouteIcon className="h-4 w-4" />
+                  Criar rota
+                </Link>
+              </Button>
+              <Button variant="outline" onClick={exportToExcel} className="gap-2">
+                <Download className="h-4 w-4" />
+                Exportar Excel
+              </Button>
+            </div>
           )}
         </div>
 
@@ -171,6 +190,20 @@ const SavedLeads = () => {
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* City Filter */}
+          <Select value={cityFilter} onValueChange={setCityFilter}>
+            <SelectTrigger className="w-full md:w-[200px]">
+              <MapPin className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Cidade" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as cidades</SelectItem>
+              {cityOptions.map(([c, n]) => (
+                <SelectItem key={c} value={c}>{c} ({n})</SelectItem>
               ))}
             </SelectContent>
           </Select>
