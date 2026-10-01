@@ -123,7 +123,7 @@ const LeadCard = ({
       </div>
       
       {/* Reasons section */}
-      <div className="bg-success-light border-l-4 border-success rounded-md p-3 md:p-4 mb-4">
+      {reasons?.length > 0 && <div className="bg-success-light border-l-4 border-success rounded-md p-3 md:p-4 mb-4">
         <h4 className="font-semibold text-foreground mb-2 text-sm md:text-base">Por que é um bom lead:</h4>
         <ul className="space-y-1">
           {reasons.map((reason, index) => (
@@ -133,7 +133,7 @@ const LeadCard = ({
             </li>
           ))}
         </ul>
-      </div>
+      </div>}
       
       {/* Company Info Grid */}
       <div className="grid grid-cols-2 gap-3 md:gap-4 mb-4 p-3 bg-muted/30 rounded-lg">
