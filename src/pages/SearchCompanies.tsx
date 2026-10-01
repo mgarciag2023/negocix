@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -52,6 +52,18 @@ const SearchCompanies = () => {
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Company[]>([]);
   const [searched, setSearched] = useState(false);
+  const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
+
+  useEffect(() => {
+    const uf = stateUf && stateUf !== "all" ? stateUf : null;
+    const prefix = city.trim();
+    if (!uf || prefix.length < 2) { setCitySuggestions([]); return; }
+    const t = setTimeout(async () => {
+      const { data } = await supabase.rpc("get_distinct_cities", { p_state: uf, p_prefix: prefix.toUpperCase() });
+      setCitySuggestions(((data || []) as { cidade: string }[]).map((r) => titleCase(r.cidade)).slice(0, 20));
+    }, 300);
+    return () => clearTimeout(t);
+  }, [city, stateUf]);
 
   const handleSearch = async () => {
     setLoading(true);
@@ -66,11 +78,10 @@ const SearchCompanies = () => {
           setLoading(false);
           return;
         }
-        const { data: rows, error } = await supabase
-          .from("companies")
-          .select("*")
-          .ilike("cnpj", `%${digits}%`)
-          .limit(200);
+        let cq = supabase.from("companies").select("*").ilike("cnpj", `%${digits}%`).limit(200);
+        if (stateUf && stateUf !== "all") cq = cq.eq("estado", stateUf);
+        if (city.trim()) cq = cq.eq("cidade", city.trim().toUpperCase());
+        const { data: rows, error } = await cq;
         if (error) throw error;
         data = (rows || []) as Company[];
       } else if (mode === "name") {
@@ -173,7 +184,7 @@ const SearchCompanies = () => {
                   </div>
                   <div>
                     <Label>Cidade (opcional)</Label>
-                    <Input placeholder="Ex: São Paulo" value={city} onChange={(e) => setCity(e.target.value)} />
+                    <Input placeholder="Ex: São Paulo" list="cidades-sugeridas" value={city} onChange={(e) => setCity(e.target.value)} />
                   </div>
                 </div>
               </TabsContent>
@@ -187,6 +198,22 @@ const SearchCompanies = () => {
                     onChange={(e) => setCnpj(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                   />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Estado (opcional)</Label>
+                    <Select value={stateUf} onValueChange={setStateUf}>
+                      <SelectTrigger><SelectValue placeholder="Todos" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        {brazilianStates.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Cidade (opcional)</Label>
+                    <Input placeholder="Ex: São Paulo" list="cidades-sugeridas" value={city} onChange={(e) => setCity(e.target.value)} />
+                  </div>
                 </div>
               </TabsContent>
 
@@ -203,11 +230,14 @@ const SearchCompanies = () => {
                   </div>
                   <div>
                     <Label>Cidade</Label>
-                    <Input placeholder="Ex: Blumenau" value={city} onChange={(e) => setCity(e.target.value)} />
+                    <Input placeholder="Ex: Blumenau" list="cidades-sugeridas" value={city} onChange={(e) => setCity(e.target.value)} />
                   </div>
                 </div>
               </TabsContent>
             </Tabs>
+            <datalist id="cidades-sugeridas">
+              {citySuggestions.map((c) => <option key={c} value={c} />)}
+            </datalist>
 
             <Button onClick={handleSearch} disabled={loading} className="w-full mt-6 h-12">
               {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
