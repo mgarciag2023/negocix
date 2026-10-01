@@ -88,6 +88,13 @@ const SuppliersResults = () => {
       const config = JSON.parse(configStr);
       setSearchConfig(config);
 
+      const historySuppliers = (location.state as { historySuppliers?: unknown[] } | null)?.historySuppliers;
+      if (Array.isArray(historySuppliers) && historySuppliers.length > 0) {
+        setSuppliers(historySuppliers as typeof suppliers);
+        setLoading(false);
+        return;
+      }
+
       // Check cache
       const cacheStr = localStorage.getItem("suppliersCache");
       if (cacheStr) {
