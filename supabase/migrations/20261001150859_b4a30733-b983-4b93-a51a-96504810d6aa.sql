@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Authenticated users can read cache" ON public.cached_search_results;
