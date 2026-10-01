@@ -21,6 +21,7 @@ import SuppliersResults from "./pages/SuppliersResults";
 import SearchCompanies from "./pages/SearchCompanies";
 import Admin from "./pages/Admin";
 import SearchHistory from "./pages/SearchHistory";
+import RoutePlanner from "./pages/RoutePlanner";
 import NotFound from "./pages/NotFound";
 import TrialSearch from "./pages/TrialSearch";
 import TrialAdmin from "./pages/TrialAdmin";
@@ -122,6 +123,7 @@ const App = () => (
           <Route path="/buscar-empresas" element={<ProtectedRoute><SearchCompanies /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
           <Route path="/historico" element={<ProtectedRoute><SearchHistory /></ProtectedRoute>} />
+          <Route path="/rotas" element={<ProtectedRoute><RoutePlanner /></ProtectedRoute>} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>
