@@ -167,6 +167,7 @@ export const customerTypes = [
   "Indústrias de Baterias",
   "Indústrias de Implementos Agrícolas",
   "Indústrias de Equipamentos Hospitalares",
+  "Indústrias",
   "Indústrias Têxteis",
   "Indústrias de Alumínio",
   "Indústrias de Sacolas Plásticas",
