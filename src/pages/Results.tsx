@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { getSessionSafely } from "@/lib/auth-session";
 import * as XLSX from 'xlsx';
 
 // Score a lead by "size" using multiple factors: porte, employees, revenue
@@ -137,6 +138,24 @@ const Results = () => {
   const hasRestoredScroll = useRef(false);
   const { isAdmin } = useAdminCheck();
   const navigate = useNavigate();
+  // Proteção contra tela travada em "Buscando leads...": cronômetro + cancelar/tentar de novo
+  const [elapsedSec, setElapsedSec] = useState(0);
+  const activeControllerRef = useRef<AbortController | null>(null);
+  useEffect(() => {
+    if (!loading) return;
+    const start = Date.now();
+    const id = setInterval(() => setElapsedSec(Math.floor((Date.now() - start) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [loading]);
+  const handleRetrySearch = () => {
+    activeControllerRef.current?.abort();
+    window.location.reload();
+  };
+  const handleCancelSearch = () => {
+    activeControllerRef.current?.abort();
+    navigate('/configuracao');
+  };
+
 
   const exportToExcel = async () => {
     if (leads.length === 0) {
@@ -415,7 +434,8 @@ const Results = () => {
         // Retry automático (1x) para erros transitórios: rede caiu, 5xx, resposta truncada.
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
         const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-        const { data: { session } } = await supabase.auth.getSession();
+        // getSession pode travar para sempre no celular (renovação de login presa) — usa versão com limite de tempo
+        const session = await getSessionSafely();
 
         const body = JSON.stringify({
           segment: (searchConfig.selectedCustomers || []).join(', '),
@@ -455,7 +475,9 @@ const Results = () => {
 
         const attemptFetch = async (attempt: number): Promise<{ data: any; transient: boolean; abort: boolean }> => {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 600000);
+          activeControllerRef.current = controller;
+          // Servidor encerra em ~380s; 7 min no cliente é suficiente
+          const timeoutId = setTimeout(() => controller.abort(), 420000);
           try {
             const response = await fetch(`${supabaseUrl}/functions/v1/search-leads`, {
               method: 'POST',
@@ -677,7 +699,18 @@ const Results = () => {
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Buscando leads...</p>
+              <p className="text-muted-foreground">Buscando leads... {elapsedSec > 3 && `(${elapsedSec}s)`}</p>
+              {elapsedSec >= 45 && (
+                <div className="mt-6 max-w-xs mx-auto space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Está demorando mais que o normal. Se você saiu do app ou a tela apagou durante a busca, toque em "Tentar de novo".
+                  </p>
+                  <div className="flex gap-2 justify-center">
+                    <Button size="sm" onClick={handleRetrySearch}>Tentar de novo</Button>
+                    <Button size="sm" variant="outline" onClick={handleCancelSearch}>Cancelar</Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </main>
