@@ -2,7 +2,7 @@
 
 - [x] Review excluded candidates: SP search fetched 330 candidates; name qualification, not truncation, explains most exclusions.
 - [x] Expand to user-approved furniture and upholstery manufacturers while preserving name-based manufacturing qualification.
-- [ ] Run regression tests, deploy and verify expanded signed-in SP search.
+- [x] Run 19 regression tests, deploy both functions and verify expanded signed-in SP search: 1,685 leads displayed, all checked against original names, active status and complete phone format; no browser errors.
 
 - [x] Align search and monitoring terms; remove unrelated standalone terms.
 - [x] Apply product-plus-manufacturing qualification in normal, city-scan and partial searches, without changing other segments.
