@@ -17,8 +17,26 @@ describe('Indústrias de Cadeiras e Poltronas', () => {
   test('does not accept chair rental or repair without manufacturing evidence', () => {
     expect(matchesSeatingIndustryName({ razao_social: 'ALUGUEL E REFORMA DE CADEIRAS LTDA' })).toBe(false);
   });
-  test('does not accept generic sofa or seat manufacturers', () => {
-    expect(matchesSeatingIndustryName({ razao_social: 'FABRICA DE SOFAS E ASSENTOS LTDA' })).toBe(false);
+  test('includes sofa manufacturers in the approved upholstery scope', () => {
+    expect(matchesSeatingIndustryName({ razao_social: 'FABRICA DE SOFAS E ASSENTOS LTDA' })).toBe(true);
+  });
+  test('includes furniture manufacturing without an explicit chair product', () => {
+    expect(matchesSeatingIndustryName({ razao_social: 'INDÚSTRIA E COMÉRCIO DE MÓVEIS LTDA' })).toBe(true);
+  });
+  test('includes upholstery manufacturing across both names', () => {
+    expect(matchesSeatingIndustryName({ nome_fantasia: 'ESTOFADOS CENTRAL', razao_social: 'CENTRAL FABRICACAO LTDA' })).toBe(true);
+  });
+  test('includes furniture named mobiliario', () => {
+    expect(matchesSeatingIndustryName({ razao_social: 'FABRICA DE MOBILIARIO LTDA' })).toBe(true);
+  });
+  test('rejects furniture stores without manufacturing evidence', () => {
+    expect(matchesSeatingIndustryName({ razao_social: 'LOJA E REVENDA DE MOVEIS E ESTOFADOS LTDA' })).toBe(false);
+  });
+  test('rejects upholstery repair without manufacturing evidence', () => {
+    expect(matchesSeatingIndustryName({ razao_social: 'REFORMA E CONSERTO DE SOFAS LTDA' })).toBe(false);
+  });
+  test('still rejects generic seat manufacturing without an approved product', () => {
+    expect(matchesSeatingIndustryName({ razao_social: 'FABRICA DE ASSENTOS LTDA' })).toBe(false);
   });
   test('accepts longarina production', () => {
     expect(matchesSeatingIndustryName({ razao_social: 'FABRICA DE LONGARINAS LTDA' })).toBe(true);
@@ -50,6 +68,8 @@ describe('Indústrias de Cadeiras e Poltronas', () => {
     expect(seatingIndustryTerms).toContain('cadeira');
     expect(seatingIndustryTerms).toContain('fabricação de poltronas');
     expect(seatingIndustryTerms).not.toContain('assentos');
-    expect(seatingIndustryTerms).not.toContain('fabrica de sofas');
+    expect(seatingIndustryTerms).toContain('fabrica de sofas');
+    expect(seatingIndustryTerms).toContain('industria de móveis');
+    expect(seatingIndustryTerms).toContain('fabricacao de estofados');
   });
 });
