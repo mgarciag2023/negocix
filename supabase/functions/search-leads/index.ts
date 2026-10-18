@@ -1,3 +1,4 @@
+import { seatingIndustryTerms, isSeatingIndustrySegment, matchesSeatingIndustryName, passesSeatingIndustry, hasValidSeatingPhone } from "../_shared/seating-industry.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -125,8 +126,8 @@ function getCnaesForSegment(segment: string): string[] {
     'adegas e distribuidoras de vinhos': ['1112700', '4635403'],
     'adegas': ['1112700', '4635403'],
     // Cadeiras e Poltronas — móveis para sentar (estofados, madeira, metal, uso hospitalar)
-    'indústrias de cadeiras e poltronas': ['3101200', '3101400', '3102100', '3103100', '3104200'],
-    'industrias de cadeiras e poltronas': ['3101200', '3101400', '3102100', '3103100', '3104200'],
+    'indústrias de cadeiras e poltronas': ['3101200', '3102100', '3103900'],
+    'industrias de cadeiras e poltronas': ['3101200', '3102100', '3103900'],
     // Usinagem de Precisão — COMPRADORES: indústrias que consomem peças usinadas
     'usinagem de precisão': ['2811900', '2812700', '2813500', '2814301', '2814302', '2815101', '2815102', '2821601', '2822401', '2823200', '2824101', '2825900', '2829101', '2829199', '2831300', '2832100', '2833000', '2840200', '2851800', '2852600', '2853400', '2854200', '2861500', '2862300', '2863100', '2864000', '2865800', '2866600', '2869100', '2910701', '2910702', '2920401', '2930101', '2930102', '2941700', '2942500', '2943300', '2944100', '2945000', '2949201', '2949299', '3031800', '3032600', '3041500', '3042300', '3050400', '3250701', '3250702', '3250709', '2660400', '2610800', '2621300', '2751100', '2790201', '2790299', '2710401', '2710403', '2721000', '2722801'],
     'usinagem de precisao': ['2811900', '2812700', '2813500', '2814301', '2814302', '2815101', '2815102', '2821601', '2822401', '2823200', '2824101', '2825900', '2829101', '2829199', '2831300', '2832100', '2833000', '2840200', '2851800', '2852600', '2853400', '2854200', '2861500', '2862300', '2863100', '2864000', '2865800', '2866600', '2869100', '2910701', '2910702', '2920401', '2930101', '2930102', '2941700', '2942500', '2943300', '2944100', '2945000', '2949201', '2949299', '3031800', '3032600', '3041500', '3042300', '3050400', '3250701', '3250702', '3250709', '2660400', '2610800', '2621300', '2751100', '2790201', '2790299', '2710401', '2710403', '2721000', '2722801'],
@@ -149,8 +150,8 @@ function generateSearchTerms(segment: string): string[] {
     'indústrias': ['industria', 'indústria', 'industrias', 'indústrias', 'industrial', 'industriais', 'fabrica', 'fábrica', 'fabricas', 'fábricas', 'fabricante', 'fabricantes', 'metalurgica', 'metalúrgica', 'metalurgicas', 'metalúrgicas', 'siderurgica', 'siderúrgica', 'siderurgicas', 'siderúrgicas', 'fundicao', 'fundição', 'usina', 'usinas', 'usinagem', 'moagem', 'beneficiamento', 'tratamento termico', 'tratamento térmico', 'parque industrial', 'distrito industrial', 'centro industrial'],
     'industrias': ['industria', 'indústria', 'industrias', 'indústrias', 'industrial', 'industriais', 'fabrica', 'fábrica', 'fabricas', 'fábricas', 'fabricante', 'fabricantes', 'metalurgica', 'metalúrgica', 'metalurgicas', 'metalúrgicas', 'siderurgica', 'siderúrgica', 'siderurgicas', 'siderúrgicas', 'fundicao', 'fundição', 'usina', 'usinas', 'usinagem', 'moagem', 'beneficiamento', 'tratamento termico', 'tratamento térmico', 'parque industrial', 'distrito industrial', 'centro industrial'],
     // ===== FÁBRICAS ADICIONADAS =====
-    'indústrias de cadeiras e poltronas': ['cadeiras', 'poltronas', 'cadeiras e poltronas', 'fabrica de cadeiras', 'fábrica de cadeiras', 'industria de cadeiras', 'indústria de cadeiras', 'fabrica de poltronas', 'fábrica de poltronas', 'industria de poltronas', 'indústria de poltronas', 'fabricante de cadeiras', 'fabricante de poltronas', 'cadeiraria', 'cadeiras giratorias', 'cadeiras giratórias', 'cadeiras de escritorio', 'cadeiras de escritório', 'poltronas de escritorio', 'poltronas de escritório', 'cadeiras office', 'moveis office', 'móveis office', 'cadeiras ergonometricas', 'cadeiras ergonômicas', 'poltronas ergonometricas', 'poltronas ergonômicas', 'cadeiras gamer', 'poltronas gamer', 'cadeiras de jantar', 'cadeiras para cozinha', 'cadeiras para restaurante', 'cadeiras para bares', 'cadeiras para eventos', 'poltronas de recepcao', 'poltronas de recepção', 'poltronas de espera', 'cadeiras de espera', 'longarinas', 'longarinas de espera', 'cadeiras universitarias', 'cadeiras universitárias', 'cadeiras escolares', 'carteiras escolares', 'cadeiras de auditorio', 'cadeiras de auditório', 'poltronas de auditorio', 'poltronas de auditório', 'poltronas de cinema', 'cadeiras de cinema', 'poltronas de teatro', 'cadeiras de teatro', 'cadeiras de praia', 'cadeiras de jardim', 'poltronas de jardim', 'cadeiras de aluminio', 'cadeiras de alumínio', 'cadeiras de madeira', 'cadeiras de metal', 'cadeiras de plastico', 'cadeiras de plástico', 'cadeiras de ferro', 'cadeiras de aco', 'cadeiras de aço', 'cadeiras estofadas', 'poltronas estofadas', 'cadeiras acolchoadas', 'poltronas acolchoadas', 'cadeiras reclinaveis', 'cadeiras reclináveis', 'poltronas reclinaveis', 'poltronas reclináveis', 'poltronas do papai', 'poltrona do papai', 'poltronas massageadoras', 'cadeiras de rodas', 'poltronas para obesos', 'cadeiras para obesos', 'cadeiras geriatricas', 'cadeiras geriátricas', 'poltronas geriatricas', 'poltronas geriátricas', 'cadeiras de barbeiro', 'poltronas de barbeiro', 'cadeiras de salao', 'cadeiras de salão', 'poltronas de salao', 'poltronas de salão', 'cadeiras hidraulicas', 'cadeiras hidráulicas', 'cadeiras de dentista', 'cadeiras odontologicas', 'cadeiras odontológicas', 'poltronas hospitalares', 'cadeiras hospitalares', 'poltronas medicas', 'poltronas médicas', 'cadeiras medicas', 'cadeiras médicas', 'estofados e cadeiras', 'moveis estofados', 'móveis estofados', 'sofas e poltronas', 'sofás e poltronas', 'fabrica de sofas', 'fábrica de sofás', 'industria de sofas', 'indústria de sofás', 'fabricante de estofados', 'estofados moveis', 'estofados móveis', 'fabrica de moveis estofados', 'fábrica de móveis estofados', 'cadeiraria industrial', 'moveis para sentar', 'móveis para sentar', 'assentos', 'assentos de cadeiras', 'assentos automotivos', 'assentos estofados', 'assentos de couro', 'encostos de cadeiras', 'cadeiras personalizadas', 'poltronas personalizadas', 'cadeiras sob medida', 'poltronas sob medida', 'cadeiras corporativas', 'poltronas corporativas', 'cadeiras de cozinha', 'cadeiras de varanda', 'cadeiras de area externa', 'cadeiras de área externa', 'cadeiras dobraveis', 'cadeiras dobráveis', 'poltronas dobraveis', 'poltronas dobráveis', 'cadeiras infantis', 'poltronas infantis', 'cadeiras para academia', 'cadeiras para clube', 'cadeiras para hotel', 'poltronas para hotel', 'cadeiras para restaurantes e bares', 'moveis para bares', 'móveis para bares', 'moveis para restaurantes', 'móveis para restaurantes', 'cadeiras design', 'poltronas design', 'cadeiras de design', 'poltronas de design', 'cadeiras classicas', 'cadeiras clássicas', 'poltronas classicas', 'poltronas clássicas', 'cadeiras modernas', 'poltronas modernas', 'cadeiras rusticas', 'cadeiras rústicas', 'poltronas rusticas', 'poltronas rústicas', 'cadeiras de fibra', 'cadeiras de fibra sintetica', 'cadeiras de fibra sintética', 'cadeiras de palhinha', 'cadeiras de trama', 'cadeiras de corda', 'cadeiras e banquetas', 'poltronas e banquetas', 'banquetas e cadeiras', 'banquetas altas', 'cadeiras altas', 'banquetas giratorias', 'banquetas giratórias', 'cadeiras e sofas', 'cadeiras e sofás', 'poltronas e sofas', 'poltronas e sofás', 'fabrica de moveis cadeiras', 'fábrica de móveis cadeiras', 'industria de moveis cadeiras', 'indústria de móveis cadeiras', 'moveis e poltronas', 'móveis e poltronas'],
-    'industrias de cadeiras e poltronas': ['cadeiras', 'poltronas', 'cadeiras e poltronas', 'fabrica de cadeiras', 'fábrica de cadeiras', 'industria de cadeiras', 'indústria de cadeiras', 'fabrica de poltronas', 'fábrica de poltronas', 'industria de poltronas', 'indústria de poltronas', 'fabricante de cadeiras', 'fabricante de poltronas', 'cadeiraria', 'cadeiras giratorias', 'cadeiras giratórias', 'cadeiras de escritorio', 'cadeiras de escritório', 'poltronas de escritorio', 'poltronas de escritório', 'cadeiras office', 'moveis office', 'móveis office', 'cadeiras ergonometricas', 'cadeiras ergonômicas', 'poltronas ergonometricas', 'poltronas ergonômicas', 'cadeiras gamer', 'poltronas gamer', 'cadeiras de jantar', 'cadeiras para cozinha', 'cadeiras para restaurante', 'cadeiras para bares', 'cadeiras para eventos', 'poltronas de recepcao', 'poltronas de recepção', 'poltronas de espera', 'cadeiras de espera', 'longarinas', 'longarinas de espera', 'cadeiras universitarias', 'cadeiras universitárias', 'cadeiras escolares', 'carteiras escolares', 'cadeiras de auditorio', 'cadeiras de auditório', 'poltronas de auditorio', 'poltronas de auditório', 'poltronas de cinema', 'cadeiras de cinema', 'poltronas de teatro', 'cadeiras de teatro', 'cadeiras de praia', 'cadeiras de jardim', 'poltronas de jardim', 'cadeiras de aluminio', 'cadeiras de alumínio', 'cadeiras de madeira', 'cadeiras de metal', 'cadeiras de plastico', 'cadeiras de plástico', 'cadeiras de ferro', 'cadeiras de aco', 'cadeiras de aço', 'cadeiras estofadas', 'poltronas estofadas', 'cadeiras acolchoadas', 'poltronas acolchoadas', 'cadeiras reclinaveis', 'cadeiras reclináveis', 'poltronas reclinaveis', 'poltronas reclináveis', 'poltronas do papai', 'poltrona do papai', 'poltronas massageadoras', 'cadeiras de rodas', 'poltronas para obesos', 'cadeiras para obesos', 'cadeiras geriatricas', 'cadeiras geriátricas', 'poltronas geriatricas', 'poltronas geriátricas', 'cadeiras de barbeiro', 'poltronas de barbeiro', 'cadeiras de salao', 'cadeiras de salão', 'poltronas de salao', 'poltronas de salão', 'cadeiras hidraulicas', 'cadeiras hidráulicas', 'cadeiras de dentista', 'cadeiras odontologicas', 'cadeiras odontológicas', 'poltronas hospitalares', 'cadeiras hospitalares', 'poltronas medicas', 'poltronas médicas', 'cadeiras medicas', 'cadeiras médicas', 'estofados e cadeiras', 'moveis estofados', 'móveis estofados', 'sofas e poltronas', 'sofás e poltronas', 'fabrica de sofas', 'fábrica de sofás', 'industria de sofas', 'indústria de sofás', 'fabricante de estofados', 'estofados moveis', 'estofados móveis', 'fabrica de moveis estofados', 'fábrica de móveis estofados', 'cadeiraria industrial', 'moveis para sentar', 'móveis para sentar', 'assentos', 'assentos de cadeiras', 'assentos automotivos', 'assentos estofados', 'assentos de couro', 'encostos de cadeiras', 'cadeiras personalizadas', 'poltronas personalizadas', 'cadeiras sob medida', 'poltronas sob medida', 'cadeiras corporativas', 'poltronas corporativas', 'cadeiras de cozinha', 'cadeiras de varanda', 'cadeiras de area externa', 'cadeiras de área externa', 'cadeiras dobraveis', 'cadeiras dobráveis', 'poltronas dobraveis', 'poltronas dobráveis', 'cadeiras infantis', 'poltronas infantis', 'cadeiras para academia', 'cadeiras para clube', 'cadeiras para hotel', 'poltronas para hotel', 'cadeiras para restaurantes e bares', 'moveis para bares', 'móveis para bares', 'moveis para restaurantes', 'móveis para restaurantes', 'cadeiras design', 'poltronas design', 'cadeiras de design', 'poltronas de design', 'cadeiras classicas', 'cadeiras clássicas', 'poltronas classicas', 'poltronas clássicas', 'cadeiras modernas', 'poltronas modernas', 'cadeiras rusticas', 'cadeiras rústicas', 'poltronas rusticas', 'poltronas rústicas', 'cadeiras de fibra', 'cadeiras de fibra sintetica', 'cadeiras de fibra sintética', 'cadeiras de palhinha', 'cadeiras de trama', 'cadeiras de corda', 'cadeiras e banquetas', 'poltronas e banquetas', 'banquetas e cadeiras', 'banquetas altas', 'cadeiras altas', 'banquetas giratorias', 'banquetas giratórias', 'cadeiras e sofas', 'cadeiras e sofás', 'poltronas e sofas', 'poltronas e sofás', 'fabrica de moveis cadeiras', 'fábrica de móveis cadeiras', 'industria de moveis cadeiras', 'indústria de móveis cadeiras', 'moveis e poltronas', 'móveis e poltronas'],
+    'indústrias de cadeiras e poltronas': seatingIndustryTerms,
+    'industrias de cadeiras e poltronas': seatingIndustryTerms,
     'fábricas de bolsas': ['fabrica de bolsas', 'fábrica de bolsas', 'fabricas de bolsas', 'fábricas de bolsas', 'industria de bolsas', 'indústria de bolsas', 'confeccao de bolsas', 'confecção de bolsas', 'fabricacao de bolsas', 'fabricação de bolsas', 'bolsas e mochilas', 'fabrica de mochilas', 'fábrica de mochilas', 'industria de mochilas', 'fabrica de malas', 'fábrica de malas', 'industria de malas', 'artefatos de couro', 'artefatos em couro', 'bolsas em couro', 'bolsas de couro fabrica', 'fabrica de carteiras', 'industria de carteiras', 'fabrica de cintos', 'industria de cintos', 'marroquinaria', 'fabrica de necessaires', 'fabrica de sacolas de tecido', 'fabrica de ecobags', 'ecobag', 'fabrica de bolsas termicas', 'fábrica de bolsas térmicas', 'bolsas termicas', 'fabrica de pastas executivas', 'industria de artigos de viagem', 'fabrica de bolsas personalizadas'],
     'fábricas de bolas': ['fabrica de bolas', 'fábrica de bolas', 'fabricas de bolas', 'fábricas de bolas', 'industria de bolas', 'indústria de bolas', 'fabricacao de bolas', 'fabricação de bolas', 'bolas esportivas fabrica', 'fabrica de bolas de futebol', 'fabrica de bolas de volei', 'fabrica de bolas de vôlei', 'fabrica de bolas de basquete', 'fabrica de bolas de futsal', 'fabrica de bolas de handebol', 'industria de material esportivo', 'indústria de material esportivo', 'fabrica de artigos esportivos', 'fábrica de artigos esportivos', 'industria de artigos esportivos', 'fabricante de bolas', 'costura de bolas', 'bolas oficiais fabrica', 'fabrica de bolas infantis', 'fabrica de bolas de borracha', 'fabrica de bolas de pilates', 'fabrica de bolas de ginastica', 'fábrica de bolas de ginástica'],
     'fábricas de capas de chuva': ['fabrica de capas de chuva', 'fábrica de capas de chuva', 'fabricas de capas de chuva', 'fábricas de capas de chuva', 'industria de capas de chuva', 'indústria de capas de chuva', 'capas de chuva', 'capa de chuva', 'fabricacao de capas de chuva', 'fabricação de capas de chuva', 'confeccao de capas de chuva', 'confecção de capas de chuva', 'capas de chuva industrial', 'fabrica de capas plasticas', 'fábrica de capas plásticas', 'vestuario impermeavel', 'vestuário impermeável', 'roupa impermeavel', 'roupas impermeaveis', 'conjunto de chuva', 'capa de motoqueiro', 'capa para motociclista', 'capa motoboy', 'fabrica de galochas', 'galochas', 'fabrica de ponchos', 'poncho', 'ponchos impermeaveis', 'industria de pvc vestuario', 'fabrica de guarda chuva', 'fábrica de guarda-chuva', 'guarda chuva', 'guarda chuvas fabrica', 'guarda sol', 'epi capa de chuva', 'fabrica de epi vestuario', 'capas impermeaveis', 'capas impermeáveis', 'impermeaveis', 'impermeáveis', 'impermeavel', 'confeccao de epi', 'confecção de epi', 'vestimenta de seguranca', 'vestimenta de segurança', 'vestimentas impermeaveis', 'fabrica de lonas', 'lonas plasticas', 'lonas plásticas', 'artefatos de pvc', 'artefatos plasticos pvc', 'plasticos flexiveis', 'plásticos flexíveis', 'fabrica de encerados', 'encerados', 'tecidos impermeaveis', 'tecidos impermeáveis', 'tecido plastificado', 'fabrica de aventais', 'aventais plasticos', 'fabrica de botas de borracha', 'artefatos de borracha vestuario', 'capas para motociclistas', 'roupas para chuva', 'equipamentos de protecao individual', 'equipamentos de proteção individual', 'confeccao de uniformes industriais'],
@@ -2134,7 +2135,7 @@ serve(async (req) => {
       const seenC = new Set<string>();
       const dedup = filtered.filter((c: any) => { if (!c.cnpj) return true; if (seenC.has(c.cnpj)) return false; seenC.add(c.cnpj); return true; });
       const leads = dedup.map((c: any, index: number) => {
-        const phone1 = isPhoneValid(c.telefone_1) ? c.telefone_1 : (c.telefone_2 || '');
+        const phone1 = (isSeatingIndustrySegment(c._segment || '') ? hasValidSeatingPhone(c.telefone_1) : isPhoneValid(c.telefone_1)) ? c.telefone_1 : (c.telefone_2 || '');
         const pv = validatePhone(phone1);
         const nfRaw = (c.nome_fantasia || '').trim();
         const rawName = !nfRaw ? (c.razao_social || 'Empresa') : nfRaw;
@@ -2351,7 +2352,8 @@ serve(async (req) => {
           if (!isPhoneValid(c.telefone_1) && !isPhoneValid(c.telefone_2)) continue;
           const nameText = normalizeTerm([c.nome_fantasia, c.razao_social].filter(Boolean).join(' '));
           if (!nameText) continue;
-          const hit = segmentTerms.find(({ terms }: { segment: string; terms: string[] }) => terms.some(t => nameText.includes(t)));
+          const hit = segmentTerms.find(({ segment: candidateSegment, terms }: { segment: string; terms: string[] }) =>
+            terms.some(t => nameText.includes(t)) && (!isSeatingIndustrySegment(candidateSegment) || matchesSeatingIndustryName(c)));
           if (!hit) continue;
           seenIds.add(c.id);
           matched.push({ ...c, _segment: hit.segment });
@@ -2685,7 +2687,7 @@ serve(async (req) => {
       // ===== CNAE-BASED SEARCH (paralelo ao tsquery) =====
       // Para nichos onde o nome da empresa não contém a palavra-chave (ex: DAJU LTDA),
       // buscamos diretamente por CNAEs oficiais. Esses resultados pulam o filtro de relevância.
-      const cnaes = getCnaesForSegment(seg);
+      const cnaes = isSeatingIndustrySegment(seg) ? [] : getCnaesForSegment(seg);
       // Pula CNAE search em multi-segment (4+) porque .or(cnae_secundaria.ilike.%XXX%)
       // em 35M linhas trava o Postgres e o abortSignal do supabase-js NÃO mata a query.
       const skipCnaeForMultiSeg = segments.length >= 4;
@@ -2794,7 +2796,7 @@ serve(async (req) => {
       }
 
       console.log(`📊 Segment "${seg}": ${bestResults.length} total results`);
-      return bestResults.map((c: any) => ({ ...c, _segment: seg }));
+      return bestResults.map((c: any) => ({ ...c, _segment: seg })).filter(passesSeatingIndustry);
     }
 
     if (!usedCityNameScan) {
@@ -2886,7 +2888,7 @@ serve(async (req) => {
 
     const buildQuickLeads = (companies: any[]) => {
       // Remove lixo óbvio ANTES do cap, para não desperdiçar as 3k vagas
-      companies = companies.filter(passesQuickNegative);
+      companies = companies.filter(passesSeatingIndustry).filter(passesQuickNegative);
       // Cap input to avoid CPU time exceeded on transformation
       const capped = companies.length > 3_000 ? companies.slice(0, 3_000) : companies;
       // Quick phone filter
@@ -2956,6 +2958,9 @@ serve(async (req) => {
       }
     }
 
+
+    // Seating qualification precedes dedup and every later fallback.
+    allCompanies = allCompanies.filter(passesSeatingIndustry);
 
     // ===== FILTER: valid phone required (check both telefone_1 and telefone_2) =====
     allCompanies = allCompanies.filter(c => isPhoneValid(c.telefone_1) || isPhoneValid(c.telefone_2));
@@ -3476,6 +3481,7 @@ serve(async (req) => {
       if (allCompanies.length === 0 && beforeDistFilter > 0) {
         console.log(`⚠️ Distributor strict zeroed results — relaxing to indicator-only`);
         allCompanies = distSnapshot.filter(c => {
+          if (isSeatingIndustrySegment(c._segment || '')) return matchesSeatingIndustryName(c);
           if (c._viaCnae) return true;
           const seg = (c._segment || '').toLowerCase();
           if (!seg.includes('distribuidor') && !seg.includes('distribuidora')) return true;
@@ -3547,6 +3553,7 @@ serve(async (req) => {
       const beforeIndustryFilter = allCompanies.length;
       const indSnapshot = allCompanies;
       allCompanies = allCompanies.filter(c => {
+        if (isSeatingIndustrySegment(c._segment || '')) return matchesSeatingIndustryName(c);
         if (c._viaCnae) return true;
         const seg = (c._segment || '').toLowerCase();
         const isIndustrySeg = seg.includes('industria') || seg.includes('indústria') || seg.includes('fabrica') || seg.includes('fábrica');
@@ -3575,6 +3582,7 @@ serve(async (req) => {
       if (allCompanies.length === 0 && beforeIndustryFilter > 0) {
         console.log(`⚠️ Industry strict zeroed results — relaxing to indicator-only`);
         allCompanies = indSnapshot.filter(c => {
+          if (isSeatingIndustrySegment(c._segment || '')) return matchesSeatingIndustryName(c);
           if (c._viaCnae) return true;
           const seg = (c._segment || '').toLowerCase();
           const isIndustrySeg = seg.includes('industria') || seg.includes('indústria') || seg.includes('fabrica') || seg.includes('fábrica');
@@ -3920,6 +3928,8 @@ serve(async (req) => {
       allCompanies = allCompanies.filter(c => {
         // Agropecuária: já validada pelo scoring pipeline (CNAE + descrição + nome + negativos)
         if (c._agroScored) return true;
+        // Seating requires its product AND manufacturing name, even for CNAE candidates.
+        if (isSeatingIndustrySegment(c._segment || '')) return matchesSeatingIndustryName(c);
         // Results found via official CNAE code always pass relevance filter
         if (c._viaCnae) return true;
 
@@ -3983,7 +3993,7 @@ serve(async (req) => {
     });
 
     let leads = allCompanies.map((c: any, index: number) => {
-      const phone1 = isPhoneValid(c.telefone_1) ? c.telefone_1 : (c.telefone_2 || '');
+      const phone1 = (isSeatingIndustrySegment(c._segment || '') ? hasValidSeatingPhone(c.telefone_1) : isPhoneValid(c.telefone_1)) ? c.telefone_1 : (c.telefone_2 || '');
       const phoneValidation = validatePhone(phone1);
       // Format name: use razao_social if nome_fantasia is weird, too short, or too generic
       const nfRaw = (c.nome_fantasia || '').trim();
