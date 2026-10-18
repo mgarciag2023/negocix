@@ -1,7 +1,8 @@
 # Seating industry search
 
 - [x] Review excluded candidates: SP search fetched 330 candidates; name qualification, not truncation, explains most exclusions.
-- [ ] Expand and verify search after user decides whether to include broader furniture manufacturers; blocked on scope decision.
+- [x] Expand to user-approved furniture and upholstery manufacturers while preserving name-based manufacturing qualification.
+- [x] Run 19 regression tests, deploy both functions and verify expanded signed-in SP search: 1,685 leads displayed, all checked against original names, active status and complete phone format; no browser errors.
 
 - [x] Align search and monitoring terms; remove unrelated standalone terms.
 - [x] Apply product-plus-manufacturing qualification in normal, city-scan and partial searches, without changing other segments.

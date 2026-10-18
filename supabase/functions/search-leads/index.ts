@@ -2501,7 +2501,7 @@ serve(async (req) => {
         }
 
         console.log(`🌆 Metro "${seg}": ${bestResults.length} leads | ${metroCities.length} cidades × ${termChunks.length} blocos | ${metroErrors} falhas | ${Date.now() - FUNCTION_START}ms`);
-        return bestResults;
+        return bestResults.map((c: any) => ({ ...c, _segment: seg })).filter(passesSeatingIndustry);
       }
 
 
@@ -2898,7 +2898,7 @@ serve(async (req) => {
       filtered = filtered.filter(c => { if (!c.cnpj) return true; if (seen.has(c.cnpj)) return false; seen.add(c.cnpj); return true; });
       // Transform to lead format
       return filtered.map((c: any, index: number) => {
-        const phone1 = isPhoneValid(c.telefone_1) ? c.telefone_1 : (c.telefone_2 || '');
+        const phone1 = (isSeatingIndustrySegment(c._segment || '') ? hasValidSeatingPhone(c.telefone_1) : isPhoneValid(c.telefone_1)) ? c.telefone_1 : (c.telefone_2 || '');
         const phoneValidation = validatePhone(phone1);
         const nfRaw = (c.nome_fantasia || '').trim();
         const isWeirdName = !nfRaw || /^\*+$/.test(nfRaw) || /^[^a-zA-Z0-9À-ÿ\s]{2,}/.test(nfRaw) || !/[a-zA-ZÀ-ÿ]{2,}/.test(nfRaw);
