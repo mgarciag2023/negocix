@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { isSeatingIndustrySegment, matchesSeatingIndustryName, passesSeatingIndustry, seatingIndustryTerms } from './seating-industry';
+import { hasValidSeatingPhone, isSeatingIndustrySegment, matchesSeatingIndustryName, passesSeatingIndustry, seatingIndustryTerms } from './seating-industry';
 
 describe('Indústrias de Cadeiras e Poltronas', () => {
   test('accepts a chair-only manufacturer', () => {
@@ -34,6 +34,17 @@ describe('Indústrias de Cadeiras e Poltronas', () => {
   test('supports accented and unaccented labels', () => {
     expect(isSeatingIndustrySegment('Indústrias de Cadeiras e Poltronas')).toBe(true);
     expect(isSeatingIndustrySegment('industrias de cadeiras e poltronas')).toBe(true);
+  });
+  test('rejects incomplete numbers and nonexistent area codes', () => {
+    expect(hasValidSeatingPhone('999999999')).toBe(false);
+    expect(hasValidSeatingPhone('(00) 3333-4444')).toBe(false);
+    expect(hasValidSeatingPhone('(11) 3333-4444')).toBe(true);
+    expect(hasValidSeatingPhone('+55 11 99999-8888')).toBe(true);
+  });
+  test('allows a valid second phone but rejects manufacturers without usable phones', () => {
+    const company = { _segment: 'Indústrias de Cadeiras e Poltronas', razao_social: 'FABRICA DE CADEIRAS LTDA', telefone_1: '999999999' };
+    expect(passesSeatingIndustry(company)).toBe(false);
+    expect(passesSeatingIndustry({ ...company, telefone_2: '(11) 3333-4444' })).toBe(true);
   });
   test('retrieves singular products and production vocabulary without generic seats', () => {
     expect(seatingIndustryTerms).toContain('cadeira');

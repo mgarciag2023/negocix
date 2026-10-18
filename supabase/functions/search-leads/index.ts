@@ -1,4 +1,4 @@
-import { seatingIndustryTerms, isSeatingIndustrySegment, matchesSeatingIndustryName, passesSeatingIndustry } from "../_shared/seating-industry.ts";
+import { seatingIndustryTerms, isSeatingIndustrySegment, matchesSeatingIndustryName, passesSeatingIndustry, hasValidSeatingPhone } from "../_shared/seating-industry.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -2135,7 +2135,7 @@ serve(async (req) => {
       const seenC = new Set<string>();
       const dedup = filtered.filter((c: any) => { if (!c.cnpj) return true; if (seenC.has(c.cnpj)) return false; seenC.add(c.cnpj); return true; });
       const leads = dedup.map((c: any, index: number) => {
-        const phone1 = isPhoneValid(c.telefone_1) ? c.telefone_1 : (c.telefone_2 || '');
+        const phone1 = (isSeatingIndustrySegment(c._segment || '') ? hasValidSeatingPhone(c.telefone_1) : isPhoneValid(c.telefone_1)) ? c.telefone_1 : (c.telefone_2 || '');
         const pv = validatePhone(phone1);
         const nfRaw = (c.nome_fantasia || '').trim();
         const rawName = !nfRaw ? (c.razao_social || 'Empresa') : nfRaw;
@@ -3993,7 +3993,7 @@ serve(async (req) => {
     });
 
     let leads = allCompanies.map((c: any, index: number) => {
-      const phone1 = isPhoneValid(c.telefone_1) ? c.telefone_1 : (c.telefone_2 || '');
+      const phone1 = (isSeatingIndustrySegment(c._segment || '') ? hasValidSeatingPhone(c.telefone_1) : isPhoneValid(c.telefone_1)) ? c.telefone_1 : (c.telefone_2 || '');
       const phoneValidation = validatePhone(phone1);
       // Format name: use razao_social if nome_fantasia is weird, too short, or too generic
       const nfRaw = (c.nome_fantasia || '').trim();
