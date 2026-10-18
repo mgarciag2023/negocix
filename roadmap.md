@@ -1,7 +1,7 @@
 # Seating industry search
 
-- [ ] Review excluded manufacturers and extend precise name vocabulary without admitting generic furniture stores.
-- [ ] Verify expanded terms with regression tests and a real signed-in search.
+- [x] Review excluded candidates: SP search fetched 330 candidates; name qualification, not truncation, explains most exclusions.
+- [ ] Expand and verify search after user decides whether to include broader furniture manufacturers; blocked on scope decision.
 
 - [x] Align search and monitoring terms; remove unrelated standalone terms.
 - [x] Apply product-plus-manufacturing qualification in normal, city-scan and partial searches, without changing other segments.
