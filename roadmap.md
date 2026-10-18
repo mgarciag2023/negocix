@@ -1,5 +1,8 @@
 # Seating industry search
 
+- [ ] Review excluded manufacturers and extend precise name vocabulary without admitting generic furniture stores.
+- [ ] Verify expanded terms with regression tests and a real signed-in search.
+
 - [x] Align search and monitoring terms; remove unrelated standalone terms.
 - [x] Apply product-plus-manufacturing qualification in normal, city-scan and partial searches, without changing other segments.
 - [x] Correct furniture CNAE metadata and prevent broad-code qualification bypass.
