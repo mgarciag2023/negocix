@@ -182,6 +182,9 @@ export const customerTypes = [
   "Estruturas Metálicas",
   "Caldeirarias",
   "Indústrias de Cadeiras e Poltronas",
+  "Indústrias de Cimentos",
+  "Mineradoras",
+  "Pedreiras",
 
   // Saúde
   "Farmácias",
