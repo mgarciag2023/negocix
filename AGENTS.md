@@ -1,5 +1,7 @@
 # Architecture rules
 
+- Keep bar candidate terms and exact name qualification in the shared bar-segment module, applying qualification before deduplication and in normal, city-scan and partial paths so short words and ambiguous names cannot diverge by response path.
+
 - Resolve Litoral Sul SC to complete municipalities in the shared regional resolver before city correction, using the existing per-city search and regional filters so beaches are included without statewide expansion.
 
 - Keep seating-industry candidate terms and name qualification in the shared seating-industry module, used before deduplication and by both normal and partial search paths, so manufacturing relevance cannot diverge by response path.
