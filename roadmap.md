@@ -1,8 +1,8 @@
 # Seating industry search
 
 ## Litoral Sul SC
-- [ ] Expand city input to the five requested municipalities without a beach/neighborhood restriction.
-- [ ] Test exact coverage and state isolation; deploy and verify a real search.
+- [x] Expand lead-search city input to the five requested municipalities without a beach/neighborhood restriction.
+- [x] 22 regression tests passed; search-leads deployed; signed-in UI search for Bares in Litoral Sul SC returned 93 leads covering all five municipalities, with every returned address inside the requested region.
 
 - [x] Review excluded candidates: SP search fetched 330 candidates; name qualification, not truncation, explains most exclusions.
 - [x] Expand to user-approved furniture and upholstery manufacturers while preserving name-based manufacturing qualification.
