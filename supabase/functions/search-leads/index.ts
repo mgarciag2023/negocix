@@ -1,4 +1,5 @@
 import { seatingIndustryTerms, isSeatingIndustrySegment, matchesSeatingIndustryName, passesSeatingIndustry, hasValidSeatingPhone } from "../_shared/seating-industry.ts";
+import { resolveLitoralSul } from "../_shared/litoral-sul.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -2015,7 +2016,7 @@ serve(async (req) => {
     if (!nationwide) {
       const regionNorm = normalizeText((region || '').replace(/[,\-\/]+/g, ' ').trim()).toUpperCase().replace(/\s+/g, ' ');
       const cityNorm = city ? normalizeText(city).toUpperCase().replace(/\s+/g, ' ') : '';
-      const metro = METRO_REGIONS[regionNorm] || METRO_REGIONS[cityNorm];
+      const metro = resolveLitoralSul(city, state) || METRO_REGIONS[regionNorm] || METRO_REGIONS[cityNorm];
       if (metro) {
         metroCities = metro.cities;
         state = metro.state;
