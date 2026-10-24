@@ -1,6 +1,6 @@
 import { seatingIndustryTerms, isSeatingIndustrySegment, matchesSeatingIndustryName, passesSeatingIndustry, hasValidSeatingPhone } from "../_shared/seating-industry.ts";
 import { resolveLitoralSul } from "../_shared/litoral-sul.ts";
-import { barSearchTerms, isBarSegment, matchesBarName, passesBarSegment } from "../_shared/bar-segment.ts";
+import { barSearchTerms, isBarSegment, matchesBarName, passesBarSegment, deduplicateBars } from "../_shared/bar-segment.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -2909,7 +2909,7 @@ serve(async (req) => {
 
     const buildQuickLeads = (companies: any[]) => {
       // Remove lixo óbvio ANTES do cap, para não desperdiçar as 3k vagas
-      companies = companies.filter(passesSeatingIndustry).filter(passesBarSegment).filter(passesQuickNegative);
+      companies = deduplicateBars(companies.filter(passesSeatingIndustry).filter(passesBarSegment).filter(passesQuickNegative));
       // Cap input to avoid CPU time exceeded on transformation
       const capped = companies.length > 3_000 ? companies.slice(0, 3_000) : companies;
       // Quick phone filter
@@ -2981,7 +2981,7 @@ serve(async (req) => {
 
 
     // Segment-specific name qualification precedes dedup and every later fallback.
-    allCompanies = allCompanies.filter(passesSeatingIndustry).filter(passesBarSegment);
+    allCompanies = deduplicateBars(allCompanies.filter(passesSeatingIndustry).filter(passesBarSegment));
 
     // ===== FILTER: valid phone required (check both telefone_1 and telefone_2) =====
     allCompanies = allCompanies.filter(c => isPhoneValid(c.telefone_1) || isPhoneValid(c.telefone_2));

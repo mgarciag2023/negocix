@@ -14,7 +14,7 @@ const normalize = (value: string) => value.normalize('NFD')
   .replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
 export function isBarSegment(segment: string): boolean {
-  return /^(bares|bar|pubs?)$/.test(normalize(segment));
+  return /^(bares|bar)$/.test(normalize(segment));
 }
 
 type BarCompany = {
@@ -34,4 +34,31 @@ export function matchesBarName(company: BarCompany): boolean {
 
 export function passesBarSegment(company: BarCompany): boolean {
   return !isBarSegment(company._segment || '') || matchesBarName(company);
+}
+
+// Merge only matching venue/location pairs, never shared names across cities
+// or shared accountant phone numbers across different addresses.
+export function deduplicateBars<T extends BarCompany & {
+  endereco?: string | null; cidade?: string | null; estado?: string | null;
+  telefone_1?: string | null; telefone_2?: string | null;
+}>(companies: T[]): T[] {
+  const names = new Set<string>();
+  const phones = new Set<string>();
+  return companies.filter(company => {
+    if (!isBarSegment(company._segment || '')) return true;
+    const address = normalize(company.endereco || '');
+    const city = normalize(company.cidade || '');
+    if (!address || !city) return true;
+    const location = `${normalize(company.estado || '')}|${city}|${address}`;
+    const name = normalize(company.nome_fantasia || company.razao_social || '');
+    const nameKey = name ? `${location}|${name}` : '';
+    const phoneKeys = [company.telefone_1, company.telefone_2]
+      .map(phone => (phone || '').replace(/\D/g, ''))
+      .filter(phone => phone.length >= 10)
+      .map(phone => `${location}|${phone.slice(-10)}`);
+    if ((nameKey && names.has(nameKey)) || phoneKeys.some(key => phones.has(key))) return false;
+    if (nameKey) names.add(nameKey);
+    phoneKeys.forEach(key => phones.add(key));
+    return true;
+  });
 }
