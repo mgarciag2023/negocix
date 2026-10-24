@@ -1,5 +1,10 @@
 # Seating industry search
 
+## Bar search correction
+- [x] Share expanded bar terms and exact name qualification across candidate retrieval and normal, city-scan and partial response paths.
+- [x] 62 regression tests passed; search and monitoring functions deployed with expanded terms.
+- [x] Signed-in Bares search in Litoral Sul SC returned 134 results on screen (previously 93), all name-qualified, active with valid phone format, within the five municipalities; two duplicate venue pairs merged without merging shared phones across different addresses.
+
 ## Litoral Sul SC
 - [x] Expand lead-search city input to the five requested municipalities without a beach/neighborhood restriction.
 - [x] 22 regression tests passed; search-leads deployed; signed-in UI search for Bares in Litoral Sul SC returned 93 leads covering all five municipalities, with every returned address inside the requested region.

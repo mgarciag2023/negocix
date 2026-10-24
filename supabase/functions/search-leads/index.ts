@@ -1,5 +1,6 @@
 import { seatingIndustryTerms, isSeatingIndustrySegment, matchesSeatingIndustryName, passesSeatingIndustry, hasValidSeatingPhone } from "../_shared/seating-industry.ts";
 import { resolveLitoralSul } from "../_shared/litoral-sul.ts";
+import { barSearchTerms, isBarSegment, matchesBarName, passesBarSegment, deduplicateBars } from "../_shared/bar-segment.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -244,7 +245,7 @@ function generateSearchTerms(segment: string): string[] {
     'cafeterias': ['cafeteria', 'cafeterias', 'café', 'cafe', 'cafés', 'coffee', 'coffee shop', 'coffee shops', 'casa do cafe', 'casa do café', 'cafeteria gourmet', 'cafeteria especial', 'cafe especial', 'café especial', 'cafe gourmet', 'café gourmet', 'cafe boutique', 'cafe artesanal', 'café artesanal', 'cafe com leite', 'cafe e bistro', 'cafe e padaria', 'café e padaria', 'cafeteria padaria', 'cafe doceria', 'cafe e doceria', 'cafe e confeitaria', 'café e confeitaria', 'cafe da manha', 'café da manhã', 'brunch cafeteria', 'cafe coworking', 'cafe com livros', 'cafe livraria', 'cafe pet friendly', 'cafe vegano', 'café vegano', 'cafe italiano', 'café italiano', 'cafe colonial', 'café colonial', 'cafe expresso', 'café expresso', 'cafe terceira onda', 'café terceira onda', 'starbucks', 'kopenhagen cafe', 'fran s cafe'],
 
     // ===== BARES =====
-    'bares': ['bar', 'bar e', 'bares', 'boteco', 'botequim', 'butiquim', 'pub', 'cervejaria', 'cervejarias', 'choperia', 'chopperia', 'chopp', 'choparia', 'lounge', 'adega', 'adegas', 'petisqueira', 'petiscaria', 'drinkeria', 'drinks', 'gastrobar', 'gastro bar', 'beer', 'beerhouse', 'beer house', 'taberna', 'tasca', 'wine bar', 'whisky', 'whiskeria', 'bar e restaurante', 'bar e lanchonete', 'bar e mercearia', 'esquina', 'sinuca', 'snooker', 'karaoke', 'karaokê'],
+    'bares': barSearchTerms,
 
     // ===== SUPERMERCADOS E MERCADOS =====
     'supermercados': ['supermercado', 'supermercados', 'rede de supermercados', 'supermarket', 'rede supermercadista', 'compre bem', 'bom preco', 'bom preço'],
@@ -2373,7 +2374,7 @@ serve(async (req) => {
           const nameText = normalizeTerm([c.nome_fantasia, c.razao_social].filter(Boolean).join(' '));
           if (!nameText) continue;
           const hit = segmentTerms.find(({ segment: candidateSegment, terms }: { segment: string; terms: string[] }) =>
-            terms.some(t => nameText.includes(t)) && (!isSeatingIndustrySegment(candidateSegment) || matchesSeatingIndustryName(c)));
+            (isBarSegment(candidateSegment) ? matchesBarName(c) : terms.some(t => nameText.includes(t))) && (!isSeatingIndustrySegment(candidateSegment) || matchesSeatingIndustryName(c)));
           if (!hit) continue;
           seenIds.add(c.id);
           matched.push({ ...c, _segment: hit.segment });
@@ -2521,7 +2522,7 @@ serve(async (req) => {
         }
 
         console.log(`🌆 Metro "${seg}": ${bestResults.length} leads | ${metroCities.length} cidades × ${termChunks.length} blocos | ${metroErrors} falhas | ${Date.now() - FUNCTION_START}ms`);
-        return bestResults.map((c: any) => ({ ...c, _segment: seg })).filter(passesSeatingIndustry);
+        return bestResults.map((c: any) => ({ ...c, _segment: seg })).filter(passesSeatingIndustry).filter(passesBarSegment);
       }
 
 
@@ -2816,7 +2817,7 @@ serve(async (req) => {
       }
 
       console.log(`📊 Segment "${seg}": ${bestResults.length} total results`);
-      return bestResults.map((c: any) => ({ ...c, _segment: seg })).filter(passesSeatingIndustry);
+      return bestResults.map((c: any) => ({ ...c, _segment: seg })).filter(passesSeatingIndustry).filter(passesBarSegment);
     }
 
     if (!usedCityNameScan) {
@@ -2908,7 +2909,7 @@ serve(async (req) => {
 
     const buildQuickLeads = (companies: any[]) => {
       // Remove lixo óbvio ANTES do cap, para não desperdiçar as 3k vagas
-      companies = companies.filter(passesSeatingIndustry).filter(passesQuickNegative);
+      companies = deduplicateBars(companies.filter(passesSeatingIndustry).filter(passesBarSegment).filter(passesQuickNegative));
       // Cap input to avoid CPU time exceeded on transformation
       const capped = companies.length > 3_000 ? companies.slice(0, 3_000) : companies;
       // Quick phone filter
@@ -2979,8 +2980,8 @@ serve(async (req) => {
     }
 
 
-    // Seating qualification precedes dedup and every later fallback.
-    allCompanies = allCompanies.filter(passesSeatingIndustry);
+    // Segment-specific name qualification precedes dedup and every later fallback.
+    allCompanies = deduplicateBars(allCompanies.filter(passesSeatingIndustry).filter(passesBarSegment));
 
     // ===== FILTER: valid phone required (check both telefone_1 and telefone_2) =====
     allCompanies = allCompanies.filter(c => isPhoneValid(c.telefone_1) || isPhoneValid(c.telefone_2));
@@ -3946,6 +3947,7 @@ serve(async (req) => {
       // Aceita o lead apenas se o nome (nome_fantasia/razao_social) contiver
       // termos relevantes ao segmento.
       allCompanies = allCompanies.filter(c => {
+        if (isBarSegment(c._segment || '')) return matchesBarName(c);
         // Agropecuária: já validada pelo scoring pipeline (CNAE + descrição + nome + negativos)
         if (c._agroScored) return true;
         // Seating requires its product AND manufacturing name, even for CNAE candidates.

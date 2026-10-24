@@ -1,4 +1,5 @@
 import { seatingIndustryTerms } from "./seating-industry.ts";
+import { barSearchTerms } from "./bar-segment.ts";
 // Auto-extracted shared category terms map (was inline in search-leads).
 // Used by both search-leads and compute-segment-stats to keep them in sync.
 export const categoryTerms: { [key: string]: string[] } = {
@@ -93,7 +94,7 @@ export const categoryTerms: { [key: string]: string[] } = {
     'cafeterias': ['cafeteria', 'cafeterias', 'café', 'cafe', 'cafés', 'coffee', 'coffee shop', 'coffee shops', 'casa do cafe', 'casa do café', 'cafeteria gourmet', 'cafeteria especial', 'cafe especial', 'café especial', 'cafe gourmet', 'café gourmet', 'cafe boutique', 'cafe artesanal', 'café artesanal', 'cafe com leite', 'cafe e bistro', 'cafe e padaria', 'café e padaria', 'cafeteria padaria', 'cafe doceria', 'cafe e doceria', 'cafe e confeitaria', 'café e confeitaria', 'cafe da manha', 'café da manhã', 'brunch cafeteria', 'cafe coworking', 'cafe com livros', 'cafe livraria', 'cafe pet friendly', 'cafe vegano', 'café vegano', 'cafe italiano', 'café italiano', 'cafe colonial', 'café colonial', 'cafe expresso', 'café expresso', 'cafe terceira onda', 'café terceira onda', 'starbucks', 'kopenhagen cafe', 'fran s cafe'],
 
     // ===== BARES =====
-    'bares': ['bar', 'bar e', 'bares', 'boteco', 'botequim', 'butiquim', 'pub', 'cervejaria', 'cervejarias', 'choperia', 'chopperia', 'chopp', 'choparia', 'lounge', 'adega', 'adegas', 'petisqueira', 'petiscaria', 'drinkeria', 'drinks', 'gastrobar', 'gastro bar', 'beer', 'beerhouse', 'beer house', 'taberna', 'tasca', 'wine bar', 'whisky', 'whiskeria', 'bar e restaurante', 'bar e lanchonete', 'bar e mercearia', 'esquina', 'sinuca', 'snooker', 'karaoke', 'karaokê'],
+    'bares': barSearchTerms,
 
     // ===== SUPERMERCADOS E MERCADOS =====
     'supermercados': ['supermercado', 'supermercados', 'rede de supermercados', 'supermarket', 'rede supermercadista', 'compre bem', 'bom preco', 'bom preço'],
