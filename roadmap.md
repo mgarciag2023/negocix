@@ -1,5 +1,9 @@
 # Seating industry search
 
+## Litoral Sul SC
+- [ ] Expand city input to the five requested municipalities without a beach/neighborhood restriction.
+- [ ] Test exact coverage and state isolation; deploy and verify a real search.
+
 - [x] Review excluded candidates: SP search fetched 330 candidates; name qualification, not truncation, explains most exclusions.
 - [x] Expand to user-approved furniture and upholstery manufacturers while preserving name-based manufacturing qualification.
 - [x] Run 19 regression tests, deploy both functions and verify expanded signed-in SP search: 1,685 leads displayed, all checked against original names, active status and complete phone format; no browser errors.
