@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Loader2, ArrowLeft } from "lucide-react";
+import { Search, Loader2, ArrowLeft, Download } from "lucide-react";
+import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { brazilianStates } from "@/data/searchConstants";
 import { useToast } from "@/hooks/use-toast";
@@ -53,6 +54,59 @@ const SearchCompanies = () => {
   const [results, setResults] = useState<Company[]>([]);
   const [searched, setSearched] = useState(false);
   const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
+
+  const exportLeads = async () => {
+    if (!results.length || loading) return;
+    try {
+      const rows = results.map((c) => ({
+        "Nome": titleCase(c.nome_fantasia || c.razao_social),
+        "Razão Social": titleCase(c.razao_social),
+        "Nome Fantasia": titleCase(c.nome_fantasia),
+        "CNPJ": formatCnpj(c.cnpj),
+        "Telefone 1": c.telefone_1 || "",
+        "Telefone 2": c.telefone_2 || "",
+        "Email": (c.email || "").toLowerCase(),
+        "Endereço": titleCase(c.endereco),
+        "Bairro": titleCase(c.bairro),
+        "Cidade": titleCase(c.cidade),
+        "Estado": (c.estado || "").toUpperCase(),
+        "CEP": c.cep || "",
+        "Atividade": titleCase(c.descricao_cnae),
+        "Porte": titleCase(c.porte),
+        "Matriz/Filial": titleCase(c.matriz_filial),
+        "Situação Cadastral": titleCase(c.situacao_cadastral),
+      }));
+      const sheet = XLSX.utils.json_to_sheet(rows);
+      sheet["!cols"] = Object.keys(rows[0]).map(() => ({ wch: 24 }));
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, sheet, "Empresas");
+      const blob = new Blob([XLSX.write(workbook, { bookType: "xlsx", type: "array" })], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const filename = `empresas-negocix-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const file = new File([blob], filename, { type: blob.type });
+      if (window.matchMedia("(pointer: coarse)").matches && navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: filename });
+          return;
+        } catch (error) {
+          if (error instanceof DOMException && error.name === "AbortError") return;
+        }
+      }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30_000);
+      toast({ title: "Arquivo gerado", description: `${results.length} empresas na planilha.` });
+    } catch (error) {
+      console.error("Company export failed", error);
+      toast({ title: "Não foi possível exportar", description: "Tente novamente.", variant: "destructive" });
+    }
+  };
 
   useEffect(() => {
     const uf = stateUf && stateUf !== "all" ? stateUf : null;
@@ -248,9 +302,15 @@ const SearchCompanies = () => {
 
         {searched && !loading && (
           <div className="space-y-3">
-            <h2 className="text-lg font-semibold">
-              {results.length} resultado(s)
-            </h2>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold">
+                {results.length} resultado(s)
+              </h2>
+              <Button onClick={exportLeads} disabled={!results.length} className="gap-2">
+                <Download className="h-4 w-4" />
+                Exportar leads
+              </Button>
+            </div>
             {results.length === 0 && (
               <Card><CardContent className="py-10 text-center text-muted-foreground">
                 Nenhuma empresa encontrada. Tente outros termos.
