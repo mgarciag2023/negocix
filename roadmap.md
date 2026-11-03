@@ -1,5 +1,9 @@
 # Seating industry search
 
+## Automatic query frequency
+- [ ] Limit automatic monitoring/statistics refresh to once per three days, preserving user searches and authorization checks.
+- [ ] Test the interval and signed-in flow; explain cost impact from recorded usage.
+
 ## Bar search correction
 - [x] Share expanded bar terms and exact name qualification across candidate retrieval and normal, city-scan and partial response paths.
 - [x] 62 regression tests passed; search and monitoring functions deployed with expanded terms.
