@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { adminQuery } from "@/lib/admin-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -215,21 +216,24 @@ export default function TrialAdminPanel() {
   const [events, setEvents] = useState<TrialEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchEvents = async () => {
+  const fetchEvents = async (manual = true) => {
     setLoading(true);
     try {
+      const { data: cachedEvents } = await adminQuery("trial-events", async () => {
       const { data, error } = await supabase
         .from("trial_analytics")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(1000);
-      if (error) { console.error("Error:", error); setEvents([]); return; }
-      setEvents((data ?? []) as unknown as TrialEvent[]);
+      if (error) throw error;
+      return (data ?? []) as unknown as TrialEvent[];
+      }, manual);
+      setEvents(cachedEvents);
     } catch (e) { console.error("Error:", e); setEvents([]); }
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchEvents(); }, []);
+  useEffect(() => { void fetchEvents(false); }, []);
 
   if (loading) {
     return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
@@ -324,7 +328,7 @@ export default function TrialAdminPanel() {
           }}>
             Testar
           </Button>
-          <Button variant="outline" size="sm" className="text-[10px] h-7 px-2 gap-1" onClick={fetchEvents}>
+          <Button variant="outline" size="sm" className="text-[10px] h-7 px-2 gap-1" onClick={() => void fetchEvents()}>
             <RefreshCw className="h-3 w-3" />
           </Button>
         </div>

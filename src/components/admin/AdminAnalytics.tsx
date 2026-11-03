@@ -9,6 +9,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Loader2, CalendarIcon, BarChart3, Users, Search, MapPin, TrendingUp, Clock, Wifi } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { adminQuery } from "@/lib/admin-query";
+import { AUTOMATIC_QUERY_INTERVAL_MS } from "@/lib/automatic-query-cache";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -44,28 +46,33 @@ export default function AdminAnalytics() {
   const [loading, setLoading] = useState(false);
   const [loginsByDay, setLoginsByDay] = useState<number>(0);
   const [activeNow, setActiveNow] = useState<string[]>([]);
+  const [activityUpdatedAt, setActivityUpdatedAt] = useState<number | null>(null);
 
   useEffect(() => {
     fetchMetrics(selectedDate);
   }, [selectedDate]);
 
-  // Poll active users every 30s
+  // Reuse the last snapshot for three days, including after reopening the tab.
   useEffect(() => {
     fetchActiveUsers();
-    const interval = setInterval(fetchActiveUsers, 30000);
+    const interval = setInterval(fetchActiveUsers, AUTOMATIC_QUERY_INTERVAL_MS);
     return () => clearInterval(interval);
   }, []);
 
   const fetchActiveUsers = async () => {
+    try {
+      const entry = await adminQuery("active-users", async () => {
     const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("search_logs")
       .select("user_email")
       .gte("created_at", fifteenMinAgo);
-    if (data) {
-      const unique = [...new Set(data.map((d) => d.user_email))];
-      setActiveNow(unique);
-    }
+    if (error) throw error;
+    return [...new Set((data || []).map((d) => d.user_email))];
+      });
+      setActiveNow(entry.data);
+      setActivityUpdatedAt(entry.updatedAt);
+    } catch (error) { console.error("Activity snapshot failed", error); }
   };
 
   const fetchMetrics = async (date: Date) => {
@@ -74,6 +81,8 @@ export default function AdminAnalytics() {
     const dayEnd = endOfDay(date).toISOString();
 
     // Fetch search logs for the day
+    try {
+    const { data: snapshot } = await adminQuery(`daily-metrics:${format(date, "yyyy-MM-dd")}`, async () => {
     const { data: logs, error } = await supabase
       .from("search_logs")
       .select("*")
@@ -82,19 +91,18 @@ export default function AdminAnalytics() {
       .order("created_at", { ascending: false });
 
     // Fetch profiles created on this day (new signups)
-    const { data: newProfiles } = await supabase
+    const { data: newProfiles, error: profilesError } = await supabase
       .from("profiles")
       .select("id")
       .gte("created_at", dayStart)
       .lte("created_at", dayEnd);
 
-    setLoginsByDay(newProfiles?.length || 0);
-
-    if (error || !logs) {
-      setMetrics(null);
-      setLoading(false);
-      return;
-    }
+    if (error) throw error;
+    if (profilesError) throw profilesError;
+    return { logs: logs || [], signups: newProfiles?.length || 0 };
+    });
+    setLoginsByDay(snapshot.signups);
+    const logs = snapshot.logs;
 
     const typedLogs = logs as SearchLog[];
 
@@ -147,7 +155,8 @@ export default function AdminAnalytics() {
       logs: typedLogs,
     });
 
-    setLoading(false);
+    } catch (error) { console.error("Metrics failed", error); setMetrics(null); }
+    finally { setLoading(false); }
   };
 
   const sortedEntries = (obj: Record<string, number>) =>
@@ -165,10 +174,10 @@ export default function AdminAnalytics() {
         </div>
         <div>
           <p className="font-semibold text-sm">
-            {activeNow.length} usuário{activeNow.length !== 1 ? "s" : ""} ativo{activeNow.length !== 1 ? "s" : ""} agora
+            {activeNow.length} usuário{activeNow.length !== 1 ? "s" : ""} ativo{activeNow.length !== 1 ? "s" : ""} na última consulta
           </p>
           <p className="text-xs text-muted-foreground">
-            {activeNow.length > 0 ? activeNow.join(", ") : "Nenhuma atividade nos últimos 15 min"}
+            {activityUpdatedAt ? `Consultado em ${new Date(activityUpdatedAt).toLocaleString("pt-BR")}` : "Sem consulta disponível"}
           </p>
         </div>
       </div>

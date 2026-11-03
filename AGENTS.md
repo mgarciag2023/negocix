@@ -1,5 +1,7 @@
 # Architecture rules
 
+- Use account-scoped persistent snapshots for automatic admin reads, preserving immediate authorization checks and explicit refreshes; throttle automatic segment aggregation in a database-locked wrapper so concurrent searches cannot bypass the refresh window.
+
 - Keep bar candidate terms and exact name qualification in the shared bar-segment module, applying qualification before deduplication and in normal, city-scan and partial paths so short words and ambiguous names cannot diverge by response path.
 
 - Resolve Litoral Sul SC to complete municipalities in the shared regional resolver before city correction, using the existing per-city search and regional filters so beaches are included without statewide expansion.

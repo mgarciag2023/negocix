@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { adminQuery } from "@/lib/admin-query";
 
 interface LeadSample {
   name?: string;
@@ -55,6 +56,8 @@ export default function SearchLogsTable() {
   }, []);
 
   const fetchLogs = async () => {
+    try {
+    const { data: cachedLogs } = await adminQuery("search-logs", async () => {
     const { data, error } = await supabase
       .from("search_logs")
       .select("*")
@@ -71,9 +74,14 @@ export default function SearchLogsTable() {
           .in("user_id", userIds);
         profileMap = new Map((profiles || []).map((p) => [p.user_id, p.full_name || ""]));
       }
-      setLogs((data as SearchLog[]).map((l) => ({ ...l, user_full_name: l.user_id ? profileMap.get(l.user_id) : "" })));
+      return (data as SearchLog[]).map((l) => ({ ...l, user_full_name: l.user_id ? profileMap.get(l.user_id) : "" }));
     }
-    setLoading(false);
+    if (error) throw error;
+    return [] as SearchLog[];
+    });
+    setLogs(cachedLogs);
+    } catch (error) { console.error("Search logs snapshot failed", error); }
+    finally { setLoading(false); }
   };
 
   const formatConfig = (config: Record<string, unknown>, type: string): string => {
