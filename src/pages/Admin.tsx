@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchLogsTable from "@/components/admin/SearchLogsTable";
 import AdminAnalytics from "@/components/admin/AdminAnalytics";
 import SegmentMonitor from "@/components/admin/SegmentMonitor";
+import { adminQuery } from "@/lib/admin-query";
 import {
   Table,
   TableBody,
@@ -96,7 +97,7 @@ const Admin = () => {
       }
 
       setIsAdmin(true);
-      await fetchProfiles();
+      await fetchProfiles(false);
     } catch (error) {
       console.error("Error checking admin access:", error);
       navigate("/");
@@ -105,7 +106,9 @@ const Admin = () => {
     }
   };
 
-  const fetchProfiles = async () => {
+  const fetchProfiles = async (manual = true) => {
+    try {
+    const { data } = await adminQuery("admin-profiles", async () => {
     const { data: profilesData, error: profilesError } = await supabase
       .from("profiles")
       .select("*")
@@ -113,10 +116,13 @@ const Admin = () => {
 
     if (profilesError) {
       console.error("Error fetching profiles:", profilesError);
-      return;
+      throw profilesError;
     }
 
-    setProfiles(profilesData || []);
+    return profilesData || [];
+    }, manual);
+    setProfiles(data);
+    } catch (error) { console.error("Profiles snapshot failed", error); }
   };
 
   const toggleBlockUser = async (profile: Profile) => {

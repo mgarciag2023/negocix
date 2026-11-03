@@ -11,6 +11,7 @@ import SegmentEditDialog from "./SegmentEditDialog";
 import { customerTypes } from "@/data/searchConstants";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { adminQuery } from "@/lib/admin-query";
 
 interface SegmentStat {
   segment_key: string;
@@ -65,17 +66,24 @@ export default function SegmentMonitor() {
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState<string | null>(null);
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { void load(false); }, []);
 
-  const load = async () => {
+  const load = async (manual = true) => {
     setLoading(true);
-    const [{ data: s }, { data: a }] = await Promise.all([
+    try {
+    const { data } = await adminQuery("segment-monitor", async () => {
+    const [s, a] = await Promise.all([
       supabase.from("segment_stats").select("*").order("searches_count", { ascending: false }).order("quality_score", { ascending: true }),
       supabase.from("segment_alerts").select("*").eq("resolved", false),
     ]);
-    setStats((s as any) || []);
-    setAlerts((a as any) || []);
-    setLoading(false);
+    if (s.error) throw s.error;
+    if (a.error) throw a.error;
+    return { stats: s.data || [], alerts: a.data || [] };
+    }, manual);
+    setStats(data.stats as SegmentStat[]);
+    setAlerts(data.alerts as SegmentAlert[]);
+    } catch (error) { console.error("Segment snapshot failed", error); }
+    finally { setLoading(false); }
   };
 
   const refresh = async (batchAll: boolean) => {
