@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { AUTOMATIC_QUERY_INTERVAL_MS, cachedAutomaticQuery } from './automatic-query-cache';
+import { AUTOMATIC_QUERY_INTERVAL_MS, cachedAutomaticQuery } from '../src/lib/automatic-query-cache';
 
 const storage = () => {
   const entries = new Map<string, string>();

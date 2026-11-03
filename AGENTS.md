@@ -1,6 +1,6 @@
 # Architecture rules
 
-- Use account-scoped persistent snapshots for automatic admin reads, preserving immediate authorization checks and explicit refreshes; throttle automatic segment aggregation in a database-locked wrapper so concurrent searches cannot bypass the refresh window.
+- Use account-scoped persistent snapshots for automatic admin reads, preserving immediate authorization checks and explicit refreshes; check stored segment timestamps before automatic aggregation to avoid repeated historical scans.
 
 - Keep bar candidate terms and exact name qualification in the shared bar-segment module, applying qualification before deduplication and in normal, city-scan and partial paths so short words and ambiguous names cannot diverge by response path.
 
