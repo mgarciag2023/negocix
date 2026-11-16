@@ -1,5 +1,7 @@
 # Architecture rules
 
+- Route company-directory searches through the authenticated `search-companies` edge function before restricting direct table reads; keep unrestricted company-search RPCs service-role-only so they cannot bypass that restriction. The access migration must succeed before switching the page to this function.
+
 - Use account-scoped persistent snapshots for automatic admin reads, preserving immediate authorization checks and explicit refreshes; check stored segment timestamps before automatic aggregation to avoid repeated historical scans.
 
 - Keep bar candidate terms and exact name qualification in the shared bar-segment module, applying qualification before deduplication and in normal, city-scan and partial paths so short words and ambiguous names cannot diverge by response path.
