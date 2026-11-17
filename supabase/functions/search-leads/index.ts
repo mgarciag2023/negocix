@@ -1,5 +1,6 @@
 import { seatingIndustryTerms, isSeatingIndustrySegment, matchesSeatingIndustryName, passesSeatingIndustry, hasValidSeatingPhone } from "../_shared/seating-industry.ts";
 import { resolveLitoralSul } from "../_shared/litoral-sul.ts";
+import { isSaoPauloCity, validSaoPauloZone, matchesSaoPauloZone } from '../_shared/sao-paulo-zones.ts';
 import { barSearchTerms, isBarSegment, matchesBarName, passesBarSegment, deduplicateBars } from "../_shared/bar-segment.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -1896,7 +1897,7 @@ serve(async (req) => {
   let earlySearchConfig: any = null;
 
   try {
-    const { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial, neighborhood, cnaes: cnaesInput, nationwide: nationwideInput } = await req.json();
+    const { segment, region, businessType, whatsappOnly, receitaFederalOnly, isTrial, neighborhood, zone, cnaes: cnaesInput, nationwide: nationwideInput } = await req.json();
     const nationwide = !!nationwideInput;
     console.log('🔍 LOCAL DB SEARCH v1 - Input:', { segment, region, nationwide, businessType, whatsappOnly, receitaFederalOnly, isTrial: !!isTrial, cnaesCount: Array.isArray(cnaesInput) ? cnaesInput.length : 0 });
 
@@ -1946,6 +1947,7 @@ serve(async (req) => {
     earlySearchConfig = {
       segment,
       region: (region || '').trim(),
+      zone: validSaoPauloZone(zone) ? zone : '',
       businessType: businessType || 'all',
       whatsappOnly: !!whatsappOnly,
       receitaFederalOnly: !!receitaFederalOnly,
@@ -2010,6 +2012,9 @@ serve(async (req) => {
       city = parsed.city; state = parsed.state; isStateOnly = parsed.isStateOnly;
     }
     console.log(`📍 Parsed region: city=${city}, state=${state}, isStateOnly=${isStateOnly}, nationwide=${nationwide}`);
+    const activeZone = !nationwide && isSaoPauloCity(city || '', state || '') && validSaoPauloZone(zone) ? zone : null;
+    if (activeZone) { city = 'SAO PAULO'; state = 'SP'; isStateOnly = false; }
+    const passesZone = (company: any) => !activeZone || matchesSaoPauloZone(company, activeZone);
 
     // ===== METRO REGIONS (ex: "Grande Porto Alegre") =====
     // Busca em várias cidades de uma vez: roda no estado e filtra pelas cidades da região.
@@ -2395,6 +2400,7 @@ serve(async (req) => {
     // Pre-compute neighborhood filter normalization (used inside fetchSegment)
     const nfNorm = neighborhoodFilter ? normalizeText(neighborhoodFilter).toLowerCase() : null;
     const matchesNeighborhood = (c: any): boolean => {
+      if (!passesZone(c)) return false;
       if (!matchesMetro(c)) return false;
       if (!nfNorm) return true;
       const b = (c?.bairro || '').toString();
@@ -2909,7 +2915,7 @@ serve(async (req) => {
 
     const buildQuickLeads = (companies: any[]) => {
       // Remove lixo óbvio ANTES do cap, para não desperdiçar as 3k vagas
-      companies = deduplicateBars(companies.filter(passesSeatingIndustry).filter(passesBarSegment).filter(passesQuickNegative));
+      companies = deduplicateBars(companies.filter(passesZone).filter(passesSeatingIndustry).filter(passesBarSegment).filter(passesQuickNegative));
       // Cap input to avoid CPU time exceeded on transformation
       const capped = companies.length > 3_000 ? companies.slice(0, 3_000) : companies;
       // Quick phone filter
@@ -2981,7 +2987,7 @@ serve(async (req) => {
 
 
     // Segment-specific name qualification precedes dedup and every later fallback.
-    allCompanies = deduplicateBars(allCompanies.filter(passesSeatingIndustry).filter(passesBarSegment));
+    allCompanies = deduplicateBars(allCompanies.filter(passesZone).filter(passesSeatingIndustry).filter(passesBarSegment));
 
     // ===== FILTER: valid phone required (check both telefone_1 and telefone_2) =====
     allCompanies = allCompanies.filter(c => isPhoneValid(c.telefone_1) || isPhoneValid(c.telefone_2));

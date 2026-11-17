@@ -451,6 +451,7 @@ const Results = () => {
           whatsappOnly: searchConfig.whatsappOnly || false,
           receitaFederalOnly: searchConfig.receitaFederalOnly || false,
           neighborhood: searchConfig.neighborhood || '',
+          zone: searchConfig.zone || '',
           filters: {
             category: searchConfig.category,
             companySizes: searchConfig.companySizes || ['all'],

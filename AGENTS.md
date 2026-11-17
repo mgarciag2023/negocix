@@ -1,5 +1,7 @@
 # Architecture rules
 
+- Share São Paulo zone classification between the search form and server; qualify by known district/neighborhood and exact municipality before deduplication in normal and partial paths, never guessing unknown zones.
+
 - Route company-directory searches through the authenticated `search-companies` edge function before restricting direct table reads; keep unrestricted company-search RPCs service-role-only so they cannot bypass that restriction. The access migration must succeed before switching the page to this function.
 
 - Use account-scoped persistent snapshots for automatic admin reads, preserving immediate authorization checks and explicit refreshes; check stored segment timestamps before automatic aggregation to avoid repeated historical scans.

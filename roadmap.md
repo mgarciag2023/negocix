@@ -1,5 +1,8 @@
 # Seating industry search
 
+## São Paulo zones
+- [x] Add conditional zone selector in client searches and shared municipality/neighborhood filtering in normal and partial paths; eight tests passed and signed-in Zona Leste search returned 279 leads.
+
 ## Automatic query frequency
 - [ ] Limit automatic monitoring/statistics refresh to once per three days, preserving user searches and authorization checks.
 - [ ] Test the interval and signed-in flow; explain cost impact from recorded usage.

@@ -9,6 +9,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Building, Building2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import SaoPauloZoneSelect from '@/components/SaoPauloZoneSelect';
+import { isSaoPauloCity, validSaoPauloZone } from '../../supabase/functions/_shared/sao-paulo-zones';
 import { customerTypes, countries, brazilianStates } from "@/data/searchConstants";
 import { cnaes as cnaeList } from "@/data/cnaes";
 
@@ -24,6 +26,9 @@ const Configuration = () => {
   const [customCountry, setCustomCountry] = useState("");
   const [state, setState] = useState("");
   const [city, setCity] = useState("");
+  const [zone, setZone] = useState('all');
+  const showZone = country === 'BR' && isSaoPauloCity(city, state);
+  useEffect(() => { if (!showZone) setZone('all'); }, [showZone]);
   const neighborhood = ""; // filtro de bairro removido — nunca restringe a busca
   const [companySizes, setCompanySizes] = useState<string[]>([]);
   const [revenueRange, setRevenueRange] = useState("all");
@@ -77,6 +82,7 @@ const Configuration = () => {
       } else {
         if (config.state !== undefined) setState(config.state);
         if (config.city !== undefined) setCity(config.city);
+        if (validSaoPauloZone(config.zone)) setZone(config.zone);
       }
     } catch {
       // ignore corrupted localStorage
@@ -125,7 +131,7 @@ const Configuration = () => {
     // Nationwide search (Brasil inteiro)
     const isNationwide = country === "BR" && state === "ALL_BR";
     const effectiveState = isNationwide ? "" : state;
-    const effectiveCity = isNationwide ? "" : city;
+    const effectiveCity = isNationwide ? "" : (showZone ? 'São Paulo' : city);
     
     // Build region string based on filled fields
     let region = "";
@@ -210,6 +216,7 @@ const Configuration = () => {
       region,
       state: effectiveState,
       city: effectiveCity,
+      zone: showZone && validSaoPauloZone(zone) ? zone : '',
       nationwide: isNationwide,
       neighborhood: neighborhood.trim(),
       country: finalCountry,
@@ -619,6 +626,8 @@ const Configuration = () => {
                   </div>
                 </div>
 
+
+                {showZone && <SaoPauloZoneSelect value={zone} onChange={setZone} />}
 
                 {/* Company Size - Multiple Selection */}
                 <div>
