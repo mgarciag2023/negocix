@@ -180,7 +180,7 @@ const Configuration = () => {
     if (country === "OTHER" && !customCountry) {
       toast({
         title: "Informe o país de busca",
-        description: "Digite o nome do país onde deseja buscar leads.",
+        description: "Digite o nome do país onde deseja buscar empresas.",
         variant: "destructive",
       });
       return;
@@ -814,7 +814,7 @@ const Configuration = () => {
                 {/* Submit */}
                 <Button type="submit" className="w-full gap-2 text-base py-6" size="lg">
                   <Search className="h-5 w-5" />
-                  Buscar Leads
+                  Buscar Empresas
                 </Button>
               </div>
             </Card>

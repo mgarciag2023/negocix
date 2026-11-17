@@ -264,7 +264,7 @@ const SavedLeads = () => {
                 </p>
                 <Button asChild>
                   <Link to="/configuracao">
-                    Buscar Leads
+                    Buscar Empresas
                   </Link>
                 </Button>
               </>

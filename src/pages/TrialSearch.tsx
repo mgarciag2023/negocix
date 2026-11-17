@@ -870,7 +870,7 @@ const TrialSearch = () => {
                 {/* Submit */}
                 <Button type="submit" className="w-full gap-2 text-base py-6" size="lg" disabled={alreadyUsed}>
                   <Search className="h-5 w-5" />
-                  {alreadyUsed ? "Teste já utilizado" : "Buscar Leads"}
+                  {alreadyUsed ? "Teste já utilizado" : "Buscar Empresas"}
                 </Button>
 
                 {alreadyUsed && (

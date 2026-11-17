@@ -52,7 +52,7 @@ const Index = () => {
                 >
                   <Link to="/configuracao" onClick={() => window.scrollTo(0, 0)}>
                     <Target className="mr-2 h-5 w-5" />
-                    Buscar Leads
+                    Buscar Empresas
                     <ArrowRight className="ml-2 h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
                   </Link>
                 </Button>

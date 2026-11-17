@@ -542,7 +542,7 @@ const Results = () => {
 
         if (!data || !Array.isArray(data.leads)) {
           toast({
-            title: lastAbort ? "Tempo esgotado" : "Erro ao buscar leads",
+            title: lastAbort ? "Tempo esgotado" : "Erro ao buscar empresas",
             description: lastAbort
               ? "A busca demorou demais. Tente novamente ou busque por uma região menor."
               : (data?.error || "Falha temporária no servidor. Tente novamente em alguns segundos."),
@@ -610,7 +610,7 @@ const Results = () => {
           }
         } else if (data?.error) {
           toast({
-            title: data.allSeen ? "Leads já exibidos" : "Erro ao buscar leads",
+            title: data.allSeen ? "Leads já exibidos" : "Erro ao buscar empresas",
             description: data.error + (data.details ? ` ${data.details}` : ''),
             variant: data.allSeen ? "default" : "destructive",
           });
@@ -624,7 +624,7 @@ const Results = () => {
       } catch (error) {
         console.error('❌ Error fetching leads:', error);
         toast({
-          title: "Erro ao buscar leads",
+          title: "Erro ao buscar empresas",
           description: "Tente novamente mais tarde",
           variant: "destructive",
         });

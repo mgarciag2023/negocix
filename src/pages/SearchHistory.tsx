@@ -210,7 +210,7 @@ export default function SearchHistory() {
                 <p className="text-muted-foreground mb-4">
                   Faça sua primeira pesquisa para ver o histórico aqui.
                 </p>
-                <Button onClick={() => navigate("/configuracao")}>Buscar Leads</Button>
+                <Button onClick={() => navigate("/configuracao")}>Buscar Empresas</Button>
               </CardContent>
             </Card>
           )}
