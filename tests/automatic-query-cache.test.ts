@@ -6,12 +6,12 @@ const storage = () => {
   return { getItem: (key: string) => entries.get(key) ?? null, setItem: (key: string, value: string) => { entries.set(key, value); } };
 };
 describe('automatic queries', () => {
-  test('refreshes only at the three-day boundary, not before it', async () => {
-    expect(AUTOMATIC_QUERY_INTERVAL_MS).toBe(259200000);
+  test('refreshes only at the 24-hour boundary, not before it', async () => {
+    expect(AUTOMATIC_QUERY_INTERVAL_MS).toBe(86400000);
     const store = storage(); let calls = 0; let time = 1000;
     const fetcher = async () => ++calls;
     await cachedAutomaticQuery(store, 'owner', 'metrics', fetcher, false, () => time);
-    time += 259200000 - 1;
+    time += 86400000 - 1;
     expect((await cachedAutomaticQuery(store, 'owner', 'metrics', fetcher, false, () => time)).data).toBe(1);
     expect(calls).toBe(1);
     time += 1;
@@ -34,7 +34,7 @@ describe('automatic queries', () => {
     await Promise.all([1, 2].map(() => cachedAutomaticQuery(store, 'owner', 'metrics', async () => ++calls)));
     expect(calls).toBe(1);
   });
-  test('failed fetch does not start a three-day cooldown', async () => {
+  test('failed fetch does not start a daily cooldown', async () => {
     const store = storage();
     await expect(cachedAutomaticQuery(store, 'owner', 'metrics', async () => { throw new Error('offline'); })).rejects.toThrow('offline');
     expect((await cachedAutomaticQuery(store, 'owner', 'metrics', async () => 'recovered')).data).toBe('recovered');

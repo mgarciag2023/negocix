@@ -4,8 +4,8 @@
 - [x] Add conditional zone selector in client searches and shared municipality/neighborhood filtering in normal and partial paths; eight tests passed and signed-in Zona Leste search returned 279 leads.
 
 ## Automatic query frequency
-- [ ] Limit automatic monitoring/statistics refresh to once per three days, preserving user searches and authorization checks.
-- [ ] Test the interval and signed-in flow; explain cost impact from recorded usage.
+- [x] Update automatic monitoring/statistics refresh from three days to 24 hours, preserving user searches and authorization checks.
+- [x] Five interval/cache regression tests passed; updated automatic segment aggregation deployed in search-leads.
 
 ## Bar search correction
 - [x] Share expanded bar terms and exact name qualification across candidate retrieval and normal, city-scan and partial response paths.

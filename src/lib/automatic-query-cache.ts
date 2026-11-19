@@ -1,4 +1,4 @@
-export const AUTOMATIC_QUERY_INTERVAL_MS = 3 * 24 * 60 * 60 * 1000;
+export const AUTOMATIC_QUERY_INTERVAL_MS = 24 * 60 * 60 * 1000;
 
 interface CacheEntry<T> { updatedAt: number; data: T }
 const pending = new Map<string, Promise<unknown>>();

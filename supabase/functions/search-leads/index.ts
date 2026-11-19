@@ -4269,7 +4269,7 @@ serve(async (req) => {
             await adminClient.from("search_lead_audit").insert(auditRows);
           }
 
-          // Automatic aggregation only when the existing snapshot is three days old.
+          // Automatic aggregation only when the existing snapshot is at least 24 hours old.
           // Manual recalculation remains immediate in compute-segment-stats.
           try {
             const { data: snapshots, error: snapshotError } = await adminClient
@@ -4280,7 +4280,7 @@ serve(async (req) => {
             const updatedAt = new Map((snapshots || []).map((s: any) => [s.segment_key, Date.parse(s.last_computed_at)]));
             for (const [segKey, meta] of refreshedSegments.entries()) {
               const last = updatedAt.get(segKey);
-              if (typeof last === "number" && Number.isFinite(last) && Date.now() - last < 3 * 24 * 60 * 60 * 1000) continue;
+              if (typeof last === "number" && Number.isFinite(last) && Date.now() - last < 24 * 60 * 60 * 1000) continue;
               await adminClient.rpc("refresh_segment_stats_from_audit", {
                 p_segment_key: segKey,
                 p_segment_label: meta.label,
